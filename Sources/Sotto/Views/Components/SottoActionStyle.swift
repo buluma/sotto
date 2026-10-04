@@ -6,9 +6,9 @@ import SwiftUI
 /// single intent-carrying modifier. The role drives visual treatment so
 /// callsites carry meaning, not styling primitives.
 enum SottoActionRole {
-    /// Primary action. Brand coral.
+    /// Primary action. Brand accent.
     case primary
-    /// The single highest-priority primary CTA on a surface. Brand coral.
+    /// The single highest-priority primary CTA on a surface. Brand accent.
     case primaryProminent
     /// Default action weight. System label color, neutral chrome.
     case secondary
@@ -34,6 +34,7 @@ extension View {
         case .primaryProminent:
             self.buttonStyle(.borderedProminent)
                 .tint(DesignSystem.Colors.accent)
+                .foregroundStyle(DesignSystem.Colors.onAccent)
         case .secondary:
             self.buttonStyle(.bordered)
                 .tint(DesignSystem.Colors.tintNeutral)
@@ -50,7 +51,7 @@ extension View {
     }
 
     /// Brand-consistent switch styling. Use for every `Toggle` styled as a
-    /// switch so on-state reads coral app-wide rather than the system blue that
+    /// switch so on-state follows the brand accent rather than the system blue that
     /// an untinted `.switch` falls back to. Keeps sibling toggles consistent.
     func sottoSwitch() -> some View {
         self.toggleStyle(.switch)

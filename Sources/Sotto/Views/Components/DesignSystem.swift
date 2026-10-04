@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Centralized design tokens for consistent styling across the app.
-/// Sotto design system — violet accent, generous spacing, rounded headlines.
+/// Sotto design system — portal-green accent, generous spacing, rounded headlines.
 enum DesignSystem {
     // MARK: - Colors
 
