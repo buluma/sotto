@@ -1289,7 +1289,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .paragraphStyle: style,
         ]
 
-        credits.append(NSAttributedString(string: "Personal Sotto build (GPL-3.0)\nBased on MacParakeet by Daniel Moon\n", attributes: normalAttributes))
+        credits.append(NSAttributedString(string: "Sotto (GPL-3.0)\By ShadowWalker\n", attributes: normalAttributes))
         credits.append(NSAttributedString(string: repoLink, attributes: linkAttributes))
 
         NSApp.activate(ignoringOtherApps: true)
