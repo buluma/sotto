@@ -726,7 +726,7 @@ struct SettingsView: View {
 
                 settingsToggleRow(
                     title: "Show Discover in the sidebar",
-                    detail: "When off, the Discover card is hidden and its feed is not requested.",
+                    detail: "Show local Rick-and-Morty-style banter cards. No network connection is used.",
                     isOn: $viewModel.showDiscover
                 )
             }

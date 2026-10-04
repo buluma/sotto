@@ -140,7 +140,7 @@ public final class SettingsViewModel {
             )
         }
     }
-    /// Show the upstream Discover feed. Off by default in this personal fork.
+    /// Show local banter cards. Off by default in this personal fork.
     ///
     /// `MainWindowView` reads this directly (`SettingsViewModel` is
     /// `@Observable`, so the sidebar re-renders on change). The notification

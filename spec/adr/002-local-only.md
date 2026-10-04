@@ -1,5 +1,18 @@
 # ADR-002: Local-First Processing
 
+## Personal Sotto amendment — 2026-10-04
+
+This amendment supersedes the inherited Discover, telemetry and app-update
+network descriptions below for this personal fork. Discover is off by default
+and reads only bundled, original Rick-and-Morty-style banter. It ignores old
+feed caches, never refreshes over HTTP, and has no thoughts submission surface.
+Remote analytics/crash transport and Sparkle app updates are removed. Explicit
+feedback and configured AI/media/model network integrations remain separate.
+See [personal Discover](../../docs/discover.md) and
+[telemetry contract](../contracts/telemetry-v1.md).
+
+## Inherited upstream decision
+
 > Status: **Accepted** (Amended 2026-03-11)
 > Date: 2026-02-08
 > Amended: 2026-03-11 — Refined scope from "no cloud processing" to local processing with optional external AI/telemetry surfaces (ADR-011)

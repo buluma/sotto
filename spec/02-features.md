@@ -2356,23 +2356,22 @@ Sotto's brand is privacy. These are non-negotiable.
 | Requirement | Detail |
 |-------------|--------|
 | Core offline operation | Dictation, file transcription, and meeting recording work fully offline after local model setup |
-| Opt-out telemetry | Self-hosted usage analytics and crash reporting can be disabled in Settings |
+| No remote telemetry | Remote analytics and crash-event transport are removed; local diagnostics remain |
 | No accounts | No email, no login, no registration |
 | No cloud STT | All speech recognition runs locally on Apple Silicon; Parakeet is default and Nemotron/Cohere/WhisperKit are optional |
 | User-controlled storage | Saved audio follows the relevant dictation/file/media/meeting storage setting; meeting audio is retained by default, with explicit deletion/retention choices |
-| Network surfaces | Model/helper setup, media/podcast imports, configured LLM features, opt-out telemetry/crash reporting, updates, explicit submissions, retained-license validation, and the independent default-on Discover feed (Settings opt-out) |
+| Network surfaces | Model/helper setup, media/podcast imports, configured LLM features, explicit feedback, gated sharing and retained-license validation. Discover is local-only and app updates are manual. |
 
 **What local-first means:**
 - Parakeet, Nemotron, and Cohere STT run locally via FluidAudio CoreML; WhisperKit also runs locally when selected
 - Captured audio is not sent to an STT or LLM service
 - Text stays local unless configured AI features or explicit user/agent delivery sends it elsewhere
 - Core workflows can run offline after model setup; local providers can keep LLM inference on-device
-- Discover requests its public feed at app launch by default, even with telemetry off
-  and without opening the page. It uses cached/bundled content offline. Settings →
-  System → Appearance → **Show Discover in the sidebar** independently controls
-  Discover: turning it off hides the card, cancels pending feed requests, clears
-  the displayed feed, and stops new loads until re-enabled. There is no global
-  no-network toggle.
+- Discover displays bundled original Rick-and-Morty-style banter, with no network
+  requests, upstream cache or submission feature. It is off by default. Settings →
+  System → Appearance → **Show Discover in the sidebar** controls visibility and
+  the local 30-second sidebar rotation. See [Discover](../docs/discover.md).
+
 
 ---
 

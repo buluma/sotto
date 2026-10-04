@@ -91,7 +91,6 @@ struct MainWindowView: View {
     let meetingSplitViewModel: MeetingSplitViewModel
     let meetingImportViewModel: MeetingImportViewModel
     let shareManagementViewModel: ShareManagementViewModel?
-    let updater: SPUUpdater
     let onRecordMeeting: () -> Void
     let onOpenAskSource: (UUID) -> Void
     let onRecordMeetingFromWorkspace: () -> Void
@@ -329,7 +328,6 @@ struct MainWindowView: View {
                             viewModel: settingsViewModel,
                             llmSettingsViewModel: llmSettingsViewModel,
                             voiceProfilesViewModel: voiceProfilesViewModel,
-                            updater: updater,
                             transformHotkeys: transformsViewModel.transforms,
                             requestedTab: state.requestedSettingsTab,
                             requestedAnchor: state.requestedSettingsAnchor,
@@ -341,8 +339,7 @@ struct MainWindowView: View {
                         )
                     case .discover:
                         DiscoverView(
-                            viewModel: discoverViewModel,
-                            thoughtsService: DiscoverThoughtsService()
+                            viewModel: discoverViewModel
                         )
                     }
                 }

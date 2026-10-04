@@ -818,9 +818,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setupDiscoverContent() {
-        // Respect the user preference before touching the network. When
-        // Discover is hidden the feed is neither loaded nor fetched, so the
-        // app makes no request to the Discover endpoint at launch.
+        // Respect the existing visibility preference for the local cards.
         guard settingsViewModel.showDiscover else {
             discoverViewModel.cancelDiscover()
             if mainWindowState.selectedItem == .discover {
@@ -835,7 +833,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let service = DiscoverService(fallbackData: data)
         discoverViewModel.configure(service: service)
         discoverViewModel.loadCached()
-        discoverViewModel.refreshInBackground()
     }
 
     // MARK: - Disk Image Guard

@@ -22,7 +22,8 @@ Parakeet is the model name, independent of the Sotto app identity.
   the legacy `config telemetry` preference cannot enable uploads.
 - App auto-updates are removed. Update source manually, review upstream changes,
   retain the personal changes, and rebuild. There is no Sotto release feed.
-- Optional cloud AI, media/model downloads, upstream Discover content (off by default), explicit
+- Discover is a bundled, offline Rick-and-Morty-style banter feed, off by default.
+- Optional cloud AI, media/model downloads, explicit
   feedback, and gated sharing are separate network features, not telemetry.
   Original service URLs remain truthful upstream references, not Sotto services.
 

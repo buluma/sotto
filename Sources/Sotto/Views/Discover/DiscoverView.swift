@@ -5,13 +5,9 @@ import SottoViewModels
 
 struct DiscoverView: View {
     let viewModel: DiscoverViewModel
-    let thoughtsService: DiscoverThoughtsServiceProtocol
 
     @State private var hoveredItemId: String?
     @State private var copiedItemId: String?
-    @State private var thoughtText: String = ""
-    @State private var thoughtSubmitted: Bool = false
-    @State private var thoughtError: String?
 
     var body: some View {
         ScrollView {
@@ -22,7 +18,6 @@ struct DiscoverView: View {
                     discoverCard(item)
                 }
 
-                thoughtsSection
             }
             .padding(DesignSystem.Spacing.lg)
         }
@@ -43,14 +38,14 @@ struct DiscoverView: View {
                     .frame(width: 32, height: 3)
             }
 
-            Text("Advanced machine intelligence should help humans rediscover what's been buried — negentropy, overunity systems, resonance-based propulsion, scalar field dynamics, biological transmutation, and the deeper physics that keep getting classified or ignored. This is a starting point.")
+            Text("Rick & Morty, between takes. A little interdimensional banter for your voice workspace.")
                 .font(DesignSystem.Typography.bodyLarge)
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
                 .textSelection(.enabled)
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text("Things worth knowing that don't make it into the mainstream. Suppressed patents, buried science, ancient wisdom. Question everything, verify what you can, and share what resonates.")
+            Text("Original fan-written dialogue, not quotes from the show. All cards live on this Mac.")
                 .font(DesignSystem.Typography.body)
                 .foregroundStyle(DesignSystem.Colors.textTertiary)
                 .textSelection(.enabled)
@@ -104,7 +99,6 @@ struct DiscoverView: View {
 
                     Text(item.body)
                         .font(bodyFont(for: item.type))
-                        .italic(item.type == .quote)
                         .foregroundStyle(DesignSystem.Colors.textPrimary.opacity(0.9))
                         .textSelection(.enabled)
                         .lineSpacing(item.type == .quote || item.type == .affirmation ? 4 : 3)
@@ -169,111 +163,6 @@ struct DiscoverView: View {
         }
     }
 
-    // MARK: - Thoughts / Feedback
-
-    private var thoughtsSection: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
-                Text("Share your thoughts")
-                    .font(DesignSystem.Typography.sectionTitle)
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-
-                Text("Know something that should be here? Drop it below.")
-                    .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-            }
-
-            if thoughtSubmitted {
-                HStack(spacing: DesignSystem.Spacing.md) {
-                    Image(systemName: "hand.thumbsup.fill")
-                        .font(.system(size: 18))
-                        .foregroundStyle(DesignSystem.Colors.successGreen)
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Sent successfully")
-                            .font(DesignSystem.Typography.bodySmall)
-                            .fontWeight(.bold)
-                        Text("Your contribution to the collective knowledge is appreciated.")
-                            .font(DesignSystem.Typography.caption)
-                            .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    }
-                }
-                .padding(DesignSystem.Spacing.md)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    RoundedRectangle(cornerRadius: DesignSystem.Layout.rowCornerRadius)
-                        .fill(DesignSystem.Colors.successGreen.opacity(0.08))
-                )
-            } else {
-                VStack(alignment: .trailing, spacing: DesignSystem.Spacing.md) {
-                    ZStack(alignment: .topLeading) {
-                        TextEditor(text: $thoughtText)
-                            .font(DesignSystem.Typography.body)
-                            .scrollContentBackground(.hidden)
-                            .padding(DesignSystem.Spacing.md)
-                            .frame(minHeight: 100)
-                            .background(
-                                RoundedRectangle(cornerRadius: DesignSystem.Layout.rowCornerRadius)
-                                    .fill(DesignSystem.Colors.surfaceElevated)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: DesignSystem.Layout.rowCornerRadius)
-                                    .strokeBorder(DesignSystem.Colors.border.opacity(0.8), lineWidth: 0.5)
-                            )
-
-                        if thoughtText.isEmpty {
-                            Text("A topic, a correction, a quote, a feeling...")
-                                .font(DesignSystem.Typography.body)
-                                .foregroundStyle(DesignSystem.Colors.textTertiary)
-                                .padding(.horizontal, DesignSystem.Spacing.md + 5)
-                                .padding(.vertical, DesignSystem.Spacing.md + 1)
-                                .allowsHitTesting(false)
-                        }
-                    }
-
-                    HStack(spacing: DesignSystem.Spacing.md) {
-                        if let thoughtError {
-                            Text(thoughtError)
-                                .font(DesignSystem.Typography.caption)
-                                .foregroundStyle(DesignSystem.Colors.errorRed)
-                        }
-                        
-                        Spacer()
-                        
-                        Button {
-                            submitThought()
-                        } label: {
-                            Text("Submit Thought")
-                                .font(DesignSystem.Typography.bodySmall)
-                                .fontWeight(.semibold)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(thoughtText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? DesignSystem.Colors.textTertiary.opacity(0.2) : DesignSystem.Colors.accent)
-                                .foregroundStyle(thoughtText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? DesignSystem.Colors.textTertiary : DesignSystem.Colors.onAccent)
-                                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Layout.buttonCornerRadius))
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(thoughtText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    }
-                }
-            }
-        }
-        .padding(DesignSystem.Spacing.xl)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius)
-                .fill(DesignSystem.Colors.cardBackground.opacity(0.5))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius)
-                .strokeBorder(
-                    DesignSystem.Colors.border.opacity(0.4),
-                    style: StrokeStyle(lineWidth: 1, dash: [4, 4])
-                )
-        )
-        .padding(.top, DesignSystem.Spacing.xl)
-    }
-
     // MARK: - Actions
 
     private func copyItem(_ item: DiscoverItem) {
@@ -293,30 +182,6 @@ struct DiscoverView: View {
             withAnimation {
                 if copiedItemId == item.id {
                     copiedItemId = nil
-                }
-            }
-        }
-    }
-
-    private func submitThought() {
-        let trimmed = thoughtText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-
-        Task {
-            do {
-                try await thoughtsService.submitThought(trimmed)
-                withAnimation {
-                    thoughtSubmitted = true
-                    thoughtError = nil
-                }
-                try? await Task.sleep(for: .seconds(4))
-                withAnimation {
-                    thoughtSubmitted = false
-                    thoughtText = ""
-                }
-            } catch {
-                withAnimation {
-                    thoughtError = error.localizedDescription
                 }
             }
         }

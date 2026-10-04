@@ -336,18 +336,18 @@ five-second busy timeout; CLI `health` uses read-only, non-migrating probes.
 Migration identifiers are historical schema labels, not app or CLI release
 versions. See [data model](01-data-model.md) and [AppPaths](../Sources/SottoCore/Services/AppPaths.swift).
 
-Core STT has no network dependency after model setup. Other surfaces include
-configured AI, model/helper/media downloads, updates, opt-out telemetry/crash
-reporting, default-on Discover with its own opt-out, explicit submissions and
-retained activation plumbing, including startup validation of an existing
-legacy license (see [ADR-006](adr/006-trial-and-license-activation.md)). Calendar
-reads local EventKit data. The
-[local-only ADR](adr/002-local-only.md) enumerates these boundaries; neither
-telemetry opt-out nor hiding Discover is a global network switch.
+Core STT has no network dependency after model setup. Sotto removes remote
+analytics/crash transport and app auto-updates. Discover is bundled local
+Rick-and-Morty-style banter, off by default, with no cache, remote refresh or
+thought submission. See [Discover](../docs/discover.md).
 
-The app ships by Developer ID signing, notarization and DMG/Sparkle delivery,
-not as an App Store sandbox configuration. Use the actual entitlements and
-[distribution guide](../docs/distribution.md) for packaging. Microphone,
+Other network surfaces include configured AI, model/helper/media downloads,
+explicit feedback and retained activation plumbing. Calendar reads local
+EventKit data. See the [local-only ADR](adr/002-local-only.md) for inherited
+boundaries; optional network integrations are independent of local Discover.
+
+Sotto is rebuilt locally. The inherited distribution guide documents upstream
+packaging rather than an enabled personal update channel. Microphone,
 Accessibility, system-audio and Calendar permissions are requested in the
 appropriate product flows; see [ADR-005](adr/005-onboarding-first-run.md).
 
