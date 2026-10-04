@@ -1,7 +1,7 @@
 # Meeting Import v1
 
 This contract governs one local recording imported through Meetings or
-`macparakeet-cli meetings import <path>`. It follows
+`sotto-cli meetings import <path>`. It follows
 [ADR-030](../adr/030-external-meeting-import.md), the
 [meeting artifact contract](meeting-artifacts-v1.md), and the
 [recovery and retention contract](meeting-recovery-retention.md).

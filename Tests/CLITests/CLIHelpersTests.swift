@@ -2,13 +2,13 @@ import Darwin
 import Foundation
 import XCTest
 @testable import CLI
-@testable import MacParakeetCore
+@testable import SottoCore
 
 final class CLIHelpersTests: XCTestCase {
 
     func testBundledCLIUsesStandardDefaultsForAppPreferenceDomain() {
         XCTAssertTrue(
-            macParakeetAppDefaults(bundleIdentifier: AppPaths.preferencesSuiteName)
+            sottoAppDefaults(bundleIdentifier: AppPaths.preferencesSuiteName)
                 === UserDefaults.standard
         )
     }
@@ -16,7 +16,7 @@ final class CLIHelpersTests: XCTestCase {
     func testStandaloneCLIUsesSharedAppPreferenceDomain() {
         let key = "CLIHelpersTests.standaloneDefaults.\(UUID().uuidString)"
         let value = UUID().uuidString
-        let standaloneDefaults = macParakeetAppDefaults(bundleIdentifier: "com.macparakeet.cli-tests")
+        let standaloneDefaults = sottoAppDefaults(bundleIdentifier: "com.sotto.cli-tests")
         let sharedDefaults = AppPaths.sharedAppDefaults()
         defer {
             standaloneDefaults.removeObject(forKey: key)
@@ -357,15 +357,15 @@ final class CLIHelpersTests: XCTestCase {
     }
 
     func testResolvedDatabasePathReturnsCustomPath() {
-        let custom = "/tmp/macparakeet-test-\(UUID().uuidString).db"
+        let custom = "/tmp/sotto-test-\(UUID().uuidString).db"
         let path = resolvedDatabasePath(custom)
         XCTAssertEqual(path, custom)
     }
 
     func testResolvedDatabasePathExpandsTilde() {
-        let path = resolvedDatabasePath("~/macparakeet-test.db")
+        let path = resolvedDatabasePath("~/sotto-test.db")
         XCTAssertFalse(path.hasPrefix("~"))
-        XCTAssertTrue(path.hasSuffix("/macparakeet-test.db"))
+        XCTAssertTrue(path.hasSuffix("/sotto-test.db"))
     }
 
     // MARK: - stdout quarantine
@@ -393,7 +393,7 @@ final class CLIHelpersTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: lockURL.deletingLastPathComponent()) }
         let store = LLMConfigStore(preferencesDomain: suiteName, lockURL: lockURL)
         try store.saveConfig(.localCLI())
-        let commandTemplate = "echo macparakeet-cli-parity-\(UUID().uuidString)"
+        let commandTemplate = "echo sotto-cli-parity-\(UUID().uuidString)"
         try LocalCLIConfigStore(defaults: defaults).save(
             LocalCLIConfig(commandTemplate: commandTemplate, timeoutSeconds: 90)
         )

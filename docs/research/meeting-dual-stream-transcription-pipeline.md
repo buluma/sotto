@@ -13,7 +13,7 @@ authors: Codex/GPT, Daniel Moon
 
 ## TL;DR
 
-MacParakeet meeting recording is a **source-aware capture pipeline**. The
+Sotto meeting recording is a **source-aware capture pipeline**. The
 default mode is dual-stream capture:
 
 - **microphone** audio is captured separately
@@ -159,9 +159,9 @@ Semantics:
 
 Relevant code:
 
-- `Sources/MacParakeetCore/Services/MeetingRecordingOutput.swift`
-- `Sources/MacParakeetCore/Services/MeetingRecordingMetadata.swift`
-- `Sources/MacParakeetCore/Services/MeetingRecordingService.swift`
+- `Sources/SottoCore/Services/MeetingRecordingOutput.swift`
+- `Sources/SottoCore/Services/MeetingRecordingMetadata.swift`
+- `Sources/SottoCore/Services/MeetingRecordingService.swift`
 
 ## What `meeting-playback.m4a` actually is
 
@@ -202,8 +202,8 @@ During recording, the selected source stream(s) feed the live transcript pipelin
 
 Relevant code:
 
-- `Sources/MacParakeetCore/Services/CaptureOrchestrator.swift`
-- `Sources/MacParakeetCore/Services/MeetingAudioPairJoiner.swift`
+- `Sources/SottoCore/Services/CaptureOrchestrator.swift`
+- `Sources/SottoCore/Services/MeetingAudioPairJoiner.swift`
 
 ### Microphone cleanup in the live path
 
@@ -238,13 +238,13 @@ It no longer feeds final meeting transcription.
 
 Relevant code:
 
-- `Sources/MacParakeetCore/Services/MeetingTranscriptAssembler.swift`
+- `Sources/SottoCore/Services/MeetingTranscriptAssembler.swift`
 
 ## Source alignment metadata
 
 Post-stop dual-source merge is only correct if the app persists a shared time origin for the recorded source files.
 
-MacParakeet now persists `MeetingSourceAlignment`, which records per source:
+Sotto now persists `MeetingSourceAlignment`, which records per source:
 
 - first observed host time
 - last observed host time
@@ -297,8 +297,8 @@ This pass is the authoritative source for the final raw text.
 
 Relevant code:
 
-- `Sources/MacParakeetCore/Services/TranscriptionService.swift`
-- `Sources/MacParakeetCore/Services/MeetingTranscriptFinalizer.swift`
+- `Sources/SottoCore/Services/TranscriptionService.swift`
+- `Sources/SottoCore/Services/MeetingTranscriptFinalizer.swift`
 
 ### Base finalization contract
 
@@ -327,11 +327,11 @@ This is intentionally additive:
 
 ## The most important constraint: Parakeet / FluidAudio are mono here
 
-Current MacParakeet final STT does **not** preserve stereo into Parakeet.
+Current Sotto final STT does **not** preserve stereo into Parakeet.
 
 ### App-level conversion
 
-Before STT, MacParakeet converts each source file to:
+Before STT, Sotto converts each source file to:
 
 - WAV
 - `16 kHz`
@@ -363,7 +363,7 @@ NVIDIA's Parakeet TDT 0.6B-v3 model card describes the model as:
 
 So the practical constraint is:
 
-- MacParakeet can store stereo meeting artifacts
+- Sotto can store stereo meeting artifacts
 - but Parakeet / FluidAudio do not consume those artifacts as stereo in this app pipeline
 
 This is exactly why the current finalization design transcribes the separate source files independently instead of trying to feed stereo `meeting-playback.m4a` into Parakeet.
@@ -377,7 +377,7 @@ This architecture keeps the right responsibilities separated:
 - **final transcript** is built from fresh post-stop source-file STT, not from live metadata
 - **diarization** is optional refinement, not the primary structure source
 
-That gives MacParakeet:
+That gives Sotto:
 
 - a stable dual-stream meeting architecture
 - no reliance on stale live transcript metadata for final correctness
@@ -406,7 +406,7 @@ The current implementation is a good foundation, but there are still real limits
 
 ## Summary
 
-Current MacParakeet meeting recording works like this:
+Current Sotto meeting recording works like this:
 
 - capture selected meeting sources separately
 - transcribe selected sources live for UI only

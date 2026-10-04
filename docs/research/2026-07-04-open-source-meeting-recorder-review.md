@@ -3,7 +3,7 @@
 > Status: research and product/architecture recommendation
 > Date: 2026-07-04
 > Scope: Muesli repos, Granola-style open source meeting recorders, local
-> meeting-memory apps, and diarization foundations relevant to MacParakeet.
+> meeting-memory apps, and diarization foundations relevant to Sotto.
 > Related: [ADR-010](../../spec/adr/010-speaker-diarization.md),
 > [ADR-014](../../spec/adr/014-meeting-recording.md),
 > [meeting artifacts v1](../../spec/contracts/meeting-artifacts-v1.md),
@@ -21,7 +21,7 @@ The open source market is converging on the same basic shape:
 - optional speaker diarization
 - local artifacts, Markdown, search, CLI, API, or MCP surfaces
 
-MacParakeet is already on the right core architecture: source-separated
+Sotto is already on the right core architecture: source-separated
 capture, raw mic/system artifacts, `meeting.m4a` as playback/export rather than
 authoritative STT input, crash recovery, and a local-first default. The
 highest-value lesson is not "add more models." It is to make meeting recording
@@ -47,12 +47,12 @@ The review used parallel subagents for:
 - direct Swift/macOS meeting recorder repos
 - Granola-style open source alternatives
 - diarization foundations and model stacks
-- MacParakeet baseline verification against the current checkout
+- Sotto baseline verification against the current checkout
 - discovery of additional high-signal projects
 
-## MacParakeet Baseline
+## Sotto Baseline
 
-MacParakeet meeting recording is currently a first-class mode beside dictation
+Sotto meeting recording is currently a first-class mode beside dictation
 and file/media transcription. It creates durable session folders, writes source
 audio separately, writes `meeting.m4a` for playback/export, persists a lock for
 crash recovery, and finalizes STT in the background. ADR-014 defines the
@@ -92,7 +92,7 @@ Current gaps exposed by the comparison:
 
 ### 1. Muesli-HQ/muesli
 
-Verdict: closest direct MacParakeet peer.
+Verdict: closest direct Sotto peer.
 
 Muesli-HQ is a native Swift/AppKit/SwiftUI macOS app with FluidAudio,
 WhisperKit, LocalVQE/DTLN AEC, SQLite, Sparkle, TelemetryDeck, and a CLI. The
@@ -105,7 +105,7 @@ Architecture and capture:
 
 - CoreAudio process tap is the default system-audio path, with
   ScreenCaptureKit fallback. The CoreAudio recorder claims lower permission and
-  sync advantages, but MacParakeet already moved away from this as the default
+  sync advantages, but Sotto already moved away from this as the default
   because of VPIO/process-tap conflict risk ([CoreAudio recorder](https://github.com/Muesli-HQ/muesli/blob/17a013a12964cb3c8545cdeb466466d91ef02113/native/MuesliNative/Sources/MuesliNativeApp/CoreAudioSystemRecorder.swift#L21-L28),
   [tap creation](https://github.com/Muesli-HQ/muesli/blob/17a013a12964cb3c8545cdeb466466d91ef02113/native/MuesliNative/Sources/MuesliNativeApp/CoreAudioSystemRecorder.swift#L176-L230)).
 - MeetingSession preloads AEC, starts system before mic, rotates mic/system VAD
@@ -138,13 +138,13 @@ Artifacts and product:
   detection uses private KVC on `_connectionID`, which is a distribution risk
   ([CameraActivityMonitor](https://github.com/Muesli-HQ/muesli/blob/17a013a12964cb3c8545cdeb466466d91ef02113/native/MuesliNative/Sources/MuesliNativeApp/CameraActivityMonitor.swift#L149-L159)).
 
-MacParakeet lessons:
+Sotto lessons:
 
 - Copy the shape of the agent CLI and notes write-back, not the broad model
   menu.
 - Continue remote/system-side diarization after source separation.
 - Consider VAD over cleaned mic once AEC is genuinely ready.
-- Do not default to CoreAudio process tap unless MacParakeet reopens and
+- Do not default to CoreAudio process tap unless Sotto reopens and
   resolves the VPIO/tap conflict.
 - Keep privacy copy explicit about every cloud escape hatch. Muesli is
   local-first for audio/STT, but summaries, iCloud text sync, OAuth, and
@@ -166,7 +166,7 @@ OpenAI Whisper, then sends transcript text to GPT-4o for rewriting
 There is no serious meeting lifecycle, local STT, system audio tap,
 diarization, persistence, recovery, search, or local-first privacy. The durable
 idea is interaction-level: a lightweight "rewind the last 30 seconds into my
-notes" action may be valuable for MacParakeet outside the full meeting mode.
+notes" action may be valuable for Sotto outside the full meeting mode.
 
 ### 3. pasrom/meeting-transcriber
 
@@ -209,7 +209,7 @@ Transcription, diarization, identity:
   [matching](https://github.com/pasrom/meeting-transcriber/blob/9b514970c5a77e9764381eaec52312a2427c7786/app/MeetingTranscriber/Sources/SpeakerMatcher.swift#L96-L147),
   [save](https://github.com/pasrom/meeting-transcriber/blob/9b514970c5a77e9764381eaec52312a2427c7786/app/MeetingTranscriber/Sources/SpeakerMatcher.swift#L407-L451)).
 
-MacParakeet lessons:
+Sotto lessons:
 
 - Copy the capture-health product surface: per-source live/silent indicators,
   permission-broken state, record-only mode, and recoverable finalization
@@ -218,7 +218,7 @@ MacParakeet lessons:
   named returning speakers.
 - Consider a debug/local automation API only if it remains behind explicit local
   trust boundaries.
-- Be cautious about adopting app-PID tap by default; MacParakeet's current
+- Be cautious about adopting app-PID tap by default; Sotto's current
   ScreenCaptureKit system-audio path is simpler for broad compatibility.
 
 ### 4. fastrepl/anarlog
@@ -237,13 +237,13 @@ rendering. Speaker support is mostly provider hints/simple assignment, with
 pyannote as a possible provider path; it does not read as a clean local
 speaker-recognition loop.
 
-MacParakeet lessons:
+Sotto lessons:
 
-- A plain local file can be the primary user trust surface. MacParakeet already
+- A plain local file can be the primary user trust surface. Sotto already
   has artifact folders; it should make `notes.md`, `transcript.json`, and
   exportable Markdown more central.
 - "Bring your own LLM" is useful, but a broad provider and sync monorepo can
-  dilute a privacy-first story. MacParakeet should add provider surfaces only
+  dilute a privacy-first story. Sotto should add provider surfaces only
   when the local/default boundary stays obvious.
 
 ### 5. OpenWhispr/openwhispr
@@ -269,13 +269,13 @@ Architecture:
   ([speakerEmbeddings](https://github.com/OpenWhispr/openwhispr/blob/01f8557b0cce141afa3a607a65bd5195ea8fa40c/src/helpers/speakerEmbeddings.js#L7-L15),
   [centroid/cosine](https://github.com/OpenWhispr/openwhispr/blob/01f8557b0cce141afa3a607a65bd5195ea8fa40c/src/helpers/speakerEmbeddings.js#L129-L155)).
 
-MacParakeet lessons:
+Sotto lessons:
 
 - Provisional live labels plus post-call refinement is a good UX if labels are
   clearly tentative.
 - Local speaker profiles can be implemented with small embeddings and
   conservative matching, but they need explicit confirmation UI.
-- Avoid copying the huge native/download/cloud surface unless MacParakeet wants
+- Avoid copying the huge native/download/cloud surface unless Sotto wants
   to become a platform rather than a focused Mac app.
 
 ### 6. Zackriya-Solutions/meetily
@@ -296,7 +296,7 @@ The codebase has substantial audio modules, VAD/noise processing, capture
 backends, transcription workers, import/retranscription paths, and database
 repositories, but it reads as churny with backup/old files still present.
 
-MacParakeet lessons:
+Sotto lessons:
 
 - Simple local setup and import/retranscribe flows matter.
 - Do not let marketing copy outrun the actual diarization implementation.
@@ -326,14 +326,14 @@ Capture and artifacts:
   ([TranscriptLogger](https://github.com/Gremble-io/Detto/blob/10384c357714a136f7e1d7127a76351668524d94/Detto/Sources/Detto/Storage/TranscriptLogger.swift#L104-L136),
   [append](https://github.com/Gremble-io/Detto/blob/10384c357714a136f7e1d7127a76351668524d94/Detto/Sources/Detto/Storage/TranscriptLogger.swift#L144-L174)).
 
-MacParakeet lessons:
+Sotto lessons:
 
 - Pre-call context and vault-native output are sharper than generic meeting
-  notes. MacParakeet's Meetings workspace should support context fields and
+  notes. Sotto's Meetings workspace should support context fields and
   artifact export that downstream agents can consume directly.
 - Detto's no-server/no-account/no-analytics posture is a useful bar for
-  MacParakeet privacy copy.
-- The app is a narrower platform target than MacParakeet, so treat it as a UX
+  Sotto privacy copy.
+- The app is a narrower platform target than Sotto, so treat it as a UX
   reference more than a deployment model.
 
 ### 8. michaelwilhelmsen/humla
@@ -357,13 +357,13 @@ Notable details:
   fixed 4-speaker cap but better rapid turn changes
   ([speaker-diarize](https://github.com/michaelwilhelmsen/humla/blob/d8968067d0483763b078d40974403861ce2293ed/speaker-diarize/Sources/speaker-diarize/main.swift#L8-L36)).
 
-MacParakeet lessons:
+Sotto lessons:
 
 - Borrow the product language around audio retention and provider choice.
 - Consider exposing diarization engine tradeoffs only when users can make a
   meaningful choice. Otherwise, hide it behind "Speaker detection" and use sane
   defaults.
-- Humla's self-host sync/PocketBase path is outside MacParakeet's current
+- Humla's self-host sync/PocketBase path is outside Sotto's current
   trust-first wedge.
 
 ### 9. silverstein/minutes
@@ -392,7 +392,7 @@ Architecture:
 - Consent reminder/disclosure stamps can be embedded into artifacts
   ([consent](https://github.com/silverstein/minutes/blob/d59d1d178bf594ae3b9193467a387830e18d71be/README.md#L114-L138)).
 
-MacParakeet lessons:
+Sotto lessons:
 
 - Add first-class agent surfaces after the artifact contract is stable: CLI,
   local file schema, and possibly MCP.
@@ -412,11 +412,11 @@ webm tracks. STT is offline batch whisper.cpp after post-processing. Speaker
 handling is source/channel attribution and whisper.cpp diarization markers, not
 durable speaker identity.
 
-MacParakeet lessons:
+Sotto lessons:
 
 - Good ideas: recordings become a searchable local knowledge base; chat/MCP,
   screenshots, tags, semantic search, and datahooks are compelling.
-- Do not copy the capture path for a native Mac app. MacParakeet's
+- Do not copy the capture path for a native Mac app. Sotto's
   ScreenCaptureKit/Core Audio architecture is stronger.
 
 ### 11. paberr/ownscribe
@@ -433,12 +433,12 @@ folder, with model warmup and resume paths
 ([usage](https://github.com/paberr/ownscribe/blob/367f6c92300541af40c2b62a065fa96a5fb82d07/README.md#L122-L136),
 [options](https://github.com/paberr/ownscribe/blob/367f6c92300541af40c2b62a065fa96a5fb82d07/README.md#L140-L176)).
 
-MacParakeet lessons:
+Sotto lessons:
 
 - Pipeline progress should name each stage: capture, transcription,
   diarization, summary, artifact write.
 - `resume` and `warmup` are useful automation commands.
-- Do not embed a Python/WhisperX/pyannote runtime in MacParakeet; keep those as
+- Do not embed a Python/WhisperX/pyannote runtime in Sotto; keep those as
   research/debug references.
 
 ### 12. pretyflaco/millet
@@ -454,12 +454,12 @@ It explicitly says macOS supports post-capture transcription/label/sync, but
 recording requires Linux
 ([requirements](https://github.com/pretyflaco/millet/blob/544e6d6b4a29da5dd6af7076bcb47c9c8afe6f3a/README.md#L117-L138)).
 
-MacParakeet lessons:
+Sotto lessons:
 
 - Voiceprint enrollment and labeling workflows are worth studying.
 - Structured summary frontmatter, sidecar JSON, and multiple exports are useful
   for artifact interoperability.
-- The capture architecture does not transfer to MacParakeet.
+- The capture architecture does not transfer to Sotto.
 
 ### 13. screenpipe/screenpipe
 
@@ -473,12 +473,12 @@ speakers, keyboard inputs, and app switches, with local storage and optional
 encryption
 ([specs](https://github.com/screenpipe/screenpipe/blob/4ea35c39052f7b8de2305b26c47c2ad5759b40d59/README.md#L107-L119)).
 
-MacParakeet lessons:
+Sotto lessons:
 
 - Event-driven capture, search, local APIs, and evaluation tooling are useful
   references for long-term meeting memory.
 - Source-available licensing and 24/7 screen capture are not aligned with
-  MacParakeet's current trust wedge.
+  Sotto's current trust wedge.
 
 ### 14. homelab-00/TranscriptionSuite
 
@@ -493,11 +493,11 @@ Parakeet/Canary, VibeVoice, whisper.cpp, MLX Whisper, MLX Parakeet/Canary, and
 Sortformer on Apple Silicon
 ([features](https://github.com/homelab-00/TranscriptionSuite/blob/ad7cd95619b4efc1a6c9f60626c3564851431ce6/docs/README.md#L84-L102)).
 
-MacParakeet lessons:
+Sotto lessons:
 
 - Good model/runtime UX reference for model preparation, profile selection,
   audio notebook, and OpenAI-compatible local assistant.
-- Too broad and server-shaped for MacParakeet's native app foundation.
+- Too broad and server-shaped for Sotto's native app foundation.
 
 ### 15. rishikanthc/Scriberr
 
@@ -510,7 +510,7 @@ notes/highlights, recorder, and a polished transcript UI
 It includes adapters for Parakeet, Canary, WhisperX, pyannote, Sortformer, and
 Voxtral, but it is not a botless native Mac meeting recorder.
 
-MacParakeet lessons:
+Sotto lessons:
 
 - Study transcript-reader UX: seek from text, notes/highlights, summaries, chat,
   exports, and speaker rename dialogs.
@@ -533,7 +533,7 @@ WebSocket APIs
 Speaker diarization extras include Sortformer/NeMo and Diart
 ([extras](https://github.com/QuentinFuxa/WhisperLiveKit/blob/a99d8d725485e73561b04efe67ae6ba83975283f/README.md#L102-L117)).
 
-MacParakeet lessons:
+Sotto lessons:
 
 - Live streaming should use intelligent buffering and stability policies, not
   naive tiny Whisper chunks.
@@ -548,14 +548,14 @@ Natively is source-available/personal-use and markets itself as an interview
 copilot and meeting assistant with native audio capture, local Whisper STT,
 dual-channel intelligence, local RAG, screenshots, and stealth mode
 ([README](https://github.com/Natively-AI-assistant/natively-cluely-ai-assistant/blob/875fd2aacf58a5fb3283a03e9f72e043b251c6b0/README.md#L102-L117)).
-It is not a good trust model for MacParakeet because the product positioning is
+It is not a good trust model for Sotto because the product positioning is
 explicitly about hidden interview assistance and "stealth mode"
 ([README](https://github.com/Natively-AI-assistant/natively-cluely-ai-assistant/blob/875fd2aacf58a5fb3283a03e9f72e043b251c6b0/README.md#L106-L113)).
 
-MacParakeet lessons:
+Sotto lessons:
 
 - Local RAG and provider data-scope gates are worth borrowing.
-- Avoid anything that makes MacParakeet feel hidden, proctor-evasive, or
+- Avoid anything that makes Sotto feel hidden, proctor-evasive, or
   consent-hostile.
 
 ### 18. Low-Priority Watchlist
@@ -569,13 +569,13 @@ Other watchlist repos discovered but not deeply reviewed here: OpenOats,
 project-raven, note67, DeLive, heed, kleoth, VoiceFlow, Whishper, and aTrain.
 They may be useful for live-assist UI, AEC experiments, or generic
 transcription UX, but they are lower value than the primary set for
-MacParakeet meeting architecture.
+Sotto meeting architecture.
 
 ## Diarization Foundations
 
 ### FluidAudio / FluidInference
 
-Verdict: best production fit for MacParakeet.
+Verdict: best production fit for Sotto.
 
 FluidAudio is already the right Swift/CoreML foundation. Its diarization docs
 now describe multiple workflow-specific options: LS-EEND, Sortformer,
@@ -584,7 +584,7 @@ full-file batch option, while LS-EEND and Sortformer are streaming options with
 different speaker-count, stability, and overlap tradeoffs
 ([FluidAudio docs](https://github.com/FluidInference/FluidAudio/blob/82aed2ab25ea6dca0e5b3a96d2c79b3499063c7d/Documentation/Diarization/GettingStarted.md#L5-L28)).
 
-Most relevant for MacParakeet:
+Most relevant for Sotto:
 
 - Source layout separates orchestration, segmentation, embedding extraction,
   clustering, and offline processing
@@ -626,7 +626,7 @@ It documents Hugging Face token requirements for diarization and CPU mode for
 Mac use
 ([README](https://github.com/m-bain/whisperX/blob/8dcdec18039f15e1412d83a60ba7be3728d0c1c7/README.md#L114-L144)).
 
-Recommendation: copy the pipeline concept, not the dependency. MacParakeet's
+Recommendation: copy the pipeline concept, not the dependency. Sotto's
 version should be:
 
 1. final source-separated ASR
@@ -638,12 +638,12 @@ version should be:
 ### NVIDIA NeMo / Sortformer
 
 Verdict: high-value reference for low-latency identity stability, but a weak
-direct dependency for MacParakeet.
+direct dependency for Sotto.
 
 Sortformer is attractive for streaming and rapid turn changes, but model
 variants commonly have a 4-speaker cap and Python/PyTorch/NeMo shaped
 deployment. FluidAudio's Sortformer/CoreML path is the relevant Mac-native
-route if MacParakeet uses it.
+route if Sotto uses it.
 
 Recommendation: treat Sortformer as an optional experiment for known-small
 meetings or tentative live hints, not the default final diarizer for general
@@ -672,20 +672,20 @@ Verdict: useful embeddable building blocks.
 OpenWhispr's implementation shows a practical ONNX route: pyannote
 segmentation, 3D-Speaker embeddings, Silero VAD, centroiding, and cosine
 similarity. This is portable and cross-platform, but less native to
-MacParakeet than FluidAudio/CoreML.
+Sotto than FluidAudio/CoreML.
 
 Recommendation: keep these as fallback or evaluation references if FluidAudio
 speaker enrollment proves insufficient.
 
 ### whisper.cpp tinydiarize
 
-Verdict: not enough for MacParakeet diarization.
+Verdict: not enough for Sotto diarization.
 
 tinydiarize can mark speaker turns, but it does not provide durable speaker
 identity, enrollment, verification, confidence, or cross-meeting profiles. It
 is useful only as a tiny baseline.
 
-## Product Lessons For MacParakeet
+## Product Lessons For Sotto
 
 ### 1. Capture Trust Is The Moat
 
@@ -693,7 +693,7 @@ The strongest competitors do not just record; they show whether recording is
 healthy. Meeting Transcriber exposes channel silence/health. Minutes has
 source-health structs. Muesli and Humla describe source retention and recovery.
 
-MacParakeet should add:
+Sotto should add:
 
 - live mic/system health in the meeting surface
 - "system audio missing" and "mic silent" warnings with exact recovery steps
@@ -704,7 +704,7 @@ MacParakeet should add:
 
 ### 2. Speaker Claims Need Honest Tiers
 
-Most projects blur "speaker diarization" and "speaker identity." MacParakeet
+Most projects blur "speaker diarization" and "speaker identity." Sotto
 should not.
 
 Recommended product taxonomy:
@@ -734,10 +734,10 @@ Before adding streaming diarization, define persistent objects:
 Word attribution should use exclusive diarization interval overlap first, then
 word midpoint, then nearest segment, then source prior, then ambiguous.
 
-### 4. Preserve MacParakeet's Source-Aware Final Truth
+### 4. Preserve Sotto's Source-Aware Final Truth
 
 Several repos still rely on mixed audio, provider diarization, or post-hoc
-dedupe. MacParakeet's design is better: source-separated source files are the
+dedupe. Sotto's design is better: source-separated source files are the
 truth, `meeting.m4a` is playback/export, and final STT transcribes source files
 separately. Keep this invariant.
 
@@ -754,7 +754,7 @@ The best product references are artifact-first:
 - Muesli: JSON CLI and notes write-back.
 - Millet: summary Markdown plus frontmatter/JSON/PDF.
 
-MacParakeet already has artifact folders. It should promote them:
+Sotto already has artifact folders. It should promote them:
 
 - make `notes.md` and `transcript.json` first-class in the Meetings UI
 - include `microphone-cleaned.m4a` in the manifest when present
@@ -765,7 +765,7 @@ MacParakeet already has artifact folders. It should promote them:
 ### 6. Context Is A Real Meeting Feature
 
 Detto's client briefing and Humla's "typed notes plus transcript" summary model
-are high-value. MacParakeet should treat pre-call context and live notes as
+are high-value. Sotto should treat pre-call context and live notes as
 summary steering data, not an afterthought.
 
 Recommended shape:
@@ -788,10 +788,10 @@ Recommended shape:
 - model download hosts
 - artifact retention and deletion behavior
 
-MacParakeet should keep default capture/STT local and explain optional cloud
+Sotto should keep default capture/STT local and explain optional cloud
 features in product copy and artifact metadata.
 
-## Recommended MacParakeet Roadmap
+## Recommended Sotto Roadmap
 
 ### Now
 
@@ -868,10 +868,10 @@ features in product copy and artifact metadata.
 
 ## Bottom Line
 
-MacParakeet's advantage should be trust, not surface area. The strongest path is
+Sotto's advantage should be trust, not surface area. The strongest path is
 to double down on native, local, source-separated, recoverable meeting capture;
 make artifacts and health visible; then add speaker intelligence in honest,
-opt-in layers. Muesli-HQ proves MacParakeet's direction is competitive.
+opt-in layers. Muesli-HQ proves Sotto's direction is competitive.
 Meeting Transcriber shows the capture-health and speaker-identity bar.
 Detto/Minutes/Anarlog show the artifact/agent-native bar. FluidAudio remains
 the right foundation for a Mac-native speaker roadmap.

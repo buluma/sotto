@@ -1,4 +1,4 @@
-{"id":"oov-001","ref":"MacParakeet should keep the transcript local.","terms":["MacParakeet"],"voice":"Samantha","rate":170}
+{"id":"oov-001","ref":"Sotto should keep the transcript local.","terms":["Sotto"],"voice":"Samantha","rate":170}
 {"id":"oov-002","ref":"FluidAudio loads the acoustic model before decoding.","terms":["FluidAudio"],"voice":"Daniel","rate":175}
 {"id":"oov-003","ref":"WhisperKit remains available as a fallback engine.","terms":["WhisperKit"],"voice":"Karen","rate":180}
 {"id":"oov-004","ref":"Nemotron is slower but useful for comparison.","terms":["Nemotron"],"voice":"Moira","rate":165}

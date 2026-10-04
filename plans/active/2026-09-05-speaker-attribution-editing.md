@@ -411,7 +411,7 @@ selection.
   consequences, and Undo availability.
 - Support Return/Space for selection, Command-Z for undo, Shift-Command-Z for
   redo, Escape to exit/cancel, and full keyboard traversal.
-- All buttons keep `.parakeetAction(...)`; color is never the only carrier of
+- All buttons keep `.sottoAction(...)`; color is never the only carrier of
   speaker identity or selection.
 - Derive palette slots deterministically from stable speaker IDs so adding or
   hiding another speaker does not recolor every remaining speaker.

@@ -19,7 +19,7 @@ host = args.host.expanduser().resolve()
 if not host.is_file() or not os.access(host, os.X_OK):
     parser.error('host must be an existing executable')
 root = Path.home() / 'Library/Application Support'
-private = root / 'MacParakeet/VoiceControlBrowser'
+private = root / 'Sotto/VoiceControlBrowser'
 private.mkdir(parents=True, exist_ok=True, mode=0o700)
 if private.is_symlink() or private.stat().st_uid != os.getuid() or private.stat().st_mode & 0o777 != 0o700:
     parser.error('private bridge directory must be owned by you with mode 0700')
@@ -31,15 +31,15 @@ location = root / {'chrome':'Google/Chrome','chromium':'Chromium','chrome-for-te
 if args.user_data_dir:
     location = args.user_data_dir.expanduser().resolve() / 'NativeMessagingHosts'
 location.mkdir(parents=True, exist_ok=True)
-manifest = location / 'com.macparakeet.voice_control.json'
+manifest = location / 'com.sotto.voice_control.json'
 if manifest.exists():
     parser.error('native host manifest already exists; preserve and review it before replacing')
 with os.fdopen(os.open(config, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), 'w') as stream:
     json.dump({'extensionOrigin': origin, 'token': secrets.token_hex(32)}, stream)
 try:
     with manifest.open('x') as stream:
-        json.dump({'name':'com.macparakeet.voice_control','description':'MacParakeet Voice Control','path':str(host),'type':'stdio','allowed_origins':[origin]},stream,indent=2)
+        json.dump({'name':'com.sotto.voice_control','description':'Sotto Voice Control','path':str(host),'type':'stdio','allowed_origins':[origin]},stream,indent=2)
 except Exception:
     config.unlink()  # Roll back only the file this invocation just created.
     raise
-print('Browser bridge installed. Enable Voice Control in MacParakeet, then connect a tab from the extension.')
+print('Browser bridge installed. Enable Voice Control in Sotto, then connect a tab from the extension.')

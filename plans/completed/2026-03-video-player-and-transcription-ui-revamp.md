@@ -53,13 +53,13 @@ Three mockup screenshots define the target UX:
 
 | File | Role | Lines |
 |------|------|-------|
-| `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift` | Detail view with tabs | ~1400 |
-| `Sources/MacParakeet/Views/Transcription/TranscribeView.swift` | Home page with inputs + recent list | ~860 |
-| `Sources/MacParakeet/Views/MainWindowView.swift` | Sidebar + routing | ~150 |
-| `Sources/MacParakeetCore/Models/Transcription.swift` | Data model | ~163 |
-| `Sources/MacParakeetCore/Services/YouTubeDownloader.swift` | yt-dlp integration | ~200 |
-| `Sources/MacParakeetCore/Database/DatabaseManager.swift` | Migrations | ~500+ |
-| `Sources/MacParakeetViewModels/TranscriptionViewModel.swift` | ViewModel for transcription UI | ~500+ |
+| `Sources/Sotto/Views/Transcription/TranscriptResultView.swift` | Detail view with tabs | ~1400 |
+| `Sources/Sotto/Views/Transcription/TranscribeView.swift` | Home page with inputs + recent list | ~860 |
+| `Sources/Sotto/Views/MainWindowView.swift` | Sidebar + routing | ~150 |
+| `Sources/SottoCore/Models/Transcription.swift` | Data model | ~163 |
+| `Sources/SottoCore/Services/YouTubeDownloader.swift` | yt-dlp integration | ~200 |
+| `Sources/SottoCore/Database/DatabaseManager.swift` | Migrations | ~500+ |
+| `Sources/SottoViewModels/TranscriptionViewModel.swift` | ViewModel for transcription UI | ~500+ |
 
 ---
 
@@ -69,7 +69,7 @@ Three mockup screenshots define the target UX:
 
 ### Step 1.1: Expand Transcription Model
 
-**File:** `Sources/MacParakeetCore/Models/Transcription.swift`
+**File:** `Sources/SottoCore/Models/Transcription.swift`
 
 Add fields:
 
@@ -83,7 +83,7 @@ These are all optional — existing transcriptions continue to work unchanged.
 
 ### Step 1.2: Database Migration
 
-**File:** `Sources/MacParakeetCore/Database/DatabaseManager.swift`
+**File:** `Sources/SottoCore/Database/DatabaseManager.swift`
 
 Add migration following the existing inline pattern:
 
@@ -99,7 +99,7 @@ migrator.registerMigration("v0.5-transcription-video-metadata") { db in
 
 ### Step 1.3: Expand yt-dlp Metadata Extraction
 
-**File:** `Sources/MacParakeetCore/Services/YouTubeDownloader.swift`
+**File:** `Sources/SottoCore/Services/YouTubeDownloader.swift`
 
 In the `fetchMetadata` / JSON parsing section, extract additional fields:
 
@@ -124,7 +124,7 @@ public struct DownloadResult: Sendable {
 
 ### Step 1.4: Store Metadata in Transcription
 
-**File:** `Sources/MacParakeetCore/Services/TranscriptionService.swift` (or wherever Transcription records are created from DownloadResult)
+**File:** `Sources/SottoCore/Services/TranscriptionService.swift` (or wherever Transcription records are created from DownloadResult)
 
 When creating a Transcription from a YouTube download, populate the new fields:
 
@@ -136,10 +136,10 @@ transcription.videoDescription = downloadResult.videoDescription
 
 ### Step 1.5: Thumbnail Cache Service
 
-**New file:** `Sources/MacParakeetCore/Services/ThumbnailCacheService.swift`
+**New file:** `Sources/SottoCore/Services/ThumbnailCacheService.swift`
 
 Simple image downloader that:
-- Downloads YouTube thumbnail from URL to `~/Library/Application Support/MacParakeet/thumbnails/{transcriptionId}.jpg`
+- Downloads YouTube thumbnail from URL to `~/Library/Application Support/Sotto/thumbnails/{transcriptionId}.jpg`
 - Returns local file URL for display
 - Checks cache before downloading
 - For local video files: uses FFmpeg to extract first frame (`ffmpeg -i input.mp4 -vframes 1 -f image2 output.jpg`)
@@ -168,7 +168,7 @@ public final class ThumbnailCacheService: Sendable {
 
 ### Step 2.1: HLS URL Extraction Service
 
-**New file:** `Sources/MacParakeetCore/Services/VideoStreamService.swift`
+**New file:** `Sources/SottoCore/Services/VideoStreamService.swift`
 
 Extracts a streaming HLS manifest URL from a YouTube URL using yt-dlp:
 
@@ -193,7 +193,7 @@ Implementation notes:
 
 ### Step 2.2: AVPlayer SwiftUI Wrapper
 
-**New file:** `Sources/MacParakeet/Views/Components/VideoPlayerView.swift`
+**New file:** `Sources/Sotto/Views/Components/VideoPlayerView.swift`
 
 NSViewRepresentable wrapping AVPlayerView from AVKit:
 
@@ -215,7 +215,7 @@ Key behaviors:
 
 ### Step 2.3: Video Player ViewModel
 
-**New file:** `Sources/MacParakeetViewModels/VideoPlayerViewModel.swift`
+**New file:** `Sources/SottoViewModels/VideoPlayerViewModel.swift`
 
 ```swift
 @MainActor @Observable
@@ -257,7 +257,7 @@ The ViewModel is source-agnostic — it always produces an AVPlayer + currentTim
 
 ### Step 2.4: Audio Scrubber Bar Component
 
-**New file:** `Sources/MacParakeet/Views/Components/AudioScrubberBar.swift`
+**New file:** `Sources/Sotto/Views/Components/AudioScrubberBar.swift`
 
 A thin, horizontal bar for audio-only playback. Used when the source is an audio file (no video to show).
 
@@ -281,7 +281,7 @@ This bar sits at the top of the detail view content area, pinned above the tab b
 
 ### Step 2.5: Playback Mode Detection
 
-**File:** `Sources/MacParakeetViewModels/MediaPlayerViewModel.swift` (or utility)
+**File:** `Sources/SottoViewModels/MediaPlayerViewModel.swift` (or utility)
 
 ```swift
 enum PlaybackMode {
@@ -320,7 +320,7 @@ func playbackMode(for transcription: Transcription) -> PlaybackMode {
 
 ### Step 3.1: Adaptive Layout
 
-**File:** `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift`
+**File:** `Sources/Sotto/Views/Transcription/TranscriptResultView.swift`
 
 Use `playbackMode(for:)` to choose the layout:
 
@@ -374,7 +374,7 @@ Store visibility preference in UserDefaults (persists across sessions).
 
 ### Step 3.2: Video Panel Component
 
-**New file:** `Sources/MacParakeet/Views/Transcription/TranscriptionVideoPanel.swift`
+**New file:** `Sources/Sotto/Views/Transcription/TranscriptionVideoPanel.swift`
 
 Contains:
 - VideoPlayerView (the AVPlayer wrapper)
@@ -387,7 +387,7 @@ Contains:
 
 ### Step 3.3: Synced Transcript Highlighting
 
-**File:** `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift` (transcript pane section)
+**File:** `Sources/Sotto/Views/Transcription/TranscriptResultView.swift` (transcript pane section)
 
 When the video player is active and playing:
 - `VideoPlayerViewModel.currentTimeMs` drives highlighting
@@ -397,7 +397,7 @@ When the video player is active and playing:
 
 ### Step 3.4: Clickable Timestamp Seeking
 
-**File:** `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift`
+**File:** `Sources/Sotto/Views/Transcription/TranscriptResultView.swift`
 
 Two integration points:
 
@@ -416,7 +416,7 @@ Two integration points:
 
 ### Step 3.5: Header Card Updates
 
-**File:** `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift`
+**File:** `Sources/Sotto/Views/Transcription/TranscriptResultView.swift`
 
 Update the header card (currently shows filename + metadata chips):
 - For YouTube: show video title prominently + channel name below
@@ -443,7 +443,7 @@ Update the header card (currently shows filename + metadata chips):
 
 ### Step 4.1: Input Cards Layout
 
-**File:** `Sources/MacParakeet/Views/Transcription/TranscribeView.swift`
+**File:** `Sources/Sotto/Views/Transcription/TranscribeView.swift`
 
 Replace the current stacked portal + YouTube card with a side-by-side layout:
 
@@ -466,7 +466,7 @@ Replace the current stacked portal + YouTube card with a side-by-side layout:
 
 ### Step 4.2: Thumbnail Grid for Recent Transcriptions
 
-**File:** `Sources/MacParakeet/Views/Transcription/TranscribeView.swift`
+**File:** `Sources/Sotto/Views/Transcription/TranscribeView.swift`
 
 Replace the current `RecentTranscriptionRow` list with a card grid:
 
@@ -498,7 +498,7 @@ Grid layout:
 
 ### Step 4.3: Placeholder Artwork for Audio Files
 
-**New file:** `Sources/MacParakeet/Views/Components/TranscriptionPlaceholderView.swift`
+**New file:** `Sources/Sotto/Views/Components/TranscriptionPlaceholderView.swift`
 
 For transcriptions without thumbnails (audio-only files):
 - Render a generated visual based on the transcription's properties
@@ -521,7 +521,7 @@ For transcriptions without thumbnails (audio-only files):
 
 ### Step 5.1: New Sidebar Item
 
-**File:** `Sources/MacParakeet/Views/MainWindowView.swift`
+**File:** `Sources/Sotto/Views/MainWindowView.swift`
 
 Add `.library` to the `SidebarItem` enum (or repurpose/rename an existing item). Place it after `.transcribe` in the primary items section.
 
@@ -533,7 +533,7 @@ Sidebar order becomes:
 
 ### Step 5.2: Library View
 
-**New file:** `Sources/MacParakeet/Views/Transcription/TranscriptionLibraryView.swift`
+**New file:** `Sources/Sotto/Views/Transcription/TranscriptionLibraryView.swift`
 
 Layout:
 
@@ -582,7 +582,7 @@ migrator.registerMigration("v0.5-transcription-favorites") { db in
 
 ### Step 5.4: Library ViewModel
 
-**New file:** `Sources/MacParakeetViewModels/TranscriptionLibraryViewModel.swift`
+**New file:** `Sources/SottoViewModels/TranscriptionLibraryViewModel.swift`
 
 ```swift
 @MainActor @Observable

@@ -285,7 +285,7 @@ Offline UI says the remote stop is pending and the link may still work; it may s
 - The service stores no recipient referrer, cookie, user-agent history, view history, or product analytics.
 
 The hosting provider necessarily processes network metadata such as a request IP to deliver and defend the service.
-The public privacy notice must describe that fact separately from MacParakeet application storage.
+The public privacy notice must describe that fact separately from Sotto application storage.
 
 ## Error contract
 

@@ -69,7 +69,7 @@ jobs:
       - name: Check Telemetry Allowlist
         timeout-minutes: 2
         env:
-          # PAT with read access to the private macparakeet-website repo, so
+          # PAT with read access to the private sotto-website repo, so
           # the script's `gh`/`curl` fallback can fetch the allowlist in CI. If
           # this secret is unset the script SKIPS (exit 0) rather than failing.
           GH_TOKEN: ${{ secrets.WEBSITE_REPO_TOKEN }}
@@ -134,7 +134,7 @@ jobs:
       - name: Ask Pi Helper
         timeout-minutes: 5
         env:
-          MACPARAKEET_ASK_TEST_HELPER: ${{ github.workspace }}/.build/ask-runtime/AskAgentHelper/ask-helper.cjs
+          SOTTO_ASK_TEST_HELPER: ${{ github.workspace }}/.build/ask-runtime/AskAgentHelper/ask-helper.cjs
         run: |
           set -euo pipefail
           scripts/build_ask_helper.sh .build/ask-runtime/AskAgentHelper .build/ask-runtime/node
@@ -144,10 +144,10 @@ jobs:
         id: tests
         timeout-minutes: 20
         env:
-          MACPARAKEET_ASK_TEST_NODE: ${{ github.workspace }}/.build/ask-runtime/node
+          SOTTO_ASK_TEST_NODE: ${{ github.workspace }}/.build/ask-runtime/node
         run: |
           set -o pipefail
-          export MACPARAKEET_CLI_TEST_EXECUTABLE="$PWD/.build/debug/macparakeet-cli"
+          export SOTTO_CLI_TEST_EXECUTABLE="$PWD/.build/debug/sotto-cli"
           swift test --skip-build --parallel -Xswiftc -warn-concurrency --xunit-output ci-logs/swift-tests.xml 2>&1 | tee ci-logs/swift-test.log
 
       - name: Test Summary
@@ -159,7 +159,7 @@ jobs:
       - name: Ask CLI Qualification
         timeout-minutes: 5
         env:
-          CLI_BINARY: ${{ github.workspace }}/.build/debug/macparakeet-cli
+          CLI_BINARY: ${{ github.workspace }}/.build/debug/sotto-cli
           NODE_BINARY: ${{ github.workspace }}/.build/ask-runtime/node
           NODE_LICENSE_FILE: ${{ github.workspace }}/.build/ask-runtime/Legal/Node/LICENSE
           OUT_DIR: ${{ github.workspace }}/.build/ask-cli-archive
@@ -169,9 +169,9 @@ jobs:
           python3 -m unittest discover -s scripts/dev/tests -p test_ask_workspace_qualification.py
           scripts/dist/build_cli_archive.sh
           mkdir -p .build/ask-cli-extracted
-          tar -xzf "$OUT_DIR/macparakeet-cli-ci-darwin-$(uname -m).tar.gz" -C .build/ask-cli-extracted
+          tar -xzf "$OUT_DIR/sotto-cli-ci-darwin-$(uname -m).tar.gz" -C .build/ask-cli-extracted
           python3 scripts/dev/ask_workspace_qualification.py \
-            --cli .build/ask-cli-extracted/macparakeet-cli \
+            --cli .build/ask-cli-extracted/sotto-cli \
             --output-dir ci-logs/ask-qualification
 
       - name: CLI Persistence Smoke
@@ -179,14 +179,14 @@ jobs:
         timeout-minutes: 2
         run: |
           set -o pipefail
-          python3 scripts/ci/cli-persistence-smoke.py "$PWD/.build/debug/macparakeet-cli" 2>&1 | tee ci-logs/cli-persistence-smoke.log
+          python3 scripts/ci/cli-persistence-smoke.py "$PWD/.build/debug/sotto-cli" 2>&1 | tee ci-logs/cli-persistence-smoke.log
 
       - name: Meeting Process Recovery
         if: ${{ !cancelled() && steps.test_build.outcome == 'success' }}
         timeout-minutes: 4
         env:
-          MACPARAKEET_CRASH_RECOVERY_TESTS: "1"
-          MACPARAKEET_TELEMETRY: "0"
+          SOTTO_CRASH_RECOVERY_TESTS: "1"
+          SOTTO_TELEMETRY: "0"
         run: |
           set -o pipefail
           swift test --skip-build -Xswiftc -warn-concurrency --filter 'MeetingRecordingCrashRecoveryTests/(testKillNineMidRecordingProducesPlayableFiles|testKilledRecordingRecoversInFreshProcessAndRemainsIdempotent)' 2>&1 | tee ci-logs/meeting-process-recovery.log
@@ -197,9 +197,9 @@ jobs:
         env:
           # Argmax/WhisperKit v0.18.0 is required for real builds but is not
           # Swift 6 language-mode clean yet. Keep this step focused on
-          # first-party MacParakeet sources while release/test builds compile
+          # first-party Sotto sources while release/test builds compile
           # the full WhisperKit dependency graph.
-          MACPARAKEET_SKIP_WHISPERKIT: "1"
+          SOTTO_SKIP_WHISPERKIT: "1"
         run: |
           mkdir -p ci-logs
           set -o pipefail
@@ -272,7 +272,7 @@ jobs:
       - name: Xcode Cache Identity
         id: xcode_cache
         env:
-          XCODE_DERIVED_DATA: ${{ runner.temp }}/macparakeet-xcode-dist
+          XCODE_DERIVED_DATA: ${{ runner.temp }}/sotto-xcode-dist
         run: |
           fingerprint=$(bash scripts/ci/xcode-cache-key.sh)
           echo "fingerprint=$fingerprint" >> "$GITHUB_OUTPUT"
@@ -280,7 +280,7 @@ jobs:
       - name: Cache Xcode Build State
         uses: actions/cache@v5
         with:
-          path: ${{ runner.temp }}/macparakeet-xcode-dist
+          path: ${{ runner.temp }}/sotto-xcode-dist
           key: xcode-v1-${{ steps.xcode_cache.outputs.fingerprint }}-${{ github.sha }}
           restore-keys: |
             xcode-v1-${{ steps.xcode_cache.outputs.fingerprint }}-
@@ -296,7 +296,7 @@ jobs:
         timeout-minutes: 2
         run: |
           python3 scripts/dev/ask_workspace_qualification.py \
-            --cli .build/release/macparakeet-cli \
+            --cli .build/release/sotto-cli \
             --output-dir ci-logs/ask-disabled --expect-disabled
 
       - name: Release Bundle Smoke
@@ -312,14 +312,14 @@ jobs:
           # Keep Xcode DerivedData and native echo-suppression build/source
           # outputs out of SwiftPM's tree. DerivedData has a separate cache;
           # native echo assets are rebuilt by the packaging script.
-          XCODE_DERIVED_DATA: ${{ runner.temp }}/macparakeet-xcode-dist
-          MACPARAKEET_MEETING_ECHO_ASSETS_DIR: ${{ runner.temp }}/macparakeet-meeting-echo-assets
-          LOCALVQE_SOURCE_DIR: ${{ runner.temp }}/macparakeet-localvqe-src
+          XCODE_DERIVED_DATA: ${{ runner.temp }}/sotto-xcode-dist
+          SOTTO_MEETING_ECHO_ASSETS_DIR: ${{ runner.temp }}/sotto-meeting-echo-assets
+          LOCALVQE_SOURCE_DIR: ${{ runner.temp }}/sotto-localvqe-src
         run: |
           mkdir -p ci-logs
           set -o pipefail
           ./scripts/dist/build_app_bundle.sh 2>&1 | tee ci-logs/release-bundle-smoke.log
-          swift - dist/MacParakeet.app/Contents/Resources/SwiftStreamingMarkdown_SwiftStreamingMarkdown.bundle <<'SWIFT'
+          swift - dist/Sotto.app/Contents/Resources/SwiftStreamingMarkdown_SwiftStreamingMarkdown.bundle <<'SWIFT'
           import AppKit
           guard let bundle = Bundle(path: CommandLine.arguments[1]),
                 bundle.bundleIdentifier != nil,
@@ -335,12 +335,12 @@ jobs:
       - name: CLI Contract Smoke
         timeout-minutes: 2
         env:
-          MACPARAKEET_TELEMETRY: "0"
+          SOTTO_TELEMETRY: "0"
         run: |
           mkdir -p ci-logs
           set -o pipefail
-          dist/MacParakeet.app/Contents/MacOS/macparakeet-cli --help > ci-logs/cli-help.txt
-          dist/MacParakeet.app/Contents/MacOS/macparakeet-cli spec --json > ci-logs/cli-spec.json
+          dist/Sotto.app/Contents/MacOS/sotto-cli --help > ci-logs/cli-help.txt
+          dist/Sotto.app/Contents/MacOS/sotto-cli spec --json > ci-logs/cli-spec.json
           python3 -m json.tool ci-logs/cli-spec.json > /dev/null
           python3 - <<'PY'
           import json
@@ -384,7 +384,7 @@ jobs:
       - name: Cache Identities
         id: cache
         env:
-          XCODE_DERIVED_DATA: ${{ runner.temp }}/macparakeet-xcode-dist
+          XCODE_DERIVED_DATA: ${{ runner.temp }}/sotto-xcode-dist
         run: |
           swift=$(bash scripts/ci/swift-cache-key.sh)
           xcode=$(bash scripts/ci/xcode-cache-key.sh)
@@ -397,7 +397,7 @@ jobs:
           fail-on-cache-miss: true
       - uses: actions/cache/restore@v5
         with:
-          path: ${{ runner.temp }}/macparakeet-xcode-dist
+          path: ${{ runner.temp }}/sotto-xcode-dist
           key: xcode-v1-${{ steps.cache.outputs.xcode }}-${{ github.sha }}
           fail-on-cache-miss: true
       - name: Verify Changed App and Resource Reach Package
@@ -411,9 +411,9 @@ jobs:
           VERSION: 0.0.0
           BUILD_NUMBER: ci-cache-qualification
           XCODE_BUILD_LOG: ci-logs/xcode-cache-invalidation.log
-          XCODE_DERIVED_DATA: ${{ runner.temp }}/macparakeet-xcode-dist
-          MACPARAKEET_MEETING_ECHO_ASSETS_DIR: ${{ runner.temp }}/macparakeet-meeting-echo-assets
-          LOCALVQE_SOURCE_DIR: ${{ runner.temp }}/macparakeet-localvqe-src
+          XCODE_DERIVED_DATA: ${{ runner.temp }}/sotto-xcode-dist
+          SOTTO_MEETING_ECHO_ASSETS_DIR: ${{ runner.temp }}/sotto-meeting-echo-assets
+          LOCALVQE_SOURCE_DIR: ${{ runner.temp }}/sotto-localvqe-src
         run: |
           mkdir -p ci-logs
           set -o pipefail

@@ -2,7 +2,7 @@
 
 > Status: **ACTIVE** - Authoritative, current
 
-MacParakeet's default speech engine family is Parakeet TDT 0.6B via FluidAudio CoreML on Apple's Neural Engine (ANE). Multilingual v3 is the default build; English-only v2 is an opt-in Parakeet build for users who want a faster no-auto-detect path; and an English-only Parakeet Unified build adds native streaming dictation with built-in punctuation, capitalization, and token-derived word timestamps. Orukeet is an optional Parakeet preview of a third-party v3 adaptation, and v3 remains the default. Nemotron is available as an opt-in Beta local engine (multilingual Nemotron 3.5 by default, plus an English-only second build), WhisperKit remains the mature optional fallback for languages Parakeet/Nemotron do not cover well enough, and Cohere Transcribe is an opt-in local accuracy engine for record-then-transcribe jobs. All speech engines run on-device; there is no cloud STT path.
+Sotto's default speech engine family is Parakeet TDT 0.6B via FluidAudio CoreML on Apple's Neural Engine (ANE). Multilingual v3 is the default build; English-only v2 is an opt-in Parakeet build for users who want a faster no-auto-detect path; and an English-only Parakeet Unified build adds native streaming dictation with built-in punctuation, capitalization, and token-derived word timestamps. Orukeet is an optional Parakeet preview of a third-party v3 adaptation, and v3 remains the default. Nemotron is available as an opt-in Beta local engine (multilingual Nemotron 3.5 by default, plus an English-only second build), WhisperKit remains the mature optional fallback for languages Parakeet/Nemotron do not cover well enough, and Cohere Transcribe is an opt-in local accuracy engine for record-then-transcribe jobs. All speech engines run on-device; there is no cloud STT path.
 
 ---
 
@@ -49,11 +49,11 @@ path. All four are selectable Parakeet models:
 | Runtime | FluidAudio streaming Nemotron CoreML path |
 | Model cache | FluidAudio model cache under `~/Library/Application Support/FluidAudio/Models/` |
 | Output | Text, token-derived word timestamps when FluidAudio reports token timings, and detected/specified language when reported |
-| Languages | Multilingual build: 40 language-locales upstream; English build: English only (ignores the `nemotron-language` hint); both exposed as opt-in Beta while MacParakeet benchmarks quality on real product audio |
+| Languages | Multilingual build: 40 language-locales upstream; English build: English only (ignores the `nemotron-language` hint); both exposed as opt-in Beta while Sotto benchmarks quality on real product audio |
 | Selection | Explicit in Settings or CLI (`--engine nemotron --language <code>`); build via the Settings *Nemotron Model* card, `config set nemotron-model`, or `transcribe --nemotron-model`; no automatic fallback |
 | Download | ~1.5 GB (multilingual) / ~600 MB (English), explicit Settings/CLI download before selecting as the shared default |
 
-Nemotron is shipped as Beta because it is fast and local but not yet proven as a default replacement on MacParakeet's real dictation/meeting corpus. It enters the same scheduler/runtime control plane as the Parakeet family and WhisperKit rather than creating a feature-owned ASR stack.
+Nemotron is shipped as Beta because it is fast and local but not yet proven as a default replacement on Sotto's real dictation/meeting corpus. It enters the same scheduler/runtime control plane as the Parakeet family and WhisperKit rather than creating a feature-owned ASR stack.
 
 Dictation on **both** Nemotron builds (multilingual and English) streams microphone samples into a live session for display-only partial text. At stop, the app cancels that session and waits up to a bounded timeout for it to drain, instead of awaiting a streamed final; a session that does not drain in time is logged as unhealthy and keeps its scheduler reservation, so the recorded-WAV STT for that take can still queue behind it. The recorded WAV is always authoritative for final transcription, including when live preview could not start, failed or dropped samples. File and meeting jobs likewise transcribe recorded audio. All of these paths keep the explicitly selected Nemotron engine; they do not fall back to another speech engine.
 
@@ -65,7 +65,7 @@ Dictation on **both** Nemotron builds (multilingual and English) streams microph
 |----------|-------|
 | Model | Whisper large-v3 turbo CoreML variant by default (`large-v3-v20240930_turbo_632MB`) |
 | Runtime | WhisperKit (`argmaxinc/argmax-oss-swift`, exact 0.18.0 when enabled) |
-| Model cache | `~/Library/Application Support/MacParakeet/models/stt/whisper/` |
+| Model cache | `~/Library/Application Support/Sotto/models/stt/whisper/` |
 | Output | Text, word timestamps when available, detected language when reported |
 | Languages | Broad Whisper language coverage, including Korean, Japanese, Chinese, Hindi, Arabic, and others outside Parakeet v3 coverage |
 | Selection | Explicit in Settings or CLI (`--engine whisper --language <code>`); no automatic fallback |
@@ -99,7 +99,7 @@ Cohere is batch-only and single-flight inside the shared runtime. Dictation reco
 Each ML workload runs on the chip it was designed for:
 
 ```
-CPU:  MacParakeet app (UI, shortcuts, clipboard, history)
+CPU:  Sotto app (UI, shortcuts, clipboard, history)
 ANE/CoreML: Parakeet STT, Nemotron Beta, and Cohere Transcribe (via FluidAudio/CoreML)
 CPU/GPU/CoreML as selected by WhisperKit: optional multilingual STT
 ```
@@ -112,7 +112,7 @@ The default Parakeet path runs on dedicated silicon, leaving CPU and GPU free fo
 
 ### Overview
 
-[FluidAudio](https://github.com/FluidInference/FluidAudio) is an open-source Swift SDK by FluidInference that runs Parakeet TDT on Apple's Neural Engine via CoreML. It is Apache 2.0 licensed and is the active runtime integration point for MacParakeet's default STT path.
+[FluidAudio](https://github.com/FluidInference/FluidAudio) is an open-source Swift SDK by FluidInference that runs Parakeet TDT on Apple's Neural Engine via CoreML. It is Apache 2.0 licensed and is the active runtime integration point for Sotto's default STT path.
 
 **SwiftPM dependency:** Use the `FluidAudio` product only — NOT `FluidAudioEspeak` (GPL-3.0, includes Kokoro TTS via ESpeakNG). PocketTTS (GPL-free) is already included in the core `FluidAudio` product since v0.12.0.
 
@@ -148,16 +148,16 @@ let samples = try AudioConverter.resampleBuffer(buffer)
 
 **Critical:** Always use FluidAudio's `AudioConverter` — never manually decode audio. CoreML models require correctly resampled input; manual parsing silently corrupts it.
 
-For meeting recording specifically, this has an important consequence: the saved `meeting-playback.m4a` artifact may preserve microphone/system channel separation as stereo, but the current final Parakeet path still works on mono per-source WAVs. MacParakeet avoids collapsing the final meeting path to a single mono mix by transcribing `microphone-raw.m4a` and `system-raw.m4a` separately, then merging those fresh results with persisted source-alignment metadata. See `docs/research/meeting-dual-stream-transcription-pipeline.md` for the end-to-end meeting pipeline.
+For meeting recording specifically, this has an important consequence: the saved `meeting-playback.m4a` artifact may preserve microphone/system channel separation as stereo, but the current final Parakeet path still works on mono per-source WAVs. Sotto avoids collapsing the final meeting path to a single mono mix by transcribing `microphone-raw.m4a` and `system-raw.m4a` separately, then merging those fresh results with persisted source-alignment metadata. See `docs/research/meeting-dual-stream-transcription-pipeline.md` for the end-to-end meeting pipeline.
 
 ### Custom Vocabulary Boosting (FluidAudio 0.11.0+)
 
-MacParakeet Phase 1 uses FluidAudio's 110M CTC encoder as a post-TDT
+Sotto Phase 1 uses FluidAudio's 110M CTC encoder as a post-TDT
 recognition sidecar, not as a replacement ASR runtime. The normal Parakeet TDT
 decode runs first and returns transcript text plus token timings. Recognition
 boosting is opt-in: `customVocabularyRecognitionBoostingEnabled` defaults to
 `false`. When that preference is enabled, the engine supports boosting, and
-enabled vocabulary anchors exist, MacParakeet runs the CTC sidecar over the
+enabled vocabulary anchors exist, Sotto runs the CTC sidecar over the
 same audio samples and uses `VocabularyRescorer` to produce the final
 transcript text. Adding an anchor alone does not enable this sidecar.
 
@@ -200,7 +200,7 @@ Runtime behavior:
   finalization keep the URL/disk-backed TDT path; Phase 1 only sidecars short
   audio that can be loaded under the configured sidecar sample bound, and skips
   boosting for longer jobs until chunked sidecar rescoring lands.
-- Vocabulary contents are user data. MacParakeet does not log or emit telemetry
+- Vocabulary contents are user data. Sotto does not log or emit telemetry
   with the term strings.
 
 When active, peak working RAM is the Parakeet TDT slot plus the CTC sidecar. The
@@ -325,7 +325,7 @@ struct TimestampedWord: Sendable {
 
 ### Runtime and Scheduling
 
-ADR-016 defines MacParakeet's STT architecture as:
+ADR-016 defines Sotto's STT architecture as:
 
 - **One process-wide `STTRuntime` owner** for model lifecycle and warm-up/shutdown across Parakeet, Nemotron Beta, Cohere, and optional WhisperKit
 - **Two STT execution slots by default**
@@ -455,7 +455,7 @@ explicit choice use the current Final Transcription route when the job starts.
 
 ### Parakeet CoreML Model Bundle
 
-The `parakeet-tdt-0.6b-*-coreml` HuggingFace repos host several precision/encoder variants, but MacParakeet only fetches the components it loads for the selected build, so the **actual download is ~465 MB per build**. v2 and v3 cache independently, so a user who installs both pays the ~465 MB once each:
+The `parakeet-tdt-0.6b-*-coreml` HuggingFace repos host several precision/encoder variants, but Sotto only fetches the components it loads for the selected build, so the **actual download is ~465 MB per build**. v2 and v3 cache independently, so a user who installs both pays the ~465 MB once each:
 
 | Component | Format |
 |-----------|--------|
@@ -477,8 +477,8 @@ The `parakeet-tdt-0.6b-*-coreml` HuggingFace repos host several precision/encode
 Nemotron is downloaded from an explicit Settings/CLI action. It is not part of first-run onboarding and is not selected automatically from locale.
 
 ```bash
-swift run macparakeet-cli models download nemotron-multilingual-1120ms
-swift run macparakeet-cli models download nemotron-english-1120ms
+swift run sotto-cli models download nemotron-multilingual-1120ms
+swift run sotto-cli models download nemotron-english-1120ms
 ```
 
 The surfaced variants are `NemotronModelVariant.multilingual1120` (`multilingual-1120ms`, default) and `NemotronModelVariant.english1120` (`english-1120ms`, Nemotron Speech Streaming EN 0.6B, English-only). The build preference is stored as `nemotron-model` (`config set nemotron-model multilingual-1120ms|english-1120ms`, aliases `multilingual`/`english`) and can be overridden per run via `transcribe --nemotron-model app-default|multilingual-1120ms|english-1120ms`. The optional language hint is stored separately as `nemotron-language` and applies only to the multilingual build (the English build ignores it); `auto` clears the stored hint.
@@ -488,7 +488,7 @@ The surfaced variants are `NemotronModelVariant.multilingual1120` (`multilingual
 Whisper models are downloaded from an explicit Settings/CLI action, or during first-run onboarding when the local macOS language is Korean, Japanese, Chinese, or Cantonese. That first-run branch is an initial setup choice, not automatic fallback during transcription.
 
 ```bash
-swift run macparakeet-cli models download whisper-large-v3-v20240930-turbo-632MB
+swift run sotto-cli models download whisper-large-v3-v20240930-turbo-632MB
 ```
 
 The normalized Whisper variant is stored without the leading `whisper-` prefix in preferences; model files live under `AppPaths.whisperModelsDir`.

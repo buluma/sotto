@@ -9,7 +9,7 @@ const revoked = new Set();
 function disconnect(reason) {
   const old = port; port = null; authorization = null; sessionID = null;
   revoked.clear(); clearTimeout(connectionTimer);
-  if (connectReply) { connectReply({ok:false,error:typeof reason === 'string' ? reason : 'Open MacParakeet and complete browser setup first.'}); connectReply = null; }
+  if (connectReply) { connectReply({ok:false,error:typeof reason === 'string' ? reason : 'Open Sotto and complete browser setup first.'}); connectReply = null; }
   try { old?.disconnect(); } catch { /* already disconnected */ }
 }
 function reply(request, payload, ok = true) {
@@ -80,7 +80,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const scope = authorization;
     await chrome.tabs.sendMessage(tab.id,{type:'bind',contextID:scope.contextID,documentID:scope.documentID},{documentId:scope.documentID});
     connectReply = sendResponse;
-    port = chrome.runtime.connectNative('com.macparakeet.voice_control');
+    port = chrome.runtime.connectNative('com.sotto.voice_control');
     const currentPort = port;
     port.onMessage.addListener(message => { if (port === currentPort) void dispatch(message); });
     port.onDisconnect.addListener(() => { const reason=chrome.runtime.lastError?.message; if (port === currentPort) disconnect(reason); });
@@ -120,7 +120,7 @@ chrome.tabs.onUpdated.addListener((id, change, tab) => {
 });
 chrome.tabs.onRemoved.addListener(id => { if (authorization?.tabId === id) disconnect(); });
 chrome.windows.onFocusChanged.addListener(id => {
-  // Switching to MacParakeet's nonactivating controls is unnecessary; native app focus invalidates dispatch.
+  // Switching to Sotto's nonactivating controls is unnecessary; native app focus invalidates dispatch.
   if (authorization && id !== authorization.windowId) {
     // Keep the chosen tab identity, but authorizedTab requires foreground again before dispatch.
   }

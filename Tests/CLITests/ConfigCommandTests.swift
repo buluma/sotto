@@ -1,7 +1,7 @@
 import ArgumentParser
 import XCTest
 @testable import CLI
-@testable import MacParakeetCore
+@testable import SottoCore
 
 final class ConfigCommandTests: XCTestCase {
 
@@ -11,8 +11,8 @@ final class ConfigCommandTests: XCTestCase {
     override func setUp() {
         super.setUp()
         // Isolate each test in a unique UserDefaults suite so we never touch
-        // the user's real `com.macparakeet.MacParakeet` plist.
-        suiteName = makeIsolatedDefaultsSuite("macparakeet.test.config.")
+        // the user's real `com.sotto.Sotto` plist.
+        suiteName = makeIsolatedDefaultsSuite("sotto.test.config.")
         defaults = UserDefaults(suiteName: suiteName)
     }
 
@@ -59,10 +59,10 @@ final class ConfigCommandTests: XCTestCase {
         ])
     }
 
-    func testReadTelemetryDefaultsToOn() throws {
-        // Mirror AppPreferences.isTelemetryEnabled: missing key → on.
+    func testReadTelemetryDefaultsToOff() throws {
+        // Personal build: missing key → off.
         let value = try ConfigCommand.read(key: "telemetry", defaults: defaults)
-        XCTAssertEqual(value, "on")
+        XCTAssertEqual(value, "off")
     }
 
     func testReadTelemetryReflectsExplicitFalse() throws {
@@ -449,7 +449,7 @@ final class ConfigCommandTests: XCTestCase {
 
     func testWriteMeetingArtifactFolderPersistsAndResets() throws {
         let folder = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-config-artifacts-\(UUID().uuidString)")
+            .appendingPathComponent("sotto-config-artifacts-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: folder) }
 
         XCTAssertEqual(

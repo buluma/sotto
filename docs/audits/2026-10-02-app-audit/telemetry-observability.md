@@ -17,7 +17,7 @@ gate, missing receiver support or a chart that omits the current product flow.
 
 ### OBS-01 — Onboarding dashboard omits current steps and overcounts actions
 
-- Evidence: app `Sources/MacParakeetViewModels/OnboardingViewModel.swift:24-46`
+- Evidence: app `Sources/SottoViewModels/OnboardingViewModel.swift:24-46`
   defines `welcome`, `permissions`, `practice`, `ready`; its `sendStepTelemetry`
   emits navigation, engine outcomes, practice outcomes and dismissal actions.
   Receiver `functions/api/stats.ts:390-398` counts all events, and

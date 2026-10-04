@@ -5,7 +5,7 @@
 
 ## Context
 
-MacParakeet can copy and export transcript text, but recipients must assemble their own presentation and the publisher cannot later stop access.
+Sotto can copy and export transcript text, but recipients must assemble their own presentation and the publisher cannot later stop access.
 A hosted link would be useful for meetings, imported media, and other Library items, but it must not turn the local corpus into a cloud account or weaken the promise that audio stays on the Mac.
 
 The feature needs three independent capabilities: recipient access to one share, anonymous owner authority to manage shares, and content encryption that keeps routine hosting infrastructure from reading the text.
@@ -13,7 +13,7 @@ A machine fingerprint or IP address is not a safe substitute for any of them bec
 
 ## Decision
 
-MacParakeet will treat sharing as an explicit encrypted export with its own lifecycle.
+Sotto will treat sharing as an explicit encrypted export with its own lifecycle.
 
 - A share is a separately persisted, text-only snapshot derived from one local Library item after an exact user preview.
 - The local Library remains authoritative, and later local edits never publish automatically.
@@ -47,7 +47,7 @@ Stopping cannot erase recipient copies or plaintext already loaded into a browse
 Keeping one URL through updates means a compromised URL cannot be repaired in place; the owner must create a new share and permanently stop the old one.
 
 The viewer origin is part of the trust boundary.
-First-party JavaScript receives the fragment key and plaintext, so MacParakeet must not claim protection against a malicious viewer deployment or absolute zero knowledge.
+First-party JavaScript receives the fragment key and plaintext, so Sotto must not claim protection against a malicious viewer deployment or absolute zero knowledge.
 Encrypted content also prevents server-side search, meaningful content previews, and ordinary content moderation.
 
 The feature adds hosted operations, local publication and outbox records, Keychain state, deletion coordination, abuse controls, and current privacy disclosures to an otherwise local corpus.

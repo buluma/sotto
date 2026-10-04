@@ -1,6 +1,6 @@
 import ArgumentParser
 import XCTest
-import MacParakeetCore
+import SottoCore
 @testable import CLI
 
 final class AskCommandTests: XCTestCase {

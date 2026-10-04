@@ -1,7 +1,7 @@
 import ArgumentParser
 import XCTest
 @testable import CLI
-@testable import MacParakeetCore
+@testable import SottoCore
 
 final class VocabCommandTests: XCTestCase {
 
@@ -10,7 +10,7 @@ final class VocabCommandTests: XCTestCase {
 
     override func setUp() async throws {
         tempDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-vocab-cli-\(UUID())")
+            .appendingPathComponent("sotto-vocab-cli-\(UUID())")
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
         dbPath = tempDir.appendingPathComponent("test.db").path
     }
@@ -24,7 +24,7 @@ final class VocabCommandTests: XCTestCase {
     func testVocabCommandKeepsFlowAliasForOneMinorRelease() {
         XCTAssertTrue(
             CLI.configuration.subcommands.contains { $0 == VocabCommand.self },
-            "vocab must be available from macparakeet-cli"
+            "vocab must be available from sotto-cli"
         )
         XCTAssertTrue(
             VocabCommand.configuration.aliases.contains("flow"),
@@ -98,7 +98,7 @@ final class VocabCommandTests: XCTestCase {
     }
 
     func testVocabWordsRecognitionBoostingStatusLineUsesCapabilityRegistry() {
-        let suiteName = makeIsolatedDefaultsSuite("macparakeet-vocab-cli-defaults-")
+        let suiteName = makeIsolatedDefaultsSuite("sotto-vocab-cli-defaults-")
         let defaults = UserDefaults(suiteName: suiteName)!
 
         SpeechEnginePreference.parakeet.save(to: defaults)
@@ -134,7 +134,7 @@ final class VocabCommandTests: XCTestCase {
     func testVocabWordsListDisplaysBlankReplacementAsAnchor() async throws {
         let manager = try DatabaseManager(path: dbPath)
         let repo = CustomWordRepository(dbQueue: manager.dbQueue)
-        let word = CustomWord(word: "MacParakeet", replacement: "  ")
+        let word = CustomWord(word: "Sotto", replacement: "  ")
         try repo.save(word)
 
         let cmd = try VocabWordsCommand.ListWords.parse([
@@ -144,13 +144,13 @@ final class VocabCommandTests: XCTestCase {
             try await cmd.run()
         }
 
-        XCTAssertTrue(output.contains("[+] MacParakeet (anchor)"))
-        XCTAssertFalse(output.contains("MacParakeet ->"))
+        XCTAssertTrue(output.contains("[+] Sotto (anchor)"))
+        XCTAssertFalse(output.contains("Sotto ->"))
     }
 
     func testVocabWordsAddJSONReturnsSavedID() async throws {
         let cmd = try VocabWordsCommand.AddWord.parse([
-            "MacParakeet",
+            "Sotto",
             "--database", dbPath,
             "--json",
         ])
@@ -161,11 +161,11 @@ final class VocabCommandTests: XCTestCase {
         let decoded = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(output.utf8)) as? [String: Any])
         XCTAssertEqual(decoded["ok"] as? Bool, true)
         let word = try XCTUnwrap(decoded["word"] as? [String: Any])
-        XCTAssertEqual(word["word"] as? String, "MacParakeet")
+        XCTAssertEqual(word["word"] as? String, "Sotto")
         XCTAssertNotNil(word["id"] as? String)
         let manager = try DatabaseManager(path: dbPath)
         let saved = try CustomWordRepository(dbQueue: manager.dbQueue).fetchAll()
-        XCTAssertEqual(saved.map(\.word), ["MacParakeet"])
+        XCTAssertEqual(saved.map(\.word), ["Sotto"])
     }
 
     func testVocabSnippetsAddJSONReturnsSavedID() async throws {
@@ -425,7 +425,7 @@ final class VocabCommandTests: XCTestCase {
         let output = try await capturingStdout {
             try await cmd.run()
         }
-        XCTAssertTrue(output.contains("MacParakeet Vocabulary Bundle"))
+        XCTAssertTrue(output.contains("Sotto Vocabulary Bundle"))
         XCTAssertTrue(output.contains("customWords"))
         XCTAssertTrue(output.contains("textSnippets"))
         XCTAssertTrue(output.contains(VocabularyBundle.schemaIdentifier))

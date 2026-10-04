@@ -49,7 +49,7 @@ These synthetic results were seeded locally; no model generated them.
 
 [QA HTTPS link](https://example.com/qa-fixture)
 
-[QA blocked file link](file:///tmp/macparakeet-qa-fixture-never-created.txt)
+[QA blocked file link](file:///tmp/sotto-qa-fixture-never-created.txt)
 
 End marker: **QA MARKDOWN COMPLETE**.
 """

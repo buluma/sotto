@@ -2,10 +2,10 @@
 set -euo pipefail
 
 # Run only in a logged-in macOS GUI session. Every application is a synthetic
-# fixture in this test's temporary directory; no real MacParakeet is addressed.
+# fixture in this test's temporary directory; no real Sotto is addressed.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/stop_app_processes.sh"
-TEST_DIR="$(mktemp -d "${TMPDIR:-/tmp}/macparakeet-quit-test.XXXXXX")"
+TEST_DIR="$(mktemp -d "${TMPDIR:-/tmp}/sotto-quit-test.XXXXXX")"
 CHILD_PIDS=""
 cleanup() {
   for state in "$TEST_DIR"/state-*; do
@@ -70,7 +70,7 @@ start_fixture() {
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleIdentifier</key><string>com.macparakeet.synthetic-quit-test</string>
+<key>CFBundleIdentifier</key><string>com.sotto.synthetic-quit-test</string>
 <key>CFBundleExecutable</key><string>Fixture</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 </dict></plist>

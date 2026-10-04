@@ -25,18 +25,18 @@ Also unrelated: #52 (multiple hotkey profiles) — that's a bigger ask we're lea
 
 | File | Change |
 |------|--------|
-| `Sources/MacParakeetCore/STT/HotkeyTrigger.swift` | Add `fileTranscriptionDefaultsKey` and `youtubeTranscriptionDefaultsKey` constants. No new preset (default `.disabled`). |
-| `Sources/MacParakeetCore/AppNotifications.swift` | Add `macParakeetFileHotkeyTriggerDidChange`, `macParakeetYouTubeHotkeyTriggerDidChange`. |
-| `Sources/MacParakeetCore/Services/TelemetryEvent.swift` | Add 2 `TelemetrySetting` cases: `.fileTranscriptionHotkey`, `.youtubeTranscriptionHotkey`. Uses existing `settingChanged` event name → no website allowlist change needed. |
-| `Sources/MacParakeetViewModels/SettingsViewModel.swift` | Add `fileTranscriptionHotkeyTrigger` and `youtubeTranscriptionHotkeyTrigger` stored properties with `didSet` persistence + notification post + telemetry. Initialize from defaults in `init`. |
-| `Sources/MacParakeet/App/AppHotkeyCoordinator.swift` | Add `fileHotkeyManager`, `youtubeHotkeyManager`; `setupFileHotkey()`, `setupYouTubeHotkey()`, `refreshFileHotkey()`, `refreshYouTubeHotkey()`. Extend conflict check so each setup bails if its trigger equals any other configured hotkey. Extend `refreshAllHotkeys` / `stopAll`. Add 2 new init callbacks. |
-| `Sources/MacParakeet/App/AppSettingsObserverCoordinator.swift` | Observe the 2 new notifications; route to 2 new callbacks. |
-| `Sources/MacParakeet/App/AppEnvironmentConfigurer.swift` | Pass 2 new closures into `AppHotkeyCoordinator` and expose on `Callbacks`. |
-| `Sources/MacParakeet/AppDelegate.swift` | 2 new handlers (`triggerFileTranscriptionFromHotkey`, `triggerYouTubeTranscriptionFromHotkey`) that call into exposed `MenuBarCoordinator` methods. Hook up 2 new `settingsObserverCoordinator` callbacks that call `hotkeyCoordinator.refresh*Hotkey()` + `menuBarCoordinator.refreshTranscriptionHotkeyShortcuts()`. |
-| `Sources/MacParakeet/App/MenuBarCoordinator.swift` | Store `transcribeFileMenuItem` and `transcribeYouTubeMenuItem` as refs. Extract `applyChordShortcut(_:to:)` helper (generalize `applyMeetingHotkeyToMenuItem`). Expose `invokeTranscribeFileFlow()` and `invokeTranscribeYouTubeFlow()` from the existing `@objc` handlers (share impl). Add `refreshTranscriptionHotkeyShortcuts()`. Take new trigger providers in the initializer. |
-| `Sources/MacParakeet/Views/Settings/SettingsView.swift` | Inside `transcriptionCard`, above Speaker Detection, add two `HotkeyRecorderView` rows with validator closures that reject collisions with dictation, meeting, and the other transcription hotkey. Reuse existing `hotkeyConflictText` style for inline warnings. |
-| `Tests/MacParakeetTests/SettingsViewModelTests.swift` (or existing file) | Persistence round-trip for both new triggers. |
-| `Tests/MacParakeetTests/AppHotkeyCoordinatorTests.swift` (create if missing, else extend) | Conflict resolution: when file = dictation, file manager does not start. |
+| `Sources/SottoCore/STT/HotkeyTrigger.swift` | Add `fileTranscriptionDefaultsKey` and `youtubeTranscriptionDefaultsKey` constants. No new preset (default `.disabled`). |
+| `Sources/SottoCore/AppNotifications.swift` | Add `sottoFileHotkeyTriggerDidChange`, `sottoYouTubeHotkeyTriggerDidChange`. |
+| `Sources/SottoCore/Services/TelemetryEvent.swift` | Add 2 `TelemetrySetting` cases: `.fileTranscriptionHotkey`, `.youtubeTranscriptionHotkey`. Uses existing `settingChanged` event name → no website allowlist change needed. |
+| `Sources/SottoViewModels/SettingsViewModel.swift` | Add `fileTranscriptionHotkeyTrigger` and `youtubeTranscriptionHotkeyTrigger` stored properties with `didSet` persistence + notification post + telemetry. Initialize from defaults in `init`. |
+| `Sources/Sotto/App/AppHotkeyCoordinator.swift` | Add `fileHotkeyManager`, `youtubeHotkeyManager`; `setupFileHotkey()`, `setupYouTubeHotkey()`, `refreshFileHotkey()`, `refreshYouTubeHotkey()`. Extend conflict check so each setup bails if its trigger equals any other configured hotkey. Extend `refreshAllHotkeys` / `stopAll`. Add 2 new init callbacks. |
+| `Sources/Sotto/App/AppSettingsObserverCoordinator.swift` | Observe the 2 new notifications; route to 2 new callbacks. |
+| `Sources/Sotto/App/AppEnvironmentConfigurer.swift` | Pass 2 new closures into `AppHotkeyCoordinator` and expose on `Callbacks`. |
+| `Sources/Sotto/AppDelegate.swift` | 2 new handlers (`triggerFileTranscriptionFromHotkey`, `triggerYouTubeTranscriptionFromHotkey`) that call into exposed `MenuBarCoordinator` methods. Hook up 2 new `settingsObserverCoordinator` callbacks that call `hotkeyCoordinator.refresh*Hotkey()` + `menuBarCoordinator.refreshTranscriptionHotkeyShortcuts()`. |
+| `Sources/Sotto/App/MenuBarCoordinator.swift` | Store `transcribeFileMenuItem` and `transcribeYouTubeMenuItem` as refs. Extract `applyChordShortcut(_:to:)` helper (generalize `applyMeetingHotkeyToMenuItem`). Expose `invokeTranscribeFileFlow()` and `invokeTranscribeYouTubeFlow()` from the existing `@objc` handlers (share impl). Add `refreshTranscriptionHotkeyShortcuts()`. Take new trigger providers in the initializer. |
+| `Sources/Sotto/Views/Settings/SettingsView.swift` | Inside `transcriptionCard`, above Speaker Detection, add two `HotkeyRecorderView` rows with validator closures that reject collisions with dictation, meeting, and the other transcription hotkey. Reuse existing `hotkeyConflictText` style for inline warnings. |
+| `Tests/SottoTests/SettingsViewModelTests.swift` (or existing file) | Persistence round-trip for both new triggers. |
+| `Tests/SottoTests/AppHotkeyCoordinatorTests.swift` (create if missing, else extend) | Conflict resolution: when file = dictation, file manager does not start. |
 
 No spec or ADR change — additive convenience hotkeys.
 

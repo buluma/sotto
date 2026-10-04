@@ -84,14 +84,14 @@ The existing two-slot scheduler remains the right execution model:
 
 ## Quality and Feature-Parity Tradeoffs
 
-Parakeet remains the default because it is the best-proven MacParakeet path for
+Parakeet remains the default because it is the best-proven Sotto path for
 latency, punctuation, timestamps, and user-facing dictation feel.
 
 Nemotron is a promising meeting candidate because it is local and fast in the
 smoke benchmark, but it should stay Beta until tested on real meeting audio.
 Known caution areas:
 
-- Nemotron now maps FluidAudio token timings into MacParakeet word timestamps
+- Nemotron now maps FluidAudio token timings into Sotto word timestamps
   when the upstream runtime reports them, but coverage still needs real meeting
   audio validation before treating it as a default-quality path.
 - VAD-guided live chunking is currently Parakeet-only; Nemotron meetings use the

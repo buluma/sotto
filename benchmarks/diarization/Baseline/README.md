@@ -1,8 +1,8 @@
 # Frozen FluidAudio 0.15.7 baseline
 
 This standalone package reproduces the acoustic diarization configuration from
-MacParakeet commit `7ad569afae560266b37a0003e9e2b9f17a2dfa47`, in
-[`DiarizationService.swift`](../../../Sources/MacParakeetCore/Services/Diarization/DiarizationService.swift).
+Sotto commit `7ad569afae560266b37a0003e9e2b9f17a2dfa47`, in
+[`DiarizationService.swift`](../../../Sources/SottoCore/Services/Diarization/DiarizationService.swift).
 It resolves FluidAudio **exactly 0.15.7**, revision
 `41540ea237350afe5117a082b5c28eda642d0612`. A separate Swift package is necessary
 because the main app now resolves the candidate SDK; running its `community1`

@@ -6,7 +6,7 @@
 > contracts. When done, update the status row for this plan in `plans/README.md`.
 >
 > **Drift check (run first)**:
-> `git diff --stat 225c61dfc..HEAD -- spec Sources/CLI Sources/MacParakeetCore/Services/MeetingRecording Tests/CLITests Tests/MacParakeetTests/Services/MeetingRecording docs/cli-testing.md docs/telemetry.md plans/active/2026-06-18-meeting-audio-retention-ndays.md`
+> `git diff --stat 225c61dfc..HEAD -- spec Sources/CLI Sources/SottoCore/Services/MeetingRecording Tests/CLITests Tests/SottoTests/Services/MeetingRecording docs/cli-testing.md docs/telemetry.md plans/active/2026-06-18-meeting-audio-retention-ndays.md`
 > If any of those paths changed since this plan was written, compare the
 > "Current state" notes below against the live files before editing. If a
 > matching contract framework already exists, update it instead of creating a
@@ -27,7 +27,7 @@
 
 ## Why this matters
 
-MacParakeet already has several public or semi-public boundaries: meeting
+Sotto already has several public or semi-public boundaries: meeting
 artifact folders, recovery lock files, CLI JSON output, telemetry event names,
 and runtime settings. Today those contracts are split across code comments,
 ADRs, changelog entries, active plans, and tests. That works while one person
@@ -35,7 +35,7 @@ has all the context loaded, but it is fragile for agents, reviewers, and future
 features like retention sweeps or cross-meeting automation.
 
 The useful pattern is explicit boundary contracts that live close to the code
-and are kept honest by tests. MacParakeet already has the underlying meeting
+and are kept honest by tests. Sotto already has the underlying meeting
 recording, recovery, artifact, and CLI surfaces; this plan makes their contracts
 easier for future contributors and agents to find. The first slice uses narrow
 `spec/contracts/*.md` documents, each tied to specific XCTest coverage, for the
@@ -49,17 +49,17 @@ JSON/spec output.
   first-class local artifact contract and names `manifest.json`,
   `transcript.json`, `notes.md`, `prompt-results.json`, and
   `prompt-results/`.
-- `Sources/MacParakeetCore/Services/MeetingRecording/MeetingArtifactStore.swift:25-37`
+- `Sources/SottoCore/Services/MeetingRecording/MeetingArtifactStore.swift:25-37`
   defines `MeetingArtifactSnapshot`; `:68-74` defines schema/file constants;
   `:82-146` materializes files; `:157-190` writes prompt-result JSON and
   Markdown.
-- `Tests/MacParakeetTests/Services/MeetingRecording/MeetingArtifactStoreTests.swift:24-68`
+- `Tests/SottoTests/Services/MeetingRecording/MeetingArtifactStoreTests.swift:24-68`
   asserts the main artifact files and selected manifest/transcript fields;
   `:70-103` asserts stale notes and prompt-result files are removed.
-- `Sources/MacParakeetCore/Services/MeetingRecording/MeetingRecordingLockFileStore.swift:4-7`
+- `Sources/SottoCore/Services/MeetingRecording/MeetingRecordingLockFileStore.swift:4-7`
   models `recording` and `awaitingTranscription`; `:183-208` reads any valid
   lock in a folder; `:218-234` splits orphan vs active sessions by PID liveness.
-- `Sources/MacParakeetCore/Services/MeetingRecording/MeetingRecordingRecoveryService.swift:83-107`
+- `Sources/SottoCore/Services/MeetingRecording/MeetingRecordingRecoveryService.swift:83-107`
   discovers dead-PID recoveries; `:125-214` recovers audio; `:306-317` cleans an
   `awaitingTranscription` lock when a completed transcript already exists.
 - `plans/active/2026-06-18-meeting-audio-retention-ndays.md:75-86` already
@@ -171,7 +171,7 @@ JSON/spec output.
 
 - R11. The CLI contract documents the stable `--json` error envelope, exit
   codes, stdout/stderr split, `--json` vs `--envelope`, and the role of
-  `macparakeet-cli spec --json` as the machine-readable catalog.
+  `sotto-cli spec --json` as the machine-readable catalog.
 - R12. Tests assert `CLISpec` still exposes JSON conventions, failure-envelope
   fields, exit codes, and the agent-facing meeting commands.
 - R13. Tests assert mutually exclusive `--json`/`--envelope` flags stay
@@ -233,11 +233,11 @@ JSON/spec output.
   - `spec/contracts/meeting-artifacts-v1.md`
   - `spec/01-data-model.md`
   - `Sources/CLI/CHANGELOG.md`
-  - `Tests/MacParakeetTests/Services/MeetingRecording/MeetingArtifactStoreTests.swift`
+  - `Tests/SottoTests/Services/MeetingRecording/MeetingArtifactStoreTests.swift`
   - `Tests/CLITests/MeetingsCommandTests.swift`
 - **Details:**
   - Document producers: `MeetingArtifactStore`, meeting finalization,
-    `macparakeet-cli meetings artifact`, meeting notes writes, prompt-result
+    `sotto-cli meetings artifact`, meeting notes writes, prompt-result
     writes.
   - Document consumers: Finder/show-in-folder UI, CLI, hooks, future agents,
     support diagnostics.
@@ -270,8 +270,8 @@ JSON/spec output.
   - `spec/adr/019-crash-resilient-meeting-recording.md`
   - `spec/05-audio-pipeline.md`
   - `plans/active/2026-06-18-meeting-audio-retention-ndays.md`
-  - `Tests/MacParakeetTests/Services/MeetingRecording/MeetingRecordingLockFileStoreTests.swift`
-  - `Tests/MacParakeetTests/Services/MeetingRecording/MeetingRecordingRecoveryServiceTests.swift`
+  - `Tests/SottoTests/Services/MeetingRecording/MeetingRecordingLockFileStoreTests.swift`
+  - `Tests/SottoTests/Services/MeetingRecording/MeetingRecordingRecoveryServiceTests.swift`
 - **Details:**
   - Document lock fields and current schema-version rule.
   - State the three predicates separately:
@@ -315,7 +315,7 @@ JSON/spec output.
   - Document stdout/stderr rules, ISO-8601/sorted/pretty JSON encoder, exit
     codes, post-parse failure envelope, parse-time failure exception, and
     `--json`/`--envelope` exclusivity.
-  - State that `macparakeet-cli spec --json` is the machine-readable catalog
+  - State that `sotto-cli spec --json` is the machine-readable catalog
     for agent-facing commands, while `Sources/CLI/CHANGELOG.md` remains the
     release-facing history.
   - Add pointers from `docs/cli-testing.md` and the changelog contract section

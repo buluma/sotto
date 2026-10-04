@@ -2,7 +2,7 @@ import ArgumentParser
 import CoreAudio
 import Foundation
 import XCTest
-@testable import MacParakeetCore
+@testable import SottoCore
 @testable import CLI
 
 final class ModelLifecycleCommandTests: XCTestCase {
@@ -54,7 +54,7 @@ final class ModelLifecycleCommandTests: XCTestCase {
         XCTAssertEqual(report.status, "schema_skew")
         XCTAssertNil(report.dictations)
         XCTAssertNil(report.transcriptions)
-        XCTAssertTrue(report.error?.contains("Upgrade macparakeet-cli") == true)
+        XCTAssertTrue(report.error?.contains("Upgrade sotto-cli") == true)
         XCTAssertTrue(report.error?.contains("v99.0-future-app-migration") == true)
     }
 
@@ -115,7 +115,7 @@ final class ModelLifecycleCommandTests: XCTestCase {
     }
 
     func testLoadSelectableSpeechModelsReflectsSharedDefaults() throws {
-        let suiteName = makeIsolatedDefaultsSuite("com.macparakeet.tests.cli.models.")
+        let suiteName = makeIsolatedDefaultsSuite("com.sotto.tests.cli.models.")
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
         defaults.removePersistentDomain(forName: suiteName)
 
@@ -234,7 +234,7 @@ final class ModelLifecycleCommandTests: XCTestCase {
     }
 
     func testLoadSelectableSpeechModelsReadsDisplayMetadataFromCapabilityRegistry() throws {
-        let suiteName = makeIsolatedDefaultsSuite("com.macparakeet.tests.cli.models-registry.")
+        let suiteName = makeIsolatedDefaultsSuite("com.sotto.tests.cli.models-registry.")
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
         defaults.removePersistentDomain(forName: suiteName)
 
@@ -273,7 +273,7 @@ final class ModelLifecycleCommandTests: XCTestCase {
     }
 
     func testLoadSelectableSpeechModelsMarksSelectedParakeetVariant() throws {
-        let suiteName = makeIsolatedDefaultsSuite("com.macparakeet.tests.cli.model-list-parakeet.")
+        let suiteName = makeIsolatedDefaultsSuite("com.sotto.tests.cli.model-list-parakeet.")
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
         defaults.removePersistentDomain(forName: suiteName)
 
@@ -295,7 +295,7 @@ final class ModelLifecycleCommandTests: XCTestCase {
     }
 
     func testLoadSelectableSpeechModelsMarksSelectedNemotronVariant() throws {
-        let suiteName = makeIsolatedDefaultsSuite("com.macparakeet.tests.cli.model-list-nemotron.")
+        let suiteName = makeIsolatedDefaultsSuite("com.sotto.tests.cli.model-list-nemotron.")
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
         defaults.removePersistentDomain(forName: suiteName)
 
@@ -318,7 +318,7 @@ final class ModelLifecycleCommandTests: XCTestCase {
     }
 
     func testResolveSelectableSpeechModelAcceptsEngineAndWhisperIDs() throws {
-        let suiteName = makeIsolatedDefaultsSuite("com.macparakeet.tests.cli.model-select.")
+        let suiteName = makeIsolatedDefaultsSuite("com.sotto.tests.cli.model-select.")
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
         defaults.removePersistentDomain(forName: suiteName)
         SpeechEnginePreference.saveWhisperModelVariant(
@@ -436,7 +436,7 @@ final class ModelLifecycleCommandTests: XCTestCase {
     }
 
     func testParakeetDownloadVariantRecognizesParakeetIDs() throws {
-        let suiteName = makeIsolatedDefaultsSuite("com.macparakeet.tests.cli.parakeet-download.")
+        let suiteName = makeIsolatedDefaultsSuite("com.sotto.tests.cli.parakeet-download.")
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
         defaults.removePersistentDomain(forName: suiteName)
 
@@ -459,7 +459,7 @@ final class ModelLifecycleCommandTests: XCTestCase {
     }
 
     func testNemotronDownloadVariantRecognizesNemotronIDs() throws {
-        let suiteName = makeIsolatedDefaultsSuite("com.macparakeet.tests.cli.nemotron-download.")
+        let suiteName = makeIsolatedDefaultsSuite("com.sotto.tests.cli.nemotron-download.")
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
         defaults.removePersistentDomain(forName: suiteName)
 
@@ -566,7 +566,7 @@ final class ModelLifecycleCommandTests: XCTestCase {
     }
 
     func testValidateSelectableSpeechModelDownloadRejectsMissingNemotron() throws {
-        let suiteName = makeIsolatedDefaultsSuite("com.macparakeet.tests.cli.model-select-nemotron-missing.")
+        let suiteName = makeIsolatedDefaultsSuite("com.sotto.tests.cli.model-select-nemotron-missing.")
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
         defaults.removePersistentDomain(forName: suiteName)
 
@@ -601,7 +601,7 @@ final class ModelLifecycleCommandTests: XCTestCase {
     }
 
     func testValidateSelectableSpeechModelDownloadAllowsDownloadedNemotron() throws {
-        let suiteName = makeIsolatedDefaultsSuite("com.macparakeet.tests.cli.model-select-nemotron-downloaded.")
+        let suiteName = makeIsolatedDefaultsSuite("com.sotto.tests.cli.model-select-nemotron-downloaded.")
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
         defaults.removePersistentDomain(forName: suiteName)
 
@@ -627,7 +627,7 @@ final class ModelLifecycleCommandTests: XCTestCase {
     }
 
     func testValidateSelectableSpeechModelDownloadRejectsMissingCohere() throws {
-        let suiteName = makeIsolatedDefaultsSuite("com.macparakeet.tests.cli.model-select-cohere-missing.")
+        let suiteName = makeIsolatedDefaultsSuite("com.sotto.tests.cli.model-select-cohere-missing.")
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
         defaults.removePersistentDomain(forName: suiteName)
 
@@ -649,7 +649,7 @@ final class ModelLifecycleCommandTests: XCTestCase {
     }
 
     func testValidateSelectableSpeechModelDownloadRejectsCohereBelowMemoryFloor() throws {
-        let suiteName = makeIsolatedDefaultsSuite("com.macparakeet.tests.cli.model-select-cohere-memory.")
+        let suiteName = makeIsolatedDefaultsSuite("com.sotto.tests.cli.model-select-cohere-memory.")
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
         defaults.removePersistentDomain(forName: suiteName)
 
@@ -669,7 +669,7 @@ final class ModelLifecycleCommandTests: XCTestCase {
     }
 
     func testValidateSelectableSpeechModelDownloadAllowsDownloadedCohere() throws {
-        let suiteName = makeIsolatedDefaultsSuite("com.macparakeet.tests.cli.model-select-cohere-downloaded.")
+        let suiteName = makeIsolatedDefaultsSuite("com.sotto.tests.cli.model-select-cohere-downloaded.")
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
         defaults.removePersistentDomain(forName: suiteName)
 
@@ -914,8 +914,8 @@ final class ModelLifecycleCommandTests: XCTestCase {
 
         // Isolated suite: without it the status reads the live app's
         // preferences, so the test result depends on whichever speech
-        // engine the developer's MacParakeet install has selected.
-        let suiteName = makeIsolatedDefaultsSuite("com.macparakeet.tests.cli.models.")
+        // engine the developer's Sotto install has selected.
+        let suiteName = makeIsolatedDefaultsSuite("com.sotto.tests.cli.models.")
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
         defaults.removePersistentDomain(forName: suiteName)
 
@@ -1077,7 +1077,7 @@ final class ModelLifecycleCommandTests: XCTestCase {
     }
 
     func testLoadAudioInputDiagnosticsUsesInjectedDefaultsAndProviders() {
-        let suiteName = makeIsolatedDefaultsSuite("com.macparakeet.tests.cli.audio.")
+        let suiteName = makeIsolatedDefaultsSuite("com.sotto.tests.cli.audio.")
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
 
@@ -1121,7 +1121,7 @@ final class ModelLifecycleCommandTests: XCTestCase {
 
     private func temporaryDatabaseURL() -> URL {
         FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-\(UUID().uuidString).db")
+            .appendingPathComponent("sotto-cli-\(UUID().uuidString).db")
     }
 }
 
@@ -1216,8 +1216,8 @@ private actor StubDiarizationService: DiarizationServiceProtocol {
     func diarize(
         audioURL: URL,
         speakerConstraint: SpeakerDiarizationConstraint?
-    ) async throws -> MacParakeetDiarizationResult {
-        MacParakeetDiarizationResult(segments: [], speakerCount: 0, speakers: [])
+    ) async throws -> SottoDiarizationResult {
+        SottoDiarizationResult(segments: [], speakerCount: 0, speakers: [])
     }
 
     func prepareModels(onProgress: (@Sendable (String) -> Void)?) async throws {

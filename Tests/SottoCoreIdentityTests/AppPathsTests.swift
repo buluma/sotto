@@ -1,0 +1,231 @@
+import XCTest
+import FluidAudio
+@testable import SottoCore
+
+final class AppPathsTests: XCTestCase {
+
+    func testAppSupportDirContainsSotto() {
+        XCTAssertTrue(AppPaths.appSupportDir.hasSuffix("Sotto"))
+    }
+
+    func testDatabasePathIsInsideAppSupport() {
+        XCTAssertTrue(AppPaths.databasePath.hasPrefix(AppPaths.appSupportDir))
+        XCTAssertTrue(AppPaths.databasePath.hasSuffix("sotto.db"))
+    }
+
+    func testDictationsDirIsInsideAppSupport() {
+        XCTAssertTrue(AppPaths.dictationsDir.hasPrefix(AppPaths.appSupportDir))
+        XCTAssertTrue(AppPaths.dictationsDir.hasSuffix("dictations"))
+    }
+
+    func testBinDirIsInsideAppSupport() {
+        XCTAssertTrue(AppPaths.binDir.hasPrefix(AppPaths.appSupportDir))
+        XCTAssertTrue(AppPaths.binDir.hasSuffix("bin"))
+    }
+
+    func testYtDlpBinaryPathIsInsideBinDir() {
+        XCTAssertTrue(AppPaths.ytDlpBinaryPath.hasPrefix(AppPaths.binDir))
+        XCTAssertTrue(AppPaths.ytDlpBinaryPath.hasSuffix("yt-dlp"))
+    }
+
+    func testYouTubeDownloadsDirIsInsideAppSupport() {
+        XCTAssertTrue(AppPaths.youtubeDownloadsDir.hasPrefix(AppPaths.appSupportDir))
+        XCTAssertTrue(AppPaths.youtubeDownloadsDir.hasSuffix("youtube-downloads"))
+    }
+
+    func testMeetingRecordingsDirIsInsideAppSupport() {
+        XCTAssertTrue(AppPaths.defaultMeetingRecordingsDir.hasPrefix(AppPaths.appSupportDir))
+        XCTAssertTrue(AppPaths.defaultMeetingRecordingsDir.hasSuffix("meeting-recordings"))
+    }
+
+    func testFluidAudioModelsDirUsesFluidAudioDefaultWithoutDebugOverride() {
+        XCTAssertEqual(
+            AppPaths.resolvedFluidAudioModelsDir(environment: [:]),
+            MLModelConfigurationUtils.defaultModelsDirectory()
+        )
+    }
+
+    func testMeetingRecordingsDirCanBeConfiguredFromDefaults() {
+        let suiteName = makeIsolatedDefaultsSuite("sotto.test.paths.")
+        let defaults = UserDefaults(suiteName: suiteName)!
+
+        XCTAssertEqual(
+            AppPaths.configuredMeetingRecordingsDir(defaults: defaults),
+            AppPaths.defaultMeetingRecordingsDir
+        )
+
+        let custom = FileManager.default.temporaryDirectory
+            .appendingPathComponent("custom-meeting-artifacts")
+            .path
+        defaults.set(custom, forKey: AppPaths.meetingArtifactsFolderKey)
+        XCTAssertEqual(AppPaths.configuredMeetingRecordingsDir(defaults: defaults), custom)
+    }
+
+    func testDeveloperAppStateDirOverridesAppSupport() {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("sotto-debug-state-\(UUID().uuidString)", isDirectory: true)
+            .standardizedFileURL
+        let environment = [AppPaths.debugAppStateDirEnvironmentKey: root.path]
+
+        XCTAssertEqual(AppPaths.resolvedAppSupportDir(environment: environment), root.path)
+        XCTAssertEqual(AppPaths.defaultMeetingRecordingsDir(environment: environment), root.appendingPathComponent("meeting-recordings").path)
+    }
+
+    func testDevBundleWithoutOverrideUsesDevStateNotStableData() {
+        let applicationSupport = FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].path
+        XCTAssertEqual(
+            AppPaths.resolvedAppSupportDir(
+                environment: [:],
+                bundleIdentifier: AppPaths.developmentBundleIdentifier
+            ),
+            applicationSupport + "/Sotto-Dev"
+        )
+        XCTAssertEqual(
+            AppPaths.resolvedAppSupportDir(
+                environment: [:],
+                bundleIdentifier: "com.sotto.Sotto"
+            ),
+            applicationSupport + "/Sotto"
+        )
+
+        // An explicit override still wins for the Dev bundle.
+        let custom = FileManager.default.temporaryDirectory
+            .appendingPathComponent("sotto-debug-state-\(UUID().uuidString)", isDirectory: true)
+            .standardizedFileURL
+        XCTAssertEqual(
+            AppPaths.resolvedAppSupportDir(
+                environment: [AppPaths.debugAppStateDirEnvironmentKey: custom.path],
+                bundleIdentifier: AppPaths.developmentBundleIdentifier
+            ),
+            custom.path
+        )
+    }
+
+    func testDeveloperAppStateDirScopesFluidAudioModelsInsideThrowawayRoot() {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("sotto-debug-state-\(UUID().uuidString)", isDirectory: true)
+            .standardizedFileURL
+        let environment = [AppPaths.debugAppStateDirEnvironmentKey: root.path]
+        let expectedModelsDir = root
+            .appendingPathComponent("FluidAudio", isDirectory: true)
+            .appendingPathComponent("Models", isDirectory: true)
+
+        XCTAssertEqual(AppPaths.resolvedFluidAudioModelsDir(environment: environment), expectedModelsDir)
+        XCTAssertEqual(
+            AppPaths.resolvedFluidAudioModelDirectory(forASRVersion: .v3, environment: environment),
+            expectedModelsDir.appendingPathComponent(Repo.parakeetV3.folderName, isDirectory: true)
+        )
+        XCTAssertEqual(
+            AppPaths.resolvedFluidAudioModelDirectory(for: .vad, environment: environment),
+            expectedModelsDir.appendingPathComponent(Repo.vad.folderName, isDirectory: true)
+        )
+    }
+
+    func testDeveloperAppStateDirKeepsMeetingRecordingsInsideThrowawayRoot() {
+        let suiteName = makeIsolatedDefaultsSuite("sotto.test.paths.")
+        let defaults = UserDefaults(suiteName: suiteName)!
+
+        let realLookingCustom = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("SottoRealArtifacts")
+            .path
+        defaults.set(realLookingCustom, forKey: AppPaths.meetingArtifactsFolderKey)
+
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("sotto-debug-state-\(UUID().uuidString)", isDirectory: true)
+            .standardizedFileURL
+        let environment = [AppPaths.debugAppStateDirEnvironmentKey: root.path]
+
+        XCTAssertEqual(
+            AppPaths.configuredMeetingRecordingsDir(defaults: defaults, environment: environment),
+            root.appendingPathComponent("meeting-recordings").path
+        )
+    }
+    func testLogsDirIsInsideUserLogs() {
+        XCTAssertTrue(AppPaths.logsDir.contains("Library/Logs"))
+        XCTAssertTrue(AppPaths.logsDir.hasSuffix("Sotto"))
+    }
+
+    func testVoiceControlLogsDirIsInsideLogsDir() {
+        XCTAssertTrue(AppPaths.voiceControlLogsDir.hasPrefix(AppPaths.logsDir))
+        XCTAssertTrue(AppPaths.voiceControlLogsDir.hasSuffix("voice-control"))
+    }
+
+    func testTempDirContainsSotto() {
+        XCTAssertTrue(AppPaths.tempDir.contains("sotto"))
+    }
+
+    func testEnsureDirectoriesCreatesAll() throws {
+        // Use a unique temp directory to avoid polluting real app support
+        let testRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("sotto_test_\(UUID().uuidString)")
+        let fm = FileManager.default
+
+        // Create subdirectories that mirror the AppPaths structure
+        let appSupportSubdir = testRoot.appendingPathComponent("AppSupport")
+        let dictationsSubdir = testRoot.appendingPathComponent("dictations")
+        let tempSubdir = testRoot.appendingPathComponent("temp")
+
+        defer {
+            try? fm.removeItem(at: testRoot)
+        }
+
+        for dir in [appSupportSubdir, dictationsSubdir, tempSubdir] {
+            try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
+
+        XCTAssertTrue(fm.fileExists(atPath: appSupportSubdir.path))
+        XCTAssertTrue(fm.fileExists(atPath: dictationsSubdir.path))
+        XCTAssertTrue(fm.fileExists(atPath: tempSubdir.path))
+
+        // Also verify the real ensureDirectories doesn't throw
+        // (it may create real dirs, but those are expected app directories)
+        try AppPaths.ensureDirectories()
+    }
+
+    // MARK: - appDefaults(bundleIdentifier:)
+
+    func testAppDefaultsReturnsStandardWhenBundleIdentifierMatchesSuite() {
+        XCTAssertTrue(
+            AppPaths.appDefaults(bundleIdentifier: AppPaths.preferencesSuiteName)
+                === UserDefaults.standard
+        )
+    }
+
+    // The two shared-suite cases verify the resolved instance against
+    // `sharedAppDefaults()` by writing through it, which targets the real
+    // `com.sotto.Sotto` domain: that is the only way to observe
+    // which suite an opaque `UserDefaults` wraps. The keys carry the
+    // `sotto.tests.` prefix so any leftover from a killed test run is
+    // identifiable, and the `defer` cleanup does not run on SIGKILL/abort.
+    private func assertResolvesToSharedSuite(
+        _ resolved: UserDefaults,
+        _ message: String
+    ) {
+        let key = "sotto.tests.AppPathsTests.\(UUID().uuidString)"
+        let value = UUID().uuidString
+        let shared = AppPaths.sharedAppDefaults()
+        defer {
+            shared.removeObject(forKey: key)
+        }
+
+        resolved.set(value, forKey: key)
+
+        XCTAssertFalse(resolved === UserDefaults.standard, message)
+        XCTAssertEqual(shared.string(forKey: key), value, message)
+    }
+
+    func testAppDefaultsReturnsSharedSuiteWhenBundleIdentifierIsNil() {
+        assertResolvesToSharedSuite(
+            AppPaths.appDefaults(bundleIdentifier: nil),
+            "nil bundle identifier resolves to the shared suite"
+        )
+    }
+
+    func testAppDefaultsReturnsSharedSuiteForUnrelatedBundleIdentifier() {
+        assertResolvesToSharedSuite(
+            AppPaths.appDefaults(bundleIdentifier: "com.sotto.tests.other"),
+            "unrelated bundle identifier resolves to the shared suite"
+        )
+    }
+}

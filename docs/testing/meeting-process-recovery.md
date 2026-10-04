@@ -11,20 +11,20 @@ and passed this dedicated test; see [hosted verification](#hosted-verification).
 
 Run from the worktree that owns the code, on an Apple Silicon Mac with Xcode selected.
 The real recovery path requires FFmpeg: install it with `brew install ffmpeg`
-and keep it in `PATH`, or set `MACPARAKEET_FFMPEG_PATH` to the executable.
+and keep it in `PATH`, or set `SOTTO_FFMPEG_PATH` to the executable.
 The behavior CI job installs this prerequisite before testing.
 
 Run the journey:
 
 ```sh
-MACPARAKEET_CRASH_RECOVERY_TESTS=1 swift test --jobs 4 \
+SOTTO_CRASH_RECOVERY_TESTS=1 swift test --jobs 4 \
   --filter MeetingRecordingCrashRecoveryTests/testKilledRecordingRecoversInFreshProcessAndRemainsIdempotent
 ```
 
 After that build, repeat the same journey without recompiling:
 
 ```sh
-MACPARAKEET_CRASH_RECOVERY_TESTS=1 swift test --skip-build \
+SOTTO_CRASH_RECOVERY_TESTS=1 swift test --skip-build \
   --filter MeetingRecordingCrashRecoveryTests/testKilledRecordingRecoversInFreshProcessAndRemainsIdempotent
 ```
 
@@ -93,7 +93,7 @@ installs FFmpeg in CI and uses the existing mock in that unit fixture.
 
 In successful run [36221389691](https://github.com/moona3k/macparakeet/actions/runs/36221389691),
 the dedicated `Meeting Process Recovery` step ran with
-`MACPARAKEET_CRASH_RECOVERY_TESTS=1` and executed **one test, zero failures,
+`SOTTO_CRASH_RECOVERY_TESTS=1` and executed **one test, zero failures,
 9.541 seconds**. The step occupied 05:55:00–05:55:21 UTC on 26 September 2026,
 including command overhead. This is explicit execution evidence, not an opt-in
 skip inferred from the ordinary suite. PR [#1173](https://github.com/moona3k/macparakeet/pull/1173)

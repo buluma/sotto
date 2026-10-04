@@ -7,7 +7,7 @@
       "--deep",
       "--strict",
       "--verbose=2",
-      "<REPO>/dist/MacParakeet.app"
+      "<REPO>/dist/Sotto.app"
     ],
     "started_at_utc": "2026-09-07T23:35:40.809001+00:00",
     "elapsed_seconds": 0.65,
@@ -21,7 +21,7 @@
       "--verify",
       "--strict",
       "--verbose=2",
-      "<REPO>/dist/MacParakeet.dmg"
+      "<REPO>/dist/Sotto.dmg"
     ],
     "started_at_utc": "2026-09-07T23:35:41.459299+00:00",
     "elapsed_seconds": 0.089,
@@ -34,7 +34,7 @@
       "xcrun",
       "stapler",
       "validate",
-      "<REPO>/dist/MacParakeet.dmg"
+      "<REPO>/dist/Sotto.dmg"
     ],
     "started_at_utc": "2026-09-07T23:35:41.548714+00:00",
     "elapsed_seconds": 0.27,
@@ -51,7 +51,7 @@
       "--context",
       "context:primary-signature",
       "--verbose=4",
-      "<REPO>/dist/MacParakeet.dmg"
+      "<REPO>/dist/Sotto.dmg"
     ],
     "started_at_utc": "2026-09-07T23:35:41.818730+00:00",
     "elapsed_seconds": 0.197,
@@ -63,7 +63,7 @@
     "argv": [
       "hdiutil",
       "verify",
-      "<REPO>/dist/MacParakeet.dmg"
+      "<REPO>/dist/Sotto.dmg"
     ],
     "started_at_utc": "2026-09-07T23:35:42.015575+00:00",
     "elapsed_seconds": 3.987,
@@ -75,7 +75,7 @@
     "argv": [
       "hdiutil",
       "attach",
-      "<REPO>/dist/MacParakeet.dmg",
+      "<REPO>/dist/Sotto.dmg",
       "-readonly",
       "-nobrowse",
       "-mountpoint",

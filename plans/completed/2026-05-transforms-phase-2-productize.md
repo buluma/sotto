@@ -20,14 +20,14 @@
 
 The Transforms spike (PR #278) validated the AX-capture → LLM → in-place-replace primitive end-to-end against a hardcoded Polish prompt on Opt+Ctrl+1, with all the hard-won correctness work already landed: clipboard backup/restore, AX-write with paste-back fallback, layout-aware Cmd+C/V resolution, stale-progress guarding by run-ID, premium "rose loader" pill with patience-threshold label reveal.
 
-**Phase 2 is now: productize the surface.** Wire `Prompt.category == .transform` rows to the executor through a new `TransformsHotkeyRegistry` (single event tap, dispatch by combo), ship Polish / Distill / Decide as built-in transforms on Opt+1 / Opt+2 / Opt+3, build a new top-level **Transforms** tab with a premium *Create your own* editor, expose the feature through a new `macparakeet-cli transforms` subcommand tree so coding agents can drive and test it headlessly, gate it behind a single `AppFeatures.transformsEnabled` flag, instrument per-name telemetry.
+**Phase 2 is now: productize the surface.** Wire `Prompt.category == .transform` rows to the executor through a new `TransformsHotkeyRegistry` (single event tap, dispatch by combo), ship Polish / Distill / Decide as built-in transforms on Opt+1 / Opt+2 / Opt+3, build a new top-level **Transforms** tab with a premium *Create your own* editor, expose the feature through a new `sotto-cli transforms` subcommand tree so coding agents can drive and test it headlessly, gate it behind a single `AppFeatures.transformsEnabled` flag, instrument per-name telemetry.
 
 Three deliberate cuts up front:
 1. **No global "Opt in" toggle** (rejected by user 2026-05-12). Always-on; gating happens through whether a user has bound a hotkey to a Transform — same mental model as the dictation hotkey itself.
 2. **No diff viewer / rule toggles / per-Transform model picker.** Phase 3 polish. macOS Cmd+Z is the v1 escape hatch.
 3. **No voice-driven trigger.** Owned by `2026-05-voice-command-agent-mode.md`.
 
-The bar is **premium, enterprise-grade UI/UX** that reads as the third member of an existing MacParakeet visual system (the dictation overlay, the meeting pill, the Transforms pill), not as a WisprFlow pixel-copy. The reference screenshots inform the *shape* of the surface; our visual language fills it in.
+The bar is **premium, enterprise-grade UI/UX** that reads as the third member of an existing Sotto visual system (the dictation overlay, the meeting pill, the Transforms pill), not as a WisprFlow pixel-copy. The reference screenshots inform the *shape* of the surface; our visual language fills it in.
 
 ---
 
@@ -37,18 +37,18 @@ PR #278 + the three follow-up commits delivered a substantial foundation. From t
 
 | Layer | Status | Path |
 |---|---|---|
-| `SelectionCaptureService` (AX-first + 250ms clipboard hijack with snapshot) | Built | `Sources/MacParakeetCore/Services/System/SelectionCaptureService.swift` |
-| `SelectionReplacementService` (AX-write + Cmd+V paste-back + clipboard restore) | Built | `Sources/MacParakeetCore/Services/System/SelectionReplacementService.swift` |
-| `TransformExecutor` (capture → LLM stream → replace; cooperative cancellation; restore-on-abandon) | Built | `Sources/MacParakeetCore/Services/Transforms/TransformExecutor.swift` |
-| `TransformPrompts.polish` (hardcoded spike prompt) | Built | `Sources/MacParakeetCore/Services/Transforms/TransformPrompts.swift` |
-| `PasteShortcutKeyResolver` (layout-aware Cmd+C/V resolution) | Built | `Sources/MacParakeetCore/Services/PasteShortcutKeyResolver.swift` |
-| Floating progress panel — bottom-anchored Capsule, rhodonea (5-petal squared rose, `r(θ) = sin²(5θ/2)`) loader, brand checkmark, "Still polishing…" patience reveal at 5s | Built | `Sources/MacParakeet/Views/Transforms/TransformSpikeProgressPanelController.swift` |
-| `TransformsSpikeCoordinator` (Opt+Ctrl+1 hotkey, run-ID stale-event guarding, panel lifecycle) | Built | `Sources/MacParakeet/App/TransformsSpikeCoordinator.swift` |
-| LLM service path: `LLMService.transform / transformStream / transformDetailed` | Built (pre-spike) | `Sources/MacParakeetCore/Services/LLM/LLMService.swift` |
-| CLI `macparakeet-cli llm transform --prompt … <input>` | Built (pre-spike) | `Sources/CLI/Commands/LLMTransformCommand.swift` |
-| Feature flag `AppFeatures.transformsSpikeEnabled` (default `false`) | Built | `Sources/MacParakeetCore/AppFeatures.swift:32` |
-| `Prompt.Category.transform` enum case (built-ins seeded by completed Phase 2) | Built (pre-spike) | `Sources/MacParakeetCore/Models/Prompt.swift:19` |
-| Test coverage: capture, replacement, executor, paste resolver | Built | `Tests/MacParakeetTests/Services/{System,Transforms}/…` |
+| `SelectionCaptureService` (AX-first + 250ms clipboard hijack with snapshot) | Built | `Sources/SottoCore/Services/System/SelectionCaptureService.swift` |
+| `SelectionReplacementService` (AX-write + Cmd+V paste-back + clipboard restore) | Built | `Sources/SottoCore/Services/System/SelectionReplacementService.swift` |
+| `TransformExecutor` (capture → LLM stream → replace; cooperative cancellation; restore-on-abandon) | Built | `Sources/SottoCore/Services/Transforms/TransformExecutor.swift` |
+| `TransformPrompts.polish` (hardcoded spike prompt) | Built | `Sources/SottoCore/Services/Transforms/TransformPrompts.swift` |
+| `PasteShortcutKeyResolver` (layout-aware Cmd+C/V resolution) | Built | `Sources/SottoCore/Services/PasteShortcutKeyResolver.swift` |
+| Floating progress panel — bottom-anchored Capsule, rhodonea (5-petal squared rose, `r(θ) = sin²(5θ/2)`) loader, brand checkmark, "Still polishing…" patience reveal at 5s | Built | `Sources/Sotto/Views/Transforms/TransformSpikeProgressPanelController.swift` |
+| `TransformsSpikeCoordinator` (Opt+Ctrl+1 hotkey, run-ID stale-event guarding, panel lifecycle) | Built | `Sources/Sotto/App/TransformsSpikeCoordinator.swift` |
+| LLM service path: `LLMService.transform / transformStream / transformDetailed` | Built (pre-spike) | `Sources/SottoCore/Services/LLM/LLMService.swift` |
+| CLI `sotto-cli llm transform --prompt … <input>` | Built (pre-spike) | `Sources/CLI/Commands/LLMTransformCommand.swift` |
+| Feature flag `AppFeatures.transformsSpikeEnabled` (default `false`) | Built | `Sources/SottoCore/AppFeatures.swift:32` |
+| `Prompt.Category.transform` enum case (built-ins seeded by completed Phase 2) | Built (pre-spike) | `Sources/SottoCore/Models/Prompt.swift:19` |
+| Test coverage: capture, replacement, executor, paste resolver | Built | `Tests/SottoTests/Services/{System,Transforms}/…` |
 
 **What the spike intentionally skipped:**
 
@@ -69,7 +69,7 @@ Phase 2 closes every one of those gaps.
 
 A new top-level sidebar item (sibling of Vocabulary, Library, Settings — IA confirmed by the design doc). The tab contains:
 
-1. **Hero card** — short framing of what Transforms does, with a *Try it out* and *How it works* affordance. Reference screenshots show a screenshot-collage of target apps (Slack, Notes, Gmail, Linear, ChatGPT, Claude, …) — we'll do our version using MacParakeet's brand visual vocabulary, not a literal collage. The hero is not the toggle; **there is no global toggle.**
+1. **Hero card** — short framing of what Transforms does, with a *Try it out* and *How it works* affordance. Reference screenshots show a screenshot-collage of target apps (Slack, Notes, Gmail, Linear, ChatGPT, Claude, …) — we'll do our version using Sotto's brand visual vocabulary, not a literal collage. The hero is not the toggle; **there is no global toggle.**
 
 2. **My Transforms** grid — three-up cards by default, each showing:
    - Bound hotkey badge (e.g. `⌥ Opt 1`) in our existing key-cap style (same atom as the Discover sidebar / Settings)
@@ -105,7 +105,7 @@ The pill already exists from the spike — bottom-anchored Capsule, rhodonea loa
 
 The reference screenshots are baseline references, not pixel targets. The bar we're building to:
 
-- **Visual continuity.** Every new component reuses existing atoms (key-cap chip, card chrome, button roles via `parakeetAction`, sacred-geometry indicators) rather than inventing parallel ones. Same rule as the spike pill polish commit `94f53067`.
+- **Visual continuity.** Every new component reuses existing atoms (key-cap chip, card chrome, button roles via `sottoAction`, sacred-geometry indicators) rather than inventing parallel ones. Same rule as the spike pill polish commit `94f53067`.
 - **Empty/error states are first-class.** No empty list of transforms (built-ins are always seeded). No-provider state is calmer than the running state, not louder.
 - **Microinteractions are considered.** Hover reveals are eased (not instant), shortcut-recording state has its own visual emphasis, save confirmations are tactile.
 - **Typography hierarchy is intentional.** Display serif for the title, body sans for descriptions, monospace only inside the prompt-body editor.
@@ -152,7 +152,7 @@ Reconciler updates: the existing prompt reconciler gains awareness of `.transfor
 
 ### TransformsHotkeyRegistry (single event tap, N transforms)
 
-New actor in `Sources/MacParakeetCore/Services/Transforms/TransformsHotkeyRegistry.swift`. Owns one process-wide event tap and a `[KeyboardShortcut: Prompt.ID]` dispatch table. Re-registers on prompt repository updates via NotificationCenter.
+New actor in `Sources/SottoCore/Services/Transforms/TransformsHotkeyRegistry.swift`. Owns one process-wide event tap and a `[KeyboardShortcut: Prompt.ID]` dispatch table. Re-registers on prompt repository updates via NotificationCenter.
 
 Collision detection (lifted from the design doc §4):
 - Modifier required. Bare keys are rejected with a clear error in the recorder UI.
@@ -169,26 +169,26 @@ The existing `TransformsSpikeCoordinator` is **replaced** by a new `TransformsCo
 
 ### CLI surface
 
-New `macparakeet-cli transforms` parent command with subcommands. CLI semver bumps to a new minor — see `Sources/CLI/CHANGELOG.md`.
+New `sotto-cli transforms` parent command with subcommands. CLI semver bumps to a new minor — see `Sources/CLI/CHANGELOG.md`.
 
 ```
-macparakeet-cli transforms list [--json]
+sotto-cli transforms list [--json]
     # List all transforms with id, name, hotkey, isBuiltIn.
 
-macparakeet-cli transforms show <name|id> [--json]
+sotto-cli transforms show <name|id> [--json]
     # Print full transform definition including prompt body.
 
-macparakeet-cli transforms run <name|id> [--input FILE | --stdin] [--json] [--stream]
+sotto-cli transforms run <name|id> [--input FILE | --stdin] [--json] [--stream]
     # Run a transform's prompt body against text input. Uses the saved
     # prompt body, not an ad-hoc one. CLI takes text input directly —
     # there is no AX-capture from the CLI surface. Output goes to
     # stdout.
 
-macparakeet-cli transforms create --name "..." --prompt "..." [--shortcut "..."] [--running-label "..."] [--json]
+sotto-cli transforms create --name "..." --prompt "..." [--shortcut "..."] [--running-label "..."] [--json]
     # Headless install of a new Transform. Useful for agent-driven
     # provisioning. --shortcut format: "opt+1", "cmd+shift+p", etc.
 
-macparakeet-cli transforms delete <name|id> [--json]
+sotto-cli transforms delete <name|id> [--json]
     # Delete a non-built-in Transform. Refuses to delete built-ins
     # (use `transforms reset` if we add one in a follow-up).
 ```
@@ -204,7 +204,7 @@ Two events per ADR-012's allowlist convention:
 - `transform_executed` — fired on successful completion. Properties: `transform_name` (built-in name or `custom`), `capture_path` (`ax | clipboard`), `replace_path` (`ax | clipboardPaste`), `llm_ms`, `total_ms`. **No** prompt body, **no** selected text, **no** output text. Custom-transform names are not transmitted (telemetry sees `custom` for any non-built-in).
 - `transform_failed` — fired on failure. Properties: `transform_name` (or `custom`), `reason` (one of `empty_selection | llm_not_configured | llm_failed | replacement_failed | cancelled`). No error message bodies.
 
-**Both events require a two-repo update** before they fire in production: add to `ALLOWED_EVENTS` in `macparakeet-website/functions/api/telemetry.ts` (per `memory/feedback_telemetry_allowlist.md`). The Worker rejects entire batches if any event is unknown — co-batched valid events get silently dropped. This is flagged as a release-gate step in §"Rollout."
+**Both events require a two-repo update** before they fire in production: add to `ALLOWED_EVENTS` in `sotto-website/functions/api/telemetry.ts` (per `memory/feedback_telemetry_allowlist.md`). The Worker rejects entire batches if any event is unknown — co-batched valid events get silently dropped. This is flagged as a release-gate step in §"Rollout."
 
 ### Feature flag
 
@@ -255,7 +255,7 @@ Single sprint, single branch, multiple logical commits.
 
 ### Phase E — Rollout (post-merge, owner-driven)
 
-1. Update `ALLOWED_EVENTS` in `macparakeet-website/functions/api/telemetry.ts`. Deploy.
+1. Update `ALLOWED_EVENTS` in `sotto-website/functions/api/telemetry.ts`. Deploy.
 2. In a follow-up commit on this branch (or a fresh micro-PR), flip `transformsEnabled = true`.
 3. Tag a release point that includes both the allowlist deploy timestamp + the flag flip.
 
@@ -293,7 +293,7 @@ All tests deterministic. No network. LLM mocked via `LLMServiceProtocol`.
 ## Rollout & gates
 
 1. **Merge gate:** `swift test` green, dev-build smoke pass, ADR-022 finalized, spec/kernel updated, plan archived to `plans/completed/`.
-2. **Pre-ship gate (telemetry):** `macparakeet-website` Worker `ALLOWED_EVENTS` deployment includes `transform_executed` + `transform_failed`. Confirmed via curl test.
+2. **Pre-ship gate (telemetry):** `sotto-website` Worker `ALLOWED_EVENTS` deployment includes `transform_executed` + `transform_failed`. Confirmed via curl test.
 3. **Ship gate:** `AppFeatures.transformsEnabled = true` flip. Single small commit.
 4. **Post-ship:** monitor `transform_executed` / `transform_failed` counts for 48 hours. Compare to spike's `llm_transform_used` baseline. Flag any unexpected `reason=replacement_failed` spike (host-app AX coverage regression).
 

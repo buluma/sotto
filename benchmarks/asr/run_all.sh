@@ -15,7 +15,7 @@ PY="${PY:-python3}"                         # set PY=venv/bin/python3 to use the
 BOOT="${BOOT:-2000}"; SEED="${SEED:-1234}"  # bootstrap resamples / RNG seed
 COHERE_SPEED_N="${COHERE_SPEED_N:-12}"      # Cohere is memory/cold-start heavy
 # Heavy-path assets (override as needed):
-MP_CLI="${MP_CLI:-$HOME/code/macparakeet/.build/release/macparakeet-cli}"
+MP_CLI="${MP_CLI:-$HOME/code/sotto/.build/release/sotto-cli}"
 FA_CLI="${FA_CLI:-$HOME/asr-bench/FluidAudio-0154/.build/release/fluidaudiocli}"
 COHERE_MODEL="${COHERE_MODEL:-$HOME/asr-bench/cohere-coreml/q8}"
 LS_CLEAN="${LS_CLEAN:-$HOME/asr-bench/LibriSpeech/test-clean}"
@@ -55,10 +55,10 @@ speed() {
 }
 
 transcribe() {
-  echo "== regenerate English hypotheses via macparakeet-cli (full sets) =="
+  echo "== regenerate English hypotheses via sotto-cli (full sets) =="
   for sub in test-clean test-other; do
     for e in parakeet-v2 parakeet-v3 parakeet-unified nemotron-en nemotron-multi whisper cohere; do
-      "$PY" run_macparakeet.py --cli "$MP_CLI" \
+      "$PY" run_sotto.py --cli "$MP_CLI" \
         --dataset-dir "$HOME/asr-bench/LibriSpeech/$sub" --dataset-name "$sub" \
         --engine "$e" --records "results/full/${e}__${sub}.jsonl"
     done

@@ -1,44 +1,44 @@
 # Brief 02 — Shared preferences and LLM config robustness
 
 Investigated against HEAD `fb186349` (`feat/cli-gui-parity`, based on
-`origin/main`). Ground truth: `Sources/MacParakeetCore/Services/AppPaths.swift`,
-`Sources/CLI/Commands/CLIHelpers.swift`, `Sources/MacParakeetCore/Services/LLM/*`,
+`origin/main`). Ground truth: `Sources/SottoCore/Services/AppPaths.swift`,
+`Sources/CLI/Commands/CLIHelpers.swift`, `Sources/SottoCore/Services/LLM/*`,
 `Sources/CLI/Commands/*.swift`, `Tests/CLITests/CLIHelpersTests.swift`,
 `Tests/CLITests/MeetingSplitCommandTests.swift`.
 
 ## How the shared-preferences mechanism actually works
 
 `AppPaths.appDefaults(bundleIdentifier: Bundle.main.bundleIdentifier)`
-(`Sources/MacParakeetCore/Services/AppPaths.swift:98-105`) is the resolver:
+(`Sources/SottoCore/Services/AppPaths.swift:98-105`) is the resolver:
 if the calling process's own bundle identifier already equals
-`com.macparakeet.MacParakeet` (the running GUI app, or an executable embedded
+`com.sotto.Sotto` (the running GUI app, or an executable embedded
 in its bundle), it returns `.standard` (already the right domain). Otherwise
 (a standalone binary such as the Homebrew CLI, whose `Bundle.main.bundleIdentifier`
 is `nil` — the CLI target has no `Info.plist`, confirmed via `Package.swift:138-144`)
-it opens the named suite `UserDefaults(suiteName: "com.macparakeet.MacParakeet")`
+it opens the named suite `UserDefaults(suiteName: "com.sotto.Sotto")`
 explicitly. This asymmetry is intentional and tested
 (`Tests/CLITests/CLIHelpersTests.swift:9-29`,
 `Tests/CLITests/MeetingSplitCommandTests.swift:427-462`).
 
-`macParakeetAppDefaults()` (`Sources/CLI/Commands/CLIHelpers.swift:16-20`) is
+`sottoAppDefaults()` (`Sources/CLI/Commands/CLIHelpers.swift:16-20`) is
 the CLI-local alias for that resolver. The established convention across the
 codebase: types that need a preferences domain (`SpeechEnginePreference`,
 `UserDefaultsAppRuntimePreferences`, `AppPreferences`, `AppPaths`) default
 their `defaults:` parameter to `.standard` for the GUI's convenience, and
-**every CLI call site is expected to explicitly pass `macParakeetAppDefaults()`
+**every CLI call site is expected to explicitly pass `sottoAppDefaults()`
 (or `AppPaths.appDefaults()`)** to override that default. This is a
 call-site discipline, not something the type system enforces.
 
 ## Hypothesis 1 — CONFIRMED BUG: `LLMConfigStore`/`LocalCLIConfigStore` break this discipline in exactly two CLI call sites
 
-`LLMConfigStore` (`Sources/MacParakeetCore/Services/LLM/LLMConfigStore.swift:25-31`)
-and `LocalCLIConfigStore` (`Sources/MacParakeetCore/Services/LLM/LocalCLIExecutor.swift:104-111`)
+`LLMConfigStore` (`Sources/SottoCore/Services/LLM/LLMConfigStore.swift:25-31`)
+and `LocalCLIConfigStore` (`Sources/SottoCore/Services/LLM/LocalCLIExecutor.swift:104-111`)
 both default `defaults: UserDefaults = .standard` — consistent with the
 convention above. `LLMService`'s convenience init and
 `StoredLLMExecutionContextResolver`'s init both default to constructing these
 with no override
-(`Sources/MacParakeetCore/Services/LLM/LLMService.swift:324-336`,
-`Sources/MacParakeetCore/Services/LLM/LLMExecutionContext.swift:29-39`), so a
+(`Sources/SottoCore/Services/LLM/LLMService.swift:324-336`,
+`Sources/SottoCore/Services/LLM/LLMExecutionContext.swift:29-39`), so a
 bare `LLMService()` reads/writes `.standard`.
 
 I grepped every CLI command file for `LLMService()`, `LLMConfigStore()`, and
@@ -62,7 +62,7 @@ both are real bugs on the Homebrew/standalone CLI:
    knowledge-card generation (lines 49, 63, 73).
 2. **`Sources/CLI/Commands/CardsCommand.swift:141`** —
    `completionProvider: LLMService()` inside `CardsGenerateCommand.run()`
-   (`macparakeet-cli cards generate`). This file never computes a `defaults`
+   (`sotto-cli cards generate`). This file never computes a `defaults`
    local at all.
 
 **Effect on the standalone/Homebrew CLI:** `AppPaths.appDefaults()` there
@@ -71,21 +71,21 @@ resolves to the named suite, not `.standard`. `LLMConfigStore(defaults:
 *wrong* UserDefaults domain, finds nothing, and returns `nil` before it ever
 reaches the Keychain lookup for the API key. `StoredLLMExecutionContextResolver.resolveContext()`
 then returns `nil`, and `LLMService` throws `LLMError.notConfigured`
-(`Sources/MacParakeetCore/Services/LLM/LLMService.swift:1434`) even when the
+(`Sources/SottoCore/Services/LLM/LLMService.swift:1434`) even when the
 user has a working provider configured in the GUI. This is not a crash —
 it's a per-item silent-looking failure: `SavedAudioAutoPromptCompletionService`
 catches the error and records `.failed(message: error.localizedDescription)`
-per prompt (`Sources/MacParakeetCore/Services/SavedAudioAutoPromptCompletionService.swift:187-189`)
+per prompt (`Sources/SottoCore/Services/SavedAudioAutoPromptCompletionService.swift:187-189`)
 and `.knowledgeCardFailed(message:)` for cards (line 261), so `meeting import`/`meeting
 split --json` reports "not configured" for every auto-prompt and card on a
 completely valid GUI-configured Homebrew install. `cards generate` fails the
 same way per transcription.
 
-Confirmed *not* affected: `macparakeet-cli transcribe` never applies AI
+Confirmed *not* affected: `sotto-cli transcribe` never applies AI
 Formatter at all regardless of this bug — `TranscribeCommand.swift`'s
 `TranscriptionService(...)` call passes neither `llmService:` nor
 `shouldUseAIFormatter:`, so both default to disabled
-(`Sources/MacParakeetCore/Services/TranscriptionService.swift:348-458`). That's
+(`Sources/SottoCore/Services/TranscriptionService.swift:348-458`). That's
 a separate, apparently deliberate scope decision (file/URL transcription
 never LLM-formats), not this bug.
 
@@ -119,7 +119,7 @@ let llmService = LLMService(
 ```swift
 // CardsCommand.swift — CardsGenerateCommand.run(), hoist a `defaults` local
 // the same way ModelsCommand.swift / TranscribeCommand.swift do
-let defaults = macParakeetAppDefaults()
+let defaults = sottoAppDefaults()
 ...
 completionProvider: LLMService(
     configStore: LLMConfigStore(defaults: defaults),
@@ -141,9 +141,9 @@ config from an isolated non-`.standard` suite injected via
 (`Tests/CLITests/MeetingSplitCommandTests.swift:434-448`).
 
 **Not investigated further (flagged, not confirmed):** `KeychainKeyValueStore`
-(`Sources/MacParakeetCore/Licensing/KeychainKeyValueStore.swift`) uses
-`kSecClassGenericPassword` with no `kSecAttrAccessGroup`, and MacParakeet is
-not sandboxed (`scripts/dist/MacParakeet.entitlements` has no
+(`Sources/SottoCore/Licensing/KeychainKeyValueStore.swift`) uses
+`kSecClassGenericPassword` with no `kSecAttrAccessGroup`, and Sotto is
+not sandboxed (`scripts/dist/Sotto.entitlements` has no
 `com.apple.security.app-sandbox` key). Whether a differently-signed standalone
 Homebrew binary can silently read a Keychain item created by the signed
 `.app` (vs. triggering a one-time Keychain ACL prompt) is a live question the
@@ -157,7 +157,7 @@ this is a secondary risk worth a follow-up, not a blocker for the fix above.
 Grepped every `SpeechEnginePreference.*(` and `SpeechEngineSelection.*(` call
 in `Sources/CLI/Commands/*.swift`. Every single call site passes an explicit
 `defaults:` argument, and in every file that argument is a local bound to
-`macParakeetAppDefaults()` (`ModelsCommand.swift:59,106,225,257,307`,
+`sottoAppDefaults()` (`ModelsCommand.swift:59,106,225,257,307`,
 `RetranscribeCommand.swift:213`, `TranscribeCommand.swift:534`,
 `VocabWordsCommand.swift:19`, `VocabProcessCommand.swift:30`,
 `AudioInputDiagnostics.swift:36`) or `AppPaths.appDefaults()`
@@ -172,14 +172,14 @@ Same method, same result: every `UserDefaultsAppRuntimePreferences(` call in
 `RetranscribeCommand.swift:381`, `SavedMeetingProcessingContext.swift:16`,
 `VocabWordsCommand.swift:27`) passes a suite-resolved `defaults`/`store`
 local. Killed. (The GUI's own bare `UserDefaultsAppRuntimePreferences()` at
-`Sources/MacParakeet/App/AppEnvironment.swift:154` is correct as written: the
-GUI process's own bundle identifier is `com.macparakeet.MacParakeet`, so
+`Sources/Sotto/App/AppEnvironment.swift:154` is correct as written: the
+GUI process's own bundle identifier is `com.sotto.Sotto`, so
 `.standard` there already *is* the shared domain — this is not the same bug
 as hypothesis 1, where the CLI is the one silently defaulting.)
 
 ## Hypothesis 4 — `config` key coverage vs `AppRuntimePreferences` / `AppPreferences` / `CalendarAutoStartPreferences`
 
-`macparakeet-cli config get/set/list` exposes exactly 25 keys
+`sotto-cli config get/set/list` exposes exactly 25 keys
 (`Sources/CLI/Commands/ConfigCommand.swift:81-232`). Below is every
 `UserDefaults` key I found declared across `AppRuntimePreferences.swift`,
 `AppPreferences.swift`, and `CalendarAutoStartPreferences` (same file), plus

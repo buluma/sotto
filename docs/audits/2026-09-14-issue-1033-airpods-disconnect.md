@@ -18,11 +18,11 @@ Both reports use v0.8.0 build `20260909173236`, commit `1cc48e726ad4`, `dist-xco
 
 Evidence locations at investigated base `d67cf93e` and the local #1032 patch:
 
-- `Sources/MacParakeet/App/AppEnvironment.swift`: `attemptsBuilder`.
-- `Sources/MacParakeetCore/Audio/MicrophoneCapture.swift`: `meetingInputDeviceAttempts`.
-- `Sources/MacParakeetCore/Audio/MicrophoneEnginePlatform.swift`: `prepare`, `recoverFromConfigurationChangeLocked`, `checkCallbackLivenessLocked`, `installRouteChangeObserversLocked`, `exhaustRecoveryLocked`.
-- `Sources/MacParakeetCore/Audio/SharedMicrophoneStream.swift`: terminal platform-stop handling and fresh-subscription startup.
-- `Sources/MacParakeetViewModels/SettingsViewModel.swift`: `refreshMicrophoneDevices`, `testSelectedMicrophone`.
+- `Sources/Sotto/App/AppEnvironment.swift`: `attemptsBuilder`.
+- `Sources/SottoCore/Audio/MicrophoneCapture.swift`: `meetingInputDeviceAttempts`.
+- `Sources/SottoCore/Audio/MicrophoneEnginePlatform.swift`: `prepare`, `recoverFromConfigurationChangeLocked`, `checkCallbackLivenessLocked`, `installRouteChangeObserversLocked`, `exhaustRecoveryLocked`.
+- `Sources/SottoCore/Audio/SharedMicrophoneStream.swift`: terminal platform-stop handling and fresh-subscription startup.
+- `Sources/SottoViewModels/SettingsViewModel.swift`: `refreshMicrophoneDevices`, `testSelectedMicrophone`.
 
 The shipped-to-current changes include #1010's one fresh implicit Bluetooth startup retry and native lifecycle instrumentation. That retry applies only to an implicit attempt resolved as Bluetooth that times out. It is not a general AirPods-unplug fix, particularly after System Default has already changed to built-in.
 

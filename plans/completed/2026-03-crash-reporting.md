@@ -4,7 +4,7 @@
 
 ## Context
 
-MacParakeet had a v0.4.22 incident where users crashed on the onboarding screen but we had **zero visibility** — the crash kills the telemetry service before it can report anything. We need a lightweight crash reporter that persists crash data to disk before the process dies, then sends it as a telemetry event on next launch.
+Sotto had a v0.4.22 incident where users crashed on the onboarding screen but we had **zero visibility** — the crash kills the telemetry service before it can report anything. We need a lightweight crash reporter that persists crash data to disk before the process dies, then sends it as a telemetry event on next launch.
 
 **Design philosophy:** This is Sentry's core architecture distilled to its minimum for a small indie macOS app. No over-engineering — just signal handlers, a file on disk, and a telemetry event.
 
@@ -24,7 +24,7 @@ MacParakeet had a v0.4.22 incident where users crashed on the onboarding screen 
      - atomic_flag guards against concurrent entry from multiple threads
      - Formats crash info into pre-allocated buffer using snprintf
      - Captures stack trace via backtrace() (up to 64 frames)
-     - Writes to ~/Library/Application Support/MacParakeet/crash_report.txt
+     - Writes to ~/Library/Application Support/Sotto/crash_report.txt
      - Uses POSIX functions (open/write/close) + snprintf (safe on Darwin)
      - Restores SIG_DFL then re-raises signal so macOS gets the crash too
 
@@ -45,7 +45,7 @@ MacParakeet had a v0.4.22 incident where users crashed on the onboarding screen 
 
 ### Step 1: Add `crashOccurred` event type
 
-**File:** `Sources/MacParakeetCore/Services/TelemetryEvent.swift`
+**File:** `Sources/SottoCore/Services/TelemetryEvent.swift`
 
 - Add `case crashOccurred = "crash_occurred"` to `TelemetryEventName`
 - Add to `TelemetryEventSpec`:
@@ -60,13 +60,13 @@ MacParakeet had a v0.4.22 incident where users crashed on the onboarding screen 
 
 ### Step 2: Add `crashOccurred` to immediate flush events
 
-**File:** `Sources/MacParakeetCore/Services/TelemetryService.swift`
+**File:** `Sources/SottoCore/Services/TelemetryService.swift`
 
 - Add `.crashOccurred` to the `immediateEvents` set (line 37-49)
 
 ### Step 3: Create CrashReporter
 
-**File:** `Sources/MacParakeetCore/Services/CrashReporter.swift` (NEW)
+**File:** `Sources/SottoCore/Services/CrashReporter.swift` (NEW)
 
 Single class with two sections:
 
@@ -115,21 +115,21 @@ Single class with two sections:
 
 ### Step 4: Wire into app lifecycle
 
-**File:** `Sources/MacParakeet/MacParakeetApp.swift`
+**File:** `Sources/Sotto/SottoApp.swift`
 - Add `CrashReporter.install()` as first line of `static func main()`, before everything
 
-**File:** `Sources/MacParakeet/App/AppEnvironment.swift`
+**File:** `Sources/Sotto/App/AppEnvironment.swift`
 - Add `CrashReporter.sendPendingReport(via: telemetryService)` after line 118 (`Telemetry.send(.appLaunched)`)
 
 ### Step 5: Add backend support
 
-**File:** `~/code/macparakeet-website/functions/api/telemetry.ts`
+**File:** `~/code/sotto-website/functions/api/telemetry.ts`
 - Add `"crash_occurred"` to the `ALLOWED_EVENTS` set (line 78)
 - No schema changes — crash data fits in the existing `props` JSON column
 
 ### Step 6: Tests
 
-**File:** `Tests/MacParakeetTests/Services/CrashReporterTests.swift` (NEW)
+**File:** `Tests/SottoTests/Services/CrashReporterTests.swift` (NEW)
 
 Tests use a temp directory (no real app paths):
 - `testLoadPendingReportParsesValidSignalCrash` — write synthetic crash file, verify all fields parsed
@@ -147,17 +147,17 @@ Tests use a temp directory (no real app paths):
 
 | File | Action | Notes |
 |------|--------|-------|
-| `Sources/MacParakeetCore/Services/CrashReporter.swift` | NEW | Core crash reporter |
-| `Sources/MacParakeetCore/Services/TelemetryEvent.swift` | MODIFY | Add crashOccurred event |
-| `Sources/MacParakeetCore/Services/TelemetryService.swift` | MODIFY | Add to immediateEvents |
-| `Sources/MacParakeet/MacParakeetApp.swift` | MODIFY | Install crash reporter |
-| `Sources/MacParakeet/App/AppEnvironment.swift` | MODIFY | Send pending report |
+| `Sources/SottoCore/Services/CrashReporter.swift` | NEW | Core crash reporter |
+| `Sources/SottoCore/Services/TelemetryEvent.swift` | MODIFY | Add crashOccurred event |
+| `Sources/SottoCore/Services/TelemetryService.swift` | MODIFY | Add to immediateEvents |
+| `Sources/Sotto/SottoApp.swift` | MODIFY | Install crash reporter |
+| `Sources/Sotto/App/AppEnvironment.swift` | MODIFY | Send pending report |
 | `functions/api/telemetry.ts` (website) | MODIFY | Add to allowlist |
-| `Tests/MacParakeetTests/Services/CrashReporterTests.swift` | NEW | Test suite |
+| `Tests/SottoTests/Services/CrashReporterTests.swift` | NEW | Test suite |
 
 ## Verification
 
 1. `swift test` — all existing tests pass + new crash reporter tests pass
 2. Build app via `scripts/dev/run_app.sh`
-3. Manually verify: write a synthetic crash file to `~/Library/Application Support/MacParakeet/crash_report.txt`, launch app, check telemetry D1 for `crash_occurred` event
+3. Manually verify: write a synthetic crash file to `~/Library/Application Support/Sotto/crash_report.txt`, launch app, check telemetry D1 for `crash_occurred` event
 4. Deploy website worker with updated allowlist

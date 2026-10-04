@@ -4,9 +4,9 @@
   "corpusProvenance": {
     "baseCommit": "7ad569afae560266b37a0003e9e2b9f17a2dfa47",
     "sourceSHA256": {
-      "Sources/MacParakeetCore/Services/Diarization/NemotronDiarizationService.swift": "a008d9bad647430bcde58034e5d27d39569fdbdc594c5453a55b7f5f0653c1ab",
-      "Sources/MacParakeetCore/Services/Diarization/NemotronDiarizationModelStore.swift": "16b8f3e68cae25cb6e0487cc65c53ac67bbb32bbcd4438435d581981bcd5a604",
-      "Sources/MacParakeetCore/Services/Diarization/DiarizationService.swift": "4f5d268218453106248955e3e07fddb312ed3bf398aed2bc83b26c516727be66",
+      "Sources/SottoCore/Services/Diarization/NemotronDiarizationService.swift": "a008d9bad647430bcde58034e5d27d39569fdbdc594c5453a55b7f5f0653c1ab",
+      "Sources/SottoCore/Services/Diarization/NemotronDiarizationModelStore.swift": "16b8f3e68cae25cb6e0487cc65c53ac67bbb32bbcd4438435d581981bcd5a604",
+      "Sources/SottoCore/Services/Diarization/DiarizationService.swift": "4f5d268218453106248955e3e07fddb312ed3bf398aed2bc83b26c516727be66",
       "benchmarks/diarization/Sources/DiarizationBenchmark.swift": "5f7a20b649fff14f57074284a12ae4f68f9b71fc22893a41a069c235ed6c9210",
       "benchmarks/diarization/Baseline/Sources/DiarizationBaseline/DiarizationBaseline.swift": "5b60d3a0694144cc124b2306be4e25ff7c9da52c4b6b61d17ebf252fb74b2e9d"
     },
@@ -22,9 +22,9 @@
   "finalIntegrationProvenance": {
     "binarySHA256": "2e67127f883a0c38c642fef4df0bf6a6b786335425e9423c38b5ce0dc8cb3f37",
     "sourceSHA256": {
-      "Sources/MacParakeetCore/Services/Diarization/NemotronDiarizationService.swift": "dc2f84fdca78a5701d0ce1fb74358a3b72d5162a21ad46422cff9de6a84b14f1",
-      "Sources/MacParakeetCore/Services/Diarization/NemotronDiarizationModelStore.swift": "073b9c27237538acb74e55cc1ec5f8d03244cad320a9e45a2671cfb0788b673e",
-      "Sources/MacParakeetCore/Services/Diarization/DiarizationService.swift": "17925bb5e5036044bea49352bf4bc93ac135cffff15ca1d03b061acfe819e956",
+      "Sources/SottoCore/Services/Diarization/NemotronDiarizationService.swift": "dc2f84fdca78a5701d0ce1fb74358a3b72d5162a21ad46422cff9de6a84b14f1",
+      "Sources/SottoCore/Services/Diarization/NemotronDiarizationModelStore.swift": "073b9c27237538acb74e55cc1ec5f8d03244cad320a9e45a2671cfb0788b673e",
+      "Sources/SottoCore/Services/Diarization/DiarizationService.swift": "17925bb5e5036044bea49352bf4bc93ac135cffff15ca1d03b061acfe819e956",
       "benchmarks/diarization/Sources/DiarizationBenchmark.swift": "8626d95874a68b43a620ba59b11b7491c9268dd62e0d1052ce9d70f34eecdc4d"
     },
     "changesSinceCorpusFreeze": "Formatting, explicit-count readiness/preparation, advisory fallback error preservation, cache clear, revision-marker validation and factory-test seam. Native acoustic decode/inference/segment mapping is unchanged."

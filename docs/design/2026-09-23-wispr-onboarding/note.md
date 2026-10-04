@@ -4,7 +4,7 @@ Date: 2026-09-23. Status: **design note**. Not an ADR and not an implementation 
 
 Source: a fresh local install of Wispr Flow 1.6.937, then three screen recordings of the first run (2:38, 2:40, and 2:44). The account signed in was an existing Wispr account, so the home screen already had cloud history. Stills below are cropped to the Wispr window. History rows are omitted.
 
-MacParakeet context: [ADR 005](../../../spec/adr/005-onboarding-first-run.md) and the activation leak in [2026-09-18-onboarding-activation-leak.md](../../research/2026-09-18-onboarding-activation-leak.md).
+Sotto context: [ADR 005](../../../spec/adr/005-onboarding-first-run.md) and the activation leak in [2026-09-18-onboarding-activation-leak.md](../../research/2026-09-18-onboarding-activation-leak.md).
 
 ## Verdict
 
@@ -21,7 +21,7 @@ Leave Wispr’s sign-in, meeting questionnaire, calendar connect, “hours a wee
 
 ## Why these four
 
-MacParakeet’s first run is Welcome, Microphone, Accessibility, Hotkey, speech model, All Set. The hotkey step’s “Try it now” line is a caption. It can raise the normal dictation overlay somewhere else on the screen, and that overlay never touches speech recognition. The key drawn inside the card does not light up, the shortcut cannot be changed here, and Continue does not wait for a press. All Set then tells the user to go dictate, after a model download that may still be in front of them.
+Sotto’s first run is Welcome, Microphone, Accessibility, Hotkey, speech model, All Set. The hotkey step’s “Try it now” line is a caption. It can raise the normal dictation overlay somewhere else on the screen, and that overlay never touches speech recognition. The key drawn inside the card does not light up, the shortcut cannot be changed here, and Continue does not wait for a press. All Set then tells the user to go dictate, after a model download that may still be in front of them.
 
 That matches the leak. About 38% of onboarding starters never finish. Of those who do finish, same-session dictation success fell to about 33% in early September 2026, and the miss is mostly people who never press the hotkey. Speech-model stall and Accessibility are the setup blockers. The growing hole is after “you’re all set.”
 
@@ -78,7 +78,7 @@ Then a dark screen says “Nice job” and compares “you just spoke” with av
 
 ![The finished comparison is a rate from that attempt. Keep this shape only with a number we measured.](spoke-faster.jpg)
 
-What matters is the structure, not the three brands. Slack, Gmail, and Notion are costumes. MacParakeet should not ship fake Slack or Gmail chrome.
+What matters is the structure, not the three brands. Slack, Gmail, and Notion are costumes. Sotto should not ship fake Slack or Gmail chrome.
 
 The first dictation also has to wait. Parakeet’s model is hundreds of megabytes, and the engine still has to load after the file is on disk. Today that wait is its own step, and the user is invited to dictate only after All Set, which is when many of them leave. The download should keep running through the permission page and the key rehearsal, which is already how warm-up starts when onboarding opens. The dictation box should not ask for speech until that warm-up reports ready.
 
@@ -111,7 +111,7 @@ The job list is the useful idea. Opening Apple Notes specifically is not. Notes 
 
 Adapt it like this:
 
-- After the in-window drill, offer two or three jobs we can actually support on the first run: dictate into the frontmost app, dictate a note into MacParakeet, or dictate a prompt. The frontmost-app path is the product. It should be the default.
+- After the in-window drill, offer two or three jobs we can actually support on the first run: dictate into the frontmost app, dictate a note into Sotto, or dictate a prompt. The frontmost-app path is the product. It should be the default.
 - Finish stays available. The job is an invitation with a visible success, not a second permissions wall.
 - The after-close tip is worth a single dismissible line near the menu bar or the existing preview pill. One appearance. If they dismiss it or dictate once, it is gone. A permanent coach mark is how this becomes nagging.
 
@@ -131,13 +131,13 @@ The right half of the window shows System Settings. The macOS prompt opens on to
 
 ![When the rows are checked, the headline becomes a privacy thank-you and Continue appears. Do not copy the third row. Meeting audio stays off this page.](permissions-done.jpg)
 
-MacParakeet’s Microphone and Accessibility steps are separate, and the copy names the macOS privilege (“Enable Accessibility”) before it names the job. Accessibility’s real reason is already in the subtitle: the global hotkey and paste. That reason should be the title.
+Sotto’s Microphone and Accessibility steps are separate, and the copy names the macOS privilege (“Enable Accessibility”) before it names the job. Accessibility’s real reason is already in the subtitle: the global hotkey and paste. That reason should be the title.
 
 Adapt it like this:
 
 - One step, two rows: microphone, and the hotkey/paste grant.
 - Microphone stays skippable. The September 16, 2026 amendment to ADR 005 is unchanged: Continue is not gated on the mic, and capture asks again on first use.
-- The hotkey grant stays required. Wispr can offer a weaker product without Accessibility. MacParakeet’s hotkey cannot.
+- The hotkey grant stays required. Wispr can offer a weaker product without Accessibility. Sotto’s hotkey cannot.
 - Requesting the grant should leave this window up. If we have to open System Settings, return the user to the same step and show the row flip to granted when the poll sees it. That poll already exists.
 - Do not add meeting recognition, system-audio recording, or calendar to this page. Those were removed because the screen-recording step was the largest drop-off, about 24% of people who reached it, and about 90% skipped it.
 
@@ -155,9 +155,9 @@ Use that split:
 
 ## Leave these out
 
-These were in the recording. They are Wispr’s cloud product, or a pitch, and they do not repair the hotkey leak. The stills are here so a later change does not treat them as part of the MacParakeet flow.
+These were in the recording. They are Wispr’s cloud product, or a pitch, and they do not repair the hotkey leak. The stills are here so a later change does not treat them as part of the Sotto flow.
 
-**Sign-in before any dictation.** MacParakeet is local-first. An account is not required to dictate.
+**Sign-in before any dictation.** Sotto is local-first. An account is not required to dictate.
 
 ![Welcome is a browser sign-in beside a finished email. We do not add an account step.](sign-in.jpg)
 
@@ -177,7 +177,7 @@ These were in the recording. They are Wispr’s cloud product, or a pitch, and t
 
 ![A referral for a free month of Pro, with Finish on the same screen.](referral.jpg)
 
-**Fake Slack, Gmail, and Notion windows.** The message, email, and list stills above are the costume. Our drill should look like MacParakeet and a plain text field. Copy the click, the lit key, and the text landing in the field. Do not copy the other apps’ logos.
+**Fake Slack, Gmail, and Notion windows.** The message, email, and list stills above are the costume. Our drill should look like Sotto and a plain text field. Copy the click, the lit key, and the text landing in the field. Do not copy the other apps’ logos.
 
 ## Order
 

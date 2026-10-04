@@ -23,28 +23,28 @@ See ADR-013 for full rationale. Key choices:
 
 | File | Target | Purpose |
 |------|--------|---------|
-| `Sources/MacParakeetCore/Models/Prompt.swift` | Core | Prompt model (GRDB) |
-| `Sources/MacParakeetCore/Models/Summary.swift` | Core | Summary model (GRDB) |
-| `Sources/MacParakeetCore/Database/PromptRepository.swift` | Core | Prompt CRUD (protocol + impl) |
-| `Sources/MacParakeetCore/Database/SummaryRepository.swift` | Core | Summary CRUD (protocol + impl) |
-| `Sources/MacParakeetViewModels/PromptsViewModel.swift` | ViewModels | Prompt management |
-| `Sources/MacParakeetViewModels/SummaryViewModel.swift` | ViewModels | Summary generation + navigation |
-| `Sources/MacParakeet/Views/Transcription/SummaryPromptsView.swift` | GUI | Management sheet |
-| `Tests/MacParakeetTests/PromptRepositoryTests.swift` | Tests | Prompt CRUD + seeding |
-| `Tests/MacParakeetTests/SummaryRepositoryTests.swift` | Tests | Summary CRUD + migration |
-| `Tests/MacParakeetTests/PromptsViewModelTests.swift` | Tests | ViewModel logic |
-| `Tests/MacParakeetTests/SummaryViewModelTests.swift` | Tests | Generation + navigation |
-| `Tests/MacParakeetTests/LLMServicePromptTests.swift` | Tests | Custom system prompt assembly |
+| `Sources/SottoCore/Models/Prompt.swift` | Core | Prompt model (GRDB) |
+| `Sources/SottoCore/Models/Summary.swift` | Core | Summary model (GRDB) |
+| `Sources/SottoCore/Database/PromptRepository.swift` | Core | Prompt CRUD (protocol + impl) |
+| `Sources/SottoCore/Database/SummaryRepository.swift` | Core | Summary CRUD (protocol + impl) |
+| `Sources/SottoViewModels/PromptsViewModel.swift` | ViewModels | Prompt management |
+| `Sources/SottoViewModels/SummaryViewModel.swift` | ViewModels | Summary generation + navigation |
+| `Sources/Sotto/Views/Transcription/SummaryPromptsView.swift` | GUI | Management sheet |
+| `Tests/SottoTests/PromptRepositoryTests.swift` | Tests | Prompt CRUD + seeding |
+| `Tests/SottoTests/SummaryRepositoryTests.swift` | Tests | Summary CRUD + migration |
+| `Tests/SottoTests/PromptsViewModelTests.swift` | Tests | ViewModel logic |
+| `Tests/SottoTests/SummaryViewModelTests.swift` | Tests | Generation + navigation |
+| `Tests/SottoTests/LLMServicePromptTests.swift` | Tests | Custom system prompt assembly |
 
 ## Modified Files
 
 | File | Change |
 |------|--------|
-| `Sources/MacParakeetCore/Database/DatabaseManager.swift` | v0.7 migration: create `prompts` + `summaries` tables, seed 7 built-ins, migrate `transcriptions.summary` → `summaries` |
-| `Sources/MacParakeetCore/Services/LLMService.swift` | `summarize()` + `summarizeStream()` accept optional `systemPrompt: String?`; update `LLMServiceProtocol` |
-| `Sources/MacParakeetViewModels/TranscriptionViewModel.swift` | Remove inline summary state — delegate to SummaryViewModel |
-| `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift` | Replace summary pane: dropdown + extra instructions + collapsible cards |
-| `Sources/MacParakeet/App/AppEnvironment.swift` | Create `PromptRepository` + `SummaryRepository`, pass to ViewModels |
+| `Sources/SottoCore/Database/DatabaseManager.swift` | v0.7 migration: create `prompts` + `summaries` tables, seed 7 built-ins, migrate `transcriptions.summary` → `summaries` |
+| `Sources/SottoCore/Services/LLMService.swift` | `summarize()` + `summarizeStream()` accept optional `systemPrompt: String?`; update `LLMServiceProtocol` |
+| `Sources/SottoViewModels/TranscriptionViewModel.swift` | Remove inline summary state — delegate to SummaryViewModel |
+| `Sources/Sotto/Views/Transcription/TranscriptResultView.swift` | Replace summary pane: dropdown + extra instructions + collapsible cards |
+| `Sources/Sotto/App/AppEnvironment.swift` | Create `PromptRepository` + `SummaryRepository`, pass to ViewModels |
 
 ## Implementation Steps
 

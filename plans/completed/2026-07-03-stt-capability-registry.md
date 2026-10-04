@@ -102,9 +102,9 @@ behavior change (characterization suites green).
 
 Phase A completion evidence (2026-07-04):
 
-- Capability source: `Sources/MacParakeetCore/STT/SpeechEngineCapabilities.swift`
+- Capability source: `Sources/SottoCore/STT/SpeechEngineCapabilities.swift`
   declares the registry, rows, language policy, model lifecycle, and telemetry
-  identity; `Tests/MacParakeetTests/STT/SpeechEngineCapabilitiesTests.swift`
+  identity; `Tests/SottoTests/STT/SpeechEngineCapabilitiesTests.swift`
   covers totality and core invariants.
 - Read-only adoption: runtime live/preview/readiness/telemetry/default-language
   gates, scheduler live admission and leases, DictationService preview gating,

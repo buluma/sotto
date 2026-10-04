@@ -106,7 +106,7 @@ class RunnerTests(unittest.TestCase):
         self.temp.cleanup()
 
     def launch(self, mode='pass', deadline='20', observe_seconds=None):
-        self.env.update(FIXTURE_MODE=mode, MACPARAKEET_PROCESS_TAP_PROBE_DEADLINE_SECONDS=deadline)
+        self.env.update(FIXTURE_MODE=mode, SOTTO_PROCESS_TAP_PROBE_DEADLINE_SECONDS=deadline)
         arguments = ['bash', str(RUNNER), str(self.output)]
         if observe_seconds is not None:
             arguments += ['--observe-seconds', str(observe_seconds)]

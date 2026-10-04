@@ -4,7 +4,7 @@
 
 ## Overview
 
-Migrate MacParakeet STT from Python/parakeet-mlx/JSON-RPC to native Swift FluidAudio/CoreML on ANE.
+Migrate Sotto STT from Python/parakeet-mlx/JSON-RPC to native Swift FluidAudio/CoreML on ANE.
 
 This is a hard-cut migration:
 - No Python runtime in product.
@@ -33,21 +33,21 @@ This is a hard-cut migration:
 ## Current Code Hotspots (Must Change)
 
 Core runtime:
-- `Sources/MacParakeetCore/STT/STTClient.swift`
-- `Sources/MacParakeetCore/STT/STTClientProtocol.swift`
-- `Sources/MacParakeetCore/STT/PythonBootstrap.swift` (delete)
-- `Sources/MacParakeetCore/STT/JSONRPCTypes.swift` (delete)
+- `Sources/SottoCore/STT/STTClient.swift`
+- `Sources/SottoCore/STT/STTClientProtocol.swift`
+- `Sources/SottoCore/STT/PythonBootstrap.swift` (delete)
+- `Sources/SottoCore/STT/JSONRPCTypes.swift` (delete)
 
 Media/download pipeline:
-- `Sources/MacParakeetCore/Services/YouTubeDownloader.swift`
-- `Sources/MacParakeetCore/Audio/AudioFileConverter.swift`
-- `Sources/MacParakeetCore/Services/AppPaths.swift`
-- `Sources/MacParakeet/App/AppEnvironment.swift`
+- `Sources/SottoCore/Services/YouTubeDownloader.swift`
+- `Sources/SottoCore/Audio/AudioFileConverter.swift`
+- `Sources/SottoCore/Services/AppPaths.swift`
+- `Sources/Sotto/App/AppEnvironment.swift`
 
 Onboarding:
-- `Sources/MacParakeetViewModels/OnboardingViewModel.swift`
-- `Sources/MacParakeet/Views/Onboarding/OnboardingFlowView.swift`
-- `Sources/MacParakeet/Onboarding/OnboardingWindowController.swift`
+- `Sources/SottoViewModels/OnboardingViewModel.swift`
+- `Sources/Sotto/Views/Onboarding/OnboardingFlowView.swift`
+- `Sources/Sotto/Onboarding/OnboardingWindowController.swift`
 
 CLI + scripts:
 - `Sources/CLI/Commands/HealthCommand.swift`
@@ -56,10 +56,10 @@ CLI + scripts:
 - `scripts/dist/sign_notarize.sh`
 
 Tests:
-- `Tests/MacParakeetTests/STT/STTClientTests.swift`
-- `Tests/MacParakeetTests/STT/JSONRPCTests.swift` (delete or replace)
-- `Tests/MacParakeetTests/Services/AppPathsTests.swift`
-- `Tests/MacParakeetTests/Services/YouTubeDownloaderTests.swift`
+- `Tests/SottoTests/STT/STTClientTests.swift`
+- `Tests/SottoTests/STT/JSONRPCTests.swift` (delete or replace)
+- `Tests/SottoTests/Services/AppPathsTests.swift`
+- `Tests/SottoTests/Services/YouTubeDownloaderTests.swift`
 
 ## Ordered Execution Checklist
 
@@ -76,11 +76,11 @@ Tests:
 ### Phase 1: Toolchain + Dependencies
 
 1. Update `Package.swift` swift-tools-version if required by FluidAudio (it specifies 6.0; validate whether 5.9 can consume it).
-2. Add FluidAudio SwiftPM dependency and wire `MacParakeetCore` target dependency.
+2. Add FluidAudio SwiftPM dependency and wire `SottoCore` target dependency.
 3. Keep build green before deleting Python paths.
 
 Exit criteria:
-- `swift build --target MacParakeetCore` succeeds.
+- `swift build --target SottoCore` succeeds.
 - No partial dependency state left in `Package.swift`.
 
 ### Phase 2: STT Runtime Swap (Core)
@@ -97,8 +97,8 @@ Exit criteria:
 ### Phase 3: Remove Python Stack
 
 1. Delete:
-   - `Sources/MacParakeetCore/STT/PythonBootstrap.swift`
-   - `Sources/MacParakeetCore/STT/JSONRPCTypes.swift`
+   - `Sources/SottoCore/STT/PythonBootstrap.swift`
+   - `Sources/SottoCore/STT/JSONRPCTypes.swift`
    - `python/` directory
 2. Remove `PythonBootstrap` construction/injection from:
    - `AppEnvironment`
@@ -154,8 +154,8 @@ Exit criteria:
 3. Update AppPaths tests for Python path removals.
 4. Run full suite and targeted smoke commands:
    - `swift test`
-   - `swift run macparakeet health`
-   - `swift run macparakeet transcribe <fixture>`
+   - `swift run sotto health`
+   - `swift run sotto transcribe <fixture>`
 
 Exit criteria:
 - Full test suite passes.
@@ -183,13 +183,13 @@ swift test
 
 CLI smoke:
 ```bash
-swift run macparakeet health
-swift run macparakeet transcribe /path/to/audio.wav
+swift run sotto health
+swift run sotto transcribe /path/to/audio.wav
 ```
 
 Build smoke:
 ```bash
-xcodebuild build -scheme MacParakeet -destination 'platform=OS X' -derivedDataPath .build/xcode
+xcodebuild build -scheme Sotto -destination 'platform=OS X' -derivedDataPath .build/xcode
 ```
 
 Static consistency sweep:

@@ -3,13 +3,13 @@
 > **Historical snapshot (archived 2026-07-16).** These drafts target the CLI
 > 2.3.1 launch and are not approved current release copy.
 
-Drafts for cross-posting the macparakeet-cli agent/Homebrew launch to the
+Drafts for cross-posting the sotto-cli agent/Homebrew launch to the
 relevant communities. **None of these have been posted.** Each
 needs the maintainer's account on the target platform; the agent
 running this rollout doesn't have those credentials.
 
 Current release note (2026-05-19): the public CLI is now
-`macparakeet-cli 2.3.1` and Homebrew install is verified through
+`sotto-cli 2.3.1` and Homebrew install is verified through
 `moona3k/tap`. Drafts should stay framed as the agent/Brew launch rather
 than a same-day 1.0 tag.
 
@@ -28,7 +28,7 @@ The right time is **alongside v0.6.0** (meeting recording + optional
 WhisperKit) for compounding momentum — the v0.6 product release is the
 headline for existing users, and the agent reframe is the headline for
 the new audience. Both are interesting in their own right; together
-they tell a fuller story about where MacParakeet is going.
+they tell a fuller story about where Sotto is going.
 
 If posting before v0.6.0, lead with the CLI / agent angle and link to
 the `/agents` page + the launch blog post. Avoid pre-announcing v0.6.0
@@ -45,12 +45,12 @@ Suggested cadence:
    community spaces. Be respectful of channel norms — if their
    `#showcase` channel exists, use it.
 4. **Track responses** in this directory; capture any high-quality
-   feedback / bug reports as GitHub issues on macparakeet.
+   feedback / bug reports as GitHub issues on sotto.
 
 ## Voice + posture
 
 - **First-person honest, not promotional.** Match the tone of the
-  open-source-announcement blog post and the macparakeet-cli launch post.
+  open-source-announcement blog post and the sotto-cli launch post.
 - **Lead with the gap** (voice/STT slot for Apple Silicon agents),
   not with feature lists.
 - **Disclose maintainer status.** Skip salesy adjectives ("fastest,"

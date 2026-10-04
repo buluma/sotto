@@ -4,7 +4,7 @@ Date: 2026-09-25. Status: proposed architecture, informed by the user's preferen
 
 ## The decision
 
-**Make Ask independent of a particular model provider. Evaluate Pi's agent core as the execution engine, with MacParakeet owning meeting access, evidence, and durable conversations.** Use the [upstream comparison](opensource-harnesses.md) for the inspected Pi revision and precise API/package identities; development-source names are not a distribution commitment.
+**Make Ask independent of a particular model provider. Evaluate Pi's agent core as the execution engine, with Sotto owning meeting access, evidence, and durable conversations.** Use the [upstream comparison](opensource-harnesses.md) for the inspected Pi revision and precise API/package identities; development-source names are not a distribution commitment.
 
 Model agnostic means the application can change its reasoning model through an adapter without changing its source-selection or evidence rules. It does not mean every model can reliably operate the same tools, fit the same context, or deliver equivalent answers. Provider API compatibility and task competence require separate qualification.
 
@@ -12,7 +12,7 @@ Keep these three choices separate:
 
 | Choice | Recommended ownership |
 | --- | --- |
-| What the assistant may access and what an answer means | MacParakeet: selected recordings, corrected text, citations, coverage, deletion and privacy |
+| What the assistant may access and what an answer means | Sotto: selected recordings, corrected text, citations, coverage, deletion and privacy |
 | How the assistant alternates model calls and tools | Reusable execution engine, with Pi the first candidate |
 | Which model produces the next action or answer | A configured provider adapter with tested capabilities |
 
@@ -22,13 +22,13 @@ This preserves the accepted [private speech memory direction](../../../spec/adr/
 
 ```mermaid
 flowchart TB
-    UI["Native Ask UI / equivalent CLI operations"] --> APP["MacParakeet run controller"]
+    UI["Native Ask UI / equivalent CLI operations"] --> APP["Sotto run controller"]
     APP --> STATE["Local conversations, scope revisions, evidence"]
     APP --> PI["Managed Pi agent core"]
     PI --> BRIDGE["Model adapter / structured event bridge"]
     BRIDGE --> LOCAL["Configured on-device model"]
     BRIDGE --> REMOTE["Configured remote provider"]
-    PI --> TOOLS["MacParakeet research tools"]
+    PI --> TOOLS["Sotto research tools"]
     TOOLS --> SCOPE["Validate run + source selection + revision"]
     SCOPE --> DATA["Local transcripts, summaries and retrieval"]
     TOOLS --> EVIDENCE["Bounded results + stable evidence IDs"]
@@ -60,11 +60,11 @@ The first scope is read-only research. Editing notes, sending email, calendar ch
 
 ## Model adapter and capability qualification
 
-Current MacParakeet source at working-tree HEAD `779e9b30fa084e9f56c9a68b2e69ab9e3fdd62b3` provides useful infrastructure:
+Current Sotto source at working-tree HEAD `779e9b30fa084e9f56c9a68b2e69ab9e3fdd62b3` provides useful infrastructure:
 
-- [LLMClientProtocol](../../../Sources/MacParakeetCore/Services/LLM/LLMClient.swift) supplies completion, streaming, execution context, and structured-output capability.
-- [LLMExecutionContext](../../../Sources/MacParakeetCore/Services/LLM/LLMExecutionContext.swift) resolves configured providers and task overrides.
-- [ChatMessage](../../../Sources/MacParakeetCore/Models/LLMTypes.swift) has system/user/assistant roles with string content. It does not itself represent a complete tool-call/result conversation.
+- [LLMClientProtocol](../../../Sources/SottoCore/Services/LLM/LLMClient.swift) supplies completion, streaming, execution context, and structured-output capability.
+- [LLMExecutionContext](../../../Sources/SottoCore/Services/LLM/LLMExecutionContext.swift) resolves configured providers and task overrides.
+- [ChatMessage](../../../Sources/SottoCore/Models/LLMTypes.swift) has system/user/assistant roles with string content. It does not itself represent a complete tool-call/result conversation.
 
 Consequently, reusing provider configuration is plausible; plugging today's string stream directly into Pi is not a complete implementation. A model bridge must translate tool definitions, call identities, arguments, results, terminal states, and errors. Keep canonical app state separate from provider-specific request bodies. Provider-specific reasoning tokens or signed blocks must not be blindly replayed to another model.
 
@@ -85,13 +85,13 @@ Freeze provider selection for a run. Between turns, a provider change needs vali
 
 | Option | Benefit | Cost or unresolved question |
 | --- | --- | --- |
-| Pi core with model calls bridged through MacParakeet | Preserves existing provider settings, credential ownership, and in-process local generation path | Must build and qualify structured model events and process transport |
+| Pi core with model calls bridged through Sotto | Preserves existing provider settings, credential ownership, and in-process local generation path | Must build and qualify structured model events and process transport |
 | Pi core with its own provider layer | Uses upstream provider integrations directly | Must reconcile credentials, model configuration, privacy behavior, and in-process local models |
 | Small native Swift loop | Direct fit with app lifecycle and local inference | We own tool-loop correctness, event handling, and future context-management maintenance |
 
-**Prototype the first option as the target architecture.** If a direct Pi provider is used temporarily to isolate loop behavior in a synthetic-data experiment, label that limitation: it does not prove compatibility with MacParakeet's existing providers. Adopt the second option only if its configuration and lifecycle costs are demonstrably smaller. Retain the native loop as a fallback if the bridge costs more than the reusable engine saves. OpenCode remains a broader alternative, documented in the comparison.
+**Prototype the first option as the target architecture.** If a direct Pi provider is used temporarily to isolate loop behavior in a synthetic-data experiment, label that limitation: it does not prove compatibility with Sotto's existing providers. Adopt the second option only if its configuration and lifecycle costs are demonstrably smaller. Retain the native loop as a fallback if the bridge costs more than the reusable engine saves. OpenCode remains a broader alternative, documented in the comparison.
 
-Do not run two independently authoritative harnesses. MacParakeet owns the run and allowed operations; Pi executes the model/tool cycle. A transport bridge should not quietly become a second planner or a parallel conversation database.
+Do not run two independently authoritative harnesses. Sotto owns the run and allowed operations; Pi executes the model/tool cycle. A transport bridge should not quietly become a second planner or a parallel conversation database.
 
 ## Context, persistence, and cancellation
 

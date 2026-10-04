@@ -1,4 +1,4 @@
-# MacParakeet Marketing Script
+# Sotto Marketing Script
 
 > Status: **ACTIVE PRODUCTION BRIEF** — source of truth for the demo/video
 > script. Current product, privacy, engine, and release claims remain governed
@@ -35,7 +35,7 @@ source, and the supported runtime is Apple Silicon.
 | Hero background | `paper` (#F8F4EC) | Warm cream; distinctive against ALTIC/Marco's dark grounds |
 | Primary text | `ink` (#0E0F12) on paper | Near-black, never pure black |
 | Accent | `coral` (#E86B3B) | One element per composition: the mark, a recording dot, or supporting line |
-| Brand mark | `brand-assets/marks/parakeet-line.svg` | Single-stroke calligraphic parakeet; recolorable via `currentColor` |
+| Brand mark | `brand-assets/marks/sotto-line.svg` | Single-stroke calligraphic parakeet; recolorable via `currentColor` |
 | Display type | SF Pro Display preferred; Inter for rendered video | Tight tracking on display sizes; never below 32pt for video text |
 | Motion | Spring physics, never linear | Stagger word reveals 100-150ms; hold beats ≥ 800ms before transitions |
 
@@ -65,7 +65,7 @@ Render target: 1920×1080 @ 60fps. Voice via Kokoro-82M by default (or Higgs Aud
 
 **Lower-third:** Apple Silicon · local dictation · offline after setup
 
-**VO:** "MacParakeet dictates anywhere on your Mac. Tap a hotkey, speak, the text appears. Speech recognition stays local and works offline after model setup."
+**VO:** "Sotto dictates anywhere on your Mac. Tap a hotkey, speak, the text appears. Speech recognition stays local and works offline after model setup."
 
 ### 0:22 – 0:38 · Mode 2: Transcription
 **Visual sequence:**
@@ -86,14 +86,14 @@ Render target: 1920×1080 @ 60fps. Voice via Kokoro-82M by default (or Higgs Aud
 
 **Lower-third:** System audio + mic · Live notes · Local transcription
 
-**VO:** "And during a meeting, MacParakeet records both sides — system audio plus your mic — gives you a live notepad, and when you're done, hands you the transcript and the summary."
+**VO:** "And during a meeting, Sotto records both sides — system audio plus your mic — gives you a live notepad, and when you're done, hands you the transcript and the summary."
 
 ### 0:54 – 1:00 · Close
 **Visual:** Cut back to paper-cream. Parakeet mark + wordmark settle center. Closing card:
 > Free. Open source. Built for Apple Silicon.
 > macparakeet.com
 
-**VO:** "Free. Open source. Built for Apple Silicon. MacParakeet."
+**VO:** "Free. Open source. Built for Apple Silicon. Sotto."
 
 **Total spoken word count:** ~95 words / 60 seconds → ~95 WPM. Paced for clarity, not for "energetic ad voice."
 
@@ -130,10 +130,10 @@ Hover Export → menu opens → cursor brushes across TXT, MD, SRT, VTT, DAPT, P
 
 ```markdown
 <p align="center">
-  <img src="brand-assets/marks/parakeet-line.svg" width="120" alt="MacParakeet"/>
+  <img src="brand-assets/marks/sotto-line.svg" width="120" alt="Sotto"/>
 </p>
 
-<h1 align="center">MacParakeet</h1>
+<h1 align="center">Sotto</h1>
 
 <p align="center">
   <strong>Fast, private, local-first voice for Apple Silicon Macs.</strong><br/>
@@ -156,7 +156,7 @@ Hover Export → menu opens → cursor brushes across TXT, MD, SRT, VTT, DAPT, P
 **Three voice apps in one. Free.**
 
 ### Sub
-MacParakeet brings system-wide dictation, file/media transcription, and meeting recording together on Apple Silicon. Speech recognition stays local; the current public build is free and open source.
+Sotto brings system-wide dictation, file/media transcription, and meeting recording together on Apple Silicon. Speech recognition stays local; the current public build is free and open source.
 
 ### Comparison table
 
@@ -165,13 +165,13 @@ prices change too quickly for an active product document. Build and date-stamp
 a source-backed comparison at publication time if a campaign needs one.
 
 ### Body paragraph
-MacParakeet captures meetings with system audio, microphone audio, or both, transcribes locally, and keeps the result alongside a live notepad — while also handling system-wide dictation and file/media transcription. The three modes share one scheduler/runtime control plane so meeting recording and dictation can be coordinated safely. Parakeet v3 is the default for English and supported European languages; English-only Parakeet builds cover timestamped exports and readable live preview; Whisper handles broader-language files and retranscription; Nemotron is Beta live preview; and Cohere is local batch plain text.
+Sotto captures meetings with system audio, microphone audio, or both, transcribes locally, and keeps the result alongside a live notepad — while also handling system-wide dictation and file/media transcription. The three modes share one scheduler/runtime control plane so meeting recording and dictation can be coordinated safely. Parakeet v3 is the default for English and supported European languages; English-only Parakeet builds cover timestamped exports and readable live preview; Whisper handles broader-language files and retranscription; Nemotron is Beta live preview; and Cohere is local batch plain text.
 
 ## CTA Conventions
 
 - **Primary URL:** `macparakeet.com`
 - **GitHub:** `github.com/moona3k/macparakeet`
-- **Homebrew (official cask, live since 2026-06-06):** `brew install --cask macparakeet`
+- **Homebrew (official cask, live since 2026-06-06):** `brew install --cask sotto`
 - **Never use:** "Get started today," "Try it free," "Sign up." There is no signup. The app downloads and runs.
 
 ## Production Stack

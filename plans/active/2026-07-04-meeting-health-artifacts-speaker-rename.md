@@ -29,7 +29,7 @@ Recommended drift check:
 
 ```bash
 git status --short
-git diff --stat -- Sources/MacParakeetCore/Services/MeetingRecording Sources/MacParakeetCore/Audio Sources/MacParakeetViewModels Sources/MacParakeet/Views/MeetingRecording Sources/MacParakeet/Views/Transcription Sources/CLI Tests spec/contracts integrations plans/active
+git diff --stat -- Sources/SottoCore/Services/MeetingRecording Sources/SottoCore/Audio Sources/SottoViewModels Sources/Sotto/Views/MeetingRecording Sources/Sotto/Views/Transcription Sources/CLI Tests spec/contracts integrations plans/active
 ```
 
 If this plan conflicts with a newer accepted ADR/spec, update the plan before
@@ -49,7 +49,7 @@ Make meeting recording feel trustworthy at the user and automation boundary by:
    while keeping diarization anonymous and post-meeting only.
 
 This is not a "more AI" plan. It is a trust and product-contract plan over the
-meeting system MacParakeet already has.
+meeting system Sotto already has.
 
 ## Minimal Product Slice
 
@@ -94,7 +94,7 @@ Keep the implementation boring and obvious:
 - `MeetingArtifactStore` materializes `manifest.json`, `transcript.json`,
   `notes.md`, `prompt-results.json`, and per-result Markdown. It does not
   materialize a top-level deterministic `meeting.md` view.
-- `macparakeet-cli meetings` already exposes `list`, `show`, `transcript`,
+- `sotto-cli meetings` already exposes `list`, `show`, `transcript`,
   `notes get|set|append|clear`, `results list|add`, `artifact`, and `export`.
   `SpecCommand` documents these. The gap is productizing the agent vocabulary,
   frontmatter-rich Markdown, and the cleaned-mic/artifact fields through the
@@ -317,7 +317,7 @@ Markdown frontmatter example:
 
 ```yaml
 ---
-schema: com.macparakeet.meeting-markdown
+schema: com.sotto.meeting-markdown
 schemaVersion: 1
 meetingID: "11111111-2222-3333-4444-555555555555"
 title: "Design Review"
@@ -382,11 +382,11 @@ the UI infer health from levels.
 
 **Likely files:**
 
-- `Sources/MacParakeetCore/Services/MeetingRecording/MeetingRecordingService.swift`
-- `Sources/MacParakeetCore/Audio/MeetingAudioCaptureService.swift`
-- `Sources/MacParakeetCore/Audio/MeetingMicHealthMonitor.swift`
+- `Sources/SottoCore/Services/MeetingRecording/MeetingRecordingService.swift`
+- `Sources/SottoCore/Audio/MeetingAudioCaptureService.swift`
+- `Sources/SottoCore/Audio/MeetingMicHealthMonitor.swift`
 - new focused type near meeting recording core, for example
-  `Sources/MacParakeetCore/Services/MeetingRecording/MeetingCaptureHealth.swift`
+  `Sources/SottoCore/Services/MeetingRecording/MeetingCaptureHealth.swift`
 
 **Approach:**
 
@@ -420,13 +420,13 @@ the UI infer health from levels.
 
 **Likely files:**
 
-- `Sources/MacParakeetViewModels/MeetingRecordingPanelViewModel.swift`
-- `Sources/MacParakeetViewModels/MeetingRecordingPillViewModel.swift`
-- `Sources/MacParakeet/Views/MeetingRecording/MeetingRecordingPanelView.swift`
-- `Sources/MacParakeet/Views/MeetingRecording/MeetingRecordingPillView.swift`
-- `Sources/MacParakeet/Views/Transcription/MeetingRecordingTile.swift`
+- `Sources/SottoViewModels/MeetingRecordingPanelViewModel.swift`
+- `Sources/SottoViewModels/MeetingRecordingPillViewModel.swift`
+- `Sources/Sotto/Views/MeetingRecording/MeetingRecordingPanelView.swift`
+- `Sources/Sotto/Views/MeetingRecording/MeetingRecordingPillView.swift`
+- `Sources/Sotto/Views/Transcription/MeetingRecordingTile.swift`
 - new view component such as
-  `Sources/MacParakeet/Views/MeetingRecording/MeetingSourceHealthChips.swift`
+  `Sources/Sotto/Views/MeetingRecording/MeetingSourceHealthChips.swift`
 
 **Approach:**
 
@@ -466,14 +466,14 @@ cleaned-mic pins.
 
 **Likely files:**
 
-- `Sources/MacParakeetCore/Services/MeetingRecording/MeetingArtifactStore.swift`
-- `Sources/MacParakeetCore/Services/MeetingRecording/MeetingRecordingOutput.swift`
-- `Sources/MacParakeetCore/Utilities/TranscriptionAssetCleanup.swift`
-- `Sources/MacParakeetCore/Services/MeetingRecording/MeetingAudioRetentionSweeper.swift`
+- `Sources/SottoCore/Services/MeetingRecording/MeetingArtifactStore.swift`
+- `Sources/SottoCore/Services/MeetingRecording/MeetingRecordingOutput.swift`
+- `Sources/SottoCore/Utilities/TranscriptionAssetCleanup.swift`
+- `Sources/SottoCore/Services/MeetingRecording/MeetingAudioRetentionSweeper.swift`
 - `spec/contracts/meeting-artifacts-v1.md`
-- `Tests/MacParakeetTests/Services/MeetingRecording/MeetingArtifactStoreTests.swift`
-- `Tests/MacParakeetTests/Services/MeetingRecording/TranscriptionAssetCleanupCleanedMicTests.swift`
-- `Tests/MacParakeetTests/Services/MeetingRecording/MeetingAudioRetentionSweeperTests.swift`
+- `Tests/SottoTests/Services/MeetingRecording/MeetingArtifactStoreTests.swift`
+- `Tests/SottoTests/Services/MeetingRecording/TranscriptionAssetCleanupCleanedMicTests.swift`
+- `Tests/SottoTests/Services/MeetingRecording/MeetingAudioRetentionSweeperTests.swift`
 
 **Approach:**
 
@@ -545,12 +545,12 @@ consistent without adding identity features.
 
 **Likely files:**
 
-- `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift`
-- `Sources/MacParakeet/Views/Transcription/TranscriptTimestampedContentView.swift`
-- `Sources/MacParakeetViewModels/TranscriptionViewModel.swift`
-- `Sources/MacParakeetCore/Database/TranscriptionRepository.swift`
-- `Tests/MacParakeetTests/ViewModels/TranscriptionViewModelTests.swift`
-- `Tests/MacParakeetTests/Views/SpeakerTurnIdentityTests.swift`
+- `Sources/Sotto/Views/Transcription/TranscriptResultView.swift`
+- `Sources/Sotto/Views/Transcription/TranscriptTimestampedContentView.swift`
+- `Sources/SottoViewModels/TranscriptionViewModel.swift`
+- `Sources/SottoCore/Database/TranscriptionRepository.swift`
+- `Tests/SottoTests/ViewModels/TranscriptionViewModelTests.swift`
+- `Tests/SottoTests/Views/SpeakerTurnIdentityTests.swift`
 
 **Approach:**
 
@@ -582,10 +582,10 @@ the meeting.
 
 **Likely files:**
 
-- `Sources/MacParakeetCore/TextProcessing/TranscriptSegmenter.swift`
-- `Sources/MacParakeetCore/Services/MeetingRecording/MeetingArtifactStore.swift`
+- `Sources/SottoCore/TextProcessing/TranscriptSegmenter.swift`
+- `Sources/SottoCore/Services/MeetingRecording/MeetingArtifactStore.swift`
 - `Sources/CLI/Commands/MeetingsCommand.swift`
-- `Tests/MacParakeetTests/Services/TranscriptExportOptionsTests.swift`
+- `Tests/SottoTests/Services/TranscriptExportOptionsTests.swift`
 - `Tests/CLITests/MeetingsCommandTests.swift`
 
 **Approach:**
@@ -679,7 +679,7 @@ Manual QA:
   `notes.md`, `meeting.md`, and prompt-result artifacts exist.
 - Add a non-empty `microphone-cleaned.m4a` fixture and materialize artifacts.
   Confirm manifest includes `cleanedMicrophoneAudioPath`.
-- Run `macparakeet-cli meetings export <id> --format md --stdout` and compare
+- Run `sotto-cli meetings export <id> --format md --stdout` and compare
   its shape to `meeting.md`.
 - Rename a speaker in a completed speaker-labeled transcript. Confirm the turn
   cards, speaker overview, Markdown export, and `transcript.json` reflect the

@@ -53,7 +53,7 @@ mockup is directional for layout, not pixel-exact.
      the flag true and selects that engine. Picking the same engine as live
      is equivalent to the inherited option — collapse it back rather than
      showing a degenerate split.
-   - Explanation: `MacParakeet uses your selected speech engine for everything
+   - Explanation: `Sotto uses your selected speech engine for everything
      by default. You can choose another engine for completed meeting recordings,
      files, media, and URLs—for example, for higher accuracy or broader language
      support when a longer wait is okay.`
@@ -95,7 +95,7 @@ mockup is directional for layout, not pixel-exact.
 - No changes to `EngineSettingsViewModel` semantics, persistence keys,
   routing, or engine lifecycle. This is a view + copy restructure; small
   view-model *additions* (e.g. a derived binding for the menu picker) are
-  fine, in `MacParakeetViewModels` with tests.
+  fine, in `SottoViewModels` with tests.
 - Download banners, switch banners, unavailable reasons, first-optimize flow,
   Whisper language card, Local Models card: behavior unchanged.
 - Do not touch Cohere gating (`AppFeatures.cohereEngineEnabled`) beyond
@@ -106,17 +106,17 @@ mockup is directional for layout, not pixel-exact.
 
 ## Where the code lives
 
-- `Sources/MacParakeet/Views/Settings/SettingsView.swift` — `engineSelectorCard`
+- `Sources/Sotto/Views/Settings/SettingsView.swift` — `engineSelectorCard`
   (~line 2038 on `main`), `transcriptionEngineCard` (~2162, delete/absorb),
   `engineTab` composition (~399–417, ids `engine.selector` /
   `engine.transcriptionSelector`), per-engine model cards (~2234, ~2359,
   ~2460), `engineSelectorCardStatus` (~2633).
-- `Sources/MacParakeet/Views/Settings/Components/` — `EngineOptionTile` lives
+- `Sources/Sotto/Views/Settings/Components/` — `EngineOptionTile` lives
   here; extend for the role chip.
-- `Sources/MacParakeetViewModels/SettingsSearchIndex.swift` (~275–300).
-- `Sources/MacParakeetViewModels/` engine settings view model — for the
+- `Sources/SottoViewModels/SettingsSearchIndex.swift` (~275–300).
+- `Sources/SottoViewModels/` engine settings view model — for the
   derived "recordings engine or same" selection if added.
-- Tests: `Tests/MacParakeetTests/ViewModels/SettingsSearchIndexTests.swift`
+- Tests: `Tests/SottoTests/ViewModels/SettingsSearchIndexTests.swift`
   plus existing engine-settings view-model tests near the code they cover.
 
 ## Acceptance criteria

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_PATH="${1:-dist/MacParakeet.app}"
-EXPECTED_BUNDLE_ID="${EXPECTED_BUNDLE_ID:-com.macparakeet.MacParakeet}"
+APP_PATH="${1:-dist/Sotto.app}"
+EXPECTED_BUNDLE_ID="${EXPECTED_BUNDLE_ID:-com.sotto.Sotto}"
 EXPECTED_TEAM_ID="${EXPECTED_TEAM_ID:-FYAF2ZD7RM}"
 EXPECTED_AUTHORITY="${EXPECTED_AUTHORITY:-Developer ID Application: Daniel Moon (FYAF2ZD7RM)}"
 

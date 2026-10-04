@@ -8,7 +8,7 @@ The original 240-second timeout evidence remains unchanged.
 
 ## Provenance and isolation
 
-- Copied CLI: `<QA_ROOT>/macparakeet-cli-runtime`, SHA-256
+- Copied CLI: `<QA_ROOT>/sotto-cli-runtime`, SHA-256
   `f8a62b79ece6045909d15ece2fd086eed7e10ca04ebc870d9fc50ed76774f095`.
 - Compiled source supplied by root: `8548c099af5ee2ab0ed4dd9efe757d85c498cca0`
   plus recovery fix `c506d7ef7d4cf98f3986cfb5de84ced6b4ce701e`. This is the
@@ -17,8 +17,8 @@ The original 240-second timeout evidence remains unchanged.
   Binary and input hashes were checked before and after every invocation and
   remained unchanged.
 - `CFFIXED_USER_HOME=<QA_ROOT>/isolated-home` reused the prepared
-  model cache. `MACPARAKEET_TELEMETRY=0`, `DO_NOT_TRACK=1`, and an owned `TMPDIR`
-  were set; any inherited `MACPARAKEET_DEBUG_APP_STATE_DIR` was removed.
+  model cache. `SOTTO_TELEMETRY=0`, `DO_NOT_TRACK=1`, and an owned `TMPDIR`
+  were set; any inherited `SOTTO_DEBUG_APP_STATE_DIR` was removed.
 - Each case used its own database, explicit language, raw processing,
   speaker detection off and no history. All three owned databases contain zero
   transcription rows. No provider settings, keys, source media, audio devices,
@@ -84,7 +84,7 @@ reuse an existing case database. Exact commands/environment overrides and
 before/after hashes are in each `result.json`. The common invocation shape was:
 
 ```sh
-macparakeet-cli-runtime transcribe <public-fleurs-file> \
+sotto-cli-runtime transcribe <public-fleurs-file> \
   --engine cohere --language <ja|ko|zh> --mode raw --speaker-detection off \
   --no-history --database <owned-case>/history.sqlite --format json
 ```

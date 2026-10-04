@@ -21,17 +21,17 @@ The shortest path is an in-context chat panel in `TranscriptResultView` backed b
 ### 2.1 What Already Exists (High Reuse Potential)
 
 1. GUI transcript detail surface is already present and stable:
-   - `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift`
+   - `Sources/Sotto/Views/Transcription/TranscriptResultView.swift`
 2. Transcript selection + detail routing already exists:
-   - `Sources/MacParakeet/Views/Transcription/TranscribeView.swift`
-   - `Sources/MacParakeetViewModels/TranscriptionViewModel.swift`
+   - `Sources/Sotto/Views/Transcription/TranscribeView.swift`
+   - `Sources/SottoViewModels/TranscriptionViewModel.swift`
 3. LLM runtime is integrated and shared:
-   - `Sources/MacParakeet/App/AppEnvironment.swift`
-   - `Sources/MacParakeetCore/LLM/MLXLLMService.swift`
+   - `Sources/Sotto/App/AppEnvironment.swift`
+   - `Sources/SottoCore/LLM/MLXLLMService.swift`
 4. Prompt contracts for transcript chat are in core:
-   - `Sources/MacParakeetCore/LLM/LLMPromptBuilder.swift`
+   - `Sources/SottoCore/LLM/LLMPromptBuilder.swift`
 5. Context bounding/truncation already exists:
-   - `Sources/MacParakeetCore/LLM/TranscriptContextAssembler.swift`
+   - `Sources/SottoCore/LLM/TranscriptContextAssembler.swift`
 6. CLI transcript chat baseline is implemented and tested:
    - `Sources/CLI/Commands/LLMCommand.swift`
    - `Tests/CLITests/LLMChatCommandTests.swift`
@@ -186,7 +186,7 @@ Panel sections:
 
 ### Slice 2: Transcript Chat Panel UI
 
-1. Add chat panel component(s) under `Sources/MacParakeet/Views/Transcription/`.
+1. Add chat panel component(s) under `Sources/Sotto/Views/Transcription/`.
 2. Embed panel in `TranscriptResultView` as two-column content region.
 3. Add suggested prompts and keyboard send behavior.
 

@@ -1,6 +1,6 @@
 # Release Demo Smoke
 
-This smoke path proves a released MacParakeet CLI can run a local demo without
+This smoke path proves a released Sotto CLI can run a local demo without
 writing demo transcription history to the user's app database. It checks CLI
 availability, records health readiness, synthesizes a tiny local audio fixture,
 transcribes it into an isolated SQLite database with Parakeet v3 and raw
@@ -21,7 +21,7 @@ scripts/dev/release_demo_smoke.sh
 If the released CLI is somewhere else, pass it explicitly:
 
 ```bash
-scripts/dev/release_demo_smoke.sh --cli /path/to/macparakeet-cli
+scripts/dev/release_demo_smoke.sh --cli /path/to/sotto-cli
 ```
 
 For development verification only, allow a SwiftPM fallback:
@@ -68,7 +68,7 @@ Notes:
 
 - The script intentionally does not use `--no-history`; export needs a persisted
   transcription ID. The `--database` option keeps transcription/export
-  persistence inside the evidence directory instead of the user's MacParakeet
+  persistence inside the evidence directory instead of the user's Sotto
   database.
 - `health --json` reports the installed app's normal health surface, including
   the app database path and counts when that database already exists. It is not
@@ -81,7 +81,7 @@ Notes:
   transcript rows, not all app state or network activity. See the
   [integration isolation rules](../integrations/README.md#safe-automation-and-isolation).
 - Health, transcription, history, and export invocations set
-  `MACPARAKEET_TELEMETRY=0`. Passing this smoke does not verify GUI capture,
+  `SOTTO_TELEMETRY=0`. Passing this smoke does not verify GUI capture,
   hardware routes, permissions, signing, notarization, or the Sparkle update
   path, and it does not by itself prove offline/no-download or dedicated-account
   isolation -- see the qualification wrapper above for those boundaries.

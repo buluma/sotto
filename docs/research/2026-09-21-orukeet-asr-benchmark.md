@@ -27,9 +27,9 @@ The vendor NeMo card (9.85% vs 11.01% pooled FLEURS) is not used here.
 
 | Item | Value |
 |------|--------|
-| CLI | `macparakeet-cli`, release build of `4c30fd1a0` in the PR worktree |
+| CLI | `sotto-cli`, release build of `4c30fd1a0` in the PR worktree |
 | Flags | `--engine parakeet --parakeet-model orukeet` or `v3`, `--speaker-detection off`, `--no-history` |
-| Telemetry | `MACPARAKEET_TELEMETRY=0` |
+| Telemetry | `SOTTO_TELEMETRY=0` |
 | Machine | Apple M4 Pro, 48 GB, macOS 26.6.2 (25G83) |
 | English | LibriSpeech `test-clean` (2,620) and `test-other` (2,939), full sets |
 | Multilingual | FLEURS via `FluidInference/fleurs-full`, first 150 sorted clips per language |

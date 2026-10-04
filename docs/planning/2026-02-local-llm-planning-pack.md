@@ -3,7 +3,7 @@
 > Status: **HISTORICAL** - The on-device Qwen3-8B / MLX-Swift plan documented here was removed 2026-02-23. Current LLM support uses external providers or local CLI instead.
 
 Last updated: 2026-02-13
-Scope: Production planning for local LLM integration in MacParakeet.
+Scope: Production planning for local LLM integration in Sotto.
 
 ## Included Artifacts
 

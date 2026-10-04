@@ -2,7 +2,7 @@ import ArgumentParser
 import CryptoKit
 import Darwin
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 @main
 struct DiarizationBenchmark: AsyncParsableCommand {

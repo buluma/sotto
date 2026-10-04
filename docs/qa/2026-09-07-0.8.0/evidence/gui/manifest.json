@@ -1,10 +1,10 @@
 {
   "candidate": "8548c099af5ee2ab0ed4dd9efe757d85c498cca0",
-  "app_bundle_id": "com.macparakeet.qa.release080",
+  "app_bundle_id": "com.sotto.qa.release080",
   "observed_app_pid": 98237,
   "scope": "Baseline GUI observations performed by root; report agent inspected files only.",
   "privacy_review": "Each copied image was individually inspected with view_image. Only the QA app window and synthetic/public fixture content are present. No file-panel shots or raw AX trees are included.",
-  "source_directory": "/tmp/macparakeet-080-qa/evidence",
+  "source_directory": "/tmp/sotto-080-qa/evidence",
   "files": [
     {
       "name": "vocabulary-1025-ordinary.png",

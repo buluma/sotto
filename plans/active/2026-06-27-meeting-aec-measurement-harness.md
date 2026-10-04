@@ -31,7 +31,7 @@ scored on, and it runs in CI with no model download or native binary.
 
 ## What shipped in this slice (test-target only)
 
-`Tests/MacParakeetTests/Services/Capture/MeetingAecMeasurementHarness.swift`:
+`Tests/SottoTests/Services/Capture/MeetingAecMeasurementHarness.swift`:
 
 - **Fixtures** (`MeetingAecScenarioFactory`): deterministic, seeded, speech-like
   near-end and far-end talkers (decorrelated), a configurable sparse echo path
@@ -50,7 +50,7 @@ scored on, and it runs in CI with no model download or native binary.
   chunks (so chunk boundaries are exercised) and returns output aligned 1:1 to
   the mic.
 
-`Tests/MacParakeetTests/Services/Capture/MeetingAecMeasurementTests.swift`: 7
+`Tests/SottoTests/Services/Capture/MeetingAecMeasurementTests.swift`: 7
 tests asserting the harness is sound and printing the first real numbers.
 
 ## First numbers (this branch, deterministic)
@@ -88,7 +88,7 @@ Two findings that should shape the engine work:
 4. **Nonlinear-echo and reverberant fixtures** (where neural is expected to beat
    the linear NLMS baseline), plus **real Zoom/Meet/Teams recordings** for the
    final #605 release proof.
-5. Consider promoting the harness to a `macparakeet-cli aec-bench` surface so the
+5. Consider promoting the harness to a `sotto-cli aec-bench` surface so the
    bake-off is reproducible outside the test target.
 
 ## Release proof for #605 (unchanged from the research note)

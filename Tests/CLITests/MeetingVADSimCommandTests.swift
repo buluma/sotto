@@ -5,7 +5,7 @@ import XCTest
 final class MeetingVADSimCommandTests: XCTestCase {
     func testJSONModeEmitsFailureEnvelopeForMissingAudioFile() async throws {
         let missingURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-missing-vad-\(UUID().uuidString).wav")
+            .appendingPathComponent("sotto-missing-vad-\(UUID().uuidString).wav")
         let command = try MeetingVADSimCommand.parse([
             missingURL.path,
             "--json",

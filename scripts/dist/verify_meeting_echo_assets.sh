@@ -6,7 +6,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 . "$ROOT_DIR/scripts/dist/meeting_echo_asset_defaults.sh"
 . "$ROOT_DIR/scripts/dist/macho_min_version.sh"
 
-APP_PATH="${1:-${APP_PATH:-$ROOT_DIR/dist/MacParakeet.app}}"
+APP_PATH="${1:-${APP_PATH:-$ROOT_DIR/dist/Sotto.app}}"
 REQUIRE_MEETING_ECHO_ASSETS="${REQUIRE_MEETING_ECHO_ASSETS:-0}"
 VERIFY_CODE_SIGNATURES="${VERIFY_CODE_SIGNATURES:-0}"
 STRICT_MEETING_ECHO_ASSETS="${STRICT_MEETING_ECHO_ASSETS:-$REQUIRE_MEETING_ECHO_ASSETS}"
@@ -40,7 +40,7 @@ missing_tool() {
 # the expected minimum can be determined; only the availability of otool/lipo
 # themselves is gated by strict mode, consistent with the other checks below.
 verify_deployment_targets() {
-  local override_min="${MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION:-}"
+  local override_min="${SOTTO_MEETING_ECHO_MIN_MACOS_VERSION:-}"
   local plist="$APP_PATH/Contents/Info.plist"
   local plist_min=""
   if [[ -f "$plist" ]]; then
@@ -48,7 +48,7 @@ verify_deployment_targets() {
   fi
 
   if [[ -n "$override_min" ]] && ! is_macos_version "$override_min"; then
-    echo "Error: MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION must be a valid macOS version." >&2
+    echo "Error: SOTTO_MEETING_ECHO_MIN_MACOS_VERSION must be a valid macOS version." >&2
     exit 1
   fi
   if [[ -e "$plist" ]] && ! is_macos_version "$plist_min"; then
@@ -66,7 +66,7 @@ verify_deployment_targets() {
   fi
   if [[ -z "$expected_min" ]]; then
     echo "Error: could not determine a valid app LSMinimumSystemVersion to verify bundled LocalVQE dylib deployment targets against." >&2
-    echo "  Set MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION, or ensure $APP_PATH/Contents/Info.plist carries a valid LSMinimumSystemVersion." >&2
+    echo "  Set SOTTO_MEETING_ECHO_MIN_MACOS_VERSION, or ensure $APP_PATH/Contents/Info.plist carries a valid LSMinimumSystemVersion." >&2
     exit 1
   fi
 
@@ -143,14 +143,14 @@ if [[ -d "$MODEL_DIR" ]]; then
   fi
 fi
 
-if [[ -n "${MACPARAKEET_MEETING_ECHO_MODEL_NAME:-}" ]]; then
-  model_name_lc="$(printf '%s' "$MACPARAKEET_MEETING_ECHO_MODEL_NAME" | tr '[:upper:]' '[:lower:]')"
-  if [[ "$MACPARAKEET_MEETING_ECHO_MODEL_NAME" == */* ||
+if [[ -n "${SOTTO_MEETING_ECHO_MODEL_NAME:-}" ]]; then
+  model_name_lc="$(printf '%s' "$SOTTO_MEETING_ECHO_MODEL_NAME" | tr '[:upper:]' '[:lower:]')"
+  if [[ "$SOTTO_MEETING_ECHO_MODEL_NAME" == */* ||
         "$model_name_lc" != *.gguf ]]; then
-    echo "Error: MACPARAKEET_MEETING_ECHO_MODEL_NAME must be a GGUF filename, not a path." >&2
+    echo "Error: SOTTO_MEETING_ECHO_MODEL_NAME must be a GGUF filename, not a path." >&2
     exit 1
   fi
-  MODEL_PATH="$MODEL_DIR/$MACPARAKEET_MEETING_ECHO_MODEL_NAME"
+  MODEL_PATH="$MODEL_DIR/$SOTTO_MEETING_ECHO_MODEL_NAME"
 fi
 
 [[ -n "$MODEL_PATH" && -f "$MODEL_PATH" ]] && model_present=1
@@ -202,7 +202,7 @@ else
   missing_tool "nm" "meeting echo runtime LocalVQE symbols"
 fi
 
-expected_model_sha="${MACPARAKEET_MEETING_ECHO_MODEL_SHA256:-}"
+expected_model_sha="${SOTTO_MEETING_ECHO_MODEL_SHA256:-}"
 if [[ -z "$expected_model_sha" ]]; then
   bundled_model_name="$(basename "$MODEL_PATH")"
   bundled_model_name_lc="$(printf '%s' "$bundled_model_name" | tr '[:upper:]' '[:lower:]')"
@@ -210,10 +210,10 @@ if [[ -z "$expected_model_sha" ]]; then
   if [[ "$bundled_model_name_lc" == "$default_model_name_lc" ]]; then
     expected_model_sha="$DEFAULT_MEETING_ECHO_MODEL_SHA256"
   elif [[ "$STRICT_MEETING_ECHO_ASSETS" == "1" ]]; then
-    echo "Error: strict meeting echo asset verification requires MACPARAKEET_MEETING_ECHO_MODEL_SHA256 for non-default models." >&2
+    echo "Error: strict meeting echo asset verification requires SOTTO_MEETING_ECHO_MODEL_SHA256 for non-default models." >&2
     echo "  Bundled model: $bundled_model_name" >&2
     echo "  Default model: $DEFAULT_MEETING_ECHO_MODEL_NAME" >&2
-    echo "  Set MACPARAKEET_MEETING_ECHO_MODEL_SHA256 to the expected SHA256 for this model." >&2
+    echo "  Set SOTTO_MEETING_ECHO_MODEL_SHA256 to the expected SHA256 for this model." >&2
     exit 1
   fi
 fi

@@ -15,8 +15,8 @@ esac
 OUT_DIR="${OUT_DIR:-$ROOT_DIR/dist}"
 
 if [[ -z "${CLI_BINARY:-}" ]]; then
-  (cd "$ROOT_DIR" && swift build -c release --product macparakeet-cli)
-  CLI_BINARY="$(cd "$ROOT_DIR" && swift build -c release --show-bin-path)/macparakeet-cli"
+  (cd "$ROOT_DIR" && swift build -c release --product sotto-cli)
+  CLI_BINARY="$(cd "$ROOT_DIR" && swift build -c release --show-bin-path)/sotto-cli"
 fi
 if [[ ! -x "$CLI_BINARY" ]]; then
   echo "CLI binary unavailable: $CLI_BINARY" >&2
@@ -25,10 +25,10 @@ fi
 
 STAGING="$(mktemp -d)"
 trap 'rm -rf "$STAGING"' EXIT
-PACKAGE="$STAGING/macparakeet-cli"
-LIBEXEC="$PACKAGE/libexec/macparakeet-cli"
+PACKAGE="$STAGING/sotto-cli"
+LIBEXEC="$PACKAGE/libexec/sotto-cli"
 mkdir -p "$LIBEXEC" "$OUT_DIR"
-install -m 0755 "$CLI_BINARY" "$PACKAGE/macparakeet-cli"
+install -m 0755 "$CLI_BINARY" "$PACKAGE/sotto-cli"
 "$ROOT_DIR/scripts/build_ask_helper.sh" "$LIBEXEC/AskAgentHelper"
 
 if [[ -n "${NODE_BINARY:-}" ]]; then
@@ -53,6 +53,6 @@ else
   tar -xOzf "$STAGING/$ASSET" "node-v${NODE_VERSION}-darwin-${NODE_ASSET_ARCH}/LICENSE" > "$LIBEXEC/Legal/Node/LICENSE"
 fi
 
-ARCHIVE="$OUT_DIR/macparakeet-cli-${VERSION}-darwin-${ARCH}.tar.gz"
-tar -czf "$ARCHIVE" -C "$PACKAGE" macparakeet-cli libexec
+ARCHIVE="$OUT_DIR/sotto-cli-${VERSION}-darwin-${ARCH}.tar.gz"
+tar -czf "$ARCHIVE" -C "$PACKAGE" sotto-cli libexec
 shasum -a 256 "$ARCHIVE"

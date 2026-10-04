@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 struct MeetingsCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
@@ -1094,7 +1094,7 @@ struct MeetingsCommand: AsyncParsableCommand {
                     }
                     let promptSnapshot =
                         normalizedNonEmptyText(promptContent)
-                        ?? "External result imported with `macparakeet-cli meetings results add`."
+                        ?? "External result imported with `sotto-cli meetings results add`."
                     let now = Date()
                     let promptResult = PromptResult(
                         transcriptionId: transcription.id,
@@ -1103,7 +1103,7 @@ struct MeetingsCommand: AsyncParsableCommand {
                         extraInstructions: normalizedNonEmptyText(extra),
                         content: resultContent,
                         // Imported output did not send meeting notes through
-                        // MacParakeet, so it has no effective-notes receipt.
+                        // Sotto, so it has no effective-notes receipt.
                         userNotesSnapshot: nil,
                         includeMeetingNotesSnapshot: false,
                         createdAt: now,

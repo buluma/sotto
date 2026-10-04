@@ -10,7 +10,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 #
 # Your dev machine already has Microphone, Accessibility, and Screen &
-# System Audio Recording permissions granted to MacParakeet-Dev. That means
+# System Audio Recording permissions granted to Sotto-Dev. That means
 # macOS's TCC database silently skips every permission prompt, so onboarding,
 # first-use flows, and permission-gated features APPEAR TO WORK PERFECTLY
 # even when they're completely broken for a brand-new user.
@@ -40,14 +40,14 @@
 # - If a new onboarding UserDefaults key gets added alongside existing ones
 #   (e.g. "onboarding.foo"), add a matching `defaults delete` line in step 3
 #   so the reset is complete.
-# - The `com.macparakeet.dev` bundle ID is the dev build only; production
-#   uses `com.macparakeet.MacParakeet`. Do not point this script at the
+# - The `com.sotto.dev` bundle ID is the dev build only; production
+#   uses `com.sotto.Sotto`. Do not point this script at the
 #   production bundle — you'd nuke a real user's permissions.
 #
 # ──────────────────────────────────────────────────────────────────────────────
 #
 # What this does:
-#   1. Quits any running MacParakeet-Dev instance
+#   1. Quits any running Sotto-Dev instance
 #   2. Resets TCC permissions (Microphone, Accessibility, Screen Recording, etc.)
 #      for the dev bundle ID — macOS will re-prompt on first use
 #   3. Clears the onboarding completion flag so the onboarding window reopens
@@ -56,7 +56,7 @@
 #
 # What this does NOT do (intentionally):
 #   - Does not delete the dictation/transcription database at
-#     ~/Library/Application Support/MacParakeet/macparakeet.db
+#     ~/Library/Application Support/Sotto/sotto.db
 #   - Does not touch downloaded STT/diarization models (they take ~6 GB to
 #     re-download). If you want a true cold-start, delete that folder manually.
 #   - Does not touch LLM API keys, hotkey config, or other settings you'd miss
@@ -70,11 +70,11 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-DEV_BUNDLE_ID="com.macparakeet.dev"
+DEV_BUNDLE_ID="com.sotto.dev"
 
-echo "[1/5] Quitting any running MacParakeet-Dev…"
-osascript -e 'tell application "MacParakeet-Dev" to quit' 2>/dev/null || true
-pkill -x "MacParakeet" 2>/dev/null || true
+echo "[1/5] Quitting any running Sotto-Dev…"
+osascript -e 'tell application "Sotto-Dev" to quit' 2>/dev/null || true
+pkill -x "Sotto" 2>/dev/null || true
 sleep 0.5
 
 echo "[2/5] Resetting TCC permissions for ${DEV_BUNDLE_ID}…"

@@ -12,7 +12,7 @@
 
 ## Context
 
-MacParakeet ships four speech engines — Parakeet (default), Nemotron
+Sotto ships four speech engines — Parakeet (default), Nemotron
 streaming (Beta), Whisper, and Cohere Transcribe — across two runtimes:
 FluidAudio CoreML/ANE and WhisperKit. The engine roster has grown one
 engine at a time (ADR-001 → ADR-021 → Nemotron → Cohere) without a

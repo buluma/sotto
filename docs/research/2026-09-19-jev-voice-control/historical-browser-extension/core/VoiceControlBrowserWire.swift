@@ -6,7 +6,7 @@ public enum VoiceControlBrowserWire {
     public static let maximumFrameBytes = 262_144
     public static var directory: URL {
         FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Application Support/MacParakeet/VoiceControlBrowser", isDirectory: true)
+            .appendingPathComponent("Library/Application Support/Sotto/VoiceControlBrowser", isDirectory: true)
     }
     public static var socketPath: String { directory.appendingPathComponent("bridge.sock").path }
 

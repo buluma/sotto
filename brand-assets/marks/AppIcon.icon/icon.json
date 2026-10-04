@@ -1,6 +1,6 @@
 {
   "fill" : {
-    "solid" : "display-p3:0.06581,0.07133,0.08796,1.00000"
+    "solid" : "srgb:0.12,0.10,0.22,1.00000"
   },
   "groups" : [
     {
@@ -19,8 +19,8 @@
             }
           ],
           "hidden" : false,
-          "image-name" : "parakeet-line.svg",
-          "name" : "parakeet-line"
+          "image-name" : "sotto-line.svg",
+          "name" : "sotto-line"
         }
       ],
       "shadow" : {

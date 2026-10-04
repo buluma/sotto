@@ -86,11 +86,11 @@ documented lanes. Do not run every command during each edit iteration.
 
 ```sh
 swift build --build-tests --jobs 8
-MACPARAKEET_TELEMETRY=0 swift test --jobs 8 --filter \
+SOTTO_TELEMETRY=0 swift test --jobs 8 --filter \
   'RetranscribeCommandTests|RetranscribePersistenceTests|TranscriptionLibraryViewModelTests'
-python3 scripts/ci/cli-persistence-smoke.py "$PWD/.build/debug/macparakeet-cli"
+python3 scripts/ci/cli-persistence-smoke.py "$PWD/.build/debug/sotto-cli"
 scripts/build_ask_helper.sh .build/ask-runtime/AskAgentHelper .build/ask-runtime/node
-MACPARAKEET_ASK_TEST_HELPER="$PWD/.build/ask-runtime/AskAgentHelper/ask-helper.cjs" \
+SOTTO_ASK_TEST_HELPER="$PWD/.build/ask-runtime/AskAgentHelper/ask-helper.cjs" \
   .build/ask-runtime/node --test Sources/AskAgentHelper/test/*.test.js
 ```
 
@@ -107,15 +107,15 @@ be applied blindly to tests whose contract checks default paths. It also does
 not isolate preferences, Keychain or TCC.
 
 ```sh
-MACPARAKEET_TELEMETRY=0 \
-MACPARAKEET_DEBUG_APP_STATE_DIR="$PWD/.build/audit-state/full-suite" \
-MACPARAKEET_ASK_TEST_NODE="$PWD/.build/ask-runtime/node" \
-MACPARAKEET_CLI_TEST_EXECUTABLE="$PWD/.build/debug/macparakeet-cli" \
+SOTTO_TELEMETRY=0 \
+SOTTO_DEBUG_APP_STATE_DIR="$PWD/.build/audit-state/full-suite" \
+SOTTO_ASK_TEST_NODE="$PWD/.build/ask-runtime/node" \
+SOTTO_CLI_TEST_EXECUTABLE="$PWD/.build/debug/sotto-cli" \
   /usr/bin/time -l swift test --jobs 8 --parallel \
   --xunit-output .build/audit-evidence/final-swift-tests.xml
 ```
 
-The corrected run uses `env -u MACPARAKEET_DEBUG_APP_STATE_DIR` and the filter
+The corrected run uses `env -u SOTTO_DEBUG_APP_STATE_DIR` and the filter
 `AppPathsTests|ConfigCommandTests|MeetingSplitCommandTests|SplitAndTranscribeFixtureSeedTests|RetranscribeCommandTests|RetranscribePersistenceTests|TranscriptionLibraryViewModelTests`.
 It also rebuilds the final formatting-only adjustments to the changed Swift
 files. Formatting review reports no warnings intersecting added/changed lines;

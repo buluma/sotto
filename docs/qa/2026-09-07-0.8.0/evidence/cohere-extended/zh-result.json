@@ -4,7 +4,7 @@
   "deadlineSeconds": 600,
   "startedAt": "2026-09-07T23:05:36.068662+00:00",
   "command": [
-    "<QA_ROOT>/macparakeet-cli-runtime",
+    "<QA_ROOT>/sotto-cli-runtime",
     "transcribe",
     "<PUBLIC_FLEURS>/cmn_hans_cn/cmn_hans_cn_0000.wav",
     "--engine",
@@ -23,7 +23,7 @@
   ],
   "environmentOverrides": {
     "CFFIXED_USER_HOME": "<QA_ROOT>/isolated-home",
-    "MACPARAKEET_TELEMETRY": "0",
+    "SOTTO_TELEMETRY": "0",
     "DO_NOT_TRACK": "1",
     "TMPDIR": "<QA_ROOT>/cohere-extended/zh/tmp"
   },

@@ -4,14 +4,14 @@ One concern: determine whether CLI `config` and LLM-backed CLI commands actually
 
 ## Settled
 
-- `AppPaths.appDefaults(bundleIdentifier:)` is the intended cross-process preference resolver (`Sources/MacParakeetCore/Services/AppPaths.swift`).
-- `macparakeet-cli config` uses `macParakeetAppDefaults()`.
+- `AppPaths.appDefaults(bundleIdentifier:)` is the intended cross-process preference resolver (`Sources/SottoCore/Services/AppPaths.swift`).
+- `sotto-cli config` uses `sottoAppDefaults()`.
 - Do not propose storing API keys as CLI flags in shell history.
 
 ## Hypotheses to confirm or kill with evidence
 
 1. `LLMConfigStore` and `LocalCLIConfigStore` default to `UserDefaults.standard`, so Homebrew CLI `cards generate` / default `LLMService()` may miss GUI-saved provider metadata.
-2. `SpeechEnginePreference.current(defaults: .standard)` vs CLI passing `macParakeetAppDefaults()` — find any CLI path that forgets to pass the suite.
+2. `SpeechEnginePreference.current(defaults: .standard)` vs CLI passing `sottoAppDefaults()` — find any CLI path that forgets to pass the suite.
 3. `UserDefaultsAppRuntimePreferences` default `.standard` — GUI OK, Homebrew CLI maybe not for any CLI caller that constructs it without the suite.
 4. `config` key coverage vs `AppRuntimePreferences` / `AppPreferences` / `CalendarAutoStartPreferences` keys. Which missing keys are automation-relevant vs GUI-only chrome?
 

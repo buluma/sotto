@@ -33,7 +33,7 @@ multilingual Parakeet build.
 
 ## Same-Machine First-300 Follow-Up
 
-After wiring Phase 2 streaming in MacParakeet, the first 300 lexicographically
+After wiring Phase 2 streaming in Sotto, the first 300 lexicographically
 sorted LibriSpeech `test-clean` files were re-run on the same machine with the
 FluidAudio 0.15.4 release CLI.
 
@@ -68,9 +68,9 @@ Nemotron-specific scorer with lowercase alphanumeric normalization, so treat
 that row as a model-of-interest comparison rather than an identical harness
 score.
 
-## MacParakeet CLI End-to-End Check
+## Sotto CLI End-to-End Check
 
-MacParakeet was also validated end to end through the release CLI, using
+Sotto was also validated end to end through the release CLI, using
 `transcribe --parakeet-model unified` and writing transcript files through
 `--output-dir` so CoreML stdout diagnostics cannot contaminate hypotheses.
 
@@ -78,18 +78,18 @@ Run:
 
 ```bash
 export LIBRISPEECH_TEST_CLEAN=/path/to/LibriSpeech/test-clean
-swift build --product macparakeet-cli -c release
-benchmarks/parakeet-unified/run_macparakeet_librispeech.py \
+swift build --product sotto-cli -c release
+benchmarks/parakeet-unified/run_sotto_librispeech.py \
   --dataset "$LIBRISPEECH_TEST_CLEAN" \
-  --cli .build/release/macparakeet-cli \
+  --cli .build/release/sotto-cli \
   --limit 300 \
   --selection stride \
-  --records benchmarks/parakeet-unified/macparakeet-unified-test-clean-stride300.jsonl
+  --records benchmarks/parakeet-unified/sotto-unified-test-clean-stride300.jsonl
 
 # Re-score the committed JSONL without re-running transcription.
-benchmarks/parakeet-unified/run_macparakeet_librispeech.py \
+benchmarks/parakeet-unified/run_sotto_librispeech.py \
   --score-only \
-  --records benchmarks/parakeet-unified/macparakeet-unified-test-clean-stride300.jsonl
+  --records benchmarks/parakeet-unified/sotto-unified-test-clean-stride300.jsonl
 ```
 
 Unified result:
@@ -103,16 +103,16 @@ The same deterministic 300-file sample was also run through v2 for an
 end-to-end CLI comparison:
 
 ```bash
-benchmarks/parakeet-unified/run_macparakeet_librispeech.py \
+benchmarks/parakeet-unified/run_sotto_librispeech.py \
   --dataset "$LIBRISPEECH_TEST_CLEAN" \
-  --cli .build/release/macparakeet-cli \
+  --cli .build/release/sotto-cli \
   --limit 300 \
   --selection stride \
   --parakeet-model v2 \
-  --records benchmarks/parakeet-unified/macparakeet-v2-test-clean-stride300.jsonl
-benchmarks/parakeet-unified/run_macparakeet_librispeech.py \
+  --records benchmarks/parakeet-unified/sotto-v2-test-clean-stride300.jsonl
+benchmarks/parakeet-unified/run_sotto_librispeech.py \
   --score-only \
-  --records benchmarks/parakeet-unified/macparakeet-v2-test-clean-stride300.jsonl
+  --records benchmarks/parakeet-unified/sotto-v2-test-clean-stride300.jsonl
 ```
 
 | Model | Files | Corpus WER | Errors | Elapsed |
@@ -120,7 +120,7 @@ benchmarks/parakeet-unified/run_macparakeet_librispeech.py \
 | Parakeet Unified | 300 | 1.93% | I=11 D=10 S=91 | 39.20s |
 | Parakeet v2 | 300 | 2.41% | I=15 D=27 S=98 | 64.20s |
 
-The MacParakeet runner and scorer are intentionally dependency-free and use a
+The Sotto runner and scorer are intentionally dependency-free and use a
 simpler English ASR normalizer than FluidAudio's canonical benchmark. The CLI
 result is therefore an end-to-end integration check, not the headline model-card
 number.
@@ -139,7 +139,7 @@ to skip download, then errored on the missing preprocessor. After the fix,
 this command repaired the cache and completed successfully:
 
 ```bash
-.build/release/macparakeet-cli transcribe \
+.build/release/sotto-cli transcribe \
   "$LIBRISPEECH_TEST_CLEAN/1089/134686/1089-134686-0000.flac" \
   --format transcript \
   --parakeet-model unified \

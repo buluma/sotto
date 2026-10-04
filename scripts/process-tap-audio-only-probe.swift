@@ -278,7 +278,7 @@ private final class SignalAccumulator: @unchecked Sendable {
 
 private final class AudioOnlyProcessTapProbe: @unchecked Sendable {
     private let ioQueue = DispatchQueue(
-        label: "com.macparakeet.process-tap-audio-only-probe",
+        label: "com.sotto.process-tap-audio-only-probe",
         qos: .userInitiated
     )
     private var tapID = AudioObjectID(unknownAudioObject)
@@ -312,9 +312,9 @@ private final class AudioOnlyProcessTapProbe: @unchecked Sendable {
 
         let outputDevice = try defaultOutputDevice()
         outputUID = try deviceUID(outputDevice)
-        let aggregateUID = "com.macparakeet.process-tap-probe.\(UUID().uuidString)"
+        let aggregateUID = "com.sotto.process-tap-probe.\(UUID().uuidString)"
         let aggregateDescription: [String: Any] = [
-            kAudioAggregateDeviceNameKey: "MacParakeet Audio-Only Tap Probe",
+            kAudioAggregateDeviceNameKey: "Sotto Audio-Only Tap Probe",
             kAudioAggregateDeviceUIDKey: aggregateUID,
             kAudioAggregateDeviceIsPrivateKey: true,
             kAudioAggregateDeviceIsStackedKey: false,

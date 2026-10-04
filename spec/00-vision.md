@@ -1,4 +1,4 @@
-# MacParakeet: Vision & Philosophy
+# Sotto: Vision & Philosophy
 
 > Status: **ACTIVE** - Authoritative, current
 > Fast, private, local-first voice app for Mac. Fully local speech with separately documented network surfaces, free and open-source (GPL-3.0).
@@ -13,7 +13,7 @@
 That is the day-one promise. The destination it builds toward
 ([ADR-027](adr/027-product-north-star.md)): **every word you speak or hear on
 your Mac becomes private, permanent, and useful — on your machine, owned by
-you, readable by you and your agents.** MacParakeet is the private speech
+you, readable by you and your agents.** Sotto is the private speech
 memory of your Mac.
 
 ```
@@ -54,7 +54,7 @@ compounds in value the longer you use the app.
   three modes, question-answering over your own corpus, and export. Scope
   guard: search + QA + export, not a PKM.
 - **Agents are first-class consumers** — scriptable corpus operations belong
-  in `macparakeet-cli`'s versioned contract, not a mirror of every GUI affordance.
+  in `sotto-cli`'s versioned contract, not a mirror of every GUI affordance.
   Current retrieval capabilities and limits live in the [integration guide](../integrations/README.md).
 - **Session-based, by design** — every capture is explicitly started by you.
   Ambient/always-on capture is deliberately parked
@@ -66,7 +66,7 @@ hand it safely to you and your agents — otherwise it does not ship.
 
 ---
 
-## Why MacParakeet Exists
+## Why Sotto Exists
 
 **The problem:** Mac users who want voice-to-text face a bad tradeoff:
 
@@ -75,11 +75,11 @@ hand it safely to you and your agents — otherwise it does not ship.
 | **Cloud speech services** | Audio leaves the Mac | Often focused on dictation or meetings | Provider account and service dependency |
 | **Local transcription tools** | Speech can stay local | Often focused on files or one capture mode | Local files, product-specific automation |
 | **Built-in OS dictation** | OS-managed | Dictation only | No shared transcript library or file/meeting workflow |
-| **MacParakeet** | **No cloud STT; can be fully local** | **Three capture modes + Transforms** | **Local library, exports, and versioned CLI** |
+| **Sotto** | **No cloud STT; can be fully local** | **Three capture modes + Transforms** | **Local library, exports, and versioned CLI** |
 
-MacParakeet is deliberately optimized for **speed + privacy + simplicity + user ownership**. Competitor capabilities and prices change; this spec defines MacParakeet's product commitments rather than serving as a live market-comparison table.
+Sotto is deliberately optimized for **speed + privacy + simplicity + user ownership**. Competitor capabilities and prices change; this spec defines Sotto's product commitments rather than serving as a live market-comparison table.
 
-**MacParakeet's answer:** Built from the ground up around Parakeet TDT for speed, with multilingual v3 as the standard-path default, English-only v2 as an opt-in TDT build, and Parakeet Unified as an opt-in English build with punctuation, capitalization, live preview, and word-timestamped output, plus local Nemotron Beta, Cohere Transcribe, and WhisperKit engines for broader language coverage and accuracy-focused batch work. Locale-aware first-run setup selects WhisperKit for Korean/Japanese/Chinese/Cantonese when no preferred English language is present. Fully local speech by default, with optional networked features. Three capture modes, plus Transforms for selected text. Simple and GPL open-source. Done.
+**Sotto's answer:** Built from the ground up around Parakeet TDT for speed, with multilingual v3 as the standard-path default, English-only v2 as an opt-in TDT build, and Parakeet Unified as an opt-in English build with punctuation, capitalization, live preview, and word-timestamped output, plus local Nemotron Beta, Cohere Transcribe, and WhisperKit engines for broader language coverage and accuracy-focused batch work. Locale-aware first-run setup selects WhisperKit for Korean/Japanese/Chinese/Cantonese when no preferred English language is present. Fully local speech by default, with optional networked features. Three capture modes, plus Transforms for selected text. Simple and GPL open-source. Done.
 
 ---
 
@@ -114,7 +114,7 @@ network opt-out.
 
 ### 3. Simplicity Over Features
 
-MacParakeet keeps the top-level product centered on three capture modes plus Transforms.
+Sotto keeps the top-level product centered on three capture modes plus Transforms.
 
 - **Dictate** -- Double-tap Fn or hold Fn, speak, and text appears at cursor. Works in any app.
 - **Transcribe** -- Drop a file, get text out. Audio, video, YouTube links.
@@ -125,7 +125,7 @@ Every feature we add must pass the test: "Does this make dictation, transcriptio
 
 ### 4. Modern, Not Minimalist
 
-Simple does not mean basic. MacParakeet includes modern capabilities that cloud competitors pioneered, but runs them locally:
+Simple does not mean basic. Sotto includes modern capabilities that cloud competitors pioneered, but runs them locally:
 
 - **Clean Pipeline** -- Deterministic text processing: filler removal, custom word replacement, snippet expansion, whitespace normalization. Professional output with zero latency.
 - **Custom Words** -- Teach it your vocabulary. Technical terms, proper nouns, acronyms. Anchors that improve recognition accuracy.
@@ -134,15 +134,15 @@ Simple does not mean basic. MacParakeet includes modern capabilities that cloud 
 ### 5. Free and Open-Source, Monetizable Official Distribution
 
 The current public build has no paid feature limits or required subscription.
-MacParakeet is free and open-source (GPL-3.0). Development feature gates still
+Sotto is free and open-source (GPL-3.0). Development feature gates still
 keep unfinished or unreleased capabilities out of normal builds; see the
 [release/flag status](README.md#release-channels-and-feature-flags).
 
-That does not mean monetization is permanently forbidden. GPL permits charging for distribution, and MacParakeet may later sell official signed/notarized builds, support, hosted services, team features, or paid official distribution while preserving recipients' GPL rights. The old LemonSqueezy/trial entitlement plumbing is intentionally retained for that future option and must not be removed as dead code without explicit owner direction and an ADR/spec update.
+That does not mean monetization is permanently forbidden. GPL permits charging for distribution, and Sotto may later sell official signed/notarized builds, support, hosted services, team features, or paid official distribution while preserving recipients' GPL rights. The old LemonSqueezy/trial entitlement plumbing is intentionally retained for that future option and must not be removed as dead code without explicit owner direction and an ADR/spec update.
 
 ---
 
-## What MacParakeet Is
+## What Sotto Is
 
 | Attribute | Description |
 |-----------|-------------|
@@ -155,9 +155,9 @@ That does not mean monetization is permanently forbidden. GPL permits charging f
 
 ---
 
-## What MacParakeet Is Not
+## What Sotto Is Not
 
-- **Not a full meeting intelligence app** -- MacParakeet records and transcribes meetings, has live notes, Ask, and prompt-based action summaries. Calendar auto-start is implemented and enabled (opt-in). Cross-mode search and QA over your own library are in scope ([ADR-027](adr/027-product-north-star.md)); entity extraction, CRM-style enrichment, and team intelligence are not.
+- **Not a full meeting intelligence app** -- Sotto records and transcribes meetings, has live notes, Ask, and prompt-based action summaries. Calendar auto-start is implemented and enabled (opt-in). Cross-mode search and QA over your own library are in scope ([ADR-027](adr/027-product-north-star.md)); entity extraction, CRM-style enrichment, and team intelligence are not.
 - **Not a note-taking app** -- It puts text where your cursor is. Your note app is your note app.
 - **Not a cloud service** -- No hosted transcription backend, no accounts, no sync product. Core speech stays local.
 - **Not an enterprise product** -- Single-user, single-Mac. No admin console, no team management (initially).
@@ -166,7 +166,7 @@ That does not mean monetization is permanently forbidden. GPL permits charging f
 
 ---
 
-## The MacParakeet Experience
+## The Sotto Experience
 
 ### Mode 1: Dictate Anywhere
 
@@ -255,7 +255,7 @@ That does not mean monetization is permanently forbidden. GPL permits charging f
 |                                                                       |
 |  1. Select text in Slack, Mail, Linear, a browser, or an editor         |
 |  2. Press a bound Transform hotkey (Control-Option-1/2/3)              |
-|  3. MacParakeet captures the selection and runs the saved prompt        |
+|  3. Sotto captures the selection and runs the saved prompt        |
 |  4. The result replaces the selection in place                         |
 |                                                                       |
 |  Uses the user's configured LLM provider. No selected text is sent      |
@@ -282,7 +282,7 @@ boundaries, automation, and avoiding a required subscription.
 ### Secondary: Privacy-Conscious Professionals
 
 People who handle sensitive notes, interviews, research, or internal material
-and want speech recognition to stay on their Mac. MacParakeet does not itself
+and want speech recognition to stay on their Mac. Sotto does not itself
 certify a user's regulatory compliance; users must evaluate their complete
 workflow, device controls, enabled telemetry, and configured AI providers.
 
@@ -306,9 +306,9 @@ Writers who think better out loud. Podcasters who need episode transcripts. Cont
 
 ## Product Position
 
-MacParakeet does not depend on a time-sensitive competitor matrix for its identity. Published comparisons must be reverified when used; prices, engine choices, and feature sets are not stable facts.
+Sotto does not depend on a time-sensitive competitor matrix for its identity. Published comparisons must be reverified when used; prices, engine choices, and feature sets are not stable facts.
 
-| Product commitment | MacParakeet's position |
+| Product commitment | Sotto's position |
 |--------------------|------------------------|
 | Speech privacy | No cloud STT; supported speech engines run on the Mac |
 | Scope | System-wide dictation, file/media transcription, and meeting recording in one app |
@@ -330,7 +330,7 @@ We are not a Whisper app that added Parakeet. We built the entire product around
 - **Word-level timestamps** -- enables synced subtitles, precise seeking, and speaker alignment where the selected engine supplies timings.
 - **Vocabulary support** -- deterministic replacements ship today; recognition-time custom-vocabulary boosting is separately controlled and tested.
 
-MacParakeet optimizes the default pipeline for Parakeet while routing optional Nemotron, Cohere, and Whisper through the same scheduler/runtime control plane.
+Sotto optimizes the default pipeline for Parakeet while routing optional Nemotron, Cohere, and Whisper through the same scheduler/runtime control plane.
 
 ### 2. Local-First, Zero-Compromise Speech
 
@@ -346,15 +346,15 @@ The current free and open-source build removes account, trial, and subscription 
 
 Three capture modes plus Transforms. Not twenty. Not fifty.
 
-The product surface area is intentionally small. This means fewer bugs, faster iteration, easier onboarding, and a UI that does not require a tutorial. If a user cannot figure out MacParakeet in 30 seconds, we have failed.
+The product surface area is intentionally small. This means fewer bugs, faster iteration, easier onboarding, and a UI that does not require a tutorial. If a user cannot figure out Sotto in 30 seconds, we have failed.
 
 ---
 
 ## Licensing
 
-MacParakeet is open-source under the **GPL-3.0** license. Current public builds are free and fully unlocked. The source code is public at [github.com/moona3k/macparakeet](https://github.com/moona3k/macparakeet).
+Sotto is open-source under the **GPL-3.0** license. Current public builds are free and fully unlocked. The source code is public at [github.com/moona3k/macparakeet](https://github.com/moona3k/macparakeet).
 
-> Historical note: MacParakeet was originally planned as a $49 one-time purchase (see ADR-003). The decision to go free/open-source in v0.5 maximized adoption and community contribution. It did not permanently ban GPL-compatible paid official distribution, support, hosted services, or future paid builds.
+> Historical note: Sotto was originally planned as a $49 one-time purchase (see ADR-003). The decision to go free/open-source in v0.5 maximized adoption and community contribution. It did not permanently ban GPL-compatible paid official distribution, support, hosted services, or future paid builds.
 
 ---
 
@@ -362,9 +362,9 @@ MacParakeet is open-source under the **GPL-3.0** license. Current public builds 
 
 The comparison below records the original separate-product positioning.
 [ADR-027](adr/027-product-north-star.md) now owns the boundary: Library search
-and corpus Q&A belong in MacParakeet's direction, while deeper entity/graph/team
+and corpus Q&A belong in Sotto's direction, while deeper entity/graph/team
 work stays outside its scope. Whether Oatmeal continues as a distinct product
-is open; the older comparison is not a reason to reject MacParakeet Library work.
+is open; the older comparison is not a reason to reject Sotto Library work.
 
 ```
 +-----------------------------------------------------------------------+
@@ -374,7 +374,7 @@ is open; the older comparison is not a reason to reject MacParakeet Library work
 |  |  Text processing pipeline (raw/clean modes)                    |    |
 |  +---------------------------------------------------------------+    |
 +-----------------------+-----------------------------------------------+
-|    MacParakeet        |              Oatmeal                          |
+|    Sotto        |              Oatmeal                          |
 |    (Voice App)        |              (Meeting Memory)                  |
 |                       |                                               |
 |  - Dictate anywhere   |  - Calendar integration                       |
@@ -390,7 +390,7 @@ is open; the older comparison is not a reason to reject MacParakeet Library work
 
 ### Key Distinctions
 
-| Dimension | MacParakeet | Oatmeal |
+| Dimension | Sotto | Oatmeal |
 |-----------|-------------|---------|
 | **Purpose** | Voice input, transcription, meeting recording | Meeting memory and knowledge |
 | **Scope** | Text in, text out, meetings transcribed | Meetings, entities, relationships, patterns |
@@ -401,11 +401,11 @@ is open; the older comparison is not a reason to reject MacParakeet Library work
 
 ### Strategic Relationship
 
-- **Standalone value**: MacParakeet is a complete product on its own. It does not require or reference Oatmeal.
-- **Historical funnel idea**: the original split reserved meeting intelligence for Oatmeal. MacParakeet now includes Calendar integration and is building toward corpus search/Q&A; only the deeper knowledge-system boundary remains outside its stated scope.
-- **Adoption timing**: MacParakeet builds community and mindshare while Oatmeal matures. Simpler product = faster to market.
-- **Technology proving ground**: Parakeet integration and clean pipeline are battle-tested in MacParakeet before being used in Oatmeal.
-- **Boundary note (2026-07)**: [ADR-027](adr/027-product-north-star.md) moves cross-mode search and corpus QA into MacParakeet; whether Oatmeal continues as a distinct product is an open question recorded there.
+- **Standalone value**: Sotto is a complete product on its own. It does not require or reference Oatmeal.
+- **Historical funnel idea**: the original split reserved meeting intelligence for Oatmeal. Sotto now includes Calendar integration and is building toward corpus search/Q&A; only the deeper knowledge-system boundary remains outside its stated scope.
+- **Adoption timing**: Sotto builds community and mindshare while Oatmeal matures. Simpler product = faster to market.
+- **Technology proving ground**: Parakeet integration and clean pipeline are battle-tested in Sotto before being used in Oatmeal.
+- **Boundary note (2026-07)**: [ADR-027](adr/027-product-north-star.md) moves cross-mode search and corpus QA into Sotto; whether Oatmeal continues as a distinct product is an open question recorded there.
 
 ---
 
@@ -435,7 +435,7 @@ is open; the older comparison is not a reason to reject MacParakeet Library work
 
 A new user should be able to:
 
-1. Download MacParakeet
+1. Download Sotto
 2. Open it
 3. Hold Fn and speak a sentence
 4. See clean text appear at their cursor
@@ -543,7 +543,7 @@ Ship-quality polish. Direct distribution via notarized DMG.
 
 ## Naming
 
-**MacParakeet** -- Named after the Parakeet STT model that powers it. "Mac" prefix signals native macOS. The name is friendly, memorable, and directly communicates the technology inside.
+**Sotto** -- Named after the Parakeet STT model that powers it. "Mac" prefix signals native macOS. The name is friendly, memorable, and directly communicates the technology inside.
 
 The parakeet bird is known for mimicking speech -- a fitting metaphor for a voice transcription app.
 

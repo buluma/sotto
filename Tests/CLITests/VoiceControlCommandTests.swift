@@ -3,7 +3,7 @@ import Foundation
 import XCTest
 
 @testable import CLI
-@testable import MacParakeetCore
+@testable import SottoCore
 
 final class VoiceControlCommandTests: XCTestCase {
     private func writeSession(instruction: String, snapshot: VoiceControlSnapshot) async throws -> URL {

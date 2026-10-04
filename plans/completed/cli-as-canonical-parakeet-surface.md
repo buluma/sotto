@@ -1,4 +1,4 @@
-# Plan: MacParakeet CLI as the canonical Parakeet-on-Apple-Silicon surface
+# Plan: Sotto CLI as the canonical Parakeet-on-Apple-Silicon surface
 
 > Status: **SHIPPED / HISTORICAL — archived 2026-07-16.** CLI
 > semver/AGENTS/integrations and Homebrew distribution shipped. The remaining
@@ -21,8 +21,8 @@
 > verified submission flow.
 >
 > **Post-Brew correction (2026-05-19):** `brew install
-> moona3k/tap/macparakeet-cli` is now shipped and verified against
-> `macparakeet-cli 2.3.1`. Item 2 below is done; the remaining release work is
+> moona3k/tap/sotto-cli` is now shipped and verified against
+> `sotto-cli 2.3.1`. Item 2 below is done; the remaining release work is
 > maintenance of the tap plus website/community/registry follow-through. The
 > body is otherwise preserved as the original April 2026 strategic snapshot.
 
@@ -30,11 +30,11 @@
 
 ## TL;DR
 
-**The reframe:** MacParakeet is the canonical Swift-native CLI for Parakeet TDT on Apple Silicon, with a beautiful Mac GUI on top. The CLI is the foundation; the GUI is one (excellent) consumer of it. Apple Silicon AI-agent operators are a real, growing audience that needs exactly this.
+**The reframe:** Sotto is the canonical Swift-native CLI for Parakeet TDT on Apple Silicon, with a beautiful Mac GUI on top. The CLI is the foundation; the GUI is one (excellent) consumer of it. Apple Silicon AI-agent operators are a real, growing audience that needs exactly this.
 
 **Why now:** OpenClaw (acquired by OpenAI Feb 2026, 350K GitHub stars, 500K running instances) and Hermes Agent (Nous Research, 95K stars in 7 weeks) are exploding. Both deploy as daemons on user-controlled compute (Mac mini, VPS). Both shell out to local CLIs via `AGENTS.md`, OpenClaw `SKILL.md` packages, and thin integration READMEs. **Voice/STT is the documented gap** in their stacks today — Whisper.cpp is too slow without ANE; OpenAI Whisper API breaks privacy + costs money.
 
-**The slot is open and winnable.** Nobody is currently sitting in the chair labeled *"canonical Swift-native Parakeet CLI for Apple Silicon, batteries included."* parakeet-mlx (Python) is closest in spirit but structurally weaker (Python deps, no SQLite memory layer, no prompts/diarization). MacParakeet — after the PR #138 CLI work — is structurally there. The remaining gap is **claiming the position deliberately.**
+**The slot is open and winnable.** Nobody is currently sitting in the chair labeled *"canonical Swift-native Parakeet CLI for Apple Silicon, batteries included."* parakeet-mlx (Python) is closest in spirit but structurally weaker (Python deps, no SQLite memory layer, no prompts/diarization). Sotto — after the PR #138 CLI work — is structurally there. The remaining gap is **claiming the position deliberately.**
 
 ---
 
@@ -79,13 +79,13 @@ FluidAudio (CoreML/ANE Swift wrapper, public)
                 │
                 ▼
    ┌────────────────────────────────────┐
-   │   MacParakeetCore (Swift library)  │
+   │   SottoCore (Swift library)  │
    │   STT + DB + Prompts + LLM         │
    └─────────────┬──────────────────────┘
                  │
         ┌────────┴────────┐
         ▼                 ▼
-  macparakeet-cli    MacParakeet.app
+  sotto-cli    Sotto.app
   (foundation)       (GUI consumer)
         │
         ├──► AGENTS.md (Hermes / Codex CLI / generic)
@@ -107,15 +107,15 @@ The CLI is the load-bearing surface. The GUI is one well-crafted client of it. A
 | **FluidAudio CLI demos** | Swift | Same backend we use | Not productized — toys |
 | **VoiceInk** | Swift, GPL, FluidAudio | GUI app | No CLI focus |
 | **MacWhisper / Superwhisper / WisprFlow** | Various | Polished GUI consumer apps | Closed-source, no CLI |
-| **MacParakeet (post-#138)** | Swift native, FluidAudio, SQLite | **Best model + best runtime + memory layer + JSON CLI + GPL** | **Positioning/distribution now exists; discovery and registry acceptance remain the active gaps** |
+| **Sotto (post-#138)** | Swift native, FluidAudio, SQLite | **Best model + best runtime + memory layer + JSON CLI + GPL** | **Positioning/distribution now exists; discovery and registry acceptance remain the active gaps** |
 
 ---
 
 ## Action plan (six items, ordered by leverage)
 
-### 1. Promote `macparakeet-cli` to a versioned public surface
+### 1. Promote `sotto-cli` to a versioned public surface
 
-**Why:** The CLI was previously framed as `"MacParakeet developer CLI (internal; used for AI-assisted development and testing)"` in its own `--help` abstract. Once OpenClaw/Hermes users build skills against `macparakeet-cli vocab words add`, that's a public contract. Breaking changes need migration paths.
+**Why:** The CLI was previously framed as `"Sotto developer CLI (internal; used for AI-assisted development and testing)"` in its own `--help` abstract. Once OpenClaw/Hermes users build skills against `sotto-cli vocab words add`, that's a public contract. Breaking changes need migration paths.
 
 **What:**
 - Adopt **semver** for the CLI surface. Done; the first public surface was
@@ -123,31 +123,31 @@ The CLI is the load-bearing surface. The GUI is one well-crafted client of it. A
 - Create `CHANGELOG.md` scoped to CLI changes. Done at
   `Sources/CLI/CHANGELOG.md`.
 - Add a **deprecation policy** doc: "CLI surface is semver. Breaking changes require N versions of `--legacy-X` shim and a release-note callout."
-- Keep `macparakeet-cli --version` aligned with the published CLI release in
-  `Sources/CLI/MacParakeetCLI.swift`.
+- Keep `sotto-cli --version` aligned with the published CLI release in
+  `Sources/CLI/SottoCLI.swift`.
 
 **Effort:** 0.5 day.
 
-### 2. Ship `brew install moona3k/tap/macparakeet-cli` — shipped 2026-05-19
+### 2. Ship `brew install moona3k/tap/sotto-cli` — shipped 2026-05-19
 
 **Why:** Apple Silicon agent operators want CLI without dragging a `.app` into `/Applications`. Headless installs (Mac mini via SSH, launchd contexts) need a clean `brew install`.
 
 **What shipped:**
 - Homebrew tap repo: `moona3k/homebrew-tap`
-- Formula `macparakeet-cli.rb` downloads a signed standalone binary from a
+- Formula `sotto-cli.rb` downloads a signed standalone binary from a
   `cli-vX.Y.Z` GitHub release.
 - Formula installs Homebrew-managed `ffmpeg` and `yt-dlp` dependencies.
-- CLI shares `~/Library/Application Support/MacParakeet/` paths with the app.
+- CLI shares `~/Library/Application Support/Sotto/` paths with the app.
 - Root README, `integrations/`, and tap README document the install path.
 - Optional: `curl -sSL macparakeet.com/install-cli.sh | bash` as an alternative one-liner
 
 **Ongoing maintenance:** bump CLI semver, publish a new `cli-vX.Y.Z` release
 asset, update the tap formula SHA256, and verify with `brew test
-moona3k/tap/macparakeet-cli`. See
+moona3k/tap/sotto-cli`. See
 `scripts/dist/homebrew-tap-scaffold/HOWTO.md`.
 
 **Dependency:** Need a way to ship the CLI binary standalone (not bundled in `.app`). Options:
-- Build from source via `swift build --product macparakeet-cli` in the formula (slow but simple)
+- Build from source via `swift build --product sotto-cli` in the formula (slow but simple)
 - Pre-built signed binary attached to GitHub releases (faster install, more release work)
 
 Chosen path: pre-built signed binary attached to GitHub releases.
@@ -159,7 +159,7 @@ Chosen path: pre-built signed binary attached to GitHub releases.
 **What:**
 - File at `/AGENTS.md` (repo root)
 - Documents:
-  - When an agent should use MacParakeet (transcription, prompt-running, history search, vocab management)
+  - When an agent should use Sotto (transcription, prompt-running, history search, vocab management)
   - Every CLI command with example inputs + expected JSON output shape
   - Privacy notes (all local, no network unless YouTube/LLM)
   - Error-handling conventions (exit codes, stderr vs stdout)
@@ -178,7 +178,7 @@ Chosen path: pre-built signed binary attached to GitHub releases.
 - New page on the marketing site: `macparakeet.com/agents`
 - Headline: *"The local STT layer for your Apple Silicon AI agent."*
 - Sections:
-  - Why MacParakeet for agents (ANE-accelerated, GPL, JSON CLI, no cloud)
+  - Why Sotto for agents (ANE-accelerated, GPL, JSON CLI, no cloud)
   - Quickstart: brew install + Hermes/OpenClaw skill registration
   - Example: "Hey OpenClaw, what was my last meeting?" → real CLI output
   - Privacy stance (everything local except optional YouTube/LLM provider)
@@ -196,7 +196,7 @@ Chosen path: pre-built signed binary attached to GitHub releases.
 - PR to `awesome-hermes-agent` registry — same
 - Cross-post to:
   - r/LocalLLaMA: "Local Whisper alternative for Mac mini AI agents"
-  - Hacker News: "MacParakeet — canonical Parakeet CLI for Apple Silicon agent operators"
+  - Hacker News: "Sotto — canonical Parakeet CLI for Apple Silicon agent operators"
   - Nous Research Discord
   - OpenClaw Discord
 - Time these to land alongside the v0.6.0 meeting-recording + WhisperKit release for compounding momentum
@@ -208,12 +208,12 @@ Chosen path: pre-built signed binary attached to GitHub releases.
 **Why:** Headline narrative for the reframe. Makes the strategic positioning shippable as content.
 
 **What:**
-- Title: *"MacParakeet, reframed: the canonical Parakeet CLI for Apple Silicon"* (or similar)
+- Title: *"Sotto, reframed: the canonical Parakeet CLI for Apple Silicon"* (or similar)
 - Story arc:
   - The agent moment is here (OpenClaw + Hermes data)
   - Voice/STT is the gap in the local agent stack
-  - MacParakeet was built for individual macOS users — but the architecture happens to be exactly what agents need
-  - Current state: macparakeet-cli 2.3.1, AGENTS.md, brew install path, registry submissions
+  - Sotto was built for individual macOS users — but the architecture happens to be exactly what agents need
+  - Current state: sotto-cli 2.3.1, AGENTS.md, brew install path, registry submissions
   - Future: same direction, more depth (MCP later, more agent integrations as ecosystem matures)
 - Link to: AGENTS.md, integrations folder, `/agents` page, Hermes/OpenClaw quickstarts
 - Submit to HN, post to relevant communities
@@ -233,7 +233,7 @@ Items 1-3 are deep work. Items 4-6 are mostly content + light coding. All can be
 - **MCP server.** Different niche (Claude Desktop / Cursor users), more effort, no validated demand. Defer until OpenClaw/Hermes integration shows real adoption signal.
 - **Bundle agent integration into v0.6.0 release notes.** v0.6.0 should headline meeting recording and optional WhisperKit for current users. Agent integration is a parallel narrative.
 - **Pivot away from GUI users.** They remain the largest and most loved audience. The reframe is *additive*, not subtractive.
-- **Renaming.** "MacParakeet" stays. CLI stays as `macparakeet-cli`. Brand is good.
+- **Renaming.** "Sotto" stays. CLI stays as `sotto-cli`. Brand is good.
 - **Whisper.cpp integration.** Stick with FluidAudio + Parakeet TDT. That's the moat.
 - **Cross-platform CLI (Linux/Windows).** Apple Silicon is the entire premise; non-Apple-Silicon defeats the ANE advantage.
 
@@ -282,12 +282,12 @@ Items 1-3 are deep work. Items 4-6 are mostly content + light coding. All can be
 ## Success signals to watch (4-8 weeks post-launch)
 
 - ClawHub and awesome-hermes-agent listings get accepted + PRs merged
-- GitHub stars trajectory on macparakeet repo
+- GitHub stars trajectory on sotto repo
 - Brew tap install count (if telemetry exists, or via Homebrew analytics)
 - `/agents` page traffic
 - Mentions in OpenClaw/Hermes Discord / r/LocalLLaMA
 - New GitHub issues from agent operators (different shape than current GUI-user issues)
-- Pull requests from non-MacParakeet users adding integration improvements
+- Pull requests from non-Sotto users adding integration improvements
 
 If any of these light up meaningfully → double down (MCP server, more agent integrations, deeper docs).
 If all stay flat → the thesis didn't validate; cost was small (3-4 days), no regret, GUI work continues unaffected.

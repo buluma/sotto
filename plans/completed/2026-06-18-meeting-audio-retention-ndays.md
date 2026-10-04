@@ -92,39 +92,39 @@ which *only ever touch the audio file and always keep the transcript*.
 
 ## Verified current state (file:line)
 
-- Immediate-delete path: `Sources/MacParakeetViewModels/TranscriptionViewModel.swift:789`
+- Immediate-delete path: `Sources/SottoViewModels/TranscriptionViewModel.swift:789`
   `applyMeetingAudioRetentionIfNeeded(_:)` runs right after transcription
   (called ~766/772); when `!shouldSaveMeetingAudio` it deletes audio now.
   The `applyMeetingRetention: Bool = true` param (~841/853) is how recovered
-  meetings opt out of deletion *during recovery* (`Sources/MacParakeet/AppDelegate.swift:181`
+  meetings opt out of deletion *during recovery* (`Sources/Sotto/AppDelegate.swift:181`
   passes `false`). This new plan should keep that immediate recovery opt-out but
   let later scheduled sweeps apply once the recovered row is completed and
   unlocked.
-- Detach (keeps transcript): `Sources/MacParakeetCore/Utilities/TranscriptionAssetCleanup.swift`
+- Detach (keeps transcript): `Sources/SottoCore/Utilities/TranscriptionAssetCleanup.swift`
   — `detachOwnedMeetingAudio()` (~66-81) removes the folder + `updateFilePath(id, nil)`;
   `isKnownMeetingFolder()` managed-path guard (~113-126).
-- Preference plumbing: `Sources/MacParakeetCore/AppRuntimePreferences.swift`
+- Preference plumbing: `Sources/SottoCore/AppRuntimePreferences.swift`
   — `saveMeetingAudioKey` (~221) + protocol (~3-32) + `UserDefaults` impl (~210-363).
   New `meetingAudioRetention` (enum + days) follows this exact pattern.
-- Settings binding: `Sources/MacParakeetViewModels/SettingsViewModel.swift:325`
+- Settings binding: `Sources/SottoViewModels/SettingsViewModel.swift:325`
   currently stores the binary `saveMeetingAudio` toggle and emits
   `.settingChanged(setting: .saveMeetingAudio)`; the tri-state setting should
   follow this path with an exact telemetry setting name (likely
   `.meetingAudioRetention`) and load in `loadSettings()`.
-- Storage card UI: `Sources/MacParakeet/Views/Settings/SettingsView.swift:1799`
+- Storage card UI: `Sources/Sotto/Views/Settings/SettingsView.swift:1799`
   `storageCard` — "Keep meeting audio" toggle (~1833) is where the new control replaces/augments the toggle; stats tiles (~1841-1862); clear-all (~1943-1960).
-- Storage stats: `Sources/MacParakeetViewModels/SettingsViewModel.swift`
+- Storage stats: `Sources/SottoViewModels/SettingsViewModel.swift`
   `meetingAudioStats()` (~1430-1450) counts meeting folders and sizes the
   meeting-recordings directory.
-- Launch ordering: `Sources/MacParakeet/App/AppStartupBootstrapper.swift`
+- Launch ordering: `Sources/Sotto/App/AppStartupBootstrapper.swift`
   `bootstrapEnvironment()` (~1-34) only has the database manager and dictation
   launch cleanup; do **not** add the meeting retention sweep directly there.
-  `Sources/MacParakeet/AppDelegate.swift:538` schedules launch recovery later via
+  `Sources/Sotto/AppDelegate.swift:538` schedules launch recovery later via
   `MeetingRecoveryCoordinator.scheduleLaunchRecoveryScanIfReady(...)`, and that
   scan is asynchronous. The retention sweep needs an app-layer coordinator after
   `AppEnvironment` setup, sequenced after the launch recovery scan task when one
   is scheduled.
-- Age anchor: `Sources/MacParakeetCore/Models/Transcription.swift` `createdAt`
+- Age anchor: `Sources/SottoCore/Models/Transcription.swift` `createdAt`
   (~19, indexed `idx_transcriptions_created_at` in `DatabaseManager.swift:132`).
   **No `audioSavedAt` column** — see Open Questions for the anchor decision.
 - Active-recording guard precedent: manual `clear-meeting-audio` refuses while a
@@ -174,7 +174,7 @@ public enum MeetingAudioRetention: Equatable, Sendable {
   switching into the mode: **30**.
 
 ### Pure policy (Core, fully unit-tested)
-`Sources/MacParakeetCore/Services/MeetingRecording/MeetingAudioRetentionPolicy.swift`
+`Sources/SottoCore/Services/MeetingRecording/MeetingAudioRetentionPolicy.swift`
 ```swift
 public enum MeetingAudioRetentionPolicy {
     public struct Candidate: Sendable, Equatable {
@@ -218,7 +218,7 @@ A small app-layer `MeetingAudioRetentionSweepCoordinator`, owned after
 6. Emit one privacy-safe telemetry count (`{swept: Int}`) if adding the paired
    website allowlist entry in the same change; otherwise log locally only.
 
-**Cadence (not launch-only):** MacParakeet is a persistent menu-bar app that can
+**Cadence (not launch-only):** Sotto is a persistent menu-bar app that can
 run for weeks, so a once-per-launch sweep could effectively never fire. Run it at
 launch **and** on a lightweight daily cadence — a `lastMeetingRetentionSweepAt`
 timestamp gates re-runs, checked at launch and on foreground/wake

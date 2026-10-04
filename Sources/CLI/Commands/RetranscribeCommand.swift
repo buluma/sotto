@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 import os
 
 enum RetranscribeRecordKind: String, ExpressibleByArgument, CaseIterable {
@@ -210,7 +210,7 @@ struct RetranscribeCommand: AsyncParsableCommand, CLITelemetryMetadataProviding 
             let customWordRepo = CustomWordRepository(dbQueue: dbManager.dbQueue)
             let snippetRepo = TextSnippetRepository(dbQueue: dbManager.dbQueue)
             let promptResultRepo = PromptResultRepository(dbQueue: dbManager.dbQueue)
-            let defaults = macParakeetAppDefaults()
+            let defaults = sottoAppDefaults()
             let target = try Self.resolveTarget(
                 record,
                 kind: kind,

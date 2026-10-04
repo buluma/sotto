@@ -8,15 +8,15 @@ Slowest cases in xUnit XML:
 
 | Case | Duration |
 | --- | ---: |
-| MacParakeetTests.TranscriptTimestampedLayoutSmokeTests.testLimitSizedTranscriptRendersNonLazilyAndSettles | 23.49s |
-| MacParakeetTests.MeetingAecMeasurementTests.testNLMSDoubleTalkQuantifiesTheTradeoff | 22.37s |
-| MacParakeetTests.MeetingAecMeasurementTests.testNLMSDoubleTalkSIRSweepReportsOverlapAccuracyAndEchoOnlyResidual | 22.37s |
-| MacParakeetTests.MeetingAecMeasurementTests.testNLMSLeavesLocalVoiceUntouchedWhenRemoteIsSilent | 22.37s |
-| MacParakeetTests.MeetingCleanedMicRendererTests.testAlignAndConditionAppliesRecordedStartOffset | 8.81s |
-| MacParakeetTests.MeetingCleanedMicRendererTests.testAlignAndConditionCancelsEchoWhenAligned | 8.81s |
-| MacParakeetTests.MeetingCleanedMicRendererTests.testAlignAndConditionOutputMatchesMicrophoneLength | 8.81s |
-| MacParakeetTests.TranscriptDocumentLayoutTests.testLongMarkdownAndWideBlocksStayInsideCompactAndRegularPanes | 5.85s |
-| MacParakeetTests.TranscriptChatViewModelTests.testUpdateTranscriptTextPreservesHistoryAndIsUsedOnNextSend | 5.85s |
-| MacParakeetTests.LocalCLIExecutorTests.testTestConnectionConfigCapsTimeout | 5.34s |
+| SottoTests.TranscriptTimestampedLayoutSmokeTests.testLimitSizedTranscriptRendersNonLazilyAndSettles | 23.49s |
+| SottoTests.MeetingAecMeasurementTests.testNLMSDoubleTalkQuantifiesTheTradeoff | 22.37s |
+| SottoTests.MeetingAecMeasurementTests.testNLMSDoubleTalkSIRSweepReportsOverlapAccuracyAndEchoOnlyResidual | 22.37s |
+| SottoTests.MeetingAecMeasurementTests.testNLMSLeavesLocalVoiceUntouchedWhenRemoteIsSilent | 22.37s |
+| SottoTests.MeetingCleanedMicRendererTests.testAlignAndConditionAppliesRecordedStartOffset | 8.81s |
+| SottoTests.MeetingCleanedMicRendererTests.testAlignAndConditionCancelsEchoWhenAligned | 8.81s |
+| SottoTests.MeetingCleanedMicRendererTests.testAlignAndConditionOutputMatchesMicrophoneLength | 8.81s |
+| SottoTests.TranscriptDocumentLayoutTests.testLongMarkdownAndWideBlocksStayInsideCompactAndRegularPanes | 5.85s |
+| SottoTests.TranscriptChatViewModelTests.testUpdateTranscriptTextPreservesHistoryAndIsUsedOnNextSend | 5.85s |
+| SottoTests.LocalCLIExecutorTests.testTestConnectionConfigCapsTimeout | 5.34s |
 
 Swift Testing (separate log summary; not included in the XML counts above): 30 tests passed after 0.004s.

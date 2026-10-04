@@ -87,7 +87,7 @@ duplicate failure calls; failure while paused; existing
 ### R2-3 — AEC release gate verifies the default model SHA
 
 `verify_meeting_echo_assets.sh` only checks SHA when
-`MACPARAKEET_MEETING_ECHO_MODEL_SHA256` is set (`:4`, `:110`) and does not
+`SOTTO_MEETING_ECHO_MODEL_SHA256` is set (`:4`, `:110`) and does not
 source `meeting_echo_asset_defaults.sh` — while `docs/distribution.md:72-73,210`
 promises checksum failure on the direct release gate and `sign_notarize.sh:167-170`
 calls the verifier without SHA. History shows this gate has drifted before

@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 protocol CLITelemetryMetadataProviding {
     var cliTelemetryMetadata: CLITelemetry.OperationMetadata { get }
@@ -32,37 +32,8 @@ enum CLITelemetry {
         }
     }
 
-    typealias EnvOverride = TelemetryPolicy.EnvOverride
-
     static func configureIfNeeded(env: [String: String] = ProcessInfo.processInfo.environment) {
-        switch decideOverride(env: env) {
-        case .forceOff, .ciAutoDisable:
-            Telemetry.configure(NoOpTelemetryService())
-        case .forceOn:
-            Telemetry.configure(TelemetryService(
-                requestTimeoutInterval: 1.0,
-                surface: "cli",
-                appVersionOverride: CLI.cliVersion,
-                isEnabled: { true }
-            ))
-        case .none:
-            Telemetry.configure(TelemetryService(
-                requestTimeoutInterval: 1.0,
-                surface: "cli",
-                appVersionOverride: CLI.cliVersion,
-                isEnabled: {
-                    AppPreferences.isTelemetryEnabled(defaults: macParakeetAppDefaults())
-                }
-            ))
-        }
-    }
-
-    static func decideOverride(env: [String: String]) -> EnvOverride {
-        TelemetryPolicy.decideOverride(env: env)
-    }
-
-    static func isCIEnvironment(env: [String: String]) -> Bool {
-        TelemetryPolicy.isCIEnvironment(env: env)
+        Telemetry.configure(NoOpTelemetryService())
     }
 
     static func runInstrumented(_ command: inout ParsableCommand) async throws {

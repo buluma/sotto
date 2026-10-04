@@ -8,7 +8,7 @@
 
 ## Review Brief
 
-You are the senior architecture reviewer for MacParakeet. Work read-only: do not
+You are the senior architecture reviewer for Sotto. Work read-only: do not
 edit files, commit, or change repository state. Read `AGENTS.md`, the linked
 implementation plan, governing ADRs/specs/contracts, and the actual current
 source and tests necessary to verify the proposal. Do not assume the plan's

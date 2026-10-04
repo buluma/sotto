@@ -14,7 +14,7 @@ fixed 5s / 1s live chunking via `FixedMeetingLiveAudioChunker`, byte-identical t
 
 - **Phase 1** — `MeetingLiveAudioChunking` protocol + `MeetingLiveChunkingDiagnostics`
   + `FixedMeetingLiveAudioChunker`; `CaptureOrchestrator` now depends on the
-  abstraction. (`Sources/MacParakeetCore/Audio/MeetingLiveAudioChunking.swift`)
+  abstraction. (`Sources/SottoCore/Audio/MeetingLiveAudioChunking.swift`)
 - **Phase 2** — `SpeechBoundaryMeetingLiveAudioChunker` actor with contiguous
   sample accounting, speech-end cuts, chunker-owned 2.0s/10.0s bounds,
   force-emit tail overlap, flush, reset, and degraded fixed-fallback on repeated
@@ -23,7 +23,7 @@ fixed 5s / 1s live chunking via `FixedMeetingLiveAudioChunker`, byte-identical t
   `Tests/.../Audio/SpeechBoundaryMeetingLiveAudioChunkerTests.swift`)
 - **Phase 3** — `MeetingVADService` (FluidAudio `VadManager` adapter) with
   cached-only, non-blocking init (`makeIfModelCached`, `.cpuOnly` default) and
-  MacParakeet-owned `MeetingVoiceActivityDetecting` / `MeetingVAD*` types.
+  Sotto-owned `MeetingVoiceActivityDetecting` / `MeetingVAD*` types.
   (`.../Services/MeetingRecording/MeetingVADService.swift`)
 - **Phase 4** — flag + `MeetingRecordingService.configureLiveChunkers(for:)`
   picks fixed vs speech-boundary per session (VAD only for cached-model Parakeet
@@ -133,7 +133,7 @@ sentence, enqueue silence-heavy chunks, and make the live preview feel choppier
 than the final transcript.
 
 The final transcript path is already safer than the live preview path:
-MacParakeet re-transcribes retained `microphone.m4a` and `system.m4a` source
+Sotto re-transcribes retained `microphone.m4a` and `system.m4a` source
 files after recording stops, then merges those source-aware results by persisted
 alignment. This plan must not change that final path.
 
@@ -193,12 +193,12 @@ alignment. This plan must not change that final path.
     and `silenceThresholdForSplit` are **inert in streaming mode** — they only
     affect the batch `segmentSpeech` path. Streaming `speechEnd` fires *only* on
     real silence; FluidAudio never force-splits a long monologue.
-- MacParakeet currently prepares ASR and diarization assets, but there is no
-  MacParakeet-owned VAD service or VAD model readiness surface.
+- Sotto currently prepares ASR and diarization assets, but there is no
+  Sotto-owned VAD service or VAD model readiness surface.
 
 ## Design
 
-### 1. Add a MacParakeet-owned live chunking abstraction
+### 1. Add a Sotto-owned live chunking abstraction
 
 Keep product code independent of any one VAD implementation:
 
@@ -304,7 +304,7 @@ No wall-clock `Date` or `hostTime` should be used for chunk timestamps.
 ### 3. Add a VAD service adapter
 
 Add a small actor in Core, for example `MeetingVADService`, that owns
-`VadManager` lifecycle behind a MacParakeet-owned protocol. The product-facing
+`VadManager` lifecycle behind a Sotto-owned protocol. The product-facing
 types should not expose FluidAudio's `VadStreamState` or `VadStreamResult`
 directly:
 
@@ -455,7 +455,7 @@ invisible by default, so prep emits `vad_model_prep` only for the transitions
 worth seeing: `prepared` (an install acquired the model) and `failed` (prep
 failed and the next launch will retry). `already_cached`, feature-off, and
 cancelled outcomes are intentionally silent to avoid per-launch telemetry spam.
-The event name must be present in `macparakeet-website/functions/api/telemetry.ts`
+The event name must be present in `sotto-website/functions/api/telemetry.ts`
 `ALLOWED_EVENTS` before a flag-on build ships, or the Worker rejects the whole
 batch.
 

@@ -3,7 +3,7 @@
 **Status:** Completed — Ask telemetry events and call sites are shipped on `main`; the website Worker allowlist includes both event names.
 **Date:** 2026-04-26 · Completed 2026-05
 **ADRs:** ADR-012 (telemetry system), ADR-018 (live Ask tab)
-**Implementation:** `ask_menu_opened` and `ask_prompt_fired` are typed in `TelemetryEventName`, serialized in `TelemetryEventSpec`, fired from `LiveAskPaneView`, covered by `TelemetryServiceTests`, and allowlisted in `macparakeet-website/functions/api/telemetry.ts`.
+**Implementation:** `ask_menu_opened` and `ask_prompt_fired` are typed in `TelemetryEventName`, serialized in `TelemetryEventSpec`, fired from `LiveAskPaneView`, covered by `TelemetryServiceTests`, and allowlisted in `sotto-website/functions/api/telemetry.ts`.
 
 ## Why
 
@@ -22,7 +22,7 @@ Without this, the next iteration is opinion-driven. With it, we have signal befo
 - Two new event names: `ask_menu_opened`, `ask_prompt_fired`
 - Wire fires from `LiveAskPaneView` (current owner of all three surfaces)
 - Keep prompt telemetry lightweight: source/group/label only, with no prompt body and no operation IDs
-- Worker allowlist update in `macparakeet-website/functions/api/telemetry.ts`
+- Worker allowlist update in `sotto-website/functions/api/telemetry.ts`
 - Tests in `TelemetryServiceTests` for serialization
 
 ### Out of scope
@@ -59,10 +59,10 @@ The shared `fire(_:)` path in `LiveAskPaneView` is the natural fire site — it 
 
 | File | Change |
 |---|---|
-| `Sources/MacParakeetCore/Services/TelemetryEvent.swift` | Add `askMenuOpened`, `askPromptFired` to `TelemetryEventName` |
-| `Sources/MacParakeet/Views/MeetingRecording/LiveAskPaneView.swift` | Add `source` param to `fire(_:)`; thread it from each call site (empty-state pill, menu, follow-up row); emit event via TelemetryService. Emit `ask_menu_opened` from `PromptMenuButton`. |
-| `Tests/MacParakeetTests/TelemetryServiceTests.swift` | Serialization tests for both event names |
-| `macparakeet-website/functions/api/telemetry.ts` | Add both names to `ALLOWED_EVENTS` |
+| `Sources/SottoCore/Services/TelemetryEvent.swift` | Add `askMenuOpened`, `askPromptFired` to `TelemetryEventName` |
+| `Sources/Sotto/Views/MeetingRecording/LiveAskPaneView.swift` | Add `source` param to `fire(_:)`; thread it from each call site (empty-state pill, menu, follow-up row); emit event via TelemetryService. Emit `ask_menu_opened` from `PromptMenuButton`. |
+| `Tests/SottoTests/TelemetryServiceTests.swift` | Serialization tests for both event names |
+| `sotto-website/functions/api/telemetry.ts` | Add both names to `ALLOWED_EVENTS` |
 
 ## Sequencing
 

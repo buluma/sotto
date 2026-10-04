@@ -31,10 +31,10 @@ CLI's ranked FTS5 segment search.
   `TranscriptionRepository.fetchLibraryPage`) resolves to
   `fetchUnicodeSearchLibraryPage`, which streams every candidate row through a
   Swift cursor and tests `transcriptionMatchesLibrarySearch` per row —
-  `Sources/MacParakeetCore/Database/TranscriptionRepository.swift:316-328`,
+  `Sources/SottoCore/Database/TranscriptionRepository.swift:316-328`,
   `:371-427`, `:952-977`. The match itself is
   `UnicodeSearch.contains` — a case/diacritic/width-insensitive
-  `String.contains` — `Sources/MacParakeetCore/Utilities/UnicodeSearch.swift:8-10`.
+  `String.contains` — `Sources/SottoCore/Utilities/UnicodeSearch.swift:8-10`.
   No ranking, no snippet, no phrase/prefix/AND-OR syntax, no FTS index used.
 
 This is a deliberate, documented split, not an accidental miss:
@@ -64,17 +64,17 @@ parity with the CLI) but has **no UI to browse, list, or read them.**
 - GUI writes cards through the same Core service the CLI uses:
   `AppEnvironment` constructs `cardRepo`/`cardGenerationService` from
   `CardRepository`/`CardGenerationService` —
-  `Sources/MacParakeet/App/AppEnvironment.swift:21-22,96-97`. Generation
+  `Sources/Sotto/App/AppEnvironment.swift:21-22,96-97`. Generation
   fires automatically after transcription completion via
   `PromptResultsViewModel.generateKnowledgeCard(transcriptionId:)` —
-  `Sources/MacParakeetViewModels/PromptResultsViewModel.swift:579-594` —
+  `Sources/SottoViewModels/PromptResultsViewModel.swift:579-594` —
   called from `TranscriptionViewModel.swift:1077` and from
   `SavedAudioAutoPromptCompletionService.swift:146,252`.
 - No GUI view or view model references `CardListItem`, `.synopsis`, or any
   card-browsing surface. `CardRepository`/`CardGenerationService` usage
   outside tests is limited to CLI commands
   (`Sources/CLI/Commands/CardsCommand.swift`) and the write-path wiring above;
-  grepping `Sources/MacParakeet/` and `Sources/MacParakeetViewModels/` for
+  grepping `Sources/Sotto/` and `Sources/SottoViewModels/` for
   card-listing symbols returns nothing beyond that wiring.
 
 Cards are explicitly scoped as a CLI/agent-facing feature: `spec/02-features.md:2096-2100`
@@ -102,7 +102,7 @@ artifact` command uses, and keeps it live automatically:
   never needs an explicit "materialize" action the way a one-shot CLI
   invocation does.
 - GUI exposes the resulting folder via `MeetingArtifactActions.openFolder` /
-  `.copyFolderPath` — `Sources/MacParakeet/Views/Transcription/MeetingArtifactActions.swift:22-40`
+  `.copyFolderPath` — `Sources/Sotto/Views/Transcription/MeetingArtifactActions.swift:22-40`
   — wired into `TranscriptionLibraryView.swift:444-471`,
   `TranscriptResultView.swift:1121-1130`, and `MeetingsView.swift:697-742`.
 - The markdown's actual content (auto notes, prompt results) is already
@@ -121,10 +121,10 @@ speaker-selection, calling the same `TranscriptionService` retranscribe path
 the CLI uses:
 
 - `TranscriptionViewModel.retranscribe(_:speechEngineOverride:speakerSelection:)` —
-  `Sources/MacParakeetViewModels/TranscriptionViewModel.swift:975-1054` —
+  `Sources/SottoViewModels/TranscriptionViewModel.swift:975-1054` —
   dispatches to `TranscriptionService.retranscribe`/`retranscribeMeeting`,
   mirroring `Sources/CLI/Commands/RetranscribeCommand.swift:427-514`.
-- Invoked from a GUI action in `Sources/MacParakeet/Views/MainWindowView.swift:184`,
+- Invoked from a GUI action in `Sources/Sotto/Views/MainWindowView.swift:184`,
   with "Retranscribe" UI surfaced across `TranscriptResultView.swift`,
   `TranscriptionLibraryView.swift`, and `MeetingsView.swift`.
 
@@ -159,9 +159,9 @@ uses:
 
 - `TranscriptResultActions` lists a `.dapt` export case labeled "DAPT
   Transcript" and calls `exportService.exportToDAPT(transcription:url:)` —
-  `Sources/MacParakeet/Views/Transcription/TranscriptResultActions.swift:16,29,329`.
+  `Sources/Sotto/Views/Transcription/TranscriptResultActions.swift:16,29,329`.
 - Same Core renderer both sides: `ExportService.exportToDAPT`/`formatDAPT` →
-  `DAPTDocumentRenderer.render` — `Sources/MacParakeetCore/Services/ExportService.swift:187-194`
+  `DAPTDocumentRenderer.render` — `Sources/SottoCore/Services/ExportService.swift:187-194`
   — also used by `Sources/CLI/Commands/ExportCommand.swift:96,117`.
 
 Recommendation: no action.

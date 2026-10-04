@@ -24,15 +24,15 @@ later per [ADR-027](../../spec/adr/027-product-north-star.md)).
 What already exists and must not regress: word timestamps + confidence +
 mic/system attribution persist (`Transcription.wordTimestamps`, finalizer
 sets `speakerId` = source), meetings have stable UUIDs with clean joins to
-summaries/Ask/artifact folder, and `macparakeet-cli meetings` already
+summaries/Ask/artifact folder, and `sotto-cli meetings` already
 exposes list/show/transcript/export with words + speakers in JSON.
 
 ## Slice 1 — Calendar context snapshot (the big one)
 
 Today only the event **title** survives auto-start (as the record's
-`fileName`). `Sources/MacParakeetCore/Calendar/CalendarEvent.swift` carries
+`fileName`). `Sources/SottoCore/Calendar/CalendarEvent.swift` carries
 event id, external id, scheduled start/end, attendees, and meeting URL at
-poll time, then `Sources/MacParakeet/App/MeetingAutoStartCoordinator.swift`
+poll time, then `Sources/Sotto/App/MeetingAutoStartCoordinator.swift`
 passes only the title into the recording flow. Organizer is not converted
 today, so adding it belongs to this slice. ADR-017 §6 decided not to persist
 events; that rationale predates ADR-027, so **amending ADR-017 is part of
@@ -63,7 +63,7 @@ this slice** (repo rule: update the ADR deliberately, don't code around it).
 ## Slice 2 — Start context for every recording (small)
 
 Manually started meetings get a date-as-title and nothing else
-(`Sources/MacParakeet/App/MeetingRecordingFlowCoordinator.swift` start path);
+(`Sources/Sotto/App/MeetingRecordingFlowCoordinator.swift` start path);
 ADR-024's app-detection collectors are compiled but disabled, and activity
 snapshots are transient.
 Without turning ADR-024 detection on:
@@ -77,7 +77,7 @@ Without turning ADR-024 detection on:
 ## Slice 3 — Durable transcript segments
 
 Segments are currently derived on the fly for UI from word timestamps
-(`Sources/MacParakeetCore/Utilities/TranscriptSegmenter.swift`), with
+(`Sources/SottoCore/Utilities/TranscriptSegmenter.swift`), with
 synthesized identity (start + speaker) — an agent cannot stably cite
 "meeting X, segment 47".
 
@@ -96,7 +96,7 @@ synthesized identity (start + speaker) — an agent cannot stably cite
 ## Product decisions (decided 2026-07-03)
 
 1. **Diarization default: ON where supported.** Flip the default
-   (`Sources/MacParakeetCore/AppRuntimePreferences.swift`) so meeting
+   (`Sources/SottoCore/AppRuntimePreferences.swift`) so meeting
    diarization runs post-meeting whenever a system track exists; the
    setting remains available to turn it off. Rationale: speaker structure
    is only recoverable while raw audio exists, so capture-time diarization
@@ -106,7 +106,7 @@ synthesized identity (start + speaker) — an agent cannot stably cite
    behavior change).
 2. **Raw-audio retention: keep deletion, add honest copy.** "Remove
    Audio" and the retention sweeper keep deleting all raw tracks
-   (`Sources/MacParakeetCore/Utilities/TranscriptionAssetCleanup.swift`) —
+   (`Sources/SottoCore/Utilities/TranscriptionAssetCleanup.swift`) —
    removal means removal; that is the privacy posture. Ships as
    **Slice 5** (small): warning copy at the Remove Audio action and the
    retention setting stating that deletion permanently prevents

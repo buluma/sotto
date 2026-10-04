@@ -13,7 +13,7 @@ This is **not** a DER harness. It is **not** the Exact / max-cap path from [#102
 
 [VoxConverse v0.3](https://github.com/joonson/voxconverse) test split, CC BY 4.0. Unique speaker count = unique `SPEAKER` column 8 in the copied RTTM under `benchmarks/diarization/rttm/`. That count matches `selected_files.tsv` `rttm_speakers` for every file below (verified 2026-09-15).
 
-Do **not** use MacParakeet library folders as labels.
+Do **not** use Sotto library folders as labels.
 
 ## Audio
 
@@ -47,7 +47,7 @@ CLI JSON from the 2026-09-13 FluidAudio 0.15.7 pin A/B, **candidate** arm (0.15.
 
 Path: `$HOME/asr-bench/fluidaudio-0.15.7-ab/results/candidate/<id>.unconstrained.json`.
 
-CLI JSON has speakers, word timestamps, and diarization segments. It does **not** include centroids. Consolidation cannot be replayed from JSON; a candidate must re-run `macparakeet-cli transcribe`.
+CLI JSON has speakers, word timestamps, and diarization segments. It does **not** include centroids. Consolidation cannot be replayed from JSON; a candidate must re-run `sotto-cli transcribe`.
 
 | File | Auto roster | Word-ID count | Isolated one-word flip (same neighbors) | Nil words | JSON SHA-256 |
 | --- | ---: | ---: | ---: | ---: | --- |

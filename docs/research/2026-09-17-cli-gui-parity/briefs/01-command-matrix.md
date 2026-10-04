@@ -1,6 +1,6 @@
 # Brief 01 — CLI vs GUI command/feature matrix
 
-One concern: produce a complete, source-cited matrix of MacParakeet GUI capabilities vs `macparakeet-cli` commands on this checkout (`origin/main` at HEAD).
+One concern: produce a complete, source-cited matrix of Sotto GUI capabilities vs `sotto-cli` commands on this checkout (`origin/main` at HEAD).
 
 ## Settled
 
@@ -10,7 +10,7 @@ One concern: produce a complete, source-cited matrix of MacParakeet GUI capabili
 
 ## Investigate
 
-Walk `spec/02-features.md`, Settings UI (`Sources/MacParakeet/Views/Settings/`, `SettingsViewModel.swift`), Library/Meetings/Prompts/Transforms, and `Sources/CLI/` (MacParakeetCLI.swift + Commands/).
+Walk `spec/02-features.md`, Settings UI (`Sources/Sotto/Views/Settings/`, `SettingsViewModel.swift`), Library/Meetings/Prompts/Transforms, and `Sources/CLI/` (SottoCLI.swift + Commands/).
 
 Cover at least: dictation, file/URL/podcast transcription, meetings (record/import/split/notes/results/labels/corrections), library (search, rename, favorite, delete, export), prompts/quick-prompts/transforms, vocab, models/engines, calendar auto-start, share links, cards/search/transcript, config, health, LLM.
 

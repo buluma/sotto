@@ -6,7 +6,7 @@ promoting Nemotron beyond Beta.
 
 ## Scope
 
-This report compares the production MacParakeet CLI path for:
+This report compares the production Sotto CLI path for:
 
 - Parakeet TDT 0.6B v3
 - Nemotron 3.5 ASR Streaming 0.6B, CoreML via FluidAudio
@@ -26,7 +26,7 @@ detection, and configurable chunk sizes including 80 ms, 160 ms, 320 ms, 560 ms,
 and 1120 ms. Source:
 https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b
 
-MacParakeet currently exposes the 1120 ms multilingual CoreML path as the single
+Sotto currently exposes the 1120 ms multilingual CoreML path as the single
 Nemotron Beta model variant.
 
 ## Method
@@ -34,7 +34,7 @@ Nemotron Beta model variant.
 Harness:
 
 ```bash
-swift build -c release --product macparakeet-cli
+swift build -c release --product sotto-cli
 PHASE_LABEL=warm REPS=1 ENGINES='parakeet-v3 nemotron whisper' \
   scripts/dev/benchmark_stt_engines.sh \
   output/benchmarks/stt/smoke-corpus-20260608/corpus.tsv
@@ -189,7 +189,7 @@ real 212.70
 Ship Nemotron as an opt-in Beta engine, not as a default candidate.
 
 The integration is valuable because Nemotron is local, fast, and materially
-faster than Whisper in warm-path tests. The current MacParakeet smoke data does
+faster than Whisper in warm-path tests. The current Sotto smoke data does
 not justify replacing Parakeet v3 or making stronger quality claims.
 
 ## Remaining Benchmark Work

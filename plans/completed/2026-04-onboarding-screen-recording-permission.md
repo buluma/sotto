@@ -19,8 +19,8 @@ Also add a live permission-polling loop during onboarding (and refresh on the ma
 1. Meeting recording is live in v0.6. The Screen Recording permission is real and unavoidable for that feature.
 2. Today, users only encounter the permission prompt the first time they click the meeting pill — mid-intent, often right before a real meeting. That is the wrong time to ask.
 3. All the plumbing already exists:
-   - `PermissionService.checkScreenRecordingPermission()` / `requestScreenRecordingPermission()` / `openScreenRecordingSettings()` — `Sources/MacParakeetCore/Services/PermissionService.swift:40-60`
-   - `TelemetryPermission.screenRecording` enum case and `permissionPrompted/Granted/Denied` events — `Sources/MacParakeetCore/Services/TelemetryEvent.swift:118`
+   - `PermissionService.checkScreenRecordingPermission()` / `requestScreenRecordingPermission()` / `openScreenRecordingSettings()` — `Sources/SottoCore/Services/PermissionService.swift:40-60`
+   - `TelemetryPermission.screenRecording` enum case and `permissionPrompted/Granted/Denied` events — `Sources/SottoCore/Services/TelemetryEvent.swift:118`
    - `MeetingRecordingFlowCoordinator` already drives the first-use flow via `.checkingPermissions` state
 4. The change is contained to ~4 files. It can land as a single PR without touching the STT runtime, database, or meeting recording service.
 
@@ -56,13 +56,13 @@ Also add a live permission-polling loop during onboarding (and refresh on the ma
 
 ### Already true
 
-- `OnboardingViewModel.Step` is a linear wizard: `welcome → microphone → accessibility → hotkey → engine → done` (`Sources/MacParakeetViewModels/OnboardingViewModel.swift:12-32`).
-- `PermissionService` has all three TCC APIs wired (`Sources/MacParakeetCore/Services/PermissionService.swift:40-71`).
-- `TelemetryPermission.screenRecording` exists and is already emitted from `MeetingRecordingFlowCoordinator` at first-use — confirming the event name is already allowlisted in `macparakeet-website/functions/api/telemetry.ts`.
-- `SettingsViewModel` has `microphoneGranted` and `accessibilityGranted` but no `screenRecordingGranted` (`Sources/MacParakeetViewModels/SettingsViewModel.swift:164-166`).
-- `SettingsView.permissionsCard` shows Microphone and Accessibility rows (`Sources/MacParakeet/Views/Settings/SettingsView.swift:516-547`).
+- `OnboardingViewModel.Step` is a linear wizard: `welcome → microphone → accessibility → hotkey → engine → done` (`Sources/SottoViewModels/OnboardingViewModel.swift:12-32`).
+- `PermissionService` has all three TCC APIs wired (`Sources/SottoCore/Services/PermissionService.swift:40-71`).
+- `TelemetryPermission.screenRecording` exists and is already emitted from `MeetingRecordingFlowCoordinator` at first-use — confirming the event name is already allowlisted in `sotto-website/functions/api/telemetry.ts`.
+- `SettingsViewModel` has `microphoneGranted` and `accessibilityGranted` but no `screenRecordingGranted` (`Sources/SottoViewModels/SettingsViewModel.swift:164-166`).
+- `SettingsView.permissionsCard` shows Microphone and Accessibility rows (`Sources/Sotto/Views/Settings/SettingsView.swift:516-547`).
 - `OnboardingFlowView` has a step icon map, title/subtitle map, continue-button map, progress strip, and a main `stepBody(viewModel.step)` switch. Adding a new case means touching each of these maps — the compiler will flag anything missed.
-- Tests live in `Tests/MacParakeetTests/ViewModels/OnboardingViewModelTests.swift`.
+- Tests live in `Tests/SottoTests/ViewModels/OnboardingViewModelTests.swift`.
 
 ### Gaps this plan closes
 
@@ -97,9 +97,9 @@ macOS calls the permission "Screen & System Audio Recording" and users legitimat
 
 > **Meeting recording (optional)**
 >
-> To capture audio from calls, MacParakeet needs macOS's "Screen & System Audio Recording" permission.
+> To capture audio from calls, Sotto needs macOS's "Screen & System Audio Recording" permission.
 >
-> **MacParakeet never looks at or saves your screen.** Apple bundles screen access into this permission — it's the only way apps are allowed to capture system audio. We only use the audio.
+> **Sotto never looks at or saves your screen.** Apple bundles screen access into this permission — it's the only way apps are allowed to capture system audio. We only use the audio.
 >
 > You can skip this and enable it later if you don't plan to record meetings.
 
@@ -115,7 +115,7 @@ macOS calls the permission "Screen & System Audio Recording" and users legitimat
 
 On some macOS versions `CGPreflightScreenCaptureAccess()` continues to return `false` after the user grants permission until the app is relaunched. After ~10 seconds of polling without a transition to granted following an Enable click, show an inline hint:
 
-> "If the status doesn't update, quit and reopen MacParakeet — macOS sometimes requires a restart after granting this permission."
+> "If the status doesn't update, quit and reopen Sotto — macOS sometimes requires a restart after granting this permission."
 
 Do not try to auto-restart the app. Just surface the hint.
 
@@ -126,7 +126,7 @@ Do not try to auto-restart the app. Just surface the hint.
 - `permissionDenied(permission: .screenRecording)` — do **not** emit on skip (skip is a user choice, not a denial); emit only if the system reports denial explicitly.
 - New event: `onboardingStep(step: "meeting_recording")` — already covered by the existing `onboardingStep` event with the new step's title.
 
-The event names already exist, so **no `macparakeet-website/functions/api/telemetry.ts` change is required**. But confirm this before merging — grep `ALLOWED_EVENTS` on the website repo for `screen_recording` / `onboarding_step` to be safe.
+The event names already exist, so **no `sotto-website/functions/api/telemetry.ts` change is required**. But confirm this before merging — grep `ALLOWED_EVENTS` on the website repo for `screen_recording` / `onboarding_step` to be safe.
 
 ### 7. Skipped-flag storage
 
@@ -136,9 +136,9 @@ The flag is informational — it prevents re-nagging in Settings (no pulsing "se
 
 ## Implementation plan
 
-### Step 1 — `OnboardingViewModel` (MacParakeetViewModels target)
+### Step 1 — `OnboardingViewModel` (SottoViewModels target)
 
-File: `Sources/MacParakeetViewModels/OnboardingViewModel.swift`
+File: `Sources/SottoViewModels/OnboardingViewModel.swift`
 
 1. Add `case meetingRecording` between `.accessibility` and `.hotkey` in the `Step` enum. Title: `"Meeting Recording"`.
 2. Add `@Observable` state:
@@ -166,9 +166,9 @@ File: `Sources/MacParakeetViewModels/OnboardingViewModel.swift`
    - Clear `grantRequestedAt` and `showRelaunchHint` when grant succeeds or when the user leaves the step.
 8. Extend `resetOnboarding()` to clear the `meetingRecordingSkipped` flag.
 
-### Step 2 — `OnboardingFlowView` (MacParakeet target)
+### Step 2 — `OnboardingFlowView` (Sotto target)
 
-File: `Sources/MacParakeet/Views/Onboarding/OnboardingFlowView.swift`
+File: `Sources/Sotto/Views/Onboarding/OnboardingFlowView.swift`
 
 1. Update every switch over `OnboardingViewModel.Step` to include `.meetingRecording`. The compiler will flag missed cases. Locations (from grep):
    - Step icon map (line ~152)
@@ -188,9 +188,9 @@ File: `Sources/MacParakeet/Views/Onboarding/OnboardingFlowView.swift`
    - Conditional relaunch hint when `viewModel.showRelaunchHint == true`.
 4. Wire `startPermissionPolling()` / `stopPermissionPolling()` to the view lifecycle (`.task { ... }` + cleanup in the `OnboardingWindowController` close path).
 
-### Step 3 — `SettingsViewModel` (MacParakeetViewModels target)
+### Step 3 — `SettingsViewModel` (SottoViewModels target)
 
-File: `Sources/MacParakeetViewModels/SettingsViewModel.swift`
+File: `Sources/SottoViewModels/SettingsViewModel.swift`
 
 1. Add `public var screenRecordingGranted = false`.
 2. Extend `refreshPermissions()` to also read `permissionService.checkScreenRecordingPermission()` and assign.
@@ -198,9 +198,9 @@ File: `Sources/MacParakeetViewModels/SettingsViewModel.swift`
 4. Add `public func openScreenRecordingSystemSettings()` passthrough.
 5. Add lifecycle-scoped polling similar to the onboarding ViewModel (start when Settings window visible, stop when closed). If adding a full polling loop to Settings is more than ~20 lines, a simpler first pass is: call `refreshPermissions()` whenever the Settings window becomes key. The live-polling implementation can be a second PR if needed.
 
-### Step 4 — `SettingsView` (MacParakeet target)
+### Step 4 — `SettingsView` (Sotto target)
 
-File: `Sources/MacParakeet/Views/Settings/SettingsView.swift`
+File: `Sources/Sotto/Views/Settings/SettingsView.swift`
 
 Update `permissionsCard` (line 516):
 
@@ -211,7 +211,7 @@ Update `permissionsCard` (line 516):
    HStack {
        rowText(
            title: "Screen & System Audio Recording",
-           detail: "Optional. Only used to capture meeting audio — MacParakeet never records your screen."
+           detail: "Optional. Only used to capture meeting audio — Sotto never records your screen."
        )
        Spacer()
        permissionPill(granted: viewModel.screenRecordingGranted)
@@ -227,7 +227,7 @@ Update `permissionsCard` (line 516):
 
 ### Step 5 — Tests
 
-File: `Tests/MacParakeetTests/ViewModels/OnboardingViewModelTests.swift`
+File: `Tests/SottoTests/ViewModels/OnboardingViewModelTests.swift`
 
 Add cases:
 
@@ -243,14 +243,14 @@ Add a separate `SettingsViewModelTests` case:
 
 8. `test_refreshPermissions_includes_screenRecording` — verifies the new field is populated.
 
-The existing test file uses a mock `PermissionService`; extend it with `screenRecordingGranted` behavior (it probably already has a stub since `MeetingRecordingFlowCoordinator` tests use it — check `Tests/MacParakeetTests/` for `MockPermissionService` or similar).
+The existing test file uses a mock `PermissionService`; extend it with `screenRecordingGranted` behavior (it probably already has a stub since `MeetingRecordingFlowCoordinator` tests use it — check `Tests/SottoTests/` for `MockPermissionService` or similar).
 
 ### Step 6 — Telemetry allowlist sanity check
 
 Before merging:
 
 ```bash
-# In macparakeet-website repo:
+# In sotto-website repo:
 grep -n "screen_recording\|onboarding_step" functions/api/telemetry.ts
 ```
 

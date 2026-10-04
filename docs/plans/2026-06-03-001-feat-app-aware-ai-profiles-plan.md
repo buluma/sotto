@@ -86,7 +86,7 @@ Columns:
 - `updatedAt` DATETIME not null.
 
 Repository: one table, one repository, following
-`Sources/MacParakeetCore/Database/README.md`.
+`Sources/SottoCore/Database/README.md`.
 
 ### KTD-2 - Exact Context Is Local Runtime Data
 
@@ -138,13 +138,13 @@ Dictation prompt selection should use the same lifecycle moment as current
 paste-target telemetry: near stop/undo time, just before `stopRecording` or
 `undoCancel` enters the service.
 
-Also capture a best-effort start-time snapshot before MacParakeet UI can become
+Also capture a best-effort start-time snapshot before Sotto UI can become
 frontmost. Use it only as a fallback when stop/undo-time context is missing or
-identifies MacParakeet itself.
+identifies Sotto itself.
 
 Reasoning:
 
-- Current MacParakeet telemetry is intentionally paste-target oriented.
+- Current Sotto telemetry is intentionally paste-target oriented.
 - TypeWhisper, FluidVoice, and Hex show that app capture can be thrown off if
   the app's own overlay steals focus.
 - A fallback snapshot gives us resilience without changing the primary contract.
@@ -170,10 +170,10 @@ When it ships later, it should:
 
 Files:
 
-- `Sources/MacParakeetCore/Models/AppPromptContext.swift`
-- `Sources/MacParakeetCore/Models/AIFormatterProfile.swift`
-- `Sources/MacParakeetCore/Models/AIFormatterProfileMatcher.swift`
-- `Tests/MacParakeetTests/Models/AIFormatterProfileMatcherTests.swift`
+- `Sources/SottoCore/Models/AppPromptContext.swift`
+- `Sources/SottoCore/Models/AIFormatterProfile.swift`
+- `Sources/SottoCore/Models/AIFormatterProfileMatcher.swift`
+- `Tests/SottoTests/Models/AIFormatterProfileMatcherTests.swift`
 
 Tasks:
 
@@ -200,18 +200,18 @@ Verification:
 
 Files:
 
-- `Sources/MacParakeetCore/Database/DatabaseManager.swift`
-- `Sources/MacParakeetCore/Database/AIFormatterProfileRepository.swift`
-- `Sources/MacParakeetCore/Database/DictationRepository.swift`
-- `Sources/MacParakeetCore/Models/Dictation.swift`
+- `Sources/SottoCore/Database/DatabaseManager.swift`
+- `Sources/SottoCore/Database/AIFormatterProfileRepository.swift`
+- `Sources/SottoCore/Database/DictationRepository.swift`
+- `Sources/SottoCore/Models/Dictation.swift`
 - `spec/01-data-model.md`
-- `Tests/MacParakeetTests/Database/AIFormatterProfileRepositoryTests.swift`
-- `Tests/MacParakeetTests/Database/DatabaseManagerTests.swift`
-- `Tests/MacParakeetTests/Database/DictationRepositoryTests.swift`
+- `Tests/SottoTests/Database/AIFormatterProfileRepositoryTests.swift`
+- `Tests/SottoTests/Database/DatabaseManagerTests.swift`
+- `Tests/SottoTests/Database/DictationRepositoryTests.swift`
 
 Tasks:
 
-1. Read `Sources/MacParakeetCore/Database/README.md` before editing.
+1. Read `Sources/SottoCore/Database/README.md` before editing.
 2. Register a new forward-only migration with the next available version name.
    Do not reuse the stale `v0.14` from old ADR-023.
 3. Create `ai_formatter_profiles`.
@@ -238,13 +238,13 @@ Verification:
 
 Files:
 
-- `Sources/MacParakeet/App/AppEnvironment.swift`
-- `Sources/MacParakeet/App/DictationFlowCoordinator.swift`
-- `Sources/MacParakeetCore/Services/Dictation/DictationService.swift`
-- `Sources/MacParakeetCore/Services/Dictation/DictationServiceSession.swift`
-- `Sources/MacParakeetCore/Services/System/FocusedAppContextService.swift`
-- `Sources/MacParakeetCore/Services/LLM/LLMService.swift` if signature changes are needed
-- `Tests/MacParakeetTests/Services/Dictation/DictationServiceTests.swift`
+- `Sources/Sotto/App/AppEnvironment.swift`
+- `Sources/Sotto/App/DictationFlowCoordinator.swift`
+- `Sources/SottoCore/Services/Dictation/DictationService.swift`
+- `Sources/SottoCore/Services/Dictation/DictationServiceSession.swift`
+- `Sources/SottoCore/Services/System/FocusedAppContextService.swift`
+- `Sources/SottoCore/Services/LLM/LLMService.swift` if signature changes are needed
+- `Tests/SottoTests/Services/Dictation/DictationServiceTests.swift`
 
 Tasks:
 
@@ -261,7 +261,7 @@ Tasks:
    with phase `finish`
 5. Mirror finish-context behavior in `undoCancelTask`.
 6. In service state, choose finish context when valid; otherwise fall back to
-   start context. Treat MacParakeet's own bundle ID as invalid for profile
+   start context. Treat Sotto's own bundle ID as invalid for profile
    routing.
 7. Replace no-arg prompt closure with async resolver.
 8. `formatTranscriptIfNeeded` asks resolver for prompt resolution, passes prompt
@@ -291,9 +291,9 @@ Verification:
 
 Files:
 
-- `Sources/MacParakeetViewModels/LLMSettingsViewModel.swift`
-- `Sources/MacParakeet/Views/Settings/LLMSettingsView.swift`
-- `Tests/MacParakeetTests/ViewModels/LLMSettingsViewModelTests.swift`
+- `Sources/SottoViewModels/LLMSettingsViewModel.swift`
+- `Sources/Sotto/Views/Settings/LLMSettingsView.swift`
+- `Tests/SottoTests/ViewModels/LLMSettingsViewModelTests.swift`
 
 Tasks:
 
@@ -333,7 +333,7 @@ Tasks:
 4. Update docs to state that exact app context is local-only and AI Formatter
    still sends transcript/prompt only to the user's configured provider.
 5. If future telemetry keys are added, update the website allowlist in the
-   paired `macparakeet-website` repo before calling that future slice done.
+   paired `sotto-website` repo before calling that future slice done.
 
 Verification:
 
@@ -385,7 +385,7 @@ Focused app at stop/undo
 - App category is existing bounded enum.
 - Browser hostname matching is absent in v1.
 - No selected text, clipboard, or screen context is read by this feature.
-- If stop/undo-time context resolves to MacParakeet itself, it is used only for
+- If stop/undo-time context resolves to Sotto itself, it is used only for
   fallback detection, not as a match target.
 
 ## Manual Smoke Plan

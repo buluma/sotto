@@ -1,11 +1,10 @@
-# Changelog -- macparakeet-cli
+# Changelog -- sotto-cli
 
-All notable changes to the **`macparakeet-cli` surface** are documented here.
+All notable changes to the **`sotto-cli` surface** are documented here.
 
 This file tracks the CLI specifically -- the commands, flags, output schemas,
 and exit codes that scripted callers (shell scripts, CI pipelines, AI agents)
-depend on. App-level changes ship through Sparkle and are documented in the
-appcast at <https://macparakeet.com/appcast.xml>.
+depend on. Sotto is updated manually from source; app auto-updates and remote telemetry are removed.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com), and the
 CLI adheres to [Semantic Versioning](https://semver.org).
@@ -106,7 +105,7 @@ by checking exit code first: `2` = misuse, `1` = runtime, `0` = success.
   with a `lookup` error instead of restoring stale history or recounting a
   deleted take. Failed-dictation recovery and audio-retention rules are unchanged.
 
-## [5.0.0] — 2026-09-27 (bundled with MacParakeet 0.8.9)
+## [5.0.0] — 2026-09-27 (bundled with Sotto 0.8.9)
 
 This major version removes Apple Intelligence analysis and Transform execution.
 Scripts using those requests must choose another provider. Apple Intelligence
@@ -127,7 +126,7 @@ channel.
   only the `cleanup` route. The app also clears a saved Apple Intelligence
   default or analysis route at launch; saved API keys are kept.
 
-## [4.9.0] — 2026-09-27 (bundled with MacParakeet 0.8.8)
+## [4.9.0] — 2026-09-27 (bundled with Sotto 0.8.8)
 
 The standalone Homebrew CLI has its own release channel.
 
@@ -165,7 +164,7 @@ The standalone Homebrew CLI has its own release channel.
 
 This CLI source version adds saved-result editing, batch text revisions, shared
 AI routes and experimental Ask automation. It does not qualify or change the
-stable MacParakeet.app release or standalone CLI channel.
+stable Sotto.app release or standalone CLI channel.
 
 ### Added
 
@@ -603,7 +602,7 @@ stable MacParakeet.app release or standalone CLI channel.
   unchanged.
 - Bundled CLI commands no longer emit a Foundation UserDefaults suite warning
   on otherwise successful invocations. The standalone CLI continues sharing
-  the MacParakeet app's preferences.
+  the Sotto app's preferences.
 - Native OpenAI LLM calls omit `temperature` for GPT-5.x reasoning-tier
   models (e.g. `gpt-5.5`, `gpt-5.4-mini`), preventing HTTP 400 responses
   from model and reasoning-effort combinations that do not accept non-default
@@ -702,7 +701,7 @@ stable MacParakeet.app release or standalone CLI channel.
 - `health --json` now reports `database.status: "schema_skew"` with a clear
   upgrade message when the shared SQLite database contains migration
   identifiers unknown to this CLI build. This turns stale-CLI/newer-app
-  database skew into an actionable `macparakeet-cli` upgrade prompt instead of
+  database skew into an actionable `sotto-cli` upgrade prompt instead of
   a generic GRDB decode/read error.
 - Destructive local mutators now support `--json` success output: `history
   delete-dictation`, `history delete-transcription`, `history
@@ -753,7 +752,7 @@ stable MacParakeet.app release or standalone CLI channel.
 
 ### Changed
 
-- In DEBUG builds with `MACPARAKEET_DEBUG_APP_STATE_DIR` set, FluidAudio
+- In DEBUG builds with `SOTTO_DEBUG_APP_STATE_DIR` set, FluidAudio
   speech/speaker models now resolve under that throwaway state root, and
   `models clear` removes only that root instead of FluidAudio's global cache.
   Destructive model commands (`models delete`, `models clear`) therefore no
@@ -950,7 +949,7 @@ stable MacParakeet.app release or standalone CLI channel.
 - Meeting JSON commands that matter to agent workflows accept opt-in
   `--envelope` success output with `{ "ok": true, "command", "data", "meta" }`.
   Existing `--json` success shapes are unchanged.
-- `history delete-meeting-audio <transcription>` deletes MacParakeet-managed
+- `history delete-meeting-audio <transcription>` deletes Sotto-managed
   meeting audio for a single saved meeting while keeping the transcript row and
   clearing its stored audio path.
 - `history clear-meeting-audio` deletes all stored meeting audio and detaches
@@ -1250,7 +1249,7 @@ stable MacParakeet.app release or standalone CLI channel.
   existing human `--format text` view intact while giving shell pipelines a
   clean `pbcopy`, `grep`, `tee`, or local-LLM input mode.
 - `transcribe --no-history` runs file/URL transcription without saving a
-  completed transcription row to MacParakeet history. For YouTube inputs,
+  completed transcription row to Sotto history. For YouTube inputs,
   downloaded audio is treated as temporary even when the shared app default is
   to retain transcription audio.
 - `models list` and `models select <id>` provide user-facing aliases over the
@@ -1299,7 +1298,7 @@ stable MacParakeet.app release or standalone CLI channel.
 - `quick-prompts list --pinned <true|false>` — filter list by pin state.
 - `quick-prompts export --pinned <true|false>` — filter export by pin state.
 - Quick-prompt import/export uses bundle schema **v1**
-  (`macparakeet.quick_prompts/1`) with `isPinned: Bool` per prompt. There is
+  (`sotto.quick_prompts/1`) with `isPinned: Bool` per prompt. There is
   no `kind` bundle schema because this surface has not shipped publicly yet.
 
 ### Added
@@ -1312,7 +1311,7 @@ stable MacParakeet.app release or standalone CLI channel.
   `--dry-run`, `--json`, and stdin (omit `--input`); `export` writes to
   stdout when `--output` is omitted. `schema` prints an LLM-friendly spec
   (or `--json` structured form) so a local coding agent can generate valid
-  bundles. Bundle format is versioned (`macparakeet.vocabulary` v1).
+  bundles. Bundle format is versioned (`sotto.vocabulary` v1).
 
 ### Fixed
 
@@ -1327,15 +1326,15 @@ stable MacParakeet.app release or standalone CLI channel.
   read `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, and
   `OPENROUTER_API_KEY` directly.
 - `config` command namespace for users who only install the CLI (no GUI):
-  `macparakeet-cli config get telemetry`, `config set telemetry on|off`, and
+  `sotto-cli config get telemetry`, `config set telemetry on|off`, and
   `config list`. Values persist in the same UserDefaults suite the GUI reads
-  (`com.macparakeet.MacParakeet`), so a later GUI install picks them up.
+  (`com.sotto.Sotto`), so a later GUI install picks them up.
 - `transcribe` now honors `DO_NOT_TRACK=1` (industry-standard, also honored
   by Homebrew, GitLab, VS Code) and auto-disables telemetry in CI environments
   (`CI`, `GITHUB_ACTIONS`, `GITLAB_CI`, `BUILDKITE`, `CIRCLECI`, `TRAVIS`,
   `JENKINS_URL`, `TF_BUILD`, `TEAMCITY_VERSION` set to a truthy value). The
-  CI auto-disable can be overridden with `MACPARAKEET_TELEMETRY=1` for
-  developers smoke-testing telemetry from a CI shell. `MACPARAKEET_TELEMETRY=0`
+  CI auto-disable can be overridden with `SOTTO_TELEMETRY=1` for
+  developers smoke-testing telemetry from a CI shell. `SOTTO_TELEMETRY=0`
   remains the explicit per-process kill switch.
 
 ### Fixed
@@ -1367,7 +1366,7 @@ stable MacParakeet.app release or standalone CLI channel.
   field on successful output when the active engine detects or confirms a
   language. This is additive; existing fields and defaults are unchanged.
 - `models download <variant>` recognizes Whisper model identifiers such as
-  `whisper-large-v3-v20240930-turbo-632MB` and stores them under MacParakeet's
+  `whisper-large-v3-v20240930-turbo-632MB` and stores them under Sotto's
   Whisper model cache.
 - `meetings` command namespace for deterministic, local meeting objects:
   `meetings list`, `meetings show`, `meetings transcript`,
@@ -1463,7 +1462,7 @@ behavior change.
 ## [1.0.0] -- 2026-04-25
 
 First release of the CLI as a versioned public surface. The CLI has existed
-since v0.1 of the MacParakeet app and powered AI-assisted testing through
+since v0.1 of the Sotto app and powered AI-assisted testing through
 v0.4--v0.6. With the prompts subcommand and JSON sweep landing in
 [PR #138](https://github.com/moona3k/macparakeet/pull/138), the surface is
 complete enough to commit to. This release marks that commitment.
@@ -1500,8 +1499,8 @@ complete enough to commit to. This release marks that commitment.
 - Pre-1.0 callers are unaffected. Every existing command and flag retains its
   prior behavior; the version bump signals "stability commitment going
   forward," not a breaking-change cliff.
-- The CLI ships inside the `MacParakeet.app` bundle today
-  (`MacParakeet.app/Contents/MacOS/macparakeet-cli`). Standalone install via
+- The CLI ships inside the `Sotto.app` bundle today
+  (`Sotto.app/Contents/MacOS/sotto-cli`). Standalone install via
   Homebrew tap is on the roadmap (see plan above) and will not change command
   semantics.
 - **`--format json` (transcribe, export) vs `--json` (read-only queries)**

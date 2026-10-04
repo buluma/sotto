@@ -4,17 +4,17 @@
 
 ## Core Concept
 
-MacParakeet is the **voice input to your personal AI agent.**
+Sotto is the **voice input to your personal AI agent.**
 
-You speak. MacParakeet captures and transcribes it locally. Then it delivers the message to your agent — whatever that agent is. The agent processes it and sends results back.
+You speak. Sotto captures and transcribes it locally. Then it delivers the message to your agent — whatever that agent is. The agent processes it and sends results back.
 
 It's a voicemail. Everyone knows what a voicemail is. You speak, hang up, and someone gets back to you.
 
 ## The Insight
 
-Every person will eventually have a personal AI agent. The agent needs a voice. MacParakeet is already the best system-wide voice capture on Mac — always on, never steals focus, fast local transcription. The leap from "paste text into apps" to "send text to your agent" is tiny.
+Every person will eventually have a personal AI agent. The agent needs a voice. Sotto is already the best system-wide voice capture on Mac — always on, never steals focus, fast local transcription. The leap from "paste text into apps" to "send text to your agent" is tiny.
 
-MacParakeet doesn't need to **be** the agent. It needs to be the best **mic** for your agent.
+Sotto doesn't need to **be** the agent. It needs to be the best **mic** for your agent.
 
 ```
 Dictation  → voice → text → paste into app      (immediate)
@@ -27,7 +27,7 @@ Same capture UX, different destination.
 
 ```
 ┌─────────────────────────────────────────────┐
-│  MacParakeet (Capture Layer)                │
+│  Sotto (Capture Layer)                │
 │                                             │
 │  - System-wide hotkey                       │
 │  - Local transcription (Parakeet/ANE)       │
@@ -54,10 +54,10 @@ Same capture UX, different destination.
    └──────────┘        └───────────┘
 ```
 
-**MacParakeet owns:** capture, transcription, inbox UI, delivery protocol.
+**Sotto owns:** capture, transcription, inbox UI, delivery protocol.
 **The agent owns:** processing, reasoning, research, tools, actions.
 
-This means MacParakeet ships with a built-in agent (using configured LLM providers) but the protocol is open — plug in your own agent when personal AI agents become a thing.
+This means Sotto ships with a built-in agent (using configured LLM providers) but the protocol is open — plug in your own agent when personal AI agents become a thing.
 
 ## Why This Is Defensible
 
@@ -137,7 +137,7 @@ Different table, different sidebar tab, different purpose.
 
 ## Agent Protocol
 
-The key design decision: MacParakeet defines a **protocol** for agent communication, not just a hardcoded LLM pipeline.
+The key design decision: Sotto defines a **protocol** for agent communication, not just a hardcoded LLM pipeline.
 
 ```swift
 protocol VoicemailAgent {

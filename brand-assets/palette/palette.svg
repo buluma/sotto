@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="MacParakeet Pop Palette">
-  <title>MacParakeet Pop Palette</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Sotto Pop Palette">
+  <title>Sotto Pop Palette</title>
   <desc>12 curated colors anchored on the coral-orange brand accent. See palette.json for hex codes and guidance.</desc>
 
   <!-- Paper background with breathing room -->
@@ -8,7 +8,7 @@
   <g font-family="-apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif">
     <!-- Header -->
     <g transform="translate(80, 90)">
-      <text x="0" y="0" font-size="44" font-weight="700" fill="#0E0F12" letter-spacing="-0.5">MacParakeet · Pop Palette</text>
+      <text x="0" y="0" font-size="44" font-weight="700" fill="#0E0F12" letter-spacing="-0.5">Sotto · Pop Palette</text>
       <text x="0" y="34" font-size="18" font-weight="400" fill="#0E0F12" opacity="0.6">Twelve colors. Coral leads. Ink and paper anchor.</text>
     </g>
 

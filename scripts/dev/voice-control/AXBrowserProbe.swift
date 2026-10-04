@@ -14,7 +14,7 @@ private func fixtureGuard() throws {
     guard let raw = ax(AXUIElementCreateApplication(app.processIdentifier), kAXFocusedWindowAttribute),
           CFGetTypeID(raw) == AXUIElementGetTypeID() else { throw FixtureError.missingFocusedWindow }
     let window = unsafeDowncast(raw as AnyObject, to: AXUIElement.self)
-    guard (ax(window, kAXTitleAttribute) as? String)?.contains("MacParakeet native AX flight fixture") == true else { throw FixtureError.wrongTitle }
+    guard (ax(window, kAXTitleAttribute) as? String)?.contains("Sotto native AX flight fixture") == true else { throw FixtureError.wrongTitle }
     var nodes = [window]; var visited = Set<CFHashCode>(); var matchingWebArea = false
     while let node = nodes.popLast(), visited.count < 1500 {
         guard visited.insert(CFHash(node)).inserted else { continue }

@@ -1,11 +1,11 @@
 # FluidAudio CoreML Migration: STT Backend Evaluation
 
 > Status: **HISTORICAL** — Research findings from February 12-13, 2026. FluidAudio migration is complete. The local Qwen3-8B GPU path referenced here is outdated because the on-device mlx-swift-lm runtime was removed 2026-02-23; current LLM support uses external providers or local CLI.
-> Implementation update: Pre-implementation size estimates below treated the full CoreML repos as the user download. Current MacParakeet fetches only the Parakeet components it loads, roughly ~465 MB per build; v2 and v3 cache independently.
+> Implementation update: Pre-implementation size estimates below treated the full CoreML repos as the user download. Current Sotto fetches only the Parakeet components it loads, roughly ~465 MB per build; v2 and v3 cache independently.
 
 ## Problem Statement
 
-MacParakeet runs Parakeet TDT 0.6B via a **Python daemon** (`parakeet-mlx`) using JSON-RPC over stdin/stdout. This works, but it's not the best architecture for the product we're building.
+Sotto runs Parakeet TDT 0.6B via a **Python daemon** (`parakeet-mlx`) using JSON-RPC over stdin/stdout. This works, but it's not the best architecture for the product we're building.
 
 ### The Core Problem: Wasted Silicon
 
@@ -20,7 +20,7 @@ Apple Silicon (M1/M2/M3/M4)
 
 These are **physically separate silicon** with their own processing pipelines. They can run simultaneously without contending for resources.
 
-Today, MacParakeet uses **two of three chips**:
+Today, Sotto uses **two of three chips**:
 
 ```
 CPU: [App logic, UI, hotkeys, clipboard]
@@ -98,7 +98,7 @@ FluidAudio's CTC-based keyword boosting maps directly to our `CustomWord` model:
 
 ```swift
 let vocabulary = CustomVocabularyContext(terms: [
-    CustomVocabularyTerm(text: "MacParakeet"),
+    CustomVocabularyTerm(text: "Sotto"),
     CustomVocabularyTerm(
         text: "macOS",
         aliases: ["Mac OS", "Macos"]  // recognized variants → canonical form
@@ -196,7 +196,7 @@ The WER improvement from ~6.3% (MLX) to 2.1-2.5% (CoreML) is a genuine bonus. Sa
 
 ### Model Size Tradeoff
 
-Pre-implementation analysis treated the full CoreML repo as a **~6 GB** user download. Current MacParakeet/FluidAudio usage only fetches the components MacParakeet loads, so the actual per-build user-facing download is roughly **~465 MB**.
+Pre-implementation analysis treated the full CoreML repo as a **~6 GB** user download. Current Sotto/FluidAudio usage only fetches the components Sotto loads, so the actual per-build user-facing download is roughly **~465 MB**.
 
 **Why is the CoreML version larger?**
 
@@ -206,7 +206,7 @@ The tradeoff is straightforward:
 
 | | MLX/GPU | CoreML/ANE |
 |---|---------|-----------|
-| Model download | ~2.5 GB | ~465 MB fetched components per selected build in current MacParakeet usage |
+| Model download | ~2.5 GB | ~465 MB fetched components per selected build in current Sotto usage |
 | Runtime memory | ~2 GB+ | ~66 MB working RAM |
 | First-run compile | None | ~3.4s one-time |
 | Speed | ~300x RTF | ~155x RTF |
@@ -244,7 +244,7 @@ All components we'd use are permissive:
 
 ### Download Size
 
-The full CoreML repo for `parakeet-tdt-0.6b-v3-coreml` is much larger than the subset MacParakeet uses. Current MacParakeet only fetches the loaded components, roughly **~465 MB per build**.
+The full CoreML repo for `parakeet-tdt-0.6b-v3-coreml` is much larger than the subset Sotto uses. Current Sotto only fetches the loaded components, roughly **~465 MB per build**.
 
 | Component | Format |
 |-----------|--------|
@@ -279,7 +279,7 @@ The full CoreML repo for `parakeet-tdt-0.6b-v3-coreml` is much larger than the s
 | Breaking API changes | Low | Pin to specific version, SDK has semver from v0.7.9+, 34 releases with no breaking changes so far |
 | CoreML crash takes down app | Low | CoreML is mature; can wrap in crash handler. Trade-off vs subprocess complexity. |
 | CoreML first-run compilation | Low | ~3.4s one-time, show progress indicator during onboarding |
-| Model download on first run | Medium | ~465 MB per selected Parakeet build in current MacParakeet usage. Must show progress. Consider CDN mirror for faster downloads. One-time cost is acceptable. |
+| Model download on first run | Medium | ~465 MB per selected Parakeet build in current Sotto usage. Must show progress. Consider CDN mirror for faster downloads. One-time cost is acceptable. |
 | Streaming ASR quality worse than batch | Low | Use batch mode for dictation (process after recording stops), streaming only for real-time feedback if added later |
 | Swift 6 requirement | Low | Our macOS 14.2+ target is compatible; may need swift-tools-version bump |
 
@@ -311,15 +311,15 @@ The CoreML/ANE path is the better architecture — three workloads on three chip
 1. **Add FluidAudio as SwiftPM dependency** (`FluidAudio` product only, not `FluidAudioEspeak`)
 2. **New `STTClient` implementation** — replace JSON-RPC Python daemon calls with FluidAudio async Swift API, conforming to existing `STTClientProtocol`
 3. **Delete entire Python stack** — remove `python/` directory, `PythonBootstrap.swift`, `JSONRPCTypes.swift`, `requirements.txt`, all uv/venv bootstrap code. No Python in the project at all.
-4. **Standalone yt-dlp binary** — replace pip-installed yt-dlp with standalone macOS binary (`yt-dlp_macos`, ~35 MB). Store in `~/Library/Application Support/MacParakeet/bin/`. Auto-updates via `yt-dlp --update`. See "Eliminating Python" below.
+4. **Standalone yt-dlp binary** — replace pip-installed yt-dlp with standalone macOS binary (`yt-dlp_macos`, ~35 MB). Store in `~/Library/Application Support/Sotto/bin/`. Auto-updates via `yt-dlp --update`. See "Eliminating Python" below.
 5. **Bundled FFmpeg binary** — ship FFmpeg in app resources. Still needed for video file transcription (mp4/mov/mkv/webm/avi → audio extraction) and yt-dlp post-processing. FluidAudio's `AudioConverter` handles resampling but NOT video demuxing.
 6. **Update STT tests** — new implementation, same `STTClientProtocol` contract
-7. **Model download during onboarding** — replace Python venv setup with CoreML component download (~465 MB per selected Parakeet build in current MacParakeet usage) + yt-dlp binary download (~35 MB)
+7. **Model download during onboarding** — replace Python venv setup with CoreML component download (~465 MB per selected Parakeet build in current Sotto usage) + yt-dlp binary download (~35 MB)
 8. **Evaluate custom vocabulary integration** — feed `CustomWord` entries as `CustomVocabularyTerm` to FluidAudio's CTC boosting
 
 ### Eliminating Python entirely
 
-The entire Python stack is being removed — not slimmed down, removed. There is no foreseeable future need for Python in MacParakeet. The full Apple Silicon ML inference stack is native Swift (FluidAudio CoreML for STT, MLX-Swift for LLM). Python was only needed because parakeet-mlx was the fastest path to Parakeet in v0.1. That reason goes away with FluidAudio.
+The entire Python stack is being removed — not slimmed down, removed. There is no foreseeable future need for Python in Sotto. The full Apple Silicon ML inference stack is native Swift (FluidAudio CoreML for STT, MLX-Swift for LLM). Python was only needed because parakeet-mlx was the fastest path to Parakeet in v0.1. That reason goes away with FluidAudio.
 
 **yt-dlp without Python:**
 
@@ -327,7 +327,7 @@ yt-dlp publishes standalone macOS binaries (~35 MB) that include a bundled Pytho
 
 | Aspect | Current (Python venv) | After (standalone binary) |
 |--------|----------------------|--------------------------|
-| Binary location | `~/...MacParakeet/python/bin/yt-dlp` | `~/...MacParakeet/bin/yt-dlp` |
+| Binary location | `~/...Sotto/python/bin/yt-dlp` | `~/...Sotto/bin/yt-dlp` |
 | Auto-update | `uv pip install --upgrade yt-dlp` | `yt-dlp --update` (built-in) |
 | Update frequency | Weekly check (current cadence) | Weekly check (same cadence) |
 | Dependencies | Python 3.11 + uv + venv (~500 MB) | None (~35 MB standalone) |
@@ -338,7 +338,7 @@ yt-dlp publishes standalone macOS binaries (~35 MB) that include a bundled Pytho
 
 1. Download `yt-dlp_macos` from GitHub releases (~35 MB)
 2. Verify SHA-256 checksum
-3. Store at `~/Library/Application Support/MacParakeet/bin/yt-dlp`
+3. Store at `~/Library/Application Support/Sotto/bin/yt-dlp`
 4. Mark executable (`chmod +x`)
 
 **Auto-update (weekly, same as current, non-blocking):**

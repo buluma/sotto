@@ -8,9 +8,9 @@
 > Note: This document is preserved as a historical plan snapshot; some "current state" statements below reflect pre-implementation context.
 > Superseded by: `0561a04` (joined software AEC, joiner/sync observability, stereo dual-source final artifact)
 > Related files:
-> - `Sources/MacParakeetCore/Audio/MicrophoneCapture.swift`
-> - `Sources/MacParakeetCore/Audio/MeetingAudioCaptureService.swift`
-> - `Sources/MacParakeetCore/Services/MeetingRecordingService.swift`
+> - `Sources/SottoCore/Audio/MicrophoneCapture.swift`
+> - `Sources/SottoCore/Audio/MeetingAudioCaptureService.swift`
+> - `Sources/SottoCore/Services/MeetingRecordingService.swift`
 
 ## Post-Implementation Amendment (Current Architecture)
 
@@ -49,7 +49,7 @@ Grep confirms **no `setVoiceProcessingEnabled` anywhere in the codebase**. There
 - **Zoom/Teams/Meet** do the same thing inside their own capture path.
 - Headphones eliminate the problem at the acoustic source, which is why every meeting-notes app recommends them.
 
-MacParakeet should do the same: enable VPIO on the meeting mic engine, plus a light defense-in-depth check and a one-line UI hint.
+Sotto should do the same: enable VPIO on the meeting mic engine, plus a light defense-in-depth check and a one-line UI hint.
 
 ## Objective
 
@@ -149,15 +149,15 @@ Thresholds are intentionally generous. Tune in manual validation.
 
 Add a single line on the meeting panel (near the "Start meeting" affordance or in the first-run meeting tip) along the lines of: **"For the cleanest separation between you and other participants, use headphones."** No nag, no persistent banner. One line, one location.
 
-File: `Sources/MacParakeet/Views/MeetingRecording/…` — pick whichever is the existing empty-state / pre-recording copy location.
+File: `Sources/Sotto/Views/MeetingRecording/…` — pick whichever is the existing empty-state / pre-recording copy location.
 
 ## Files to change
 
-1. `Sources/MacParakeetCore/Audio/MicrophoneCapture.swift` — add `enableVoiceProcessing` init arg + VPIO enable block.
-2. `Sources/MacParakeetCore/Audio/MeetingAudioCaptureService.swift` — construct `MicrophoneCapture(enableVoiceProcessing: true)` in the default `init()`.
-3. `Sources/MacParakeetCore/Services/MeetingRecordingService.swift` — add RMS EMA state + mic-chunk suppression inside `handleCaptureEvent`.
-4. `Sources/MacParakeet/Views/MeetingRecording/…` — add "use headphones" copy (one line).
-5. `Tests/MacParakeetTests/…` — tests listed below.
+1. `Sources/SottoCore/Audio/MicrophoneCapture.swift` — add `enableVoiceProcessing` init arg + VPIO enable block.
+2. `Sources/SottoCore/Audio/MeetingAudioCaptureService.swift` — construct `MicrophoneCapture(enableVoiceProcessing: true)` in the default `init()`.
+3. `Sources/SottoCore/Services/MeetingRecordingService.swift` — add RMS EMA state + mic-chunk suppression inside `handleCaptureEvent`.
+4. `Sources/Sotto/Views/MeetingRecording/…` — add "use headphones" copy (one line).
+5. `Tests/SottoTests/…` — tests listed below.
 
 ## Tests
 
@@ -221,9 +221,9 @@ You are picking this plan up to **review it and then implement it**. Do both pha
 - Read `spec/adr/014-meeting-recording.md` and `spec/adr/015-concurrent-dictation-meeting.md` — these are locked. Do not violate them.
 - Read `spec/10-ai-coding-method.md` for the kernel workflow and source-of-truth precedence.
 - Read the three primary files fully before touching anything:
-  - `Sources/MacParakeetCore/Audio/MicrophoneCapture.swift`
-  - `Sources/MacParakeetCore/Audio/MeetingAudioCaptureService.swift`
-  - `Sources/MacParakeetCore/Services/MeetingRecordingService.swift`
+  - `Sources/SottoCore/Audio/MicrophoneCapture.swift`
+  - `Sources/SottoCore/Audio/MeetingAudioCaptureService.swift`
+  - `Sources/SottoCore/Services/MeetingRecordingService.swift`
 - Check `git status` and `git diff` for both `MicrophoneCapture.swift` and `MeetingAudioCaptureService.swift`. **Another agent has in-flight changes in these files.** Understand their changes before planning yours. Do not clobber them.
 
 ### Phase 1 — Review the plan (do this before writing any code)
@@ -255,7 +255,7 @@ Only start this after Phase 1 is approved.
    2. `MeetingAudioCaptureService.swift`: construct `MicrophoneCapture(enableVoiceProcessing: true)` in the default `init()`. Leave the test-seam `init(microphoneCapture:systemAudioTapFactory:)` unchanged.
    3. `MeetingRecordingService.swift`: add RMS-EMA state + mic-chunk suppression inside `handleCaptureEvent`. Keep audio writing + level meter updates unconditional; gate only the transcription enqueue.
    4. Add/extend tests listed in the Tests section. Use the existing `MeetingMicrophoneCapturing` / `STTTranscribing` mock pattern.
-   5. Add the one-line "use headphones" copy on the meeting panel. Find the right view file under `Sources/MacParakeet/Views/MeetingRecording/` — do **not** create a new file.
+   5. Add the one-line "use headphones" copy on the meeting panel. Find the right view file under `Sources/Sotto/Views/MeetingRecording/` — do **not** create a new file.
 3. After each source change, compile (`swift build`) to surface errors early. After all changes, run `swift test`. All tests must pass and the pass count must equal baseline + new tests.
 4. Spawn an **Explore subagent** to review the diff of the changed files for real issues (per CLAUDE.md: "Review agent before commit"). Fix anything it surfaces that is actually a bug, ignore stylistic noise.
 5. **Do not commit and do not push.** Leave the working tree dirty with a summary of changes for the user to review. The user will decide whether to merge with the other agent's in-flight work or split into a separate PR.

@@ -1,8 +1,8 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
-/// `macparakeet-cli meeting-vad-sim <audio>` — headlessly replay the meeting
+/// `sotto-cli meeting-vad-sim <audio>` — headlessly replay the meeting
 /// live-preview chunking path on an audio file and compare the fixed 5s strategy
 /// against VAD speech-boundary chunking. Dev/agent tool for Phase 0 of the
 /// VAD-guided live chunking plan: measures chunk boundaries on real speech and
@@ -105,7 +105,7 @@ struct MeetingVADSimCommand: AsyncParsableCommand {
         print("── mode: \(r.mode) " + String(repeating: "─", count: max(0, 40 - r.mode.count)))
         if r.mode == "vad" && !r.vadAvailable {
             print("  VAD model not cached — live path would fall back to fixed.")
-            print("  (Launch MacParakeet with VAD enabled and let background prep fetch it, then retry.)")
+            print("  (Launch Sotto with VAD enabled and let background prep fetch it, then retry.)")
             return
         }
         let durS = Double(r.audioDurationMs) / 1000.0

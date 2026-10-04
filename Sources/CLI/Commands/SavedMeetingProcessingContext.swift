@@ -1,5 +1,5 @@
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 /// Shared CLI construction for operations that turn already-managed meeting
 /// audio into a transcript and its enabled post-processing. Keeping it here

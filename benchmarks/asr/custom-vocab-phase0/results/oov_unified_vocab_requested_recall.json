@@ -3,8 +3,8 @@
     {
       "hyp": "Mac Parakeet should keep the transcript local.",
       "id": "oov-001",
-      "ref": "MacParakeet should keep the transcript local.",
-      "term": "MacParakeet"
+      "ref": "Sotto should keep the transcript local.",
+      "term": "Sotto"
     },
     {
       "hyp": "Fluid audio loads the acoustic model before decoding.",
@@ -227,7 +227,7 @@
     {
       "id": "oov-001",
       "missing_terms": [
-        "MacParakeet"
+        "Sotto"
       ],
       "recalled_terms": 0,
       "total_terms": 1

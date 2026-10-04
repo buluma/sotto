@@ -17,7 +17,7 @@ formatting preferences do not silently choose a different journey.
 ## Prepare once, qualify repeatedly
 
 Use an Apple Silicon Mac and the dedicated disposable macOS account named
-`macparakeet-e2e`. Do not rename an everyday account or run with sudo. State
+`sotto-e2e`. Do not rename an everyday account or run with sudo. State
 directories and `--database` do not isolate shared UserDefaults or Keychain;
 the account boundary is intentional. Do not put valuable app data in it.
 Python 3.9+, `say`, `afconvert`, and `sandbox-exec` must be available. Install a
@@ -28,11 +28,11 @@ Build or install the intended CLI separately. Provision the selected model in
 an owned state directory, using that CLI's normal model installation command:
 
 ```sh
-export MACPARAKEET_DEBUG_APP_STATE_DIR="$HOME/qualification-state"
-export MACPARAKEET_TELEMETRY=0
-/absolute/path/to/macparakeet-cli models download parakeet-v3
+export SOTTO_DEBUG_APP_STATE_DIR="$HOME/qualification-state"
+export SOTTO_TELEMETRY=0
+/absolute/path/to/sotto-cli models download parakeet-v3
 python3 scripts/dev/model_qualification.py pin \
-  --state-dir "$MACPARAKEET_DEBUG_APP_STATE_DIR" \
+  --state-dir "$SOTTO_DEBUG_APP_STATE_DIR" \
   --output "$HOME/approved-parakeet-v3.json"
 ```
 
@@ -48,7 +48,7 @@ Run qualification with a new evidence directory:
 
 ```sh
 python3 scripts/dev/model_qualification.py run \
-  --cli /absolute/path/to/macparakeet-cli \
+  --cli /absolute/path/to/sotto-cli \
   --state-dir "$HOME/qualification-state" \
   --manifest "$HOME/approved-parakeet-v3.json" \
   --output-dir "$HOME/qualification-runs/candidate-001"

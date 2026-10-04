@@ -7,7 +7,7 @@
 > **Executor instructions**: Treat this as a proposal and naming record, not an
 > implementation ticket. Before building, reconcile it with
 > `plans/active/2026-06-19-meetings-workspace-productization.md`,
-> `spec/contracts/meeting-artifacts-v1.md`, and the current `macparakeet-cli`
+> `spec/contracts/meeting-artifacts-v1.md`, and the current `sotto-cli`
 > command surface. The first valid implementation slice is read-only context
 > retrieval with JSON output and citations.
 
@@ -27,11 +27,11 @@
 
 ## Summary
 
-Build a `ContextEngine`-shaped module that turns MacParakeet's local Library
+Build a `ContextEngine`-shaped module that turns Sotto's local Library
 into structured, cited, budget-aware context for UI, CLI, and external agents.
 
 The important product idea is not "add a chatbot." It is to make
-MacParakeet's transcript, meeting, notes, prompt-result, calendar, speaker, and
+Sotto's transcript, meeting, notes, prompt-result, calendar, speaker, and
 artifact data easy for agents and scripts to inspect without learning the
 database schema or filesystem conventions.
 
@@ -42,7 +42,7 @@ window-budget concepts.
 
 ## Why this matters
 
-MacParakeet already has the hard local substrate:
+Sotto already has the hard local substrate:
 
 - persisted transcripts and meeting rows
 - source-separated meeting artifacts
@@ -53,7 +53,7 @@ MacParakeet already has the hard local substrate:
 
 What is missing is one stable interface that answers a simpler question:
 
-> "Given a task or query, what local MacParakeet context should an agent,
+> "Given a task or query, what local Sotto context should an agent,
 > command, or UI flow use, and how do we cite it?"
 
 Without this seam, each future feature is tempted to reimplement lookup,
@@ -68,7 +68,7 @@ the start**.
 
 ```
 Mac app Ask / Library UI
-macparakeet-cli
+sotto-cli
 future local agent or MCP server
 LLM tool-calling loop
         |
@@ -192,13 +192,13 @@ Prefer a `library` namespace if it can be added without conflicting with the
 current CLI vocabulary:
 
 ```bash
-macparakeet-cli library list --since 7d --json
-macparakeet-cli library search "pricing Sarah" --json
-macparakeet-cli library read-transcript <meeting-id> --around 00:14:20 --json
-macparakeet-cli library read-notes <meeting-id> --json
-macparakeet-cli library prompt-results <meeting-id> --json
-macparakeet-cli library context "what did I promise Sarah?" --since 30d --json
-macparakeet-cli library ask "what did I promise Sarah?" --since 30d --json
+sotto-cli library list --since 7d --json
+sotto-cli library search "pricing Sarah" --json
+sotto-cli library read-transcript <meeting-id> --around 00:14:20 --json
+sotto-cli library read-notes <meeting-id> --json
+sotto-cli library prompt-results <meeting-id> --json
+sotto-cli library context "what did I promise Sarah?" --since 30d --json
+sotto-cli library ask "what did I promise Sarah?" --since 30d --json
 ```
 
 If `meetings` remains the better namespace for the first slice, keep the JSON
@@ -210,7 +210,7 @@ shape compatible with a future `library` namespace.
 
 ```json
 {
-  "schema": "com.macparakeet.library-context",
+  "schema": "com.sotto.library-context",
   "schemaVersion": 1,
   "query": "what did I promise Sarah?",
   "scope": {

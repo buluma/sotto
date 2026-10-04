@@ -15,9 +15,9 @@ retention. Callers own those effects.
 ## Producers
 
 - `SavedAudioAutoPromptCompletionService.completeAutoPrompts(for:onProgress:)`
-  in `MacParakeetCore/Services/SavedAudioAutoPromptCompletionService.swift`.
+  in `SottoCore/Services/SavedAudioAutoPromptCompletionService.swift`.
 - `PromptAutoRunSelector.resolve` / `.autoRunPrompts` in
-  `MacParakeetCore/Services/PromptAutoRunSelector.swift` — the shared
+  `SottoCore/Services/PromptAutoRunSelector.swift` — the shared
   selection precedence (label policy → meeting-type policy → per-prompt
   `appliesToSources`) extracted from `PromptResultsViewModel` so the GUI
   auto-generation path and this service resolve identically.
@@ -113,7 +113,7 @@ older results retain an unknown source.
 
 ## Tests that enforce this
 
-`Tests/MacParakeetTests/Services/SavedAudioAutoPromptCompletionServiceTests.swift`:
+`Tests/SottoTests/Services/SavedAudioAutoPromptCompletionServiceTests.swift`:
 
 - `testNoAutoRunPromptsProducesNoLLMCallAndNoOutcomes`
 - `testSourceScopedAutoRunPromptOnlyRunsForItsApplicableSource`
@@ -129,7 +129,7 @@ older results retain an unknown source.
 - `testWithoutInjectedCardGeneratorNoCardGenerationIsAttempted`
 - `testInjectedMeetingArtifactStoreIsRefreshedAfterCompletion`
 
-`Tests/MacParakeetTests/ViewModels/PromptResultsViewModelTests.swift` continues
+`Tests/SottoTests/ViewModels/PromptResultsViewModelTests.swift` continues
 to cover the GUI-facing selection/auto-generation behavior end to end and
 passed unmodified against the extracted `PromptAutoRunSelector`.
 

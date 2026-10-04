@@ -116,7 +116,7 @@
       },
       "test_evidence": {
         "parallel_xctest_progress_lines": 5563,
-        "last_parallel_progress_line": "swift-test\tSwift Test\t2026-09-07T23:59:36.5341040Z [5563/5563] Testing MacParakeetTests.YouTubeURLValidatorTests/testYouTubeHomepage",
+        "last_parallel_progress_line": "swift-test\tSwift Test\t2026-09-07T23:59:36.5341040Z [5563/5563] Testing SottoTests.YouTubeURLValidatorTests/testYouTubeHomepage",
         "swift_testing_summary_lines": [
           "swift-test\tSwift Test\t2026-09-07T23:59:36.6128950Z ✔ Test run with 29 tests passed after 0.004 seconds."
         ],
@@ -235,7 +235,7 @@
       },
       "test_evidence": {
         "parallel_xctest_progress_lines": 5563,
-        "last_parallel_progress_line": "swift-test\tSwift Test\t2026-09-08T00:06:46.0257770Z [5563/5563] Testing MacParakeetTests.YouTubeURLValidatorTests/testWhitespaceOnly",
+        "last_parallel_progress_line": "swift-test\tSwift Test\t2026-09-08T00:06:46.0257770Z [5563/5563] Testing SottoTests.YouTubeURLValidatorTests/testWhitespaceOnly",
         "swift_testing_summary_lines": [
           "swift-test\tSwift Test\t2026-09-08T00:06:46.1441370Z ✔ Test run with 29 tests passed after 0.007 seconds."
         ],

@@ -34,7 +34,7 @@ Before creation, show:
 
 The [September 25 editor QA fix plan](2026-09-25-split-editor-validation.md) adds explicit current-position availability and friendly validation guidance. Enable the bordered secondary “Use current position” action only when applying playback changes the target time and produces valid cuts from the current text. Invalid or unchanged applications preserve the draft; typed invalid times remain editable and show actionable guidance. Preserve Core/CLI validation and all processing/recovery behavior.
 
-Use native accessible controls and `.parakeetAction(...)`. Show separate audio-preparation and per-part processing progress. After audio publication, cancellation means stop processing, not undo creation. Keep completed and unfinished parts visible with retry actions and links to the original/siblings where they still exist.
+Use native accessible controls and `.sottoAction(...)`. Show separate audio-preparation and per-part processing progress. After audio publication, cancellation means stop processing, not undo creation. Keep completed and unfinished parts visible with retry actions and links to the original/siblings where they still exist.
 
 ## Settled behavior
 
@@ -136,7 +136,7 @@ progress and reconciler tests pass alongside the existing Core/CLI suite.
 
 Not done in this pass: real native-app/manual QA (an opt-in DEBUG fixture
 seeder is provided for a host to run this — see
-`Tests/MacParakeetTests/QA/SplitAndTranscribeFixtureSeedTests.swift`),
+`Tests/SottoTests/QA/SplitAndTranscribeFixtureSeedTests.swift`),
 real-model acceptance, and an elaborate operation-history UI (explicitly out
 of scope). A child's "View split progress…" action now opens the persisted
 operation by `provenance.operationId`, with Continue processing on that sheet.
@@ -158,7 +158,7 @@ columns in older schemas and SQL `NULL` remain readable. The design and
 auto-prompt contract now describe the completed implementation and measured QA.
 
 The combined focused gate passed 179 tests, one skipped, zero failures, with
-`MACPARAKEET_SPLIT_SIGINT_TESTS=1`. This includes real SIGINT delivery, plaintext
+`SOTTO_SPLIT_SIGINT_TESTS=1`. This includes real SIGINT delivery, plaintext
 preview identity, superseded/cancelled sweep completion, missing-column reads,
 malformed provenance preservation, split services, startup reconciliation, and
 saved-audio prompt completion. No second full-suite run was performed.
@@ -214,7 +214,7 @@ or lock hierarchy.
 
 The focused review-fix gate passed: 169 tests, one skipped, zero failures,
 including opt-in SIGINT subprocess coverage, native recovery, retention and
-sharing deletion. Command: `MACPARAKEET_SPLIT_SIGINT_TESTS=1 swift test --filter
+sharing deletion. Command: `SOTTO_SPLIT_SIGINT_TESTS=1 swift test --filter
 'MeetingSplit|MeetingAudioRetentionSweepCoordinatorTests|MeetingAudioRetentionSweeperTests|MeetingMediaMutationLease|ShareDeletionPropagationTests'`.
 An initial test compilation failure was corrected with the Core testable import;
 only the subsequent completed run is counted. The full suite was not repeated.

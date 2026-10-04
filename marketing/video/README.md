@@ -1,6 +1,6 @@
-# MacParakeet Video Pipeline
+# Sotto Video Pipeline
 
-Programmatic rendering for every MacParakeet marketing asset — demos,
+Programmatic rendering for every Sotto marketing asset — demos,
 hero loops, social cuts, GIFs. Built with [Remotion](https://www.remotion.dev)
 for composition and **100% local TTS** for voice (Kokoro-82M by default,
 Higgs Audio V2 as the premium-quality upgrade path). Every asset is
@@ -75,7 +75,7 @@ gitignored. Screencasts (when captured) go in `public/screencasts/`.
 **Default: Kokoro-82M via `kokoro-js`.** #1 open-weight TTS on the
 [Artificial Analysis leaderboard](https://artificialanalysis.ai/text-to-speech/leaderboard)
 (ELO 1059). 82M params, MIT license, pure Node, no Python, no cloud.
-Studio-quality on calm/measured delivery — which matches MacParakeet's
+Studio-quality on calm/measured delivery — which matches Sotto's
 brand voice ("calm, confident, minimal, slight warmth"). Generates ~30s
 of audio in under a second on M-series CPUs.
 

@@ -10,12 +10,12 @@ contract's normative rules.
   the audio exporter/geometry/leases, and `meetings split
   preview|create|status|resume|discard`.
 - **Native ViewModel**: `MeetingSplitViewModel`
-  (`Sources/MacParakeetViewModels/MeetingSplitViewModel.swift`). One shared,
+  (`Sources/SottoViewModels/MeetingSplitViewModel.swift`). One shared,
   app-owned instance (created in `AppDelegate`, `configure(service:)`d in
   `setupEnvironment`) so a running batch survives the sheet closing and is
   visible from every entry point.
 - **Native sheet**: `MeetingSplitSheetView`
-  (`Sources/MacParakeet/Views/Meetings/MeetingSplitSheetView.swift`).
+  (`Sources/Sotto/Views/Meetings/MeetingSplitSheetView.swift`).
   Uses standard playback controls, editable minute/second or hour/minute/second
   cut times, and titles for each part. Incomplete time input stays visible and
   disables creation. Two parts are the default; adding a split divides the
@@ -26,11 +26,11 @@ contract's normative rules.
 - **Entry points**: `TranscriptResultView`'s action bar, and row menus in
   `TranscriptionLibraryView` and `MeetingsView`, each gated by
   `MeetingSplitEligibility.isEligible(_:)`
-  (`Sources/MacParakeetCore/Services/MeetingSplit/MeetingSplitEligibility.swift`).
+  (`Sources/SottoCore/Services/MeetingSplit/MeetingSplitEligibility.swift`).
 - **Startup reconciliation**: `MeetingFinalizationReconciler` branches on
   `Transcription.splitProvenance` to
   `MeetingSplitOperationLeaseReconciliationCoordinator`
-  (`Sources/MacParakeet/App/MeetingSplitFinalizationReconciliationCoordinator.swift`)
+  (`Sources/Sotto/App/MeetingSplitFinalizationReconciliationCoordinator.swift`)
   instead of the capture-lock-only path.
 - **Combined deletion migration**: `TranscriptionLibraryViewModel.deleteTranscription`/
   `deleteTargets`, `TranscriptionViewModel.deleteTranscription`, and
@@ -98,16 +98,16 @@ type, spacing, colors, and action styles; no custom waveform editor is needed.
 
 ## Host QA fixture
 
-`Tests/MacParakeetTests/QA/SplitAndTranscribeFixtureSeedTests.swift` is an
+`Tests/SottoTests/QA/SplitAndTranscribeFixtureSeedTests.swift` is an
 opt-in, DEBUG-only XCTest that seeds a synthetic (silent-tone) meeting
 recording with a real transcript into a **fresh temporary** app-state root —
 it refuses to run against an existing directory or one outside the system
 temp root. To inspect the native flow in the real app without personal data:
 
 ```sh
-FIXTURE_DIR="$(mktemp -d)/macparakeet-895-fixture"
-MACPARAKEET_DEBUG_APP_STATE_DIR="$FIXTURE_DIR" swift test --filter SplitAndTranscribeFixtureSeedTests
-MACPARAKEET_DEBUG_APP_STATE_DIR="$FIXTURE_DIR" scripts/dev/run_app.sh
+FIXTURE_DIR="$(mktemp -d)/sotto-895-fixture"
+SOTTO_DEBUG_APP_STATE_DIR="$FIXTURE_DIR" swift test --filter SplitAndTranscribeFixtureSeedTests
+SOTTO_DEBUG_APP_STATE_DIR="$FIXTURE_DIR" scripts/dev/run_app.sh
 ```
 
 Then open Library, select the seeded "Weekly sync — Split QA fixture"

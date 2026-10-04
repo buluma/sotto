@@ -11,7 +11,7 @@
 > alongside prompt content and an optional model override. The provider remains
 > global. Historical result snapshots remain unchanged.
 
-Target: MacParakeet
+Target: Sotto
 
 Scope: Prompt Library result and Transform prompts
 
@@ -89,7 +89,7 @@ before dispatch when a higher value would be sent.
 
 Built-in provenance does not restrict these controls. Built-in and user-created
 prompts use the same validation, version creation, reset, and execution paths.
-Clearing every override means inherit MacParakeet defaults.
+Clearing every override means inherit Sotto defaults.
 
 Settings can be configured in the prompt editor or through `prompts set`.
 The CLI exposes model, sampling, token-limit, thinking-mode and reasoning-effort
@@ -257,7 +257,7 @@ OpenAI-compatible mapping is:
 }
 ```
 
-The accepted levels are endpoint- and model-template-dependent. MacParakeet
+The accepted levels are endpoint- and model-template-dependent. Sotto
 retains its existing typed controls but identifies custom endpoint acceptance
 as unverified. An explicit value is sent using the existing mapping; this is
 not a claim that every endpoint implements that field or value.

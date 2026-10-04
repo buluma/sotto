@@ -6,13 +6,13 @@ This is an independent source/contract review. Root owns all builds, Swift tests
 
 ## Isolation findings
 
-- `AppPaths.swift` supports `MACPARAKEET_DEBUG_APP_STATE_DIR` only under `#if DEBUG`. It redirects application data, meeting artifacts, local logs, and FluidAudio model caches. Release builds ignore it.
-- That override does **not** change the preference domain or credential stores. `AppPaths.preferencesSuiteName` is fixed to `com.macparakeet.MacParakeet`; CLI `config` writes that suite through `macParakeetAppDefaults()`. Do not run `config set` or model selection commands assuming the state directory isolates preferences.
+- `AppPaths.swift` supports `SOTTO_DEBUG_APP_STATE_DIR` only under `#if DEBUG`. It redirects application data, meeting artifacts, local logs, and FluidAudio model caches. Release builds ignore it.
+- That override does **not** change the preference domain or credential stores. `AppPaths.preferencesSuiteName` is fixed to `com.sotto.Sotto`; CLI `config` writes that suite through `sottoAppDefaults()`. Do not run `config set` or model selection commands assuming the state directory isolates preferences.
 - GUI settings predominantly use `.standard`. A copied DEBUG application bundle with a unique bundle identifier plus the state override can isolate those settings and data. No app/Core/ViewModel call site of `AppPaths.appDefaults` or `sharedAppDefaults` was found; those helpers are called by CLI commands. The GUI's retained entitlement store uses the bundle identifier as its Keychain service (`AppEnvironment.swift:210`). This is not complete whole-process isolation.
-- `LLMConfigStore` defaults to Keychain service `com.macparakeet.llm`, independent of bundle identifier. Avoid saving/deleting provider keys from a QA bundle; use an inline CLI provider pointed at a synthetic loopback server for transport verification.
+- `LLMConfigStore` defaults to Keychain service `com.sotto.llm`, independent of bundle identifier. Avoid saving/deleting provider keys from a QA bundle; use an inline CLI provider pointed at a synthetic loopback server for transport verification.
 - CLI `--database` directs repository access to a throwaway SQLite file, but `makeDatabaseManager` still calls `AppPaths.ensureDirectories()`. Use the DEBUG state override as well for complete data-directory isolation.
-- Set `MACPARAKEET_TELEMETRY=0` and `DO_NOT_TRACK=1` per QA process. Do not persistently change the user's telemetry setting.
-- `LocalCLIExecutor.defaultWorkingDirectory()` resolves Foundation Application Support directly, bypassing the DEBUG state-root override (`LocalCLIExecutor.swift:336`). Inline local-shell provider probes can therefore create `MacParakeet/LocalCLI` outside that override. Prefer the loopback HTTP provider for this QA run.
+- Set `SOTTO_TELEMETRY=0` and `DO_NOT_TRACK=1` per QA process. Do not persistently change the user's telemetry setting.
+- `LocalCLIExecutor.defaultWorkingDirectory()` resolves Foundation Application Support directly, bypassing the DEBUG state-root override (`LocalCLIExecutor.swift:336`). Inline local-shell provider probes can therefore create `Sotto/LocalCLI` outside that override. Prefer the loopback HTTP provider for this QA run.
 - `CFFIXED_USER_HOME` has no repository references or product support contract. Its Foundation behavior must be established with root's small resolver probe, including named UserDefaults suites and `FileManager` directory URLs, before treating it as a Release-build isolation mechanism. It does not establish Keychain isolation.
 
 ## Findings to address
@@ -57,12 +57,12 @@ These are source review results, not executed runtime passes.
 The commands below are recommendations, **not commands executed by this reviewer**. Set `qa_cli_binary` to the candidate DEBUG CLI already built by root. Use a new owned directory; do not substitute a personal library database. Keep the state override on each invocation, since every new CLI process resolves its own paths.
 
 ```bash
-qa_cli_binary='/absolute/path/to/candidate/debug/macparakeet-cli'
-qa_state_dir='/tmp/macparakeet-080-qa/owned-cli-state'
-qa_database="$qa_state_dir/macparakeet.db"
+qa_cli_binary='/absolute/path/to/candidate/debug/sotto-cli'
+qa_state_dir='/tmp/sotto-080-qa/owned-cli-state'
+qa_database="$qa_state_dir/sotto.db"
 qa_cli() {
-  env MACPARAKEET_DEBUG_APP_STATE_DIR="$qa_state_dir" \
-    MACPARAKEET_TELEMETRY=0 DO_NOT_TRACK=1 \
+  env SOTTO_DEBUG_APP_STATE_DIR="$qa_state_dir" \
+    SOTTO_TELEMETRY=0 DO_NOT_TRACK=1 \
     "$qa_cli_binary" "$@"
 }
 

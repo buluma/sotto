@@ -3,9 +3,9 @@
 > Status: **IMPLEMENTED** — merged to `main`; Nemotron 3.5 Beta shipping in v0.6.22
 > Drafted: 2026-06-08
 > Branch: `plan/nemotron-benchmark`
-> Worktree: `/Users/dmoon/code/macparakeet-worktrees/nemotron-benchmark`
+> Worktree: `/Users/dmoon/code/sotto-worktrees/nemotron-benchmark`
 > ADRs: `spec/adr/001-parakeet-stt.md`, `spec/adr/016-centralized-stt-runtime-scheduler.md`, `spec/adr/021-whisperkit-multilingual-stt.md`
-> Scope: add Nemotron 3.5 as a clean opt-in Beta speech engine, backed by side-by-side benchmarks against MacParakeet's current Parakeet v3/v2 and Whisper paths.
+> Scope: add Nemotron 3.5 as a clean opt-in Beta speech engine, backed by side-by-side benchmarks against Sotto's current Parakeet v3/v2 and Whisper paths.
 
 ## Current Branch Status
 
@@ -56,13 +56,13 @@ failures.
 
 ## 1. Intent
 
-MacParakeet's default STT path is already strong: Parakeet TDT v3/v2 through
+Sotto's default STT path is already strong: Parakeet TDT v3/v2 through
 FluidAudio CoreML on Apple Silicon, owned by one process-wide `STTRuntime` and
 scheduled through the two-slot `STTScheduler`. Newer FluidAudio releases add
 Nemotron ASR support with broader multilingual coverage and streaming-oriented
 APIs.
 
-The product goal is to let MacParakeet users try the new local frontier ASR
+The product goal is to let Sotto users try the new local frontier ASR
 engine without destabilizing the proven default path:
 
 **Ship Nemotron 3.5 as an explicit Beta engine for dictation, file
@@ -70,7 +70,7 @@ transcription, and meetings, while Parakeet remains the default stable engine.**
 
 Benchmarks are still required, but they should shape the implementation, UX copy,
 and known tradeoffs rather than block any user-facing exposure until perfect
-proof exists. The answer must come from MacParakeet workloads, not upstream
+proof exists. The answer must come from Sotto workloads, not upstream
 claims alone. Dictation, meeting live preview, meeting finalization, and file
 transcription have different latency and output-quality requirements.
 
@@ -186,7 +186,7 @@ performance, not final product quality.
 
 ### Layer B: Product Corpus
 
-Purpose: approximate real MacParakeet behavior.
+Purpose: approximate real Sotto behavior.
 
 - natural spoken dictation with filler words and corrections
 - meeting-style two-speaker audio
@@ -213,10 +213,10 @@ Purpose: protect future changes once a direction is chosen.
 Run the current `origin/main` CLI on the corpus:
 
 ```bash
-MACPARAKEET_TELEMETRY=0 swift run macparakeet-cli transcribe sample.wav \
+SOTTO_TELEMETRY=0 swift run sotto-cli transcribe sample.wav \
   --engine parakeet --parakeet-model v3 --format json --no-history
 
-MACPARAKEET_TELEMETRY=0 swift run macparakeet-cli transcribe sample.wav \
+SOTTO_TELEMETRY=0 swift run sotto-cli transcribe sample.wav \
   --engine parakeet --parakeet-model v2 --format json --no-history
 ```
 
@@ -235,7 +235,7 @@ and verifies compilation:
 
 ```bash
 swift package update FluidAudio
-swift build --target MacParakeetCore
+swift build --target SottoCore
 swift test --filter STT
 ```
 
@@ -250,7 +250,7 @@ Expected decision point:
 ### Phase 3: Production-Path Benchmark Harness
 
 The first harness should exercise the same path users exercise: the
-`macparakeet-cli transcribe` command backed by the production STT wrappers.
+`sotto-cli transcribe` command backed by the production STT wrappers.
 This keeps the benchmark honest about model routing, audio conversion,
 progress, engine attribution, cancellation/error mapping, and CLI privacy
 defaults.
@@ -258,8 +258,8 @@ defaults.
 Run shape:
 
 ```bash
-swift build -c release --product macparakeet-cli
-MACPARAKEET_TELEMETRY=0 DO_NOT_TRACK=1 \
+swift build -c release --product sotto-cli
+SOTTO_TELEMETRY=0 DO_NOT_TRACK=1 \
   scripts/dev/benchmark_stt_engines.sh output/benchmarks/stt/corpus.tsv
 ```
 
@@ -401,7 +401,7 @@ model-details tooltip.
 
 ## 13. Open Questions
 
-- Which Nemotron path is the best MacParakeet candidate: streaming, offline, or
+- Which Nemotron path is the best Sotto candidate: streaming, offline, or
   both with different job-class routing?
 - Does manual language selection materially improve quality over auto mode?
 - Does streaming output need a second finalization pass for punctuation and

@@ -31,7 +31,7 @@ assets or hardware that cannot be produced in a sandbox.
 - **U2 — adaptive delay in mic conditioning: DONE.**
   `StreamingMeetingEchoSuppressor` re-estimates its reference delay from paired
   audio on a cadence; the static `…REFERENCE_DELAY_MS` is the seed/override and
-  `MACPARAKEET_MEETING_ECHO_ADAPTIVE_DELAY` (default on) gates it. Oversized
+  `SOTTO_MEETING_ECHO_ADAPTIVE_DELAY` (default on) gates it. Oversized
   manual delays are clamped to the adaptive search ceiling so fixed reference
   retention stays bounded. The factory builds the estimator for the
   dynamic-library path. Passthrough/asset-less paths are unchanged, so shipped
@@ -102,7 +102,7 @@ assets or hardware that cannot be produced in a sandbox.
 
 ### Summary
 
-MacParakeet already captures microphone and system audio separately, and it has a `MicConditioning` seam plus optional LocalVQE-compatible runtime loading.
+Sotto already captures microphone and system audio separately, and it has a `MicConditioning` seam plus optional LocalVQE-compatible runtime loading.
 The remaining bug is that production still behaves like raw mic passthrough unless private echo assets are present, and final meeting transcription still reads `microphone-raw.m4a` instead of a cleaned mic source.
 This plan turns the scaffold into a source-aware AEC product path while preserving raw `microphone-raw.m4a` and `system-raw.m4a` as truth.
 
@@ -122,7 +122,7 @@ The shipped measurement harness proved that reference alignment is load-bearing:
 
 **AEC behavior**
 
-- R4. Estimate or adapt microphone/reference delay instead of relying only on static `MACPARAKEET_MEETING_ECHO_REFERENCE_DELAY_MS`.
+- R4. Estimate or adapt microphone/reference delay instead of relying only on static `SOTTO_MEETING_ECHO_REFERENCE_DELAY_MS`.
 - R5. Process far-end-only speaker bleed into little or no false `Me` transcript content.
 - R6. Preserve near-end local speech when the remote side is silent.
 - R7. Preserve near-end local speech during double-talk while reducing far-end bleed.
@@ -239,10 +239,10 @@ flowchart TB
 - **Requirements:** R4, R8, R12, AE5
 - **Dependencies:** None
 - **Files:**
-  - `Sources/MacParakeetCore/Services/Capture/MeetingEchoDelayEstimator.swift`
-  - `Sources/MacParakeetCore/Services/Capture/MicConditioner.swift`
-  - `Tests/MacParakeetTests/Services/Capture/MeetingEchoDelayEstimatorTests.swift`
-  - `Tests/MacParakeetTests/Services/Capture/MeetingAecMeasurementTests.swift`
+  - `Sources/SottoCore/Services/Capture/MeetingEchoDelayEstimator.swift`
+  - `Sources/SottoCore/Services/Capture/MicConditioner.swift`
+  - `Tests/SottoTests/Services/Capture/MeetingEchoDelayEstimatorTests.swift`
+  - `Tests/SottoTests/Services/Capture/MeetingAecMeasurementTests.swift`
 - **Approach:** Use a normalized-correlation estimator with pre-emphasis and a confidence threshold. Treat silence or weak correlation as no estimate rather than forcing a lag. Keep it independent of LocalVQE so the harness, NLMS baseline, and any WebRTC benchmark can share it.
 - **Execution note:** Start characterization-first from the existing measurement harness before wiring into runtime.
 - **Patterns to follow:** `MeetingAecMeasurementHarness.swift` for synthetic scenarios; `MeetingEchoSuppressionDiagnostics` for small value diagnostics.
@@ -260,13 +260,13 @@ flowchart TB
 - **Requirements:** R4, R5, R6, R7, R8, AE1, AE2, AE3, AE5
 - **Dependencies:** U1
 - **Files:**
-  - `Sources/MacParakeetCore/Services/Capture/MicConditioner.swift`
-  - `Sources/MacParakeetCore/Services/Capture/MeetingEchoSuppressionRuntime.swift`
-  - `Sources/MacParakeetCore/Services/Capture/CaptureOrchestrator.swift`
-  - `Tests/MacParakeetTests/Services/Capture/MeetingEchoSuppressorTests.swift`
-  - `Tests/MacParakeetTests/Services/Capture/MeetingAecMeasurementTests.swift`
-  - `Tests/MacParakeetTests/Services/Capture/CaptureOrchestratorTests.swift`
-- **Approach:** Add an adaptive-delay component around or inside `StreamingMeetingEchoSuppressor` that can update the effective `referenceDelaySamples` based on confidence-scored observations. Keep `MACPARAKEET_MEETING_ECHO_REFERENCE_DELAY_MS` as a manual seed/override rather than the only answer. Diagnostics should expose current delay, confidence, estimate count, rejected estimates, and fallback frames.
+  - `Sources/SottoCore/Services/Capture/MicConditioner.swift`
+  - `Sources/SottoCore/Services/Capture/MeetingEchoSuppressionRuntime.swift`
+  - `Sources/SottoCore/Services/Capture/CaptureOrchestrator.swift`
+  - `Tests/SottoTests/Services/Capture/MeetingEchoSuppressorTests.swift`
+  - `Tests/SottoTests/Services/Capture/MeetingAecMeasurementTests.swift`
+  - `Tests/SottoTests/Services/Capture/CaptureOrchestratorTests.swift`
+- **Approach:** Add an adaptive-delay component around or inside `StreamingMeetingEchoSuppressor` that can update the effective `referenceDelaySamples` based on confidence-scored observations. Keep `SOTTO_MEETING_ECHO_REFERENCE_DELAY_MS` as a manual seed/override rather than the only answer. Diagnostics should expose current delay, confidence, estimate count, rejected estimates, and fallback frames.
 - **Technical design:** Directional shape: `MicConditioning` receives paired mic/reference batches, accumulates enough history for analysis, estimates delay when reference energy is present, and processes frames against the current delay. It must never emit raw held-tail samples except through the existing explicit `flush()` fallback.
 - **Patterns to follow:** Existing frame-carry and reference-validity behavior in `StreamingMeetingEchoSuppressor`; environment parsing in `MeetingEchoSuppressionConfiguration`.
 - **Test scenarios:**
@@ -283,16 +283,16 @@ flowchart TB
 - **Requirements:** R1, R2, R8, R10, R11, AE1, AE2, AE4, AE6
 - **Dependencies:** U1, U2
 - **Files:**
-  - `Sources/MacParakeetCore/Services/MeetingRecording/MeetingCleanedMicRenderer.swift`
-  - `Sources/MacParakeetCore/Services/MeetingRecording/MeetingRecordingService.swift`
-  - `Sources/MacParakeetCore/Services/MeetingRecording/MeetingRecordingMetadata.swift`
-  - `Sources/MacParakeetCore/Services/MeetingRecording/MeetingRecordingOutput.swift`
-  - `Sources/MacParakeetCore/Services/MeetingRecording/MeetingRecordingRecoveryService.swift`
-  - `Sources/MacParakeetCore/Services/MeetingRecording/MeetingArtifactStore.swift`
-  - `Sources/MacParakeetCore/Audio/MeetingAudioStorageWriter.swift`
-  - `Tests/MacParakeetTests/Services/MeetingRecording/MeetingRecordingServiceTests.swift`
-  - `Tests/MacParakeetTests/Services/MeetingRecording/MeetingRecordingRecoveryServiceTests.swift`
-  - `Tests/MacParakeetTests/Services/MeetingRecording/MeetingArtifactStoreTests.swift`
+  - `Sources/SottoCore/Services/MeetingRecording/MeetingCleanedMicRenderer.swift`
+  - `Sources/SottoCore/Services/MeetingRecording/MeetingRecordingService.swift`
+  - `Sources/SottoCore/Services/MeetingRecording/MeetingRecordingMetadata.swift`
+  - `Sources/SottoCore/Services/MeetingRecording/MeetingRecordingOutput.swift`
+  - `Sources/SottoCore/Services/MeetingRecording/MeetingRecordingRecoveryService.swift`
+  - `Sources/SottoCore/Services/MeetingRecording/MeetingArtifactStore.swift`
+  - `Sources/SottoCore/Audio/MeetingAudioStorageWriter.swift`
+  - `Tests/SottoTests/Services/MeetingRecording/MeetingRecordingServiceTests.swift`
+  - `Tests/SottoTests/Services/MeetingRecording/MeetingRecordingRecoveryServiceTests.swift`
+  - `Tests/SottoTests/Services/MeetingRecording/MeetingArtifactStoreTests.swift`
 - **Approach:** Derive cleaned mic from finalized raw source files rather than adding a third real-time writer first. This keeps capture-risk low and lets the renderer reuse `MeetingSourceAlignment`, the selected echo runtime, and readiness/decodability gates before final STT. Persist enough metadata for recovery and later inspection.
 - **Patterns to follow:** `MeetingAudioStorageWriter` source-file naming, `MeetingRecordingOutput` source URL conventions, recovery lock handling in `MeetingRecordingRecoveryService`.
 - **Test scenarios:**
@@ -310,12 +310,12 @@ flowchart TB
 - **Requirements:** R2, R5, R6, R7, R8, R9, R11, AE1, AE2, AE3, AE4, AE5
 - **Dependencies:** U3
 - **Files:**
-  - `Sources/MacParakeetCore/Services/TranscriptionService.swift`
-  - `Sources/MacParakeetCore/Services/MeetingRecording/MeetingTranscriptFinalizer.swift`
-  - `Sources/MacParakeetCore/Services/MeetingRecording/MeetingTranscriptSourceReconciler.swift`
-  - `Tests/MacParakeetTests/Services/TranscriptionServiceTests.swift`
-  - `Tests/MacParakeetTests/Services/MeetingRecording/MeetingTranscriptSourceReconcilerTests.swift`
-  - `Tests/MacParakeetTests/Services/MeetingRecording/MeetingTranscriptFinalizerTests.swift`
+  - `Sources/SottoCore/Services/TranscriptionService.swift`
+  - `Sources/SottoCore/Services/MeetingRecording/MeetingTranscriptFinalizer.swift`
+  - `Sources/SottoCore/Services/MeetingRecording/MeetingTranscriptSourceReconciler.swift`
+  - `Tests/SottoTests/Services/TranscriptionServiceTests.swift`
+  - `Tests/SottoTests/Services/MeetingRecording/MeetingTranscriptSourceReconcilerTests.swift`
+  - `Tests/SottoTests/Services/MeetingRecording/MeetingTranscriptFinalizerTests.swift`
 - **Approach:** Update `transcribeMeetingSources` so `AudioSource.microphone` resolves to the cleaned mic candidate when readiness/decodability gates pass and raw mic otherwise. Keep system STT on `system-raw.m4a`. Keep `MeetingTranscriptSourceReconciler` as a safety net for residual overlap, not the primary AEC mechanism.
 - **Health gates:** the cleaned render completes before the bounded deadline,
   the candidate output can be atomically published, and the published file is
@@ -338,8 +338,8 @@ flowchart TB
 - **Requirements:** R8, R13, AE4
 - **Dependencies:** U2
 - **Files:**
-  - `Sources/MacParakeetCore/Services/Capture/MeetingEchoSuppressionRuntime.swift`
-  - `Tests/MacParakeetTests/Services/Capture/MeetingEchoSuppressionRuntimeTests.swift`
+  - `Sources/SottoCore/Services/Capture/MeetingEchoSuppressionRuntime.swift`
+  - `Tests/SottoTests/Services/Capture/MeetingEchoSuppressionRuntimeTests.swift`
   - `scripts/dist/build_app_bundle.sh`
   - `scripts/dist/verify_meeting_echo_assets.sh`
   - `docs/distribution.md`
@@ -353,7 +353,7 @@ flowchart TB
   before choosing the release default. Prefer echo-only v1.4 if it preserves
   near-end better, even if v1.2 removes more noise. This gate has selected v1.4;
   rerun it when changing the default model or LocalVQE runtime pin.
-- **Patterns to follow:** Existing `BUNDLE_MEETING_ECHO_ASSETS`, `REQUIRE_MEETING_ECHO_ASSETS`, and `MACPARAKEET_MEETING_ECHO_MODEL_SHA256` handling.
+- **Patterns to follow:** Existing `BUNDLE_MEETING_ECHO_ASSETS`, `REQUIRE_MEETING_ECHO_ASSETS`, and `SOTTO_MEETING_ECHO_MODEL_SHA256` handling.
 - **Test scenarios:**
   - Automatic mode with no bundled assets returns passthrough and logs unavailable state.
   - Dynamic-library-required mode with missing assets returns an unloaded LocalVQE diagnostics object.
@@ -420,8 +420,8 @@ claim meeting AEC readiness.
 **Reproduce:**
 
 ```bash
-MACPARAKEET_TEST_LOCALVQE_LIBRARY=/path/to/liblocalvqe.dylib \
-MACPARAKEET_TEST_LOCALVQE_MODELS=/path/to/v1.4-aec.gguf:/path/to/v1.2.gguf \
+SOTTO_TEST_LOCALVQE_LIBRARY=/path/to/liblocalvqe.dylib \
+SOTTO_TEST_LOCALVQE_MODELS=/path/to/v1.4-aec.gguf:/path/to/v1.2.gguf \
 swift test --filter MeetingAecModelScoringTests
 ```
 
@@ -436,11 +436,11 @@ test skips when the env vars are unset, so CI stays green without the private as
 - **Requirements:** R12, R14
 - **Dependencies:** U1, U2, U5
 - **Files:**
-  - `Tests/MacParakeetTests/Services/Capture/MeetingAecMeasurementHarness.swift`
-  - `Tests/MacParakeetTests/Services/Capture/MeetingAecMeasurementTests.swift`
+  - `Tests/SottoTests/Services/Capture/MeetingAecMeasurementHarness.swift`
+  - `Tests/SottoTests/Services/Capture/MeetingAecMeasurementTests.swift`
   - `docs/research/2026-06-meeting-aec-open-issues-prior-art.md`
   - `plans/active/2026-06-28-meeting-aec-full-close.md`
-  - Optional if implemented: `Sources/MacParakeetCore/Services/Capture/WebRTCAec3MeetingEchoProcessor.swift`
+  - Optional if implemented: `Sources/SottoCore/Services/Capture/WebRTCAec3MeetingEchoProcessor.swift`
 - **Approach:** Treat WebRTC AEC3 as a benchmark/fallback rather than immediate product scope unless LocalVQE fails synthetic or real QA. If a prototype is feasible in the implementation window, score it on the same fixtures. If not, update the decision record with the LocalVQE metrics that justify shipping without it.
 - **Patterns to follow:** LocalVQE runtime abstraction through `MeetingEchoSuppressing`; research note's Prismical/WebRTC API shape.
 - **Test scenarios:**
@@ -455,13 +455,13 @@ test skips when the env vars are unset, so CI stays green without the private as
 - **Requirements:** R7, R8, R13, R15, AE4, AE5
 - **Dependencies:** U2, U3, U4, U5
 - **Files:**
-  - `Sources/MacParakeetCore/Audio/AudioCaptureDiagnostics.swift`
-  - `Sources/MacParakeetCore/Services/MeetingRecording/MeetingRecordingService.swift`
-  - `Sources/MacParakeetCore/Services/Capture/MicConditioner.swift`
-  - `Sources/MacParakeetCore/Services/Capture/MeetingEchoSuppressionRuntime.swift`
-  - `Sources/MacParakeet/Views/Feedback/FeedbackView.swift`
-  - `Tests/MacParakeetTests/Audio/DiagnosticLogScopeTests.swift`
-  - `Tests/MacParakeetTests/Services/MeetingRecording/MeetingRecordingServiceTests.swift`
+  - `Sources/SottoCore/Audio/AudioCaptureDiagnostics.swift`
+  - `Sources/SottoCore/Services/MeetingRecording/MeetingRecordingService.swift`
+  - `Sources/SottoCore/Services/Capture/MicConditioner.swift`
+  - `Sources/SottoCore/Services/Capture/MeetingEchoSuppressionRuntime.swift`
+  - `Sources/Sotto/Views/Feedback/FeedbackView.swift`
+  - `Tests/SottoTests/Audio/DiagnosticLogScopeTests.swift`
+  - `Tests/SottoTests/Services/MeetingRecording/MeetingRecordingServiceTests.swift`
   - `docs/human-qa-guide.md`
 - **Approach:** Extend `meeting_echo_suppression_summary` with delay, confidence, cleaned artifact status, selected input path for final STT, processor version/model, fallback reason, and health-gate result. Keep uploaded diagnostics metadata-only; never include audio or transcript content.
 - **Patterns to follow:** Existing `meeting_recording_health` and feedback diagnostic upload scope.
@@ -569,9 +569,9 @@ test skips when the env vars are unset, so CI stays green without the private as
 - `plans/active/2026-06-27-meeting-aec-measurement-harness.md` - shipped harness, first ERLE numbers, alignment/double-talk findings.
 - `docs/research/2026-06-meeting-aec-open-issues-prior-art.md` - LocalVQE, Muesli, WebRTC AEC3, Anarlog/Hyprnote, Corti, and release-proof recommendations.
 - `spec/05-audio-pipeline.md` - current raw/default mic capture, optional `StreamingMeetingEchoSuppressor`, final source-file STT architecture.
-- `Sources/MacParakeetCore/Services/Capture/MicConditioner.swift` - passthrough and streaming echo suppressor seam.
-- `Sources/MacParakeetCore/Services/Capture/MeetingEchoSuppressionRuntime.swift` - LocalVQE-compatible dynamic library/model loader.
-- `Sources/MacParakeetCore/Services/TranscriptionService.swift` - final meeting source transcription path that must prefer cleaned mic after gates.
+- `Sources/SottoCore/Services/Capture/MicConditioner.swift` - passthrough and streaming echo suppressor seam.
+- `Sources/SottoCore/Services/Capture/MeetingEchoSuppressionRuntime.swift` - LocalVQE-compatible dynamic library/model loader.
+- `Sources/SottoCore/Services/TranscriptionService.swift` - final meeting source transcription path that must prefer cleaned mic after gates.
 - `scripts/dist/build_app_bundle.sh` and `scripts/dist/verify_meeting_echo_assets.sh` - existing echo asset packaging hooks.
 
 ---

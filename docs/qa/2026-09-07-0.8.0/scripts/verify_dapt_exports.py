@@ -33,12 +33,12 @@ def main():
     if any(args.output.iterdir()):
         raise SystemExit("Refusing to reuse nonempty evidence directory")
     state = args.output / "state"
-    database = state / "macparakeet.db"
+    database = state / "sotto.db"
     fixed_home = args.output / "foundation-home"
     fixed_home.mkdir()
     env = dict(os.environ)
-    env.update({"MACPARAKEET_DEBUG_APP_STATE_DIR": str(state), "CFFIXED_USER_HOME": str(fixed_home),
-                "MACPARAKEET_TELEMETRY": "0", "DO_NOT_TRACK": "1", "MACPARAKEET_DEBUG_SQL": "0"})
+    env.update({"SOTTO_DEBUG_APP_STATE_DIR": str(state), "CFFIXED_USER_HOME": str(fixed_home),
+                "SOTTO_TELEMETRY": "0", "DO_NOT_TRACK": "1", "SOTTO_DEBUG_SQL": "0"})
     commands = []
 
     def write_json(name, value):

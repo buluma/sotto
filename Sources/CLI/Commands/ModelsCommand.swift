@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 import os
 
 struct ModelsCommand: AsyncParsableCommand {
@@ -56,7 +56,7 @@ extension ModelsCommand {
 
         func run() throws {
             try emitJSONOrRethrow(json: json) {
-                let defaults = macParakeetAppDefaults()
+                let defaults = sottoAppDefaults()
                 let selection = try resolveSelectableSpeechModel(id, defaults: defaults)
                 try validateSelectableSpeechModelDownload(selection, defaults: defaults)
 
@@ -103,7 +103,7 @@ extension ModelsCommand {
 
         func run() async throws {
             try await emitJSONOrRethrow(json: json) {
-                let defaults = macParakeetAppDefaults()
+                let defaults = sottoAppDefaults()
                 let sttClient = makeConfiguredSTTClient(defaults: defaults)
                 var sttClientNeedsShutdown = true
                 defer {
@@ -159,7 +159,7 @@ extension ModelsCommand {
             }
 
             if let nemotronVariant = nemotronDownloadVariant(from: lowered) {
-                let language = SpeechEnginePreference.nemotronDefaultLanguage(defaults: macParakeetAppDefaults())
+                let language = SpeechEnginePreference.nemotronDefaultLanguage(defaults: sottoAppDefaults())
                 let modelName = speechModelLifecycle(for: .nemotron(nemotronVariant)).modelName
                 print("Nemotron: downloading \(modelName)...")
                 let lastMessage = OSAllocatedUnfairLock(initialState: "")
@@ -222,7 +222,7 @@ extension ModelsCommand {
 
         func run() async throws {
             let attempts = try validatedAttempts(attempts)
-            let defaults = macParakeetAppDefaults()
+            let defaults = sottoAppDefaults()
             let sttClient = makeConfiguredSTTClient(defaults: defaults)
             var sttClientNeedsShutdown = true
             defer {
@@ -254,7 +254,7 @@ extension ModelsCommand {
 
         func run() async throws {
             let attempts = try validatedAttempts(attempts)
-            let defaults = macParakeetAppDefaults()
+            let defaults = sottoAppDefaults()
             let sttClient = makeConfiguredSTTClient(defaults: defaults)
             var sttClientNeedsShutdown = true
             defer {
@@ -304,7 +304,7 @@ extension ModelsCommand {
 
         func run() async throws {
             try emitJSONOrRethrow(json: json) {
-                let defaults = macParakeetAppDefaults()
+                let defaults = sottoAppDefaults()
                 let target = try resolveModelDeletionTarget(id, defaults: defaults)
 
                 if isModelInUse(target, defaults: defaults) {
@@ -497,7 +497,7 @@ func clearModelCachesForCLI(
 /// spellings. Returns nil for non-Parakeet ids so Nemotron/Whisper parsing runs.
 func parakeetDownloadVariant(
     from lowered: String,
-    defaults: UserDefaults = macParakeetAppDefaults()
+    defaults: UserDefaults = sottoAppDefaults()
 ) -> ParakeetModelVariant? {
     if lowered == SpeechEnginePreference.parakeet.rawValue {
         return SpeechEnginePreference.parakeetModelVariant(defaults: defaults)
@@ -547,7 +547,7 @@ func downloadParakeetVariant(
 
 func nemotronDownloadVariant(
     from lowered: String,
-    defaults: UserDefaults = macParakeetAppDefaults()
+    defaults: UserDefaults = sottoAppDefaults()
 ) -> NemotronModelVariant? {
     if lowered == SpeechEnginePreference.nemotron.rawValue {
         return SpeechEnginePreference.nemotronModelVariant(defaults: defaults)
@@ -600,7 +600,7 @@ func resolveWhisperDownloadModel(_ variant: String) throws -> String {
     }
     guard let whisperVariant = WhisperModelVariant.normalize(normalizedInput) else {
         throw ValidationError(
-            "Unsupported Whisper model identifier '\(variant)'. Run `macparakeet-cli models list` for valid IDs.")
+            "Unsupported Whisper model identifier '\(variant)'. Run `sotto-cli models list` for valid IDs.")
     }
     return whisperVariant.rawValue
 }
@@ -677,7 +677,7 @@ func validatedAttempts(_ attempts: Int) throws -> Int {
 
 /// Builds the CLI's standalone STT client from the persisted app/CLI defaults,
 /// so `warm-up`/`repair`/`status` exercise the engine the user selected.
-func makeConfiguredSTTClient(defaults: UserDefaults = macParakeetAppDefaults()) -> STTClient {
+func makeConfiguredSTTClient(defaults: UserDefaults = sottoAppDefaults()) -> STTClient {
     STTClient(
         parakeetModelVariant: SpeechEnginePreference.parakeetModelVariant(defaults: defaults),
         speechEngine: SpeechEnginePreference.current(defaults: defaults),
@@ -687,7 +687,7 @@ func makeConfiguredSTTClient(defaults: UserDefaults = macParakeetAppDefaults()) 
     )
 }
 
-func makeParakeetSTTClient(defaults: UserDefaults = macParakeetAppDefaults()) -> STTClient {
+func makeParakeetSTTClient(defaults: UserDefaults = sottoAppDefaults()) -> STTClient {
     STTClient(
         parakeetModelVariant: SpeechEnginePreference.parakeetModelVariant(defaults: defaults),
         speechEngine: .parakeet,
@@ -698,7 +698,7 @@ func makeParakeetSTTClient(defaults: UserDefaults = macParakeetAppDefaults()) ->
 func loadSpeechStackStatus(
     sttClient: STTClientProtocol,
     diarizationService: DiarizationServiceProtocol,
-    defaults: UserDefaults = macParakeetAppDefaults(),
+    defaults: UserDefaults = sottoAppDefaults(),
     isParakeetModelCached: (@Sendable (ParakeetModelVariant) -> Bool)? = nil,
     nemotronModelVariant: NemotronModelVariant? = nil,
     isNemotronModelDownloaded: (@Sendable (NemotronModelVariant) -> Bool)? = nil,
@@ -799,7 +799,7 @@ struct SelectableSpeechModelSelection: Equatable {
 }
 
 func loadSelectableSpeechModels(
-    defaults: UserDefaults = macParakeetAppDefaults(),
+    defaults: UserDefaults = sottoAppDefaults(),
     isParakeetModelCached: ((ParakeetModelVariant) -> Bool)? = nil,
     isNemotronModelDownloaded: ((NemotronModelVariant) -> Bool)? = nil,
     isWhisperModelDownloaded: ((String) -> Bool)? = nil,
@@ -900,7 +900,7 @@ func loadSelectableSpeechModels(
 
 func resolveSelectableSpeechModel(
     _ id: String,
-    defaults: UserDefaults = macParakeetAppDefaults()
+    defaults: UserDefaults = sottoAppDefaults()
 ) throws -> SelectableSpeechModelSelection {
     let trimmed = id.trimmingCharacters(in: .whitespacesAndNewlines)
     let lowered = trimmed.lowercased()
@@ -966,11 +966,11 @@ func resolveSelectableSpeechModel(
     guard let variantInput,
         !variantInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     else {
-        throw ValidationError("Unknown model ID: '\(id)'. Run `macparakeet-cli models list` for valid IDs.")
+        throw ValidationError("Unknown model ID: '\(id)'. Run `sotto-cli models list` for valid IDs.")
     }
 
     guard let whisperVariant = WhisperModelVariant.normalize(variantInput) else {
-        throw ValidationError("Unknown model ID: '\(id)'. Run `macparakeet-cli models list` for valid IDs.")
+        throw ValidationError("Unknown model ID: '\(id)'. Run `sotto-cli models list` for valid IDs.")
     }
 
     return SelectableSpeechModelSelection(
@@ -981,7 +981,7 @@ func resolveSelectableSpeechModel(
 
 func validateSelectableSpeechModelDownload(
     _ selection: SelectableSpeechModelSelection,
-    defaults: UserDefaults = macParakeetAppDefaults(),
+    defaults: UserDefaults = sottoAppDefaults(),
     isNemotronModelDownloaded: ((NemotronModelVariant, String?) -> Bool)? = nil,
     isWhisperModelDownloaded: ((String) -> Bool)? = nil,
     isCohereModelDownloaded: (() -> Bool)? = nil,
@@ -995,7 +995,7 @@ func validateSelectableSpeechModelDownload(
             })(nemotronVariant, language)
         guard downloaded else {
             throw ValidationError(
-                "Nemotron model is not downloaded. Run `macparakeet-cli models download \(nemotronModelID(for: nemotronVariant))` first."
+                "Nemotron model is not downloaded. Run `sotto-cli models download \(nemotronModelID(for: nemotronVariant))` first."
             )
         }
     }
@@ -1004,7 +1004,7 @@ func validateSelectableSpeechModelDownload(
         let downloaded = (isWhisperModelDownloaded ?? { WhisperEngine.isModelDownloaded(model: $0) })(whisperVariant)
         guard downloaded else {
             throw ValidationError(
-                "Whisper model is not downloaded. Run `macparakeet-cli models download \(whisperModelID(for: whisperVariant))` first."
+                "Whisper model is not downloaded. Run `sotto-cli models download \(whisperModelID(for: whisperVariant))` first."
             )
         }
     }
@@ -1017,7 +1017,7 @@ func validateSelectableSpeechModelDownload(
         let downloaded = (isCohereModelDownloaded ?? { CohereTranscribeEngine.isModelCached() })()
         guard downloaded else {
             throw ValidationError(
-                "\(cohereModelName) is not downloaded. Run `macparakeet-cli models download \(cohereModelID)` first."
+                "\(cohereModelName) is not downloaded. Run `sotto-cli models download \(cohereModelID)` first."
             )
         }
     }
@@ -1055,7 +1055,7 @@ enum ModelDeletionError: Error, Equatable, LocalizedError {
 /// unknown id.
 func resolveModelDeletionTarget(
     _ id: String,
-    defaults: UserDefaults = macParakeetAppDefaults()
+    defaults: UserDefaults = sottoAppDefaults()
 ) throws -> ModelDeletionTarget {
     let selection = try resolveSelectableSpeechModel(id, defaults: defaults)
     if let parakeetVariant = selection.parakeetVariant {
@@ -1081,7 +1081,7 @@ func resolveModelDeletionTarget(
     if selection.engine == .cohere {
         return ModelDeletionTarget(kind: .cohere, displayName: cohereModelName)
     }
-    throw ValidationError("Unknown model ID: '\(id)'. Run `macparakeet-cli models list` for valid IDs.")
+    throw ValidationError("Unknown model ID: '\(id)'. Run `sotto-cli models list` for valid IDs.")
 }
 
 /// Whether `target` is protected from deletion without `--force`. The selected
@@ -1090,7 +1090,7 @@ func resolveModelDeletionTarget(
 /// is protected only while Whisper is active.
 func isModelInUse(
     _ target: ModelDeletionTarget,
-    defaults: UserDefaults = macParakeetAppDefaults()
+    defaults: UserDefaults = sottoAppDefaults()
 ) -> Bool {
     let currentEngine = SpeechEnginePreference.current(defaults: defaults)
     switch target.kind {
@@ -1217,7 +1217,7 @@ func prepareSpeechStack(
     attempts: Int,
     sttClient: STTClientProtocol,
     diarizationService: DiarizationServiceProtocol,
-    defaults: UserDefaults = macParakeetAppDefaults(),
+    defaults: UserDefaults = sottoAppDefaults(),
     log: @escaping @Sendable (String) -> Void
 ) async throws {
     let speechLabel = "\(SpeechEnginePreference.current(defaults: defaults).displayName) (STT)"

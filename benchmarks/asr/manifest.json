@@ -1,23 +1,23 @@
 {
   "schema_version": 1,
   "suite": {
-    "name": "MacParakeet ASR Benchmark Suite",
-    "owner": "MacParakeet",
+    "name": "Sotto ASR Benchmark Suite",
+    "owner": "Sotto",
     "source_of_truth": "benchmarks/asr/README.md",
-    "purpose": "A product-owned, reproducible benchmark contract for choosing local ASR engines on Apple Silicon across accuracy, latency, memory, language coverage, and MacParakeet product surfaces.",
+    "purpose": "A product-owned, reproducible benchmark contract for choosing local ASR engines on Apple Silicon across accuracy, latency, memory, language coverage, and Sotto product surfaces.",
     "principles": [
       "Score every hypothesis through the same normalizer and metric implementation.",
       "Keep public research datasets separate from private product fixtures.",
       "Report uncertainty and use paired tests for engine-vs-engine claims.",
       "Measure accuracy, speed, memory, and product-surface support separately.",
-      "Publish enough provenance for another MacParakeet checkout to reproduce the numbers."
+      "Publish enough provenance for another Sotto checkout to reproduce the numbers."
     ]
   },
   "engines": [
     {
       "id": "parakeet-v3",
       "name": "Parakeet TDT 0.6B v3",
-      "runtime": "FluidAudio CoreML/ANE via macparakeet-cli",
+      "runtime": "FluidAudio CoreML/ANE via sotto-cli",
       "status": "shipping_default",
       "language_scope": "multilingual",
       "product_surfaces": [
@@ -39,7 +39,7 @@
     {
       "id": "parakeet-v2",
       "name": "Parakeet TDT 0.6B v2",
-      "runtime": "FluidAudio CoreML/ANE via macparakeet-cli",
+      "runtime": "FluidAudio CoreML/ANE via sotto-cli",
       "status": "shipping_opt_in",
       "language_scope": "English",
       "product_surfaces": [
@@ -61,7 +61,7 @@
     {
       "id": "parakeet-unified",
       "name": "Parakeet Unified",
-      "runtime": "FluidAudio CoreML/ANE via macparakeet-cli",
+      "runtime": "FluidAudio CoreML/ANE via sotto-cli",
       "status": "shipping_opt_in",
       "language_scope": "English",
       "product_surfaces": [
@@ -83,7 +83,7 @@
     {
       "id": "parakeet-orukeet",
       "name": "Orukeet (Parakeet v3 preview)",
-      "runtime": "FluidAudio CoreML/ANE via macparakeet-cli",
+      "runtime": "FluidAudio CoreML/ANE via sotto-cli",
       "status": "shipping_opt_in",
       "language_scope": "multilingual",
       "product_surfaces": [
@@ -103,7 +103,7 @@
     {
       "id": "nemotron-en",
       "name": "Nemotron English 1120ms Beta",
-      "runtime": "FluidAudio CoreML/ANE via macparakeet-cli",
+      "runtime": "FluidAudio CoreML/ANE via sotto-cli",
       "status": "shipping_beta",
       "language_scope": "English",
       "product_surfaces": [
@@ -125,7 +125,7 @@
     {
       "id": "nemotron-multi",
       "name": "Nemotron Multilingual 1120ms Beta",
-      "runtime": "FluidAudio CoreML/ANE via macparakeet-cli",
+      "runtime": "FluidAudio CoreML/ANE via sotto-cli",
       "status": "shipping_beta",
       "language_scope": "multilingual",
       "product_surfaces": [
@@ -147,7 +147,7 @@
     {
       "id": "whisper",
       "name": "WhisperKit large-v3-turbo",
-      "runtime": "WhisperKit via macparakeet-cli",
+      "runtime": "WhisperKit via sotto-cli",
       "status": "shipping_opt_in",
       "language_scope": "multilingual",
       "product_surfaces": [
@@ -165,7 +165,7 @@
     {
       "id": "cohere",
       "name": "Cohere Transcribe 03-2026 q8",
-      "runtime": "FluidAudio CoreML/ANE via macparakeet-cli",
+      "runtime": "FluidAudio CoreML/ANE via sotto-cli",
       "status": "shipping_opt_in",
       "language_scope": "selected_languages",
       "product_surfaces": [
@@ -240,8 +240,8 @@
       "expected_size": "125 files / about 119 hours."
     },
     {
-      "id": "macparakeet-private-product-fixtures",
-      "name": "MacParakeet private product fixtures",
+      "id": "sotto-private-product-fixtures",
+      "name": "Sotto private product fixtures",
       "tier": "private_product",
       "status": "planned_private",
       "license": "Do not commit audio or transcripts without explicit consent.",
@@ -257,7 +257,7 @@
       "license": "Derived metrics only.",
       "language": "en",
       "domain": "cold start, steady RTFx, peak RSS",
-      "expected_size": "24 LibriSpeech files for integrated engines; Cohere reference evidence currently from FluidAudio CLI, but new runs should use macparakeet-cli."
+      "expected_size": "24 LibriSpeech files for integrated engines; Cohere reference evidence currently from FluidAudio CLI, but new runs should use sotto-cli."
     }
   ],
   "metrics": [
@@ -344,7 +344,7 @@
         "rtfx"
       ],
       "status": "current_committed_evidence",
-      "runner": "run_macparakeet.py for shipping engines; fa_json_to_jsonl.py only for legacy FluidAudio reference imports.",
+      "runner": "run_sotto.py for shipping engines; fa_json_to_jsonl.py only for legacy FluidAudio reference imports.",
       "publication_rule": "Use full test-clean and test-other for English claims; do not cite first-N subsets as final."
     },
     {
@@ -368,7 +368,7 @@
         "paired_delta_ci"
       ],
       "status": "current_capped_evidence",
-      "runner": "run_macparakeet_fleurs.py for shipping engines; fa_json_to_jsonl.py only for legacy FluidAudio reference imports.",
+      "runner": "run_sotto_fleurs.py for shipping engines; fa_json_to_jsonl.py only for legacy FluidAudio reference imports.",
       "publication_rule": "Treat n=150/language as ranking-grade; expand before shipping automatic language routing."
     },
     {
@@ -377,7 +377,7 @@
       "surface": "meeting_final",
       "datasets": [
         "ami-meetings",
-        "macparakeet-private-product-fixtures"
+        "sotto-private-product-fixtures"
       ],
       "engines": [
         "parakeet-v3",
@@ -402,7 +402,7 @@
       "name": "Live preview suitability",
       "surface": "dictation_live_preview",
       "datasets": [
-        "macparakeet-private-product-fixtures"
+        "sotto-private-product-fixtures"
       ],
       "engines": [
         "parakeet-v2",
@@ -470,7 +470,7 @@
       ],
       "status": "current_reference_evidence",
       "runner": "speed_bench.py; use cohere-fa-reference only for legacy FluidAudio comparisons.",
-      "publication_rule": "Report hardware, macOS version, model path, runtime path, contention assumptions, and whether Cohere was measured through macparakeet-cli or FluidAudio reference CLI."
+      "publication_rule": "Report hardware, macOS version, model path, runtime path, contention assumptions, and whether Cohere was measured through sotto-cli or FluidAudio reference CLI."
     }
   ],
   "quality_gates": [
@@ -502,7 +502,7 @@
       "name": "Published benchmark refresh",
       "scope": "research_release",
       "required_evidence": [
-        "Pinned MacParakeet commit and CLI version",
+        "Pinned Sotto commit and CLI version",
         "Pinned model/runtime versions",
         "Dataset source, split, utterance count, and selection policy",
         "Normalizer and scorer version",

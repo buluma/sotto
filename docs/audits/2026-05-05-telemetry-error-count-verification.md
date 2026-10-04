@@ -4,7 +4,7 @@
 > The original private working note was `journal/2026-05-05-telemetry-error-counts.md`
 > (intentionally not tracked); this audit is the durable repository record.
 > Source: direct Cloudflare D1 queries run with `npx wrangler d1 execute
-> macparakeet-telemetry --remote --command ...`. Wrangler auth expired around
+> sotto-telemetry --remote --command ...`. Wrangler auth expired around
 > 2026-05-05 02:11 UTC, then was refreshed and D1 access was restored around
 > 2026-05-05 02:53 UTC.
 
@@ -140,7 +140,7 @@ window.
 Exact CoreAudio bucket:
 
 ```bash
-npx wrangler d1 execute macparakeet-telemetry --remote --command "
+npx wrangler d1 execute sotto-telemetry --remote --command "
 SELECT app_ver, COUNT(*) AS coreaudio_10868_events,
        COUNT(DISTINCT session) AS sessions, MIN(ts) AS first_ts, MAX(ts) AS last_ts
 FROM events
@@ -152,7 +152,7 @@ ORDER BY app_ver"
 Current dictation denominator:
 
 ```bash
-npx wrangler d1 execute macparakeet-telemetry --remote --command "
+npx wrangler d1 execute sotto-telemetry --remote --command "
 SELECT app_ver, COUNT(*) AS dictation_starts, COUNT(DISTINCT session) AS sessions
 FROM events
 WHERE event='dictation_started'
@@ -164,7 +164,7 @@ ORDER BY app_ver"
 Failure taxonomy for a release:
 
 ```bash
-npx wrangler d1 execute macparakeet-telemetry --remote --command "
+npx wrangler d1 execute sotto-telemetry --remote --command "
 SELECT event, json_extract(props,'$.outcome') AS outcome,
        json_extract(props,'$.source') AS source,
        json_extract(props,'$.stage') AS stage,

@@ -2,7 +2,7 @@
 
 > Status: **ACTIVE** - Authoritative, current
 
-Text processing transforms raw STT output into polished text. MacParakeet offers a deterministic pipeline for fast, predictable results.
+Text processing transforms raw STT output into polished text. Sotto offers a deterministic pipeline for fast, predictable results.
 
 ---
 
@@ -175,45 +175,45 @@ unchanged.
 
 ```bash
 # Run clean processing on text
-macparakeet-cli vocab process "uh hello kubernetes is great"
+sotto-cli vocab process "uh hello kubernetes is great"
 # → "Hello Kubernetes is great."
 
 # Process and copy to clipboard
-macparakeet-cli vocab process "text here" --copy
+sotto-cli vocab process "text here" --copy
 
 # Transcribe with processing
-macparakeet-cli transcribe recording.wav --mode clean
-macparakeet-cli transcribe recording.wav --mode raw
+sotto-cli transcribe recording.wav --mode clean
+sotto-cli transcribe recording.wav --mode raw
 ```
 
 ### Custom Words
 
 ```bash
 # List all custom words
-macparakeet-cli vocab words list
+sotto-cli vocab words list
 
 # Add a vocabulary anchor
-macparakeet-cli vocab words add "kubernetes" "Kubernetes"
+sotto-cli vocab words add "kubernetes" "Kubernetes"
 
 # Add a correction
-macparakeet-cli vocab words add "aye pee eye" "API"
+sotto-cli vocab words add "aye pee eye" "API"
 
 # Delete a custom word
-macparakeet-cli vocab words delete <id>
+sotto-cli vocab words delete <id>
 ```
 
 ### Text Snippets
 
 ```bash
 # List all snippets
-macparakeet-cli vocab snippets list
+sotto-cli vocab snippets list
 
 # Add a snippet (trigger is a natural phrase, not an abbreviation)
-macparakeet-cli vocab snippets add "my signature" "Best regards, David"
+sotto-cli vocab snippets add "my signature" "Best regards, David"
 
 # Edit a snippet
-macparakeet-cli vocab snippets edit <id> --trigger "my signature" --expansion "Best regards, Daniel"
+sotto-cli vocab snippets edit <id> --trigger "my signature" --expansion "Best regards, Daniel"
 
 # Delete a snippet
-macparakeet-cli vocab snippets delete <id>
+sotto-cli vocab snippets delete <id>
 ```

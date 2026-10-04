@@ -25,7 +25,7 @@ All APIs verified against compiled FluidAudio 0.12.3 source (resolved Mar 14, 20
 | `clearAllModelCaches()` | **Confirmed** | `DownloadUtils.clearAllModelCaches()` — static, removes `~/Library/Application Support/FluidAudio/Models/` (ASR+VAD+Diarization) and `~/.cache/fluidaudio/Models/` (TTS) |
 | Diarization progress | **NOT available** | `OfflineDiarizerManager.prepareModels(directory:configuration:forceRedownload:)` — no progress handler parameter |
 
-Build verified: `swift build --target MacParakeetCore` passes. Tests verified: 786/786 pass on 0.12.3.
+Build verified: `swift build --target SottoCore` passes. Tests verified: 786/786 pass on 0.12.3.
 
 ## Why Now
 
@@ -58,7 +58,7 @@ Build verified: `swift build --target MacParakeetCore` passes. Tests verified: 7
 
 Already done during verification:
 1. ~~Run `swift package update FluidAudio`~~ — resolved to 0.12.3
-2. ~~Run `swift build --target MacParakeetCore`~~ — passes
+2. ~~Run `swift build --target SottoCore`~~ — passes
 3. ~~Run `swift test`~~ — 786/786 pass
 4. Commit: "Upgrade FluidAudio to 0.12.3"
 
@@ -89,7 +89,7 @@ Already done during verification:
 
 **Files changed:**
 
-- `Sources/MacParakeetCore/STT/STTClient.swift`:
+- `Sources/SottoCore/STT/STTClient.swift`:
   - Add `private var warmUpProgressHandler: DownloadUtils.ProgressHandler?` stored property
   - In `warmUp()`: store the progress callback, then call `ensureInitialized()`
   - In `ensureInitialized()`: pass `warmUpProgressHandler` to `AsrModels.downloadAndLoad(version:progressHandler:)`
@@ -115,18 +115,18 @@ Already done during verification:
 
 **Files changed:**
 
-- `Sources/MacParakeetViewModels/TranscriptionViewModel.swift`:
+- `Sources/SottoViewModels/TranscriptionViewModel.swift`:
   - Store `transcriptionTask: Task<Void, Never>?` (currently fire-and-forget `Task { ... }`)
   - Add `cancelTranscription()` method that calls `transcriptionTask?.cancel()`
   - In `transcribeFile()`, `transcribeURL()`, `retranscribe()`: assign the Task to `transcriptionTask`
   - Handle cancellation separately from errors: on `CancellationError`, reset to idle state (no error banner)
   - Define task ownership: new transcription cancels any in-flight one (only one active at a time)
 
-- `Sources/MacParakeet/Views/Transcription/TranscribeView.swift` (or bottom bar):
+- `Sources/Sotto/Views/Transcription/TranscribeView.swift` (or bottom bar):
   - Add cancel button (X icon or "Cancel" text) visible during `.processing` state
   - Wire to `viewModel.cancelTranscription()`
 
-- `Sources/MacParakeetCore/Services/TranscriptionService.swift`:
+- `Sources/SottoCore/Services/TranscriptionService.swift`:
   - Already handles `CancellationError` at lines 193-194, 246 (telemetry + status)
   - **Change needed:** On cancellation, set status to `.cancelled` (not `.error`) or delete the record entirely, so cancelled jobs don't appear as failed in history. Check if `TranscriptionStatus` has a `.cancelled` case; if not, add one.
 
@@ -142,20 +142,20 @@ Already done during verification:
 
 **Files changed:**
 
-- `Sources/MacParakeetCore/STT/STTClientProtocol.swift`:
+- `Sources/SottoCore/STT/STTClientProtocol.swift`:
   - Add `func clearModelCache() async` to protocol (instance method)
 
-- `Sources/MacParakeetCore/STT/STTClient.swift`:
+- `Sources/SottoCore/STT/STTClient.swift`:
   - Implement: call `shutdown()` first (release loaded models, cancel init task), then `DownloadUtils.clearAllModelCaches()`
   - Reset `modelsReady` state
 
-- `Sources/MacParakeetViewModels/SettingsViewModel.swift`:
+- `Sources/SottoViewModels/SettingsViewModel.swift`:
   - Add `clearModelCache()` method
   - Guard against clearing while transcription/dictation is active (check state, warn user)
   - Update model status to `.notDownloaded` after clearing
   - Show confirmation alert before clearing (destructive action)
 
-- `Sources/MacParakeet/Views/Settings/SettingsView.swift`:
+- `Sources/Sotto/Views/Settings/SettingsView.swift`:
   - Add "Delete Models" button (destructive style) in the Speech Model card
   - Confirmation dialog: "This will delete local speech and speaker models. You'll need to re-download them before transcribing."
   - Disable button while transcription/dictation is active
@@ -164,7 +164,7 @@ Already done during verification:
   - Add `models clear` subcommand for CLI parity
   - Calls `sttClient.clearModelCache()`
 
-- `Tests/MacParakeetTests/STT/MockSTTClient.swift`:
+- `Tests/SottoTests/STT/MockSTTClient.swift`:
   - Add `func clearModelCache() async` no-op stub
 
 ### Step 6: Verify & clean up
@@ -183,14 +183,14 @@ Already done during verification:
 | File | Change |
 |------|--------|
 | `Package.resolved` | Updated to FluidAudio 0.12.3 |
-| `Sources/MacParakeetCore/STT/STTClient.swift` | Fix CancellationError swallowing, replace polling with DownloadProgress callback (with throttle), add clearModelCache, add cancellation check |
-| `Sources/MacParakeetCore/STT/STTClientProtocol.swift` | Add `clearModelCache() async` |
-| `Sources/MacParakeetViewModels/TranscriptionViewModel.swift` | Store Task reference, add cancelTranscription(), handle CancellationError separately |
-| `Sources/MacParakeetViewModels/SettingsViewModel.swift` | Add clearModelCache() with confirmation guard |
-| `Sources/MacParakeet/Views/Transcription/TranscribeView.swift` | Add cancel button |
-| `Sources/MacParakeet/Views/Settings/SettingsView.swift` | Add "Delete Models" button with confirmation |
+| `Sources/SottoCore/STT/STTClient.swift` | Fix CancellationError swallowing, replace polling with DownloadProgress callback (with throttle), add clearModelCache, add cancellation check |
+| `Sources/SottoCore/STT/STTClientProtocol.swift` | Add `clearModelCache() async` |
+| `Sources/SottoViewModels/TranscriptionViewModel.swift` | Store Task reference, add cancelTranscription(), handle CancellationError separately |
+| `Sources/SottoViewModels/SettingsViewModel.swift` | Add clearModelCache() with confirmation guard |
+| `Sources/Sotto/Views/Transcription/TranscribeView.swift` | Add cancel button |
+| `Sources/Sotto/Views/Settings/SettingsView.swift` | Add "Delete Models" button with confirmation |
 | `Sources/CLI/Commands/ModelsCommand.swift` | Add `models clear` subcommand |
-| `Tests/MacParakeetTests/STT/MockSTTClient.swift` | Add clearModelCache() stub |
+| `Tests/SottoTests/STT/MockSTTClient.swift` | Add clearModelCache() stub |
 
 ## Risks
 

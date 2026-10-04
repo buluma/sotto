@@ -23,7 +23,7 @@ typing key and correctly carries an interference warning.
 ## Decision
 
 Support exact shared dictation triggers. If hands-free and push-to-talk are set
-to the exact same non-disabled `HotkeyTrigger`, MacParakeet treats that trigger
+to the exact same non-disabled `HotkeyTrigger`, Sotto treats that trigger
 as a shared dictation key and routes it through the existing combined
 hold/double-tap gesture controller.
 

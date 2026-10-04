@@ -1,7 +1,7 @@
 import ArgumentParser
 import XCTest
 @testable import CLI
-@testable import MacParakeetCore
+@testable import SottoCore
 
 final class TranscribeCommandTests: XCTestCase {
     private enum OutputTeardownError: Error, Equatable {
@@ -755,7 +755,7 @@ final class TranscribeCommandTests: XCTestCase {
         let dbURL = temporaryDatabaseURL()
         defer { try? FileManager.default.removeItem(at: dbURL) }
         let missingURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-missing-\(UUID().uuidString).wav")
+            .appendingPathComponent("sotto-missing-\(UUID().uuidString).wav")
         let command = try TranscribeCommand.parse([
             missingURL.path,
             "--format", "json",
@@ -1045,6 +1045,6 @@ final class TranscribeCommandTests: XCTestCase {
 
     private func temporaryDatabaseURL() -> URL {
         FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-\(UUID().uuidString).db")
+            .appendingPathComponent("sotto-cli-\(UUID().uuidString).db")
     }
 }

@@ -131,7 +131,7 @@ Aim: ~6-8 new test cases. We have 1521+ tests; we are not trying to add a hundre
 - `Tests/CLITests/PromptsCommandTests.swift`
 
 **Modified:**
-- `Sources/CLI/MacParakeetCLI.swift` — register PromptsCommand
+- `Sources/CLI/SottoCLI.swift` — register PromptsCommand
 - `Sources/CLI/Commands/CLIHelpers.swift` — add `findPrompt`
 - `Sources/CLI/Commands/HistoryCommand.swift` — `--json` x5
 - `Sources/CLI/Commands/StatsCommand.swift` — `--json`
@@ -145,10 +145,10 @@ Aim: ~6-8 new test cases. We have 1521+ tests; we are not trying to add a hundre
 
 - `swift build` passes.
 - `swift test` shows green for new + existing CLI tests.
-- `swift run macparakeet-cli prompts list` emits the 6 built-ins after a fresh DB.
-- `swift run macparakeet-cli history dictations --json | jq .` parses cleanly.
-- `swift run macparakeet-cli prompts add --name "Test" --content "Hi" && \
-  swift run macparakeet-cli prompts list | grep Test` works end-to-end.
+- `swift run sotto-cli prompts list` emits the 6 built-ins after a fresh DB.
+- `swift run sotto-cli history dictations --json | jq .` parses cleanly.
+- `swift run sotto-cli prompts add --name "Test" --content "Hi" && \
+  swift run sotto-cli prompts list | grep Test` works end-to-end.
 
 ## Risks / things to watch
 

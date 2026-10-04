@@ -17,17 +17,17 @@ parser.add_argument('--env-file', type=Path)
 parser.add_argument('--goal', default='Find one way flights from Zürich to London on 20 September.')
 args = parser.parse_args()
 root = Path(__file__).resolve().parents[3]
-core = root / 'Sources/MacParakeetCore/Services/VoiceControl'
+core = root / 'Sources/SottoCore/Services/VoiceControl'
 env = os.environ.copy()
 if args.env_file:
     for line in args.env_file.read_text().splitlines():
         key, sep, value = line.removeprefix('export ').partition('=')
         if sep and key in ('JEV_API_KEY', 'TYPESAFE_API_KEY'):
             env['JEV_API_KEY'] = value.strip().strip('\"\'')
-with tempfile.TemporaryDirectory(prefix='macparakeet-native-browser-') as build:
+with tempfile.TemporaryDirectory(prefix='sotto-native-browser-') as build:
     folder = Path(build)
     # Extract this unchanged enum to avoid linking unrelated audio dependencies.
-    source = (root / 'Sources/MacParakeetCore/Services/System/StreamingCursorInserter.swift').read_text()
+    source = (root / 'Sources/SottoCore/Services/System/StreamingCursorInserter.swift').read_text()
     start = source.index('public enum StreamingCursorEventMarker')
     end = source.index('\n}', start) + 2
     marker = folder / 'StreamingCursorEventMarker.swift'

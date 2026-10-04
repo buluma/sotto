@@ -9,12 +9,12 @@ From the QA worktree:
 
 ```sh
 python3 docs/qa/2026-09-07-0.8.0/scripts/seed_gui_fixtures.py \
-  --database '/tmp/macparakeet-080-qa/isolated-home/Library/Application Support/MacParakeet/macparakeet.db' \
+  --database '/tmp/sotto-080-qa/isolated-home/Library/Application Support/Sotto/sotto.db' \
   --dry-run
 
 # Run this insertion only after the isolated app has quit.
 python3 docs/qa/2026-09-07-0.8.0/scripts/seed_gui_fixtures.py \
-  --database '/tmp/macparakeet-080-qa/isolated-home/Library/Application Support/MacParakeet/macparakeet.db'
+  --database '/tmp/sotto-080-qa/isolated-home/Library/Application Support/Sotto/sotto.db'
 ```
 
 The database must already exist with the current migrated schema. There is no
@@ -96,12 +96,12 @@ Saved outputs belong to `summaries` (`PromptResult`), and conversations belong t
 
 Source references: `Models/Transcription.swift`, `Models/PromptResult.swift`,
 `Models/ChatConversation.swift`, `Models/LLMTypes.swift`, and
-`Database/DatabaseManager.swift` under `Sources/MacParakeetCore`. GRDB's pinned
+`Database/DatabaseManager.swift` under `Sources/SottoCore`. GRDB's pinned
 `Core/Support/Foundation/UUID.swift` confirms UUID byte encoding.
 
 Python validation used a new database containing copies of only the three CREATE
 TABLE statements, with no copied user rows:
-`/tmp/macparakeet-080-qa/gui-fixture-validation-692koyey/synthetic-schema.db`.
+`/tmp/sotto-080-qa/gui-fixture-validation-692koyey/synthetic-schema.db`.
 Evidence: sibling `validation.json`. Observed: five inserts, word counts
 240/240/10,000, valid JSON shapes, UUID BLOBs, no foreign-key violations, a
 byte-identical dry run, no duplicate inserts, and preservation of an intentional

@@ -382,7 +382,7 @@ substituted for, `recording.lock`.
   cannot start from a stale cached transcript after deletion succeeds and a
   successful deletion cannot overlap in-flight provider work. Non-split rows
   never acquire the child lease.
-- Older MacParakeet builds that predate this lease do not create or respect
+- Older Sotto builds that predate this lease do not create or respect
   `.meeting-media-mutation.lock`. A split running only on a build with this
   lease is protected against *this build's* mutators; it offers no
   protection against an older, unpatched binary mutating the same root
@@ -392,7 +392,7 @@ substituted for, `recording.lock`.
 ## Non-Stable Fields
 
 - PID liveness is process-local and time-sensitive. `kill(pid, 0)` cannot
-  distinguish MacParakeet from a later process that reused the same PID. A
+  distinguish Sotto from a later process that reused the same PID. A
   long-lived reused PID can leave a `.processing` row looking owned, which
   suppresses reconciliation, recovery, and Retry until that PID exits. This
   remaining hole is accepted; do not add a schema bump or process-birth

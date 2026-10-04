@@ -197,7 +197,7 @@ If no LLM provider is configured, the Ask tab renders an empty state:
 
 > *"Ask needs an AI provider. Add one in Settings → AI Providers. Recording works without it."*
 
-with an "Open Settings" button. The recording itself continues uninterrupted; the Transcript tab is unaffected; finalize still works. Users who never configure LLM use MacParakeet's meeting recording exactly as it works today.
+with an "Open Settings" button. The recording itself continues uninterrupted; the Transcript tab is unaffected; finalize still works. Users who never configure LLM use Sotto's meeting recording exactly as it works today.
 
 ### 8. Live Ask does not contend with STT for the scheduler
 
@@ -244,7 +244,7 @@ The `LLMService` calls run against cloud or local LLM providers over HTTP. They 
 
 Insights would have made meeting recording reach feature parity with Granola-class tools that show a standing AI view of the call. The cost: an actor with debounce policy + delta gates + cancellation, periodic LLM calls firing whether or not the user looks, free-form section-parsing, a staleness indicator, an extra final-finalize round to persist results, and meaningfully more UI surface.
 
-Pull-on-demand pills in Ask cover the same use cases (summary, what-did-I-miss, action items) at zero idle cost and with deterministic UX. The product stance shifts from "we maintain a view of your meeting" to "we help you think during your meeting." The latter feels more like MacParakeet — a small tool with one clear edge — and less like a feature checklist.
+Pull-on-demand pills in Ask cover the same use cases (summary, what-did-I-miss, action items) at zero idle cost and with deterministic UX. The product stance shifts from "we maintain a view of your meeting" to "we help you think during your meeting." The latter feels more like Sotto — a small tool with one clear edge — and less like a feature checklist.
 
 ### Why label-vs-prompt instead of bare strings
 
@@ -288,7 +288,7 @@ Two ways the follow-up row could be smarter: (a) embed "suggested follow-ups" in
 
 ## Implementation
 
-### Core (MacParakeetCore)
+### Core (SottoCore)
 
 For the original Ask shipment: unchanged — no new actors, services, or schema.
 
@@ -301,7 +301,7 @@ cap-removal amendment means there is no
 `pinnedCap`, `swapPin`, `saveAndPin`, cap-exceeded result, or `fetchPinned`
 limit in the current implementation.
 
-### ViewModels (MacParakeetViewModels)
+### ViewModels (SottoViewModels)
 
 - `MeetingRecordingPanelViewModel` (extended): `LivePanelTab` enum, `selectedTab`, composed `chatViewModel: TranscriptChatViewModel`, `chatTranscript` computed plain-text projection of `previewLines`, push to chat VM on every `updatePreviewLines(...)`.
 - `TranscriptChatViewModel` (extended):
@@ -310,12 +310,12 @@ limit in the current implementation.
   - `bindPersistedConversation(transcriptionId:transcriptionRepo:conversationRepo:)` — promote in-memory thread to a `ChatConversation` in one repo write at finalize time.
   - Optional `richPrompt` parameter on `sendMessage(...)` so pills can ship a comprehensive prompt while the bubble shows the short label.
 
-### View layer (MacParakeet)
+### View layer (Sotto)
 
 - `MeetingRecordingPanelView` — tab bar (text + 1pt accent capsule underline, `Cmd+1/2`); `paneContent` switches between Transcript and Ask; footer hidden on Ask.
 - `LiveAskPaneView` *(new)* — scrollable message thread, vertical "Quick prompts" stack of starter pills in the empty state, horizontal-scroll follow-up row above the input once messages exist, polished input bar (14pt corners, hairline border), `TypingIndicator` (three accent dots, 1.4s wave), no-LLM empty state with Settings CTA.
 
-### Wiring (MacParakeet App)
+### Wiring (Sotto App)
 
 - `MeetingRecordingFlowCoordinator` — accepts `transcriptionRepo`, `conversationRepo`, `configStore`, `cliConfigStore`, `llmService?` at init. Configures the panel's chatViewModel for in-memory live mode at `.showRecordingPill`. Calls `bindPersistedConversation(...)` at `.navigateToTranscription` so the live thread carries onto `TranscriptResultView`'s Chat tab. New `updateLLMService(_:)` forwards provider changes.
 - `AppEnvironmentConfigurer` — passes the new deps; weak-holds the meeting coordinator so `refreshLLMAvailability(in:)` forwards LLM provider changes to the live chat VM alongside the existing singleton chat VM.
@@ -333,6 +333,6 @@ See decision §2 for the full lists.
 
 ## Future Work
 
-- **Transcription-failure chat recovery.** If transcription fails after stop, the in-memory Ask thread is lost. Sketch: write `chatHistory` to `~/Library/Application Support/MacParakeet/pending-chat-{recordingId}.json` on every send; delete the sidecar on successful finalize; on next launch, surface a "Recover chat" entry if a sidecar is found. ~50 lines, no schema migration. Defer until telemetry or a user complaint says it matters.
+- **Transcription-failure chat recovery.** If transcription fails after stop, the in-memory Ask thread is lost. Sketch: write `chatHistory` to `~/Library/Application Support/Sotto/pending-chat-{recordingId}.json` on every send; delete the sidecar on successful finalize; on next launch, surface a "Recover chat" entry if a sidecar is found. ~50 lines, no schema migration. Defer until telemetry or a user complaint says it matters.
 - **Localization** of quick-prompt copy.
 - **Reopen Insights** if telemetry indicates users want passive-glance value enough to justify the LLM cost surface.

@@ -1,6 +1,6 @@
 # Agent Memory Governance
 
-> Status: **ACTIVE** -- how MacParakeet keeps agent instructions useful without
+> Status: **ACTIVE** -- how Sotto keeps agent instructions useful without
 > turning every session into a long-context tax.
 
 ## Verdict
@@ -8,7 +8,7 @@
 The sensible move is not "delete all memory." It is to stop treating
 always-loaded memory as a knowledge base.
 
-MacParakeet should keep a small push layer that loads every session and move
+Sotto should keep a small push layer that loads every session and move
 everything else to pull surfaces the agent reads only when relevant. Durable,
 single-subsystem lessons belong in code, tests, subsystem READMEs, specs, or
 skills. Volatile state belongs behind live commands and canonical sources, not
@@ -70,18 +70,18 @@ nearly every session.
 ## Promotion Map
 
 - Database migrations, GRDB UUID storage, or repository access patterns:
-  `Sources/MacParakeetCore/Database/README.md` and `spec/01-data-model.md`.
+  `Sources/SottoCore/Database/README.md` and `spec/01-data-model.md`.
 - STT scheduling, engine routing, and runtime constraints:
-  `Sources/MacParakeetCore/STT/README.md`, `spec/06-stt-engine.md`, and focused
+  `Sources/SottoCore/STT/README.md`, `spec/06-stt-engine.md`, and focused
   tests.
 - Audio capture, meeting artifacts, and recovery:
-  `Sources/MacParakeetCore/Audio/README.md`, `spec/05-audio-pipeline.md`,
+  `Sources/SottoCore/Audio/README.md`, `spec/05-audio-pipeline.md`,
   `spec/contracts/`, and recovery tests.
 - UI hover, panel, and visual interaction rules: `spec/04-ui-patterns.md` or
   local view/controller comments when the behavior is highly localized.
 - Permissions, clipboard, Accessibility selection/replacement, focused-app
   context, media control, and launch-at-login:
-  `Sources/MacParakeetCore/Services/System/README.md`.
+  `Sources/SottoCore/Services/System/README.md`.
 - Test timing, flake triage, and CI-reliability notes: `spec/09-testing.md` or
   the focused test file's header comments.
 - Public CLI behavior: `integrations/README.md`, `Sources/CLI/README.md`,

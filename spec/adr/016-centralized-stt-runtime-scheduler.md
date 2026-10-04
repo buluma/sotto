@@ -13,7 +13,7 @@
 
 ## Context
 
-MacParakeet has three co-equal transcription producers:
+Sotto has three co-equal transcription producers:
 
 1. Dictation
 2. Meeting recording (live chunk preview + finalization)
@@ -35,7 +35,7 @@ Per-flow STT ownership leads to duplicated runtime lifecycle, unclear shutdown/w
 
 ### 1. One process-wide STT control plane
 
-MacParakeet owns exactly one app-level STT control plane for local speech inference in the process.
+Sotto owns exactly one app-level STT control plane for local speech inference in the process.
 
 That control plane is responsible for:
 
@@ -92,7 +92,7 @@ But it only guarantees **two STT execution slots** by default:
 1. **Interactive slot** — reserved for `dictation`
 2. **Background slot** — shared by `meetingFinalize`, `meetingLiveChunk`, and `fileTranscription`
 
-This is deliberate. MacParakeet does **not** reserve a permanent third slot for file / YouTube transcription in v1.
+This is deliberate. Sotto does **not** reserve a permanent third slot for file / YouTube transcription in v1.
 
 Rationale:
 
@@ -270,4 +270,4 @@ durable stop; the meeting feature never constructs or downloads an engine.
 - Upstream validation against the checked-out FluidAudio `0.13.6` dependency supports this design:
   - `AsrManager` is documented as thread-safe/concurrent.
   - `transcriptionProgressStream` is explicitly single-session per manager, which reinforces keeping progress isolated by slot instead of multiplexing unrelated jobs through one manager instance.
-  - `OfflineDiarizerManager.prepareModels()` short-circuits once models are prepared, so MacParakeet's single shared diarization wrapper matches the intended lifecycle.
+  - `OfflineDiarizerManager.prepareModels()` short-circuits once models are prepared, so Sotto's single shared diarization wrapper matches the intended lifecycle.

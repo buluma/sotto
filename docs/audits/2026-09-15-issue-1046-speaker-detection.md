@@ -29,9 +29,9 @@ They are linked. Raising the clustering cut merges more (helps 1, hurts 2). Lowe
 
 **Clustering.** FluidAudio's offline community-1 + VBx path over-splits one person into `S1` / `S3` / `S7`, or parks a noisy short embedding in the wrong cluster. The app currently runs `DiarizationService.highAccuracyConfig`: `stepRatio 0.1`, `embedding.minSegmentDurationSeconds = 0`, zero-vote re-embed on, library-default `clustering.threshold`. Short turns keep their own embedding on purpose (ADR-010 2026-09-06 amendment, [#972](https://github.com/moona3k/macparakeet/issues/972)). That is a DER win on long turns and a source of one-word speaker IDs.
 
-**Presentation.** `TranscriptSegmenter.segmentBoundaries` starts a new bubble on every speaker-ID change (`Sources/MacParakeetCore/Utilities/TranscriptSegmenter.swift`). Isolated one-word ID flips therefore look like "cluttered transcription segmentation" even when ASR chunking is fine. Consecutive same-ID words already group into one turn; collapsing bogus IDs is what cleans the UI, not a new Markdown renderer.
+**Presentation.** `TranscriptSegmenter.segmentBoundaries` starts a new bubble on every speaker-ID change (`Sources/SottoCore/Utilities/TranscriptSegmenter.swift`). Isolated one-word ID flips therefore look like "cluttered transcription segmentation" even when ASR chunking is fine. Consecutive same-ID words already group into one turn; collapsing bogus IDs is what cleans the UI, not a new Markdown renderer.
 
-`SpeakerMerger.mergeWordTimestampsWithSpeakers` first assigns by maximum direct overlap, then applies the neighbor-agreement smoothing added by this change. A no-overlap run remains nil unless both surrounding speaker runs agree. There is no nearest-turn fallback at transcript edges or between different speakers (`Sources/MacParakeetCore/Services/Diarization/SpeakerMerger.swift`).
+`SpeakerMerger.mergeWordTimestampsWithSpeakers` first assigns by maximum direct overlap, then applies the neighbor-agreement smoothing added by this change. A no-overlap run remains nil unless both surrounding speaker runs agree. There is no nearest-turn fallback at transcript edges or between different speakers (`Sources/SottoCore/Services/Diarization/SpeakerMerger.swift`).
 
 ## What already shipped (do not redo)
 
@@ -39,7 +39,7 @@ They are linked. Raising the clustering cut merges more (helps 1, hurts 2). Lowe
 | --- | --- | --- |
 | [#972](https://github.com/moona3k/macparakeet/issues/972) / ADR-010 2026-09-06 | FluidAudio 0.15.6, high-accuracy async config, calendar prior as a **cap** | Embedding consolidation; `SpeakerMerger` smoothing |
 | [#1023](https://github.com/moona3k/macparakeet/issues/1023) / ADR-010 2026-09-13 | Pin 0.15.7 so Exact / `maxSpeakers` bind on both cluster censuses | Unconstrained Auto over-split. Eval: `benchmarks/diarization/2026-09-13-fluidaudio-0.15.7-eval.md` |
-| `MeetingSpeakerPrior` | System-track bounds `min = 1`, `max = n + 1` for 1–8 countable remote attendees | A 1:1 invite still legally yields two remote labels (`Others` + `Others 1`). That is the [#944](https://github.com/moona3k/macparakeet/issues/944) hole. A wrong `minSpeakers` would K-Means-split real people, which is why min stays 1 (`Sources/MacParakeetCore/Services/Diarization/MeetingSpeakerPrior.swift`) |
+| `MeetingSpeakerPrior` | System-track bounds `min = 1`, `max = n + 1` for 1–8 countable remote attendees | A 1:1 invite still legally yields two remote labels (`Others` + `Others 1`). That is the [#944](https://github.com/moona3k/macparakeet/issues/944) hole. A wrong `minSpeakers` would K-Means-split real people, which is why min stays 1 (`Sources/SottoCore/Services/Diarization/MeetingSpeakerPrior.swift`) |
 | [#542](https://github.com/moona3k/macparakeet/issues/542) / #960 | Edit speakers: rename, merge, remove, split, undo | Manual merge is the escape hatch, not the automatic fix |
 | [#1044](https://github.com/moona3k/macparakeet/pull/1044) | Meeting voice profiles behind a disabled gate | Must not rewrite automatic speaker IDs |
 
@@ -111,7 +111,7 @@ Contributor testbench: welcome if it scores unique IDs vs truth, singleton-word 
 - Feed voice-profile matches back into clustering or silently merge labels because a profile scored close (wrong-person learning is worse than a missed suggestion; see `spec/contracts/speaker-voiceprints.md`).
 - Replace FluidAudio with another diarizer as the first move. ADR-010 and the 2026-09-06 synthesis: the model is not the remaining problem.
 - Close #1046 (or #662) because Edit speakers can merge by hand.
-- Use MacParakeet library folders as labeled ground truth.
+- Use Sotto library folders as labeled ground truth.
 - Quote historical DER (~15%, 13.89%) as a measurement of the pinned 0.15.7 high-accuracy path. Those figures predate the clustering-port fixes and were not re-run on this pin.
 
 ## Priority

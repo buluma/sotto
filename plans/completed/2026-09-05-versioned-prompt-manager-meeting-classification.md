@@ -199,10 +199,10 @@ revision.
 - If the user has modified, renamed, reconfigured, or deleted the built-in, the
   reconciler leaves the prompt and its history completely untouched.
 - For a customized built-in, a newer bundled definition may be shown as
-  **MacParakeet update available**, but it is not inserted into user history or
+  **Sotto update available**, but it is not inserted into user history or
   activated automatically.
 - The user may compare against the bundled candidate and explicitly choose
-  **Keep mine**, **Adopt MacParakeet version**, or **Create a copy**.
+  **Keep mine**, **Adopt Sotto version**, or **Create a copy**.
 - Explicit adoption creates a new normal history version.
 
 The automatic-update guard is based on persisted provenance, not a content-only
@@ -218,13 +218,13 @@ changes are preserved independently and are never overwritten by reconciliation.
 - They become editable on every result prompt, including built-ins.
 - Transform execution is extended to accept the same settings rather than
   receiving only a prompt string.
-- Blank settings inherit MacParakeet defaults exactly as today.
+- Blank settings inherit Sotto defaults exactly as today.
 - Unsupported settings are omitted and surfaced as a compatibility warning;
   they are never reinterpreted.
 - `modelOverride` is optional and versioned. `nil` means the active provider's
   selected model.
 - The provider remains global in this scope. Per-prompt provider selection is
-  deferred until MacParakeet has a first-class multi-provider profile model.
+  deferred until Sotto has a first-class multi-provider profile model.
 - API keys remain in Keychain and never enter a prompt version.
 - If a model override does not exist for the active provider, execution is
   blocked with a repair action; it does not silently use another model.
@@ -545,7 +545,7 @@ Badges:
 
 - Collapsed **Generation settings** section using the existing validation and
   provider capability resolver.
-- `Reset to MacParakeet defaults` clears the six inference overrides.
+- `Reset to Sotto defaults` clears the six inference overrides.
 - Optional model picker defaults to **Use active model**.
 - Unsupported or unavailable choices show actionable, non-blocking guidance in
   the editor; execution is blocked only for an unavailable explicit model.

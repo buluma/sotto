@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 enum PromptAutoRunSource: String, ExpressibleByArgument {
     case file
@@ -18,7 +18,7 @@ enum PromptAutoRunSource: String, ExpressibleByArgument {
     }
 }
 
-/// `macparakeet-cli prompts` — manage the prompt library and run prompts
+/// `sotto-cli prompts` — manage the prompt library and run prompts
 /// against saved transcriptions. Built so an agent or CI run can verify
 /// migrations, seed test prompts deterministically, and exercise the
 /// multi-summary write path without launching the GUI.
@@ -508,7 +508,7 @@ extension PromptsCommand {
                 }
 
                 // Body precedence: --content > --from-file > stdin (for piped workflows
-                // like `cat prompt.md | macparakeet-cli prompts add --name X`).
+                // like `cat prompt.md | sotto-cli prompts add --name X`).
                 let body: String
                 if let content {
                     body = content

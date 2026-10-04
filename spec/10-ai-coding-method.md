@@ -4,7 +4,7 @@
 
 ## Purpose
 
-This document explains how agents and humans should use MacParakeet's specs,
+This document explains how agents and humans should use Sotto's specs,
 plans, tests, and review loops without turning process into the product.
 
 The goal is simple: keep changes grounded, verifiable, and easy for the next

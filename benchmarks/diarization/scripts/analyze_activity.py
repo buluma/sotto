@@ -176,7 +176,7 @@ def analyze_condition(prefix: Path, saved: dict, expected_ids: set[str], md_eval
         raise ValueError("Reference/UEM coverage differs from manifest")
     if sha256(md_eval) != MDEVAL_SHA256:
         raise ValueError("Scorer does not match pinned dscore engine")
-    with tempfile.TemporaryDirectory(prefix="macparakeet-activity-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="sotto-activity-") as temporary:
         mapping = Path(temporary) / "mapping.csv"
         result = subprocess.run(
             ["perl", str(md_eval), "-af", "-r", str(paths["reference"]), "-s", str(paths["prediction"]),

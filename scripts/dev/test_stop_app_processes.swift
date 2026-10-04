@@ -26,14 +26,14 @@ struct ShutdownTests {
     }
 
     static func run() throws {
-        let literal = "/synthetic/work(qa)[draft]+/.build/debug/MacParakeet"
+        let literal = "/synthetic/work(qa)[draft]+/.build/debug/Sotto"
         let matcher = try AppExecutableMatcher(root: "/synthetic", paths: [literal])
         try expect(matcher.matches(literal), "Literal regex punctuation must match")
-        try expect(!matcher.matches("/synthetic/workqa/.build/debug/MacParakeet"), "Regex-shaped lookalike must not match")
+        try expect(!matcher.matches("/synthetic/workqa/.build/debug/Sotto"), "Regex-shaped lookalike must not match")
         try expect(!matcher.matches("/bin/sh"), "An unrelated executable must not match its arguments")
-        try expect(!matcher.matches("/another/worktree/MacParakeet-Dev.app/Contents/MacOS/MacParakeet"), "Dev bundles in other worktrees are untouched")
-        try expect(!matcher.matches("/another/worktree/MacParakeet-Dev.app/Contents/MacOS/MacParakeet-helper"), "Executable suffix must not match")
-        try expectFailure("absolute") { _ = try AppExecutableMatcher(root: "/synthetic", paths: ["relative/MacParakeet"]) }
+        try expect(!matcher.matches("/another/worktree/Sotto-Dev.app/Contents/MacOS/Sotto"), "Dev bundles in other worktrees are untouched")
+        try expect(!matcher.matches("/another/worktree/Sotto-Dev.app/Contents/MacOS/Sotto-helper"), "Executable suffix must not match")
+        try expectFailure("absolute") { _ = try AppExecutableMatcher(root: "/synthetic", paths: ["relative/Sotto"]) }
         print("PASS: literal executable paths and Dev bundle scope")
 
         try expectFailure("At least one") { _ = try AppExecutableMatcher(root: "/synthetic", paths: []) }
@@ -77,10 +77,10 @@ struct ShutdownTests {
 
         // Only these two test-owned children are ever terminated by the tests.
         // Real app handles are never requested: libproc inspection is read-only.
-        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("macparakeet-quit-test-\(UUID().uuidString)(qa)[literal]")
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("sotto-quit-test-\(UUID().uuidString)(qa)[literal]")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: folder) }
-        let rawURL = folder.appendingPathComponent("MacParakeet")
+        let rawURL = folder.appendingPathComponent("Sotto")
         try FileManager.default.copyItem(at: URL(fileURLWithPath: "/bin/sleep"), to: rawURL)
         let raw = Process()
         raw.executableURL = rawURL

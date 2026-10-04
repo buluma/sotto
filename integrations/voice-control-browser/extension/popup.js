@@ -4,6 +4,6 @@ for (const type of ['connect', 'disconnect']) {
     try {
       const result = await chrome.runtime.sendMessage({type});
       status.textContent = result?.ok ? (type === 'connect' ? 'Tab connected.' : 'Disconnected.') : (result?.error || 'Connection failed.');
-    } catch { status.textContent = 'Open MacParakeet and complete browser setup first.'; }
+    } catch { status.textContent = 'Open Sotto and complete browser setup first.'; }
   });
 }

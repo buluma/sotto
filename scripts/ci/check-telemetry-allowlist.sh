@@ -2,15 +2,15 @@
 # Cross-repo telemetry allowlist guard.
 #
 # Every TelemetryEventName case the app can emit must be present in
-# ALLOWED_EVENTS in macparakeet-website/functions/api/telemetry.ts. The
+# ALLOWED_EVENTS in sotto-website/functions/api/telemetry.ts. The
 # Worker rejects an entire batch when ANY event in it is unknown, so one
 # missing allowlist entry silently destroys all co-batched telemetry from
 # every affected user. This has bitten three times (AUDIT-073 being the
 # third); this guard closes the class.
 #
 # The website repo is private, so the allowlist is resolved in this order:
-#   1. $MACPARAKEET_WEBSITE_TELEMETRY_TS — explicit path to telemetry.ts
-#   2. ../macparakeet-website/functions/api/telemetry.ts — sibling checkout
+#   1. $SOTTO_WEBSITE_TELEMETRY_TS — explicit path to telemetry.ts
+#   2. ../sotto-website/functions/api/telemetry.ts — sibling checkout
 #   3. `gh api` against moona3k/macparakeet-website (honors GH_TOKEN; in CI
 #      provide a PAT with read access via the WEBSITE_REPO_TOKEN secret)
 #   4. curl against the GitHub contents API using GH_TOKEN / GITHUB_TOKEN
@@ -25,7 +25,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-SWIFT_ENUM_FILE="$REPO_ROOT/Sources/MacParakeetCore/Services/Telemetry/TelemetryEvent.swift"
+SWIFT_ENUM_FILE="$REPO_ROOT/Sources/SottoCore/Services/Telemetry/TelemetryEvent.swift"
 WEBSITE_FILE_PATH="functions/api/telemetry.ts"
 WEBSITE_REPO="moona3k/macparakeet-website"
 
@@ -56,11 +56,11 @@ allowlist_ts=""
 source_used=""
 github_token="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
 
-if [[ -n "${MACPARAKEET_WEBSITE_TELEMETRY_TS:-}" && -r "${MACPARAKEET_WEBSITE_TELEMETRY_TS:-}" ]]; then
-    allowlist_ts="$(cat "$MACPARAKEET_WEBSITE_TELEMETRY_TS")"
-    source_used="\$MACPARAKEET_WEBSITE_TELEMETRY_TS"
-elif [[ -r "$REPO_ROOT/../macparakeet-website/$WEBSITE_FILE_PATH" ]]; then
-    allowlist_ts="$(cat "$REPO_ROOT/../macparakeet-website/$WEBSITE_FILE_PATH")"
+if [[ -n "${SOTTO_WEBSITE_TELEMETRY_TS:-}" && -r "${SOTTO_WEBSITE_TELEMETRY_TS:-}" ]]; then
+    allowlist_ts="$(cat "$SOTTO_WEBSITE_TELEMETRY_TS")"
+    source_used="\$SOTTO_WEBSITE_TELEMETRY_TS"
+elif [[ -r "$REPO_ROOT/../sotto-website/$WEBSITE_FILE_PATH" ]]; then
+    allowlist_ts="$(cat "$REPO_ROOT/../sotto-website/$WEBSITE_FILE_PATH")"
     source_used="sibling checkout"
 elif command -v gh >/dev/null 2>&1; then
     if allowlist_ts="$(gh api "repos/$WEBSITE_REPO/contents/$WEBSITE_FILE_PATH" --jq '.content' 2>/dev/null | base64 -d)"; then

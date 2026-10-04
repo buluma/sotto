@@ -179,14 +179,14 @@ Read them with `git show <hash>`:
 Add dictation overlay with waveform visualization
 
 ## What Changed
-- Sources/MacParakeet/Views/Dictation/DictationOverlayView.swift: New
+- Sources/Sotto/Views/Dictation/DictationOverlayView.swift: New
   compact dark pill overlay with recording state indicator, waveform,
   and cancel button.
-- Sources/MacParakeet/Views/Dictation/WaveformView.swift: Real-time
+- Sources/Sotto/Views/Dictation/WaveformView.swift: Real-time
   audio level waveform using AVAudioEngine tap data.
-- Sources/MacParakeetCore/Services/Dictation/DictationService.swift:
+- Sources/SottoCore/Services/Dictation/DictationService.swift:
   Added `audioLevelPublisher` for UI.
-- Tests/MacParakeetTests/DictationServiceTests.swift: Test audio
+- Tests/SottoTests/DictationServiceTests.swift: Test audio
   level callback registration.
 
 ## Root Intent
@@ -195,7 +195,7 @@ is recording, see their voice levels, and have a clear way to cancel.
 The pill overlay appears over all apps without stealing focus.
 
 ## Seed Prompt
-Give MacParakeet dictation visual feedback: a compact dark pill
+Give Sotto dictation visual feedback: a compact dark pill
 overlay, visible over all apps, that shows recording state and live
 voice levels and offers cancel (button + Escape). Hard constraints:
 must never steal focus from the active app (non-activating panel),
@@ -213,13 +213,13 @@ rejected it: it would couple UI cadence to engine choice.
 - ADR-001 + ADR-007: Parakeet TDT model with FluidAudio CoreML runtime
 
 ## Files Changed
-- Sources/MacParakeet/Views/Dictation/DictationOverlayView.swift
+- Sources/Sotto/Views/Dictation/DictationOverlayView.swift
   (+145) — borderless NSPanel + state-driven layout.
-- Sources/MacParakeet/Views/Dictation/WaveformView.swift (+62) —
+- Sources/Sotto/Views/Dictation/WaveformView.swift (+62) —
   real-time waveform rendering from audio-level data.
-- Sources/MacParakeetCore/Services/Dictation/DictationService.swift
+- Sources/SottoCore/Services/Dictation/DictationService.swift
   (+28, ~12) — new `audioLevelPublisher` exposed to the overlay.
-- Tests/MacParakeetTests/DictationServiceTests.swift (+34) —
+- Tests/SottoTests/DictationServiceTests.swift (+34) —
   audio-level callback registration tests.
 ```
 
@@ -239,7 +239,7 @@ should be transparent: save → paste transcription → restore the
 original.
 
 ## Files Changed
-- Sources/MacParakeetCore/Services/Dictation/DictationService.swift
+- Sources/SottoCore/Services/Dictation/DictationService.swift
   (~18)
 ```
 
@@ -256,7 +256,7 @@ explicit so users know to fall back to Show Video.
 
 ## Subsystem READMEs
 
-Some folders under `Sources/MacParakeetCore/` carry a `README.md` that
+Some folders under `Sources/SottoCore/` carry a `README.md` that
 captures non-obvious rules (threading, ordering, retention) that
 aren't visible from grep. As of this writing: `Audio/`, `STT/`,
 `TextProcessing/`, `Database/`, `Licensing/`.

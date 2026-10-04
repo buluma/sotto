@@ -17,13 +17,13 @@ stated by the source and marked "unknown" when the source does not state them.
 The strongest offline diarization models with open weights are still the pyannote
 community-1 family (CC-BY-4.0) and DiariZen (CC BY-NC 4.0, not shippable). Nothing
 newer with open, commercial-use weights has displaced community-1 since September
-2025. The frontier that matters for MacParakeet moved in two other places:
+2025. The frontier that matters for Sotto moved in two other places:
 
 1. The pinned FluidAudio 0.15.4 offline pipeline carries three confirmed porting
    defects in its clustering stage (inverted AHC threshold, wrong speaker-count
    comparison, missing constrained assignment) plus a non-deterministic K-Means
    fallback. FluidAudio fixed all four in v0.15.5 (2026-07-07) and v0.15.6
-   (2026-08-19). MacParakeet ships every one of them today. This is the most likely
+   (2026-08-19). Sotto ships every one of them today. This is the most likely
    concrete cause of "results are not the best" and the cheapest fix.
 2. NVIDIA's Nemotron-3 Diarization preview (8-speaker Sortformer, offline preset)
    has a FluidAudio CoreML port with a reported AMI DER around 9.3, but its license
@@ -57,7 +57,7 @@ license permits production use. Details and the A/B design are in section 3.
   audio), per-segment confidence, and exclusive mode. pyannote's 2026-09-03 tutorial
   recommends starting at a matching threshold of 50/100 and tuning by observed
   false-unknown vs wrong-name outcomes; it publishes no accuracy figure.
-- Python only. Not an app dependency for MacParakeet (unchanged from the June doc).
+- Python only. Not an app dependency for Sotto (unchanged from the June doc).
 
 ### 2.2 FluidAudio: latest (v0.15.6, 2026-08-19) vs pinned 0.15.4 (2026-06-16)
 
@@ -102,7 +102,7 @@ DER at the shipped defaults (stepRatio 0.2, minSegmentDuration 1.0 s, RTFx 122) 
 13.89% at stepRatio 0.1 / minSegmentDuration 0 (RTFx 65); the PyTorch reference is
 "~11%" and the gap is attributed to fp16 on the Neural Engine. AMI SDM 16-meeting
 test set: 10.6% average DER, 12/16 correct speaker counts, RTFx about 70; collar and
-overlap handling are not stated for that table. MacParakeet's `DiarizationService`
+overlap handling are not stated for that table. Sotto's `DiarizationService`
 starts from `OfflineDiarizerConfig.default`, so the shipped app runs the faster,
 less accurate setting even in the async path.
 
@@ -144,13 +144,13 @@ less accurate setting even in the async path.
 - Weights are CC BY-NC 4.0; the April 2026 tutorial paper explains the restriction
   is inherited from RAMC, MSDWild, and DIHARD-3 training data. Code is MIT. No CoreML
   conversion exists on Hugging Face; community ONNX and MLX repos do. Not shippable
-  in MacParakeet; useful as the open-weights accuracy ceiling in a research harness.
+  in Sotto; useful as the open-weights accuracy ceiling in a research harness.
 
 ### 2.5 Apple Silicon ports: sherpa-onnx, senko, MLX, Argmax SpeakerKit, speech-swift, Apple SpeechAnalyzer
 
 - sherpa-onnx: pyannote segmentation-3.0 (not community-1) plus 3D-Speaker or NeMo
   embeddings, C API with Swift examples (`speaker-diarization.swift`). No accuracy
-  numbers published. Older segmentation model than what MacParakeet already runs.
+  numbers published. Older segmentation model than what Sotto already runs.
 - senko (MIT, Python, 3D-Speaker lineage): pyannote segmentation-3.0 or Silero VAD,
   CAM++ embeddings via CoreML on Mac, spectral or UMAP+HDBSCAN clustering. On the
   OpenBench protocol (collar 0, overlap scored) an M3 scores AMI-SDM 32.8, VoxConverse
@@ -258,7 +258,7 @@ different protocols are not comparable and are marked.
 \* Not comparable: AMI table run with `--threshold 0.7` under the inverted semantics,
 collar/overlap unstated. \*\* Not comparable: gated card, protocol not visible.
 
-## 3. Implications for MacParakeet
+## 3. Implications for Sotto
 
 ### 3.1 Stale claims in ADR-010 and the June frontier doc
 
@@ -300,7 +300,7 @@ while FluidAudio reports 13.9 to 15.1 on a friendlier protocol. It also reports 
 speaker-count accuracy on AMI-SDM. Risks: second Swift dependency overlapping
 FluidAudio's models, an undeclared license on the model repo, and Argmax's commercial
 Pro tier shaping the open package. Use it first as the reference arm of the A/B; adopt
-only if it wins on MacParakeet's own meeting corpus.
+only if it wins on Sotto's own meeting corpus.
 
 **3. Nemotron-3 Diarization via FluidAudio PR #883 (blocked, track).**
 Causal argument: an end-to-end 8-speaker Sortformer with reported AMI DER around
@@ -340,7 +340,7 @@ it beats C on the local set. Report the protocol beside every number.
 ## 4. Failure scenarios and uncertainty
 
 - The 0.15.4 defect story is confirmed in code and by FluidAudio's own PR, but the
-  size of the DER gain on MacParakeet's meeting audio is unmeasured. FluidAudio has
+  size of the DER gain on Sotto's meeting audio is unmeasured. FluidAudio has
   not yet republished its AMI table under the new semantics.
 - The FluidAudio AMI SDM 10.6 figure has no stated collar or overlap policy and was
   produced with a non-default threshold under inverted semantics; do not treat it as
@@ -356,7 +356,7 @@ it beats C on the local set. Report the protocol beside every number.
   Fa/Fb sweeps.
 - Two-channel echo suppression via "Me" centroid matching is a design inference
   from evidenced components, not an evidenced system. Post-AEC leakage levels in
-  MacParakeet's system track are unknown to this survey.
+  Sotto's system track are unknown to this survey.
 - LLM post-correction results are all from English telephone corpora with
   fine-tuned models; transfer to meetings and to Parakeet transcripts is unproven.
 - Gated or JS-rendered pages (NVIDIA cards, ScienceDirect, ACM) were read through
@@ -435,4 +435,4 @@ Target-speaker and channel priors
 
 Local
 - `spec/adr/010-speaker-diarization.md`, `docs/research/speaker-diarization-frontier-2026-06.md`
-- `Sources/MacParakeetCore/Services/Diarization/DiarizationService.swift` (config at line 205)
+- `Sources/SottoCore/Services/Diarization/DiarizationService.swift` (config at line 205)

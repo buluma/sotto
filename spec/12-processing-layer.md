@@ -4,7 +4,7 @@
 > Related: [spec/11-llm-integration.md](11-llm-integration.md) (LLM providers), [spec/13-agent-workflows.md](13-agent-workflows.md) (future workflows, agents, voice control), [ADR-011](adr/011-llm-cloud-and-local-providers.md) (cloud + local providers), [ADR-013](adr/013-prompt-library-multi-summary.md) (prompt library + multi-summary), [ADR-022](adr/022-transforms-system-wide-rewrite.md) (Transforms)
 > Triggered by: [GitHub issue #51](https://github.com/moona3k/macparakeet/issues/51), [VoiceInk PR #600](https://github.com/Beingpax/VoiceInk/pull/600) by @mitsuhiko
 
-This spec defines MacParakeet's current processing layer: the Prompt Library, multi-summary system, and the shared prompt-storage contract that productized Transforms use. Summary/result behavior remains the main focus here; ADR-022 owns the system-wide Transform interaction model. The persisted summary table is still named `summaries`; the Swift model is now `PromptResult`.
+This spec defines Sotto's current processing layer: the Prompt Library, multi-summary system, and the shared prompt-storage contract that productized Transforms use. Summary/result behavior remains the main focus here; ADR-022 owns the system-wide Transform interaction model. The persisted summary table is still named `summaries`; the Swift model is now `PromptResult`.
 
 > **2026-09-07 amendment — versioned prompts and transcription labels:** The
 > historical row shape and management sheet documented below describe the
@@ -104,7 +104,7 @@ The Prompt Library is intentionally general-purpose. This spec locks summary/res
 `Prompt.Category` currently supports:
 
 - `.result` — used by the summary pane today; stored as `"summary"` for compatibility (the former Swift name was `.summary`)
-- `.transform` — productized Transforms (ADR-022), managed by the Transforms tab and `macparakeet-cli transforms`
+- `.transform` — productized Transforms (ADR-022), managed by the Transforms tab and `sotto-cli transforms`
 
 Additional categories are future schema decisions and are not part of this spec.
 
@@ -160,7 +160,7 @@ public struct Prompt: Codable, Identifiable, Sendable {
     public var updatedAt: Date
     public var keyboardShortcut: String?  // transform-only encoded shortcut
     public var runningLabel: String?       // transform-only progress label
-    public var inferenceSettings: PromptInferenceSettings?  // result-only typed settings; nil = MacParakeet defaults
+    public var inferenceSettings: PromptInferenceSettings?  // result-only typed settings; nil = Sotto defaults
     public var includeMeetingNotes: Bool  // result-only automatic context opt-in; defaults false
 
     public enum Category: String, Codable, Sendable {
@@ -272,14 +272,14 @@ editing service. Collection membership is mutable organization metadata and
 can be managed through `prompts collections` and prompt collection flags
 without creating a version. Transform execution also uses saved settings. Repository writes and
 execution independently reject invalid numeric values. Blank settings inherit
-the current MacParakeet prompt-result and adapter defaults. See
+the current Sotto prompt-result and adapter defaults. See
 [spec/14-per-prompt-inference-settings.md](14-per-prompt-inference-settings.md).
 
 **Migration from existing data:** Existing `transcriptions.summary` values migrate into the `summaries` table with classic `Summary` prompt metadata. The legacy `transcriptions.summary` column is dropped by `v0.7.6-drop-legacy-transcription-summary`.
 
 ### Community Prompts
 
-The current implementation seeds built-in/community prompts from `Prompt.builtInPrompts()` in Swift. `Sources/MacParakeetCore/Resources/community-prompts.json` exists as a contribution/reference file, but it is not yet the runtime source of truth for prompt seeding.
+The current implementation seeds built-in/community prompts from `Prompt.builtInPrompts()` in Swift. `Sources/SottoCore/Resources/community-prompts.json` exists as a contribution/reference file, but it is not yet the runtime source of truth for prompt seeding.
 
 `Summary` is the auto-run default and the classic built-in fallback. The shipped built-in list is defined in code and currently includes `Summary`, `Action Items & Decisions`, `Chapter Breakdown`, `Study Guide`, `Blog Post`, and `What Stood Out`. The `PromptTemplateRenderer` still exposes `{{userNotes}}` and `{{transcript}}` for advanced custom prompts; no built-in references `{{userNotes}}` today (the "Memo-Steered Notes" built-in was reverted on 2026-05-02; see ADR-020). The implemented replacement is a separate `includeMeetingNotes` checkbox on every result prompt, default false; it does not restore or rewrite a built-in prompt.
 

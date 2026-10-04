@@ -5,7 +5,7 @@ Status: **read-only**. Companion to
 [2026-09-18-telemetry-user-landscape.md](./2026-09-18-telemetry-user-landscape.md)
 and the July setup audit
 [2026-07-04-onboarding-telemetry-review.md](../audits/2026-07-04-onboarding-telemetry-review.md).
-Sources: Cloudflare D1 `macparakeet-telemetry`
+Sources: Cloudflare D1 `sotto-telemetry`
 (`7372263e-6a0b-4c70-8188-8f1d6d16bf31`), live `GET /api/stats`
 (generated 2026-09-19T05:00:26Z), and current onboarding code
 (`OnboardingViewModel`, `OnboardingFlowView`). No production writes.
@@ -218,7 +218,7 @@ Current six-step contract (ADR-005): Welcome → Microphone →
 Accessibility → Hotkey → Speech Model → Ready.
 
 The Ready screen is a celebration, a tip list (hotkey / drop a file /
-Settings / meetings), and a primary button **“Open MacParakeet”** that
+Settings / meetings), and a primary button **“Open Sotto”** that
 writes `onboarding_completed` and opens the main window. It does not
 require, or even host, a real dictation.
 
@@ -275,7 +275,7 @@ hashes rotate daily. Any “churn” claim past T0 is a guess.
 Highest expected T0 lift. Attacks the 57% of September completers who
 never even `dictation_started` in that process.
 
-- Replace Ready’s tip list + “Open MacParakeet” as the default path.
+- Replace Ready’s tip list + “Open Sotto” as the default path.
 - Host a real in-window dictation (mic already granted, model already
   `.ready`). Primary CTA is “Try saying something.” Auto-complete
   onboarding on first `dictation_completed`.

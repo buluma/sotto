@@ -2,7 +2,7 @@ import hashlib,json,tempfile
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 root=Path(__file__).resolve().parents[2]
-out=Path(tempfile.mkdtemp(prefix='macparakeet-report-browser-focused-'))/'run-02'
+out=Path(tempfile.mkdtemp(prefix='sotto-report-browser-focused-'))/'run-02'
 out.mkdir(exist_ok=False)
 data=json.loads((root/'evidence.json').read_text())
 result={'assertions':[],'bounds':[],'errors':[],'http_requests':[],

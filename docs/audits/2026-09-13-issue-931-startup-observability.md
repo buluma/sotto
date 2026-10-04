@@ -170,7 +170,7 @@ with any terminal record and the meeting health summary. No terminal record
 means completion was not observed, not proof that the process is still hung.
 
 While it is still blocked, use Activity Monitor's **Sample Process** for
-MacParakeet to identify the native stack; review it locally for private paths
+Sotto to identify the native stack; review it locally for private paths
 before sharing. Logs can identify a pending call boundary; a native stack is
 needed to distinguish driver/HAL waits from an application lock cycle.
 Do not reset Core Audio, delete meeting artifacts, or orphan a replacement

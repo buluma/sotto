@@ -2,7 +2,7 @@
 
 Date: 2026-09-17. Local working note. Not a GitHub comment.
 
-Question: what is Superwhisper’s “streaming cursor with 1-character-at-a-time output,” and how can MacParakeet ship that as optional delight without slowing the default paste path or breaking dictation insertion?
+Question: what is Superwhisper’s “streaming cursor with 1-character-at-a-time output,” and how can Sotto ship that as optional delight without slowing the default paste path or breaking dictation insertion?
 
 ## What #449 actually asks for
 
@@ -10,17 +10,17 @@ Issue [#449](https://github.com/moona3k/macparakeet/issues/449) (2026-06-07, app
 
 > streaming cursor with 1-character-at-a-time output (from SuperWhisper). Cutesy and pointless but also kinda nice!!
 
-The maintainer asked for a Superwhisper screen recording. None arrived. The report is still specific enough to identify the feature: **the destination app’s insertion point racing through already-finished text**, not live ASR and not MacParakeet’s overlay preview.
+The maintainer asked for a Superwhisper screen recording. None arrived. The report is still specific enough to identify the feature: **the destination app’s insertion point racing through already-finished text**, not live ASR and not Sotto’s overlay preview.
 
 ## Superwhisper’s two insertion modes
 
-Superwhisper’s default is the same family as MacParakeet: record, then **paste** the finished string at the cursor. Their changelog documents an experimental alternative: **“Simulate output keystrokes instead of using copy/paste (only works for US QWERTY layout)”** ([Superwhisper changelog](https://superwhisper.com/changelog)).
+Superwhisper’s default is the same family as Sotto: record, then **paste** the finished string at the cursor. Their changelog documents an experimental alternative: **“Simulate output keystrokes instead of using copy/paste (only works for US QWERTY layout)”** ([Superwhisper changelog](https://superwhisper.com/changelog)).
 
 That keystroke path is the streaming cursor. Users describe the doubled-event bug as “pasting every letter individually” ([r/superwhisper, May 2026](https://www.reddit.com/r/superwhisper/comments/1th4pge/bug_text_is_pasted_twice_after_dictating/)). Community CGEvent typers (e.g. macrowhisper’s `typeText`) loop graphemes with ~10ms sleeps and `keyboardSetUnicodeString`.
 
 Live transcription (words appearing **while** you speak, on some Superwhisper models) is a different feature. #449’s “1-character-at-a-time output” is the post-ASR typewriter, not Parakeet live preview.
 
-## What MacParakeet does today
+## What Sotto does today
 
 Canonical insertion is documented in [spec/02-features.md](../../spec/02-features.md) and implemented by `ClipboardService.pasteText`:
 

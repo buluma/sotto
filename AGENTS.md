@@ -1,13 +1,18 @@
-# AGENTS.md -- MacParakeet
+# AGENTS.md -- Sotto
+
+This is a personal local fork. Do not publish, push, create public PRs, or
+configure upstream telemetry/auto-updates. Preserve original legal notices.
+Use manual source updates and local validation. Historical release statements
+refer to upstream, not a distributed Sotto build.
 
 > Canonical startup guide for coding agents working in this repo. Claude Code
 > also reads [`CLAUDE.md`](./CLAUDE.md), which is a small Claude-specific
-> overlay. Agents outside this repo that want to call `macparakeet-cli` should
+> overlay. Agents outside this repo that want to call `sotto-cli` should
 > start with [`integrations/README.md`](./integrations/README.md).
 
 ## Project Shape
 
-MacParakeet is a fast, private, local-first voice app for Apple Silicon Macs.
+Sotto is a fast, private, local-first voice app for Apple Silicon Macs.
 It ships three primary capture modes -- system-wide dictation, file/media URL
 transcription, and meeting recording -- plus Transforms for selected-text
 rewrites. Speech recognition runs locally by default through Parakeet via
@@ -16,8 +21,8 @@ engines.
 
 The repo contains two products:
 
-- `MacParakeet.app`: SwiftUI macOS app.
-- `macparakeet-cli`: public automation surface in `Sources/CLI/`; compatibility
+- `Sotto.app`: SwiftUI macOS app.
+- `sotto-cli`: public automation surface in `Sources/CLI/`; compatibility
   notes live in `Sources/CLI/CHANGELOG.md`.
 
 `main` is development. The notarized DMG is the user-facing stable channel.
@@ -39,8 +44,8 @@ scripts/dev/run_app.sh
 no-mistakes doctor
 no-mistakes init
 no-mistakes axi
-swift run macparakeet-cli --help
-swift run macparakeet-cli health
+swift run sotto-cli --help
+swift run sotto-cli health
 ```
 
 For a testable GUI build, use `scripts/dev/run_app.sh` instead of copying its
@@ -49,9 +54,9 @@ the `EquatableMacros` plugin, so Xcode builds must keep
 `-skipMacroValidation`; otherwise dependency resolution stops with
 `Macro “EquatableMacros” ... must be enabled before it can be used`. The dev
 script owns this flag. Do not install another Markdown renderer or edit the
-package checkout to work around the error. A `com.macparakeet.dev` bundle
+package checkout to work around the error. A `com.sotto.dev` bundle
 launched any other way (Finder, `open`, a relaunch) still keeps `AppPaths`
-storage (database, media, logs, models) under `MacParakeet-Dev`. Preferences
+storage (database, media, logs, models) under `Sotto-Dev`. Preferences
 and Keychain are still shared with the stable app. The script must confirm this worktree’s replaced dev executables have exited
 before it rebuilds or re-signs their bundle; preserve unrelated app instances.
 Re-signing a bundle in place while macOS is executing it can cause a delayed
@@ -88,9 +93,9 @@ This repo often has many parallel worktrees.
 
 - Swift package tools-version is 5.9; first-party code is kept Swift 6
   language-mode/concurrency clean.
-- `MacParakeetCore` owns shared logic and has no SwiftUI view ownership. Small
+- `SottoCore` owns shared logic and has no SwiftUI view ownership. Small
   AppKit-backed adapter services are allowed when Foundation has no equivalent.
-- `MacParakeetViewModels` contains `@Observable` view models that can be tested
+- `SottoViewModels` contains `@Observable` view models that can be tested
   without the GUI.
 - New I/O should use async/await. Avoid new completion-handler or Combine
   patterns.
@@ -99,7 +104,7 @@ This repo often has many parallel worktrees.
 - Keep `@MainActor` work short; move long-running I/O, model, process, and
   audio work off the actor, then hop back for UI state.
 - Database access uses GRDB repositories, roughly one repository per table.
-- UI buttons use `.parakeetAction(...)`; do not tint whole hosting roots coral.
+- UI buttons use `.sottoAction(...)`; do not tint whole hosting roots with the accent color.
 
 When editing a load-bearing Core subsystem, read its local README before code:
 `Audio/`, `STT/`, `TextProcessing/`, `Database/`, `Licensing/`, `Calendar/`,
@@ -114,7 +119,7 @@ and `Services/System/` currently have subsystem rules.
   outside explicit product recovery/discard flows.
 - Keep the product focused. Prefer reliable capture, recovery, durable local
   artifacts, polished daily workflows, and simple UX over feature sprawl.
-- North star ([ADR-027](./spec/adr/027-product-north-star.md)): MacParakeet is
+- North star ([ADR-027](./spec/adr/027-product-north-star.md)): Sotto is
   the private speech memory of your Mac. Features must capture speech better,
   make the local library more useful, or expose it safely to the user and
   their agents.
@@ -153,7 +158,7 @@ PRs, CI, local Greptile CLI review, and independent review until findings
 converge. Greptile CLI reviews committed branch changes only; uncommitted
 changes are ignored, so run it from the clean worktree/branch that owns the PR.
 
-MacParakeet adopts `no-mistakes` as the preferred gate for non-trivial
+Sotto adopts `no-mistakes` as the preferred gate for non-trivial
 agent-authored branches when it is installed. Initialize once per checkout with
 `no-mistakes init`; it adds the local `no-mistakes` remote and installs the
 user-level `/no-mistakes` skill for Claude Code and Codex. The committed

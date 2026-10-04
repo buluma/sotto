@@ -53,8 +53,8 @@ Tab bar inserted between header and pane content (`Transcript` default, `Ask`). 
 - The transcript body was kept inline in `MeetingRecordingPanelView.swift` rather than extracted into `LiveTranscriptPaneView.swift` for the same reason.
 
 Files actually touched:
-- `Sources/MacParakeetViewModels/MeetingRecordingPanelViewModel.swift` — added `LivePanelTab` enum, `selectedTab`, composed `chatViewModel`, `chatTranscript` projection.
-- `Sources/MacParakeet/Views/MeetingRecording/MeetingRecordingPanelView.swift` — inline tab bar + `paneContent` switch.
+- `Sources/SottoViewModels/MeetingRecordingPanelViewModel.swift` — added `LivePanelTab` enum, `selectedTab`, composed `chatViewModel`, `chatTranscript` projection.
+- `Sources/Sotto/Views/MeetingRecording/MeetingRecordingPanelView.swift` — inline tab bar + `paneContent` switch.
 
 ### Phase B — Live Insights service + pane ❌ dropped 2026-04-24
 
@@ -68,11 +68,11 @@ Introduces the `MeetingLiveInsightsService` actor, the viewmodel, and the render
 
 | File | Change |
 |------|--------|
-| `Sources/MacParakeetCore/MeetingRecording/MeetingLiveInsightsService.swift` *(new)* | Actor. Debounce (25s minimum interval, 50-word delta, 45s first-run floor). Uses `LLMService.generatePromptResultStream(transcript:systemPrompt:)`. Emits `AsyncStream<MeetingInsightsSnapshot>`. Exposes `update(...)`, `refreshNow()`, `finalize() async -> MeetingInsights`. |
-| `Sources/MacParakeetCore/MeetingRecording/MeetingInsights.swift` *(new)* | `MeetingInsights` (four optional section strings), `MeetingInsightsSnapshot`, parsing from the LLM response. |
-| `Sources/MacParakeetCore/MeetingRecording/MeetingInsightsPrompt.swift` *(new)* | Static built-in system prompt (returns fixed markdown sections). |
-| `Sources/MacParakeetViewModels/MeetingInsightsViewModel.swift` *(new)* | `@MainActor @Observable`. Subscribes to service. Exposes `snapshot`, `isRefreshing`, `hasLLM`, `providerDisplayName`, `refresh()`. |
-| `Sources/MacParakeetViewModels/MeetingRecordingPanelViewModel.swift` | Compose `insightsViewModel`. Expose to panel view. |
+| `Sources/SottoCore/MeetingRecording/MeetingLiveInsightsService.swift` *(new)* | Actor. Debounce (25s minimum interval, 50-word delta, 45s first-run floor). Uses `LLMService.generatePromptResultStream(transcript:systemPrompt:)`. Emits `AsyncStream<MeetingInsightsSnapshot>`. Exposes `update(...)`, `refreshNow()`, `finalize() async -> MeetingInsights`. |
+| `Sources/SottoCore/MeetingRecording/MeetingInsights.swift` *(new)* | `MeetingInsights` (four optional section strings), `MeetingInsightsSnapshot`, parsing from the LLM response. |
+| `Sources/SottoCore/MeetingRecording/MeetingInsightsPrompt.swift` *(new)* | Static built-in system prompt (returns fixed markdown sections). |
+| `Sources/SottoViewModels/MeetingInsightsViewModel.swift` *(new)* | `@MainActor @Observable`. Subscribes to service. Exposes `snapshot`, `isRefreshing`, `hasLLM`, `providerDisplayName`, `refresh()`. |
+| `Sources/SottoViewModels/MeetingRecordingPanelViewModel.swift` | Compose `insightsViewModel`. Expose to panel view. |
 (See above — original Phase B content lives in git history.)
 
 ### Phase C — Live Ask ✅ shipped 2026-04-24 (commit `e574135a` + polish `80317e70`)
@@ -96,29 +96,29 @@ What was deferred:
 
 ### Phase D — Calendar auto-start: notify-only (ADR-017 phase 1) ✅ shipped 2026-04-25
 
-Ported the four core files from Oatmeal (`MeetingMonitor`, `MeetingLinkParser`, `CalendarService`, `CalendarEvent` — GRDB stripped per ADR-017 §6), wired a notify-only `MeetingAutoStartCoordinator` with adaptive 60s/15s/5s polling + `.EKEventStoreChanged` observer + daily stale-id cleanup. Settings card (mode/lead/filter/per-calendar checkboxes/permission CTA) and skippable onboarding step both shipped. CLI surface (`macparakeet-cli calendar upcoming` + `health` extension) shipped alongside for headless verification by AI agents and CI. **Amendment:** the per-calendar include list (originally Phase 3) landed in Phase D — only ~30 lines and made onboarding feel finished.
+Ported the four core files from Oatmeal (`MeetingMonitor`, `MeetingLinkParser`, `CalendarService`, `CalendarEvent` — GRDB stripped per ADR-017 §6), wired a notify-only `MeetingAutoStartCoordinator` with adaptive 60s/15s/5s polling + `.EKEventStoreChanged` observer + daily stale-id cleanup. Settings card (mode/lead/filter/per-calendar checkboxes/permission CTA) and skippable onboarding step both shipped. CLI surface (`sotto-cli calendar upcoming` + `health` extension) shipped alongside for headless verification by AI agents and CI. **Amendment:** the per-calendar include list (originally Phase 3) landed in Phase D — only ~30 lines and made onboarding feel finished.
 
 **Original plan (kept for reference):**
 
 | File | Change |
 |------|--------|
-| `Sources/MacParakeetCore/Calendar/CalendarService.swift` *(new, ported)* | EventKit wrapper. Permission check + request, `fetchUpcomingEvents(withinDays:)`, `availableCalendars()`. Strip Oatmeal's telemetry category prefixes. |
-| `Sources/MacParakeetCore/Calendar/CalendarEvent.swift` *(new, ported)* | `CalendarEvent`, `EventParticipant`, `CalendarInfo` — plain `Sendable` structs, no GRDB. |
-| `Sources/MacParakeetCore/Calendar/MeetingLinkParser.swift` *(new, ported verbatim)* | Zoom/Meet/Teams/Webex/Around regex extractor. |
-| `Sources/MacParakeetCore/Calendar/MeetingMonitor.swift` *(new, ported verbatim)* | Pure state machine: `evaluate(events, now, config, activeRecording, dismissedIds, remindedIds, countdownShownIds) -> [MonitorEvent]`. |
-| `Sources/MacParakeetCore/Calendar/CalendarAutoStartMode.swift` *(new)* | `.off` / `.notify` / `.autoStart`. |
-| `Sources/MacParakeetCore/Calendar/MeetingTriggerFilter.swift` *(new)* | `.withLink` / `.withParticipants` / `.allEvents`. |
-| `Sources/MacParakeetViewModels/SettingsViewModel.swift` | New properties: `calendarAutoStartMode`, `calendarReminderMinutes`, `meetingTriggerFilter`, `calendarIncludedIdentifiers: Set<String>`. Persist via `UserDefaults` under a `CalendarAutoStart.*` namespace. `didSet` posts a new notification. |
-| `Sources/MacParakeetCore/AppNotifications.swift` | Add `macParakeetCalendarSettingsDidChange`. |
-| `Sources/MacParakeet/App/MeetingAutoStartCoordinator.swift` *(new)* | `@MainActor` class. 60s poll (5s near events). Subscribes to `.EKEventStoreChanged`. Calls `MeetingMonitor.evaluate`, fires `UNUserNotificationCenter` notifications for `.reminderDue`. Does **not** start recordings in this phase. Owned by `AppDelegate`, configured in `AppEnvironmentConfigurer`, observed via `AppSettingsObserverCoordinator`. |
-| `Sources/MacParakeet/Views/Settings/CalendarSettingsView.swift` *(new)* | Mode picker + reminder lead time picker + trigger filter picker + per-calendar checkboxes + permission CTA. |
-| `Sources/MacParakeet/Views/Settings/SettingsView.swift` | Mount `CalendarSettingsView` as a new section. |
-| `Sources/MacParakeet/Views/Onboarding/OnboardingCalendarView.swift` *(new)* | Explainer + "Grant Calendar access" button + "Skip" button. Sets `calendarAutoStartMode = .off` on skip. |
-| `Sources/MacParakeet/Views/Onboarding/OnboardingFlowView.swift` | Slot the new step after permissions, before model download. |
-| `Sources/MacParakeetCore/Services/TelemetryEvent.swift` | Add `.permissionGranted(permission: .calendar)`, `.permissionDenied(permission: .calendar)`, `.settingChanged(.calendarAutoStartMode)` etc. |
-| `../macparakeet-website/functions/api/telemetry.ts` | Mirror all new event names. |
-| `Tests/MacParakeetTests/Calendar/MeetingMonitorTests.swift` *(new)* | Ported from Oatmeal if available; otherwise write: reminder fires exactly once per event, auto-start window is T±30s, dismissed ids suppress further events, trigger filter correctness. |
-| `Tests/MacParakeetTests/Calendar/MeetingLinkParserTests.swift` *(new)* | Zoom/Meet/Teams URL extraction from location/notes/url fields. |
+| `Sources/SottoCore/Calendar/CalendarService.swift` *(new, ported)* | EventKit wrapper. Permission check + request, `fetchUpcomingEvents(withinDays:)`, `availableCalendars()`. Strip Oatmeal's telemetry category prefixes. |
+| `Sources/SottoCore/Calendar/CalendarEvent.swift` *(new, ported)* | `CalendarEvent`, `EventParticipant`, `CalendarInfo` — plain `Sendable` structs, no GRDB. |
+| `Sources/SottoCore/Calendar/MeetingLinkParser.swift` *(new, ported verbatim)* | Zoom/Meet/Teams/Webex/Around regex extractor. |
+| `Sources/SottoCore/Calendar/MeetingMonitor.swift` *(new, ported verbatim)* | Pure state machine: `evaluate(events, now, config, activeRecording, dismissedIds, remindedIds, countdownShownIds) -> [MonitorEvent]`. |
+| `Sources/SottoCore/Calendar/CalendarAutoStartMode.swift` *(new)* | `.off` / `.notify` / `.autoStart`. |
+| `Sources/SottoCore/Calendar/MeetingTriggerFilter.swift` *(new)* | `.withLink` / `.withParticipants` / `.allEvents`. |
+| `Sources/SottoViewModels/SettingsViewModel.swift` | New properties: `calendarAutoStartMode`, `calendarReminderMinutes`, `meetingTriggerFilter`, `calendarIncludedIdentifiers: Set<String>`. Persist via `UserDefaults` under a `CalendarAutoStart.*` namespace. `didSet` posts a new notification. |
+| `Sources/SottoCore/AppNotifications.swift` | Add `sottoCalendarSettingsDidChange`. |
+| `Sources/Sotto/App/MeetingAutoStartCoordinator.swift` *(new)* | `@MainActor` class. 60s poll (5s near events). Subscribes to `.EKEventStoreChanged`. Calls `MeetingMonitor.evaluate`, fires `UNUserNotificationCenter` notifications for `.reminderDue`. Does **not** start recordings in this phase. Owned by `AppDelegate`, configured in `AppEnvironmentConfigurer`, observed via `AppSettingsObserverCoordinator`. |
+| `Sources/Sotto/Views/Settings/CalendarSettingsView.swift` *(new)* | Mode picker + reminder lead time picker + trigger filter picker + per-calendar checkboxes + permission CTA. |
+| `Sources/Sotto/Views/Settings/SettingsView.swift` | Mount `CalendarSettingsView` as a new section. |
+| `Sources/Sotto/Views/Onboarding/OnboardingCalendarView.swift` *(new)* | Explainer + "Grant Calendar access" button + "Skip" button. Sets `calendarAutoStartMode = .off` on skip. |
+| `Sources/Sotto/Views/Onboarding/OnboardingFlowView.swift` | Slot the new step after permissions, before model download. |
+| `Sources/SottoCore/Services/TelemetryEvent.swift` | Add `.permissionGranted(permission: .calendar)`, `.permissionDenied(permission: .calendar)`, `.settingChanged(.calendarAutoStartMode)` etc. |
+| `../sotto-website/functions/api/telemetry.ts` | Mirror all new event names. |
+| `Tests/SottoTests/Calendar/MeetingMonitorTests.swift` *(new)* | Ported from Oatmeal if available; otherwise write: reminder fires exactly once per event, auto-start window is T±30s, dismissed ids suppress further events, trigger filter correctness. |
+| `Tests/SottoTests/Calendar/MeetingLinkParserTests.swift` *(new)* | Zoom/Meet/Teams URL extraction from location/notes/url fields. |
 
 **Ship criteria:** User grants Calendar permission through onboarding or Settings. At T-5min of a calendar event with a video link, a macOS notification appears. `.autoStart` mode is exposed in the UI but is a no-op (shows a "Coming soon" hint if selected, or clamp the picker to not expose it yet — plan says clamp).
 
@@ -132,14 +132,14 @@ Add the countdown toast and the actual recording triggers.
 
 | File | Change |
 |------|--------|
-| `Sources/MacParakeet/Views/MeetingRecording/MeetingCountdownToastController.swift` *(new)* | `NSPanel` subclass via `KeylessPanel`. 5-second countdown with cancel button. Public `show(title:subtitle:onConfirm:onCancel:)`. |
-| `Sources/MacParakeet/Views/MeetingRecording/MeetingCountdownToastView.swift` *(new)* | SwiftUI view for the toast body. Fills a progress bar over 5s. |
-| `Sources/MacParakeet/App/MeetingAutoStartCoordinator.swift` | Handle `.autoStartDue` → show countdown toast → on confirm, call `MeetingRecordingFlowCoordinator.startRecording(triggeredBy: .calendar(event))`. Respect `activeRecording` — do not fire a second start if manual start already took. Calendar-driven stop is removed. |
-| `Sources/MacParakeet/App/MeetingRecordingFlowCoordinator.swift` | Accept an optional `triggeredBy: MeetingRecordingTrigger` parameter (`.manual` / `.hotkey` / `.calendar(CalendarEvent)`). Stash it on the session so title defaults use the calendar event title. |
-| `Sources/MacParakeet/Views/Settings/CalendarSettingsView.swift` | Unclamp `.autoStart` option. The original auto-stop toggle from this phase was later removed by the ADR-017 amendment. |
-| `Sources/MacParakeetCore/Services/TelemetryEvent.swift` | Add `.calendarReminderShown(mode:leadMinutes:hasMeetUrl:)`, `.calendarAutoStartTriggered(leadSeconds:hasMeetUrl:)`, `.calendarAutoStartCancelled(reason:)`, `.calendarAutoStartFailed(reason:)`, `.meetingRecordingStarted(trigger:)` (if not already present). |
-| `../macparakeet-website/functions/api/telemetry.ts` | Mirror. |
-| `Tests/MacParakeetTests/App/MeetingAutoStartCoordinatorTests.swift` *(new)* | Countdown cancel does not start recording. Active recording suppresses subsequent `.autoStartDue` for the same event. Failed starts emit `calendar_auto_start_failed`. |
+| `Sources/Sotto/Views/MeetingRecording/MeetingCountdownToastController.swift` *(new)* | `NSPanel` subclass via `KeylessPanel`. 5-second countdown with cancel button. Public `show(title:subtitle:onConfirm:onCancel:)`. |
+| `Sources/Sotto/Views/MeetingRecording/MeetingCountdownToastView.swift` *(new)* | SwiftUI view for the toast body. Fills a progress bar over 5s. |
+| `Sources/Sotto/App/MeetingAutoStartCoordinator.swift` | Handle `.autoStartDue` → show countdown toast → on confirm, call `MeetingRecordingFlowCoordinator.startRecording(triggeredBy: .calendar(event))`. Respect `activeRecording` — do not fire a second start if manual start already took. Calendar-driven stop is removed. |
+| `Sources/Sotto/App/MeetingRecordingFlowCoordinator.swift` | Accept an optional `triggeredBy: MeetingRecordingTrigger` parameter (`.manual` / `.hotkey` / `.calendar(CalendarEvent)`). Stash it on the session so title defaults use the calendar event title. |
+| `Sources/Sotto/Views/Settings/CalendarSettingsView.swift` | Unclamp `.autoStart` option. The original auto-stop toggle from this phase was later removed by the ADR-017 amendment. |
+| `Sources/SottoCore/Services/TelemetryEvent.swift` | Add `.calendarReminderShown(mode:leadMinutes:hasMeetUrl:)`, `.calendarAutoStartTriggered(leadSeconds:hasMeetUrl:)`, `.calendarAutoStartCancelled(reason:)`, `.calendarAutoStartFailed(reason:)`, `.meetingRecordingStarted(trigger:)` (if not already present). |
+| `../sotto-website/functions/api/telemetry.ts` | Mirror. |
+| `Tests/SottoTests/App/MeetingAutoStartCoordinatorTests.swift` *(new)* | Countdown cancel does not start recording. Active recording suppresses subsequent `.autoStartDue` for the same event. Failed starts emit `calendar_auto_start_failed`. |
 
 **Ship criteria:** End-to-end: calendar event at T-5min fires notification; at T-0 shows a 5s cancellable toast; on confirm (or timeout) starts meeting recording. Recording stop is manual.
 

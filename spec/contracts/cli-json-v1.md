@@ -1,10 +1,10 @@
 # CLI JSON v1
 
-> Status: ACTIVE - public automation contract for `macparakeet-cli`.
+> Status: ACTIVE - public automation contract for `sotto-cli`.
 
 ## Purpose
 
-`macparakeet-cli` is the stable automation surface for local scripts, coding
+`sotto-cli` is the stable automation surface for local scripts, coding
 agents, and external tools. JSON modes must remain machine-readable on stdout,
 with human progress/status kept off stdout.
 
@@ -28,7 +28,7 @@ still apply.
 - Local shell scripts and `jq` pipelines.
 - Coding-agent integrations.
 - Smoke and support workflows.
-- `integrations/README.md` users calling `macparakeet-cli` from outside this
+- `integrations/README.md` users calling `sotto-cli` from outside this
   repo.
 
 ## Stable Conventions
@@ -37,13 +37,13 @@ still apply.
   mode.
 - Export-style commands can also write JSON files. For those commands,
   `--format json` alone may write a file and print the path; use the command's
-  documented stdout mode from `macparakeet-cli spec --json` when a caller needs
+  documented stdout mode from `sotto-cli spec --json` when a caller needs
   parseable JSON on stdout. For `meetings export`, that mode is
   `--stdout --format json`.
 - Human progress/status is written to stderr.
 - JSON uses ISO-8601 dates, sorted keys, and pretty printing through the shared
   encoder.
-- `macparakeet-cli spec --json` is the installed binary's machine-readable
+- `sotto-cli spec --json` is the installed binary's machine-readable
   command catalog, with `cliVersion`, per-command `readOnly`/`jsonMode`,
   arguments, options, output summaries, and supported config keys. It is not
   a JSON Schema for each payload or a side-effect sandbox. Family-level
@@ -425,7 +425,7 @@ still apply.
   `vocab words list` support text is not a JSON contract.
 - Destructive local mutators that advertise `--json` return a single success
   object with `ok: true` plus affected IDs, counts, or model/cache names. Use
-  `macparakeet-cli spec --json` for each command's documented JSON mode and
+  `sotto-cli spec --json` for each command's documented JSON mode and
   output summary.
 - Prompt collection, prompt, and meeting-classification command names and option shapes are
   additive v1 surface: `prompts history`, version-aware `prompts show`,
@@ -508,7 +508,7 @@ preferences, and artifact mutations, use the
 
 ## Versioning And Compatibility
 
-The current CLI spec schema is `macparakeet.cli.spec` v1. Additive catalog
+The current CLI spec schema is `sotto.cli.spec` v1. Additive catalog
 fields are v1-compatible. Removing a stable catalog entry such as a command,
 option, or configuration key is a breaking CLI-surface change and requires a
 new CLI major even when the catalog envelope stays schema v1. Removing or

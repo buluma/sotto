@@ -10,7 +10,7 @@
 > over all recommendations below and the HTML. Historical audio measurements
 > remain evidence only for their stated fixtures, not production acceptance.
 
-Investigation of [MacParakeet issue #895](https://github.com/moona3k/macparakeet/issues/895). Prepared September 11, 2026. Research and an interactive HTML concept; no production implementation.
+Investigation of [Sotto issue #895](https://github.com/moona3k/macparakeet/issues/895). Prepared September 11, 2026. Research and an interactive HTML concept; no production implementation.
 
 For implementation, use the [agent handoff](../../plans/2026-09-11-issue-895-meeting-split-plan.md) with the current code and governing contracts. The HTML is reference material only. The user explicitly left the optimal UI/UX open to exploration and decision during implementation; no layout or container in this report is mandatory.
 

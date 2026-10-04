@@ -80,11 +80,11 @@ What did I request? What changed? Where did it stop? What can I fix?
 
 Show “verified” only when the recorded postcondition supports it. An Accessibility dispatch is not a completed user goal.
 
-After a turn, `/tmp/macparakeet-voice-control/latest.md` is the wide event (outcome, why, actor, route, last control). `latest.json` joins the steps. Local logs may include the instruction and control labels so a turn can be debugged. Copy diagnostics strips names. Field values, selected text, audio, screenshots, credentials, and remote bodies stay out. A later replay inspects the record; it does not re-execute on the live desktop.
+After a turn, `/tmp/sotto-voice-control/latest.md` is the wide event (outcome, why, actor, route, last control). `latest.json` joins the steps. Local logs may include the instruction and control labels so a turn can be debugged. Copy diagnostics strips names. Field values, selected text, audio, screenshots, credentials, and remote bodies stay out. A later replay inspects the record; it does not re-execute on the live desktop.
 
 ## Native Accessibility only
 
-Install MacParakeet, grant macOS permissions, enable Voice Control, speak to the app already in front of you. No extension, developer mode, native-host registration, CDP, special profile, or browser restart. Web content is a region of the Accessibility tree. An optional connected-tab DOM adapter may supply page candidates later; AX remains the fallback and the Flights path. The earlier extension experiment is [historical](historical-browser-extension/README.md).
+Install Sotto, grant macOS permissions, enable Voice Control, speak to the app already in front of you. No extension, developer mode, native-host registration, CDP, special profile, or browser restart. Web content is a region of the Accessibility tree. An optional connected-tab DOM adapter may supply page candidates later; AX remains the fallback and the Flights path. The earlier extension experiment is [historical](historical-browser-extension/README.md).
 
 ## What we will not build
 

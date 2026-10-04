@@ -86,7 +86,7 @@ The "Memo-Steered Notes" built-in prompt described in §5 has been removed from 
 
 **Notes consumption path going forward:** With the auto-run prompt removed, the user's typed notes still need a way out. Two surfaces, neither of which re-introduces the auto-run / source-leak problems above:
 
-1. **Meeting artifact folder.** Written into the meeting session folder alongside `meeting-playback.m4a` and `meeting-recording-metadata.json` at finalize, crash-recovery time, explicit `macparakeet-cli meetings artifact`, meeting-note flushes (navigation, AI actions and ordinary quit), CLI note writes, and prompt-result writes. Debounced saved-note edits update SQLite without rebuilding the whole artifact folder. Empty / whitespace-only / nil notes do not produce `notes.md`. The DB column `transcriptions.userNotes` is canonical; `MeetingArtifactStore` refreshes `manifest.json`, `transcript.json`, `notes.md`, `prompt-results.json`, and `prompt-results/*.md` from the DB so agents and users have a deterministic local file contract. Zero-UI consumption surface — user opens the meeting folder in Finder and reads what they typed in any editor.
+1. **Meeting artifact folder.** Written into the meeting session folder alongside `meeting-playback.m4a` and `meeting-recording-metadata.json` at finalize, crash-recovery time, explicit `sotto-cli meetings artifact`, meeting-note flushes (navigation, AI actions and ordinary quit), CLI note writes, and prompt-result writes. Debounced saved-note edits update SQLite without rebuilding the whole artifact folder. Empty / whitespace-only / nil notes do not produce `notes.md`. The DB column `transcriptions.userNotes` is canonical; `MeetingArtifactStore` refreshes `manifest.json`, `transcript.json`, `notes.md`, `prompt-results.json`, and `prompt-results/*.md` from the DB so agents and users have a deterministic local file contract. Zero-UI consumption surface — user opens the meeting folder in Finder and reads what they typed in any editor.
 2. **Chat threading.** `LLMService.chat / chatStream / chatDetailed` accept a `userNotes: String?` parameter. When the user has typed notes, the chat system prompt gains a `User's notes from the meeting:\n…` block before the transcript block. Chat is user-initiated (not auto-run) and the empty-notes case is byte-identical to today's chat — so the failure modes that drove the prompt revert do not apply. `TranscriptChatViewModel.bindUserNotesProvider(_:)` lets callers thread either a static value (saved-transcription detail page reads `Transcription.userNotes`) or a live closure (live in-meeting Ask reads `MeetingNotesViewModel.notesText` at chat-send time so every keystroke up to Send is visible to the LLM).
 
 The first surface gives the user a file they can read; the second gives the AI context the user already typed. Together they cover the value the reverted built-in prompt was trying to deliver, without the auto-run footguns. The final sentence of the original amendment treated saved-detail editing as future work; the 2026-09-05 amendment above supersedes that point and is implemented by the saved-meeting Notes tab.
@@ -486,7 +486,7 @@ If post-implementation the diff is genuinely too large to review in one sitting,
 
 - **Three tabs in a small floating panel risks feeling cramped.** Mitigated by Notes default, the `ViewThatFits` collapse strategy at narrow widths (§1), and the Ask-only streaming dot at wider widths. If Phase 2 usability testing shows users switching too frequently, the collapsible-transcript-ticker-inside-Notes pattern is a planned escape hatch with a defined trigger threshold (~3+ switches/min).
 - **No inline formatting during the meeting.** Plaintext + slash commands cover headings/labels via plaintext markers; bold/italic/lists are not available. Char's TipTap renders formatted blocks live; ours render raw `**Action:**` characters until post-meeting markdown rendering ships (Future Work). Users coming from Char will experience this as a visual regression. Acceptable v0.6 compromise; markdown rendering is one of the first follow-up PRs.
-- **Custom prompts do not gain `{{userNotes}}` automatically.** Users who cloned a built-in into a custom prompt for editing will continue to see their custom prompt produce notes-blind summaries. There is no migration path that touches custom prompts (by design -- we don't rewrite user content). Users who want notes-aware summaries can author a custom prompt that references `{{userNotes}}`; MacParakeet no longer ships a default memo-steered prompt.
+- **Custom prompts do not gain `{{userNotes}}` automatically.** Users who cloned a built-in into a custom prompt for editing will continue to see their custom prompt produce notes-blind summaries. There is no migration path that touches custom prompts (by design -- we don't rewrite user content). Users who want notes-aware summaries can author a custom prompt that references `{{userNotes}}`; Sotto no longer ships a default memo-steered prompt.
 - **One more thing to do during a meeting.** Whether to type notes is now a live decision. Placeholder copy nudges; no force.
 - **First slash menu in the codebase.** Local to the Notes pane, intentionally not generalized. Future menus (e.g., for the dictation overlay) would copy the pattern, not share infrastructure. NSPanel-specific implementation pitfalls flagged in §7.
 - **Memo-steered built-ins need source scoping before re-introduction.** The reverted "Memo-Steered Notes" prompt showed that a global auto-run prompt can leak meeting-specific assumptions into file and YouTube transcriptions. Current shipped behavior keeps `{{userNotes}}` available for custom prompts without changing default outputs.
@@ -501,7 +501,7 @@ If post-implementation the diff is genuinely too large to review in one sitting,
 
 ## Implementation
 
-### Core (MacParakeetCore)
+### Core (SottoCore)
 
 - Migration: add `userNotes TEXT` to `transcriptions` (nullable, default NULL)
 - `Transcription` model: add `userNotes: String?`
@@ -515,13 +515,13 @@ If post-implementation the diff is genuinely too large to review in one sitting,
 - `PromptResult` model: add `userNotesSnapshot: String?`
 - `PromptResultRepository`: read/write the snapshot column
 
-### ViewModels (MacParakeetViewModels)
+### ViewModels (SottoViewModels)
 
 - `MeetingNotesViewModel` *(new, `@MainActor @Observable`)*: owns `notesText: String` with `private(set)` external visibility (only `TextEditor` `$binding` mutates it). Debounced 250ms idle writes call `MeetingRecordingService.updateNotes(_:)` — never touches the lock file directly. Exposes `commit()` for finalize, `restore(_:)` for recovery. Soft-cap warning surfaces at 7,500 words.
 - `MeetingRecordingPanelViewModel` (extended): compose `notesViewModel`; `LivePanelTab` gains `.notes`; default selection becomes `.notes`; tab-state hint values exposed for view binding (used at default panel widths; collapsed at narrow widths per §1).
 - `PromptResultsViewModel`: read `userNotes` from row at generation; truncate to 8,000-word soft cap *for the prompt only* (full notes preserved); thread into `PromptTemplateRenderer`; record snapshot on resulting `PromptResult`; surface a "Notes truncated for summary" banner when truncation occurs.
 
-### View layer (MacParakeet)
+### View layer (Sotto)
 
 - `LiveNotesPaneView` *(new)*: SwiftUI `TextEditor`, placeholder, focus management, **in-view slash-command overlay** (NOT a SwiftUI `.popover`) anchored to the editor frame; key events intercepted via `onKeyPress` (drop to `NSTextView` wrapper if `onKeyPress` is insufficient inside `KeylessPanel`). Footer notice for soft-cap warning at 7,500 words.
 - `MeetingRecordingPanelView`: tab bar grows to three; ⌘3 binding; default selection logic; tab labels render with state hints at default widths and collapse to plain nouns + tooltips at the 360px minimum.
@@ -529,7 +529,7 @@ If post-implementation the diff is genuinely too large to review in one sitting,
 - `MeetingCountdownToastView` (extended): rich variant for calendar-triggered starts (title, attendees count, video link badge, description preview, `⌘1 = Notes` hint); manual variant unchanged.
 - `TranscriptResultView` (touched): summary detail view treats `userNotesSnapshot` NULL or empty identically — omits the "Notes used" section entirely.
 
-### Wiring (MacParakeet App)
+### Wiring (Sotto App)
 
 - `MeetingRecordingFlowCoordinator`: instantiate `MeetingNotesViewModel`, pass to panel VM, hook lock-file persistence, commit notes to row at finalize, restore on recovery
 - `AppEnvironmentConfigurer`: wire dependencies as above

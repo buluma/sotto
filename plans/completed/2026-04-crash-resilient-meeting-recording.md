@@ -6,7 +6,7 @@
 
 ## Problem
 
-`MeetingAudioStorageWriter` (`Sources/MacParakeetCore/Audio/MeetingAudioStorageWriter.swift`) writes audio with `AVAudioFile`, which only flushes the MP4 `moov` atom in `deinit`. Any crash, force-quit, kernel panic, or power loss mid-recording leaves audio bytes on disk but no decoder can find samples without the index. The user loses the entire session even when it's a 40-minute meeting that crashed at minute 39.
+`MeetingAudioStorageWriter` (`Sources/SottoCore/Audio/MeetingAudioStorageWriter.swift`) writes audio with `AVAudioFile`, which only flushes the MP4 `moov` atom in `deinit`. Any crash, force-quit, kernel panic, or power loss mid-recording leaves audio bytes on disk but no decoder can find samples without the index. The user loses the entire session even when it's a 40-minute meeting that crashed at minute 39.
 
 Three other artifacts are also clean-stop-only: `metadata.json`, `meeting.m4a` (the FFmpeg-mixed file), and the post-stop transcription pass. So the failure mode isn't just "audio is unplayable" — there's no detection that a recording was ever in progress, no UI surfacing the loss, and no recovery path.
 
@@ -36,7 +36,7 @@ This phase made interrupted recordings *visible* and recoverable. In this PR it 
 New file in the session folder, written **before** any audio is captured:
 
 ```
-~/Library/Application Support/MacParakeet/meeting-recordings/<uuid>/recording.lock
+~/Library/Application Support/Sotto/meeting-recordings/<uuid>/recording.lock
 ```
 
 JSON content (schema v1):
@@ -62,7 +62,7 @@ Field rationale:
 
 ## 1.2 New module
 
-New file: `Sources/MacParakeetCore/Services/MeetingRecordingLockFileStore.swift`
+New file: `Sources/SottoCore/Services/MeetingRecordingLockFileStore.swift`
 
 ```swift
 public struct MeetingRecordingLockFile: Codable, Sendable {
@@ -124,7 +124,7 @@ try lockFileStore.write(lock, folderURL: session.folderURL)
 
 ## 1.4 Recovery scan + UX
 
-New module: `Sources/MacParakeetCore/Services/MeetingRecordingRecoveryService.swift`
+New module: `Sources/SottoCore/Services/MeetingRecordingRecoveryService.swift`
 
 ```swift
 public protocol MeetingRecordingRecoveryServicing: Sendable {
@@ -150,7 +150,7 @@ UX hook in `AppDelegate` / `AppEnvironment`:
 
 ## 1.5 Tests (Phase 1)
 
-Unit (`Tests/MacParakeetTests/Services/MeetingRecordingLockFileStoreTests.swift`):
+Unit (`Tests/SottoTests/Services/MeetingRecordingLockFileStoreTests.swift`):
 
 - `testWriteThenRead_roundTrip` — schema v1 fields preserved.
 - `testReadFromMissingFolder_returnsNil`.
@@ -160,7 +160,7 @@ Unit (`Tests/MacParakeetTests/Services/MeetingRecordingLockFileStoreTests.swift`
 - `testDiscoverOrphansReturnsDeadOwners` — checker returns `false`; assert returned.
 - `testDiscoverOrphansHandlesUnknownSchemaVersion` — write v999, ensure scanner skips it without crashing.
 
-Integration (`Tests/MacParakeetTests/Services/MeetingRecordingRecoveryServiceTests.swift`):
+Integration (`Tests/SottoTests/Services/MeetingRecordingRecoveryServiceTests.swift`):
 
 - `testRecoverSynthesizesMetadataAndPersistsTranscription` — fake session folder with two short m4a fixtures + a lock file; assert `Transcription` is written with `recoveredFromCrash: true` flag.
 - `testRecoverDeletesLockOnSuccess`.
@@ -238,7 +238,7 @@ writer.startSession(atSourceTime: .zero)
 
 This is the most error-prone piece and gets its own unit test. New file:
 
-`Sources/MacParakeetCore/Audio/PCMBufferToSampleBuffer.swift`
+`Sources/SottoCore/Audio/PCMBufferToSampleBuffer.swift`
 
 ```swift
 import AVFAudio
@@ -323,20 +323,20 @@ func finalize() {
 
 Unit:
 
-- `Tests/MacParakeetTests/Audio/PCMBufferToSampleBufferTests.swift`:
+- `Tests/SottoTests/Audio/PCMBufferToSampleBufferTests.swift`:
     - `testRoundTripPreservesSamples` — sine wave in, sample buffer through `AVAssetWriter` → `AVAssetReader`, decoded values match within `1e-3` tolerance.
     - `testPresentationTimestampsAdvanceWithSampleCount`.
     - `testReturnsNilOnFormatMismatch` — pass a buffer whose format is incompatible with what we expect.
     - `testDeepCopiesBytes` — mutate the PCM buffer after conversion, confirm the sample buffer's bytes are unchanged.
 
-- `Tests/MacParakeetTests/Audio/MeetingAudioStorageWriterTests.swift`:
+- `Tests/SottoTests/Audio/MeetingAudioStorageWriterTests.swift`:
     - `testFinalizedFileLoadsAsAVAsset` — write 5 s, finalize, assert duration ≈ 5 s.
     - `testFragmentedFileContainsMovieFragments` — write 10 s of audio, finalize, and assert `moof` fragments exist.
     - `testWritesToBothMicAndSystemFiles` — basic two-stream sanity.
 
 Integration:
 
-- `Tests/MacParakeetTests/Services/MeetingRecordingCrashRecoveryTests.swift`:
+- `Tests/SottoTests/Services/MeetingRecordingCrashRecoveryTests.swift`:
     - `testKillNineMidRecordingProducesPlayableFiles` — spawn a child process via `Process()` that records 10 s, kill `-9` it after 5 s, in the parent process load the resulting `microphone.m4a` as `AVAsset` and assert duration ≥ 4 s. **This is the load-bearing integration test** — if it passes, the architectural goal is met.
 
 Manual smoke:
@@ -398,5 +398,5 @@ Resolved: the launch scan is gated behind onboarding completion. Lock files rema
 - Apple docs: [`AVAssetWriter`](https://developer.apple.com/documentation/avfoundation/avassetwriter)
 - Apple docs: [`AVAssetWriter.movieFragmentInterval`](https://developer.apple.com/documentation/avfoundation/avassetwriter/moviefragmentinterval)
 - Apple docs: [`AVAssetWriter.initialMovieFragmentInterval`](https://developer.apple.com/documentation/avfoundation/avassetwriter/initialmoviefragmentinterval)
-- Existing writer: `Sources/MacParakeetCore/Audio/MeetingAudioStorageWriter.swift`
-- Existing service: `Sources/MacParakeetCore/Services/MeetingRecordingService.swift`
+- Existing writer: `Sources/SottoCore/Audio/MeetingAudioStorageWriter.swift`
+- Existing service: `Sources/SottoCore/Services/MeetingRecordingService.swift`

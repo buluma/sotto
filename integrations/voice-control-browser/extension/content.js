@@ -1,6 +1,6 @@
 (() => {
-  if (globalThis.__macParakeetVoiceControlInstalled) return;
-  globalThis.__macParakeetVoiceControlInstalled = true;
+  if (globalThis.__sottoVoiceControlInstalled) return;
+  globalThis.__sottoVoiceControlInstalled = true;
   let contextID = null, documentID = null, snapshot = null, nextID = 0;
   const nodeIDs = new WeakMap();
   const idFor = node => { if (!nodeIDs.has(node)) nodeIDs.set(node, String(++nextID)); return nodeIDs.get(node); };

@@ -139,12 +139,12 @@ run_prepare() {
     CMAKE_LOG="$CMAKE_LOG" \
     FAKE_CMAKE_SRC="$FAKE_CMAKE_SRC" \
     FAKE_CURL_CONTENT="$FAKE_CURL_CONTENT" \
-    MACPARAKEET_MEETING_ECHO_ASSETS_DIR="$assets_dir" \
+    SOTTO_MEETING_ECHO_ASSETS_DIR="$assets_dir" \
     LOCALVQE_SOURCE_DIR="$source_dir" \
     LOCALVQE_REPO_URL="$UPSTREAM_REPO" \
     LOCALVQE_REF="$UPSTREAM_REF" \
     LOCALVQE_FETCH_REF="refs/heads/main" \
-    MACPARAKEET_MEETING_ECHO_MODEL_SHA256="$FAKE_MODEL_SHA256" \
+    SOTTO_MEETING_ECHO_MODEL_SHA256="$FAKE_MODEL_SHA256" \
     "$@" \
     "$PREPARE_SCRIPT" 2>&1
 }
@@ -169,7 +169,7 @@ assert_not_contains() {
 : >"$CMAKE_LOG"
 ASSETS_1="$TMP_DIR/assets-1"
 SRC_1="$TMP_DIR/src-1"
-out="$(run_prepare "$ASSETS_1" "$SRC_1" env MACPARAKEET_MEETING_ECHO_APP_MIN_MACOS_VERSION=15.5)"
+out="$(run_prepare "$ASSETS_1" "$SRC_1" env SOTTO_MEETING_ECHO_APP_MIN_MACOS_VERSION=15.5)"
 if [[ ! -f "$ASSETS_1/lib/liblocalvqe.dylib" ]]; then
   printf 'FAIL: first prepare run did not produce liblocalvqe.dylib\n%s\n' "$out" >&2
   exit 1
@@ -181,7 +181,7 @@ echo "PASS: cmake receives explicit CMAKE_OSX_DEPLOYMENT_TARGET"
 
 # --- Re-running with identical inputs is a cache hit (no rebuild) ----------
 first_build_calls="$(grep -c -- '--build' "$CMAKE_LOG")"
-out="$(run_prepare "$ASSETS_1" "$SRC_1" env MACPARAKEET_MEETING_ECHO_APP_MIN_MACOS_VERSION=15.5)"
+out="$(run_prepare "$ASSETS_1" "$SRC_1" env SOTTO_MEETING_ECHO_APP_MIN_MACOS_VERSION=15.5)"
 second_build_calls="$(grep -c -- '--build' "$CMAKE_LOG")"
 if [[ "$second_build_calls" != "$first_build_calls" ]]; then
   printf 'FAIL: unchanged inputs should be a cache hit (no extra cmake --build calls)\n%s\n' "$out" >&2
@@ -198,7 +198,7 @@ clang -shared -o "$ASSETS_2/lib/liblocalvqe.dylib" "$FAKE_CMAKE_SRC" -mmacosx-ve
 printf 'repo=%s\nref=%s\nbuild_type=Release\nuniversal=0\n' "$UPSTREAM_REPO" "$UPSTREAM_REF" >"$ASSETS_2/lib/.localvqe-runtime.stamp"
 printf 'liblocalvqe.dylib\n' >"$ASSETS_2/lib/.localvqe-runtime.dylibs"
 : >"$CMAKE_LOG"
-out="$(run_prepare "$ASSETS_2" "$SRC_2" env MACPARAKEET_MEETING_ECHO_APP_MIN_MACOS_VERSION=14.2)"
+out="$(run_prepare "$ASSETS_2" "$SRC_2" env SOTTO_MEETING_ECHO_APP_MIN_MACOS_VERSION=14.2)"
 assert_not_contains "stale pre-fix stamp is not treated as current" "$out" "already present"
 assert_contains "stale pre-fix stamp triggers a real build" "$(cat "$CMAKE_LOG")" "-DCMAKE_OSX_DEPLOYMENT_TARGET=14.2"
 rebuilt_minos="$("$ROOT_DIR/scripts/dist/macho_min_version.sh" "$ASSETS_2/lib/liblocalvqe.dylib")"
@@ -211,7 +211,7 @@ SRC_3="$TMP_DIR/src-3"
 : >"$CMAKE_LOG"
 FAIL_MARKER="$TMP_DIR/fail-once-marker"
 rm -f "$FAIL_MARKER"
-out="$(run_prepare "$ASSETS_3" "$SRC_3" env MACPARAKEET_MEETING_ECHO_APP_MIN_MACOS_VERSION=14.2 LOCALVQE_CMAKE_BUILD_JOBS=4 FAKE_CMAKE_FAIL_ONCE_MARKER="$FAIL_MARKER")"
+out="$(run_prepare "$ASSETS_3" "$SRC_3" env SOTTO_MEETING_ECHO_APP_MIN_MACOS_VERSION=14.2 LOCALVQE_CMAKE_BUILD_JOBS=4 FAKE_CMAKE_FAIL_ONCE_MARKER="$FAIL_MARKER")"
 assert_contains "parallel failure is retried at -j1" "$out" "retrying once with LOCALVQE_CMAKE_BUILD_JOBS=1"
 if [[ ! -f "$ASSETS_3/lib/liblocalvqe.dylib" ]]; then
   printf 'FAIL: retried build did not eventually produce liblocalvqe.dylib\n%s\n' "$out" >&2
@@ -234,8 +234,8 @@ assert_fail_contains_no_tools() {
 assert_fail_contains_no_tools \
   "malformed app minimum is rejected" \
   "must be a macOS version like 14.2" \
-  MACPARAKEET_MEETING_ECHO_APP_MIN_MACOS_VERSION=not-a-version \
-  MACPARAKEET_MEETING_ECHO_ASSETS_DIR="$TMP_DIR/assets-reject-4" LOCALVQE_SOURCE_DIR="$TMP_DIR/src-reject-4"
+  SOTTO_MEETING_ECHO_APP_MIN_MACOS_VERSION=not-a-version \
+  SOTTO_MEETING_ECHO_ASSETS_DIR="$TMP_DIR/assets-reject-4" LOCALVQE_SOURCE_DIR="$TMP_DIR/src-reject-4"
 
 echo "PASS: a malformed app minimum is rejected before tool use"
 

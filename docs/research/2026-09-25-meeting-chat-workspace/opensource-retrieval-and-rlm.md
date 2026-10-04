@@ -1,6 +1,6 @@
 # Open-source patterns: scoped retrieval, agents, and RLM
 
-Date: 2026-09-25. Research for MacParakeet's proposed multi-meeting Ask workspace; no implementation commitment.
+Date: 2026-09-25. Research for Sotto's proposed multi-meeting Ask workspace; no implementation commitment.
 
 ## Recommendation
 
@@ -26,7 +26,7 @@ The chat loop runs a bounded number of model cycles, accounts for tool tokens, t
 
 **Borrow.** Freeze selected meeting IDs and transcript revisions in a request-owned scope. Every search, passage read, summary read, and follow-up must take that scope from the application. Define empty selection deliberately. Keep citation handles in application-owned records, and expand adjacent passages when interpretation needs surrounding conversation.
 
-**Do not infer or copy wholesale.** Onyx's filters represent a large server product with enterprise connectors and multiple modes. They are not proof that arbitrary per-meeting selection is enforced across all its paths. MacParakeet needs a simpler scope contract with no mode-specific escape from the user's selected meetings. No Onyx UI behavior or full index implementation was exercised here.
+**Do not infer or copy wholesale.** Onyx's filters represent a large server product with enterprise connectors and multiple modes. They are not proof that arbitrary per-meeting selection is enforced across all its paths. Sotto needs a simpler scope contract with no mode-specific escape from the user's selected meetings. No Onyx UI behavior or full index implementation was exercised here.
 
 ## AnythingLLM: a useful workspace and capability reference
 
@@ -34,7 +34,7 @@ The chat loop runs a bounded number of model cycles, accounts for tool tokens, t
 
 Agent tools go beyond this initial retrieval. `memory.search` searches the invocation workspace, adds returned sources to the citation buffer, and returns passages to the model. Its no-result response suggests web search, and the same plugin can store new memory. Those are upstream product choices, not suitable defaults for a strictly curated, read-only meeting question. [Memory plugin](https://github.com/Mintplex-Labs/anything-llm/blob/1f20188bd3c2c6e44bc132cc4a0777b1bf23708a/server/utils/agents/aibitat/plugins/memory.js).
 
-The document summarizer lists documents using the invocation's workspace ID, resolves a requested filename against that list, loads the document, and registers a citation. It returns full text if it fits the model context; otherwise its helper walks token-bounded sections and accumulates key points with cancellation support. This offers both targeted retrieval and a broader document-reading operation. Filename matching alone would be unsuitable for repeated meetings with identical names: MacParakeet should expose stable IDs with dates. [Document summarizer](https://github.com/Mintplex-Labs/anything-llm/blob/1f20188bd3c2c6e44bc132cc4a0777b1bf23708a/server/utils/agents/aibitat/plugins/summarize.js), [long-document helper](https://github.com/Mintplex-Labs/anything-llm/blob/1f20188bd3c2c6e44bc132cc4a0777b1bf23708a/server/utils/agents/aibitat/utils/summarize.js).
+The document summarizer lists documents using the invocation's workspace ID, resolves a requested filename against that list, loads the document, and registers a citation. It returns full text if it fits the model context; otherwise its helper walks token-bounded sections and accumulates key points with cancellation support. This offers both targeted retrieval and a broader document-reading operation. Filename matching alone would be unsuitable for repeated meetings with identical names: Sotto should expose stable IDs with dates. [Document summarizer](https://github.com/Mintplex-Labs/anything-llm/blob/1f20188bd3c2c6e44bc132cc4a0777b1bf23708a/server/utils/agents/aibitat/plugins/summarize.js), [long-document helper](https://github.com/Mintplex-Labs/anything-llm/blob/1f20188bd3c2c6e44bc132cc4a0777b1bf23708a/server/utils/agents/aibitat/utils/summarize.js).
 
 The AIbitat harness owns round/tool limits, provider selection, a citation buffer, and an abort controller. It checks abort state after streaming so a truncated tool call is not executed, and invokes the model again after tool results. Providers can use streaming or non-streaming execution. The Ollama adapter checks the model's native-tool capability and otherwise uses an `UnTooled` fallback; it also translates internal function history into provider-specific tool messages. This is strong evidence that model independence requires adapters and capability handling, not just a configurable model name. It does not prove fallback reliability on arbitrary local models. [Harness](https://github.com/Mintplex-Labs/anything-llm/blob/1f20188bd3c2c6e44bc132cc4a0777b1bf23708a/server/utils/agents/aibitat/index.js), [Ollama adapter](https://github.com/Mintplex-Labs/anything-llm/blob/1f20188bd3c2c6e44bc132cc4a0777b1bf23708a/server/utils/agents/aibitat/providers/ollama.js).
 
@@ -52,7 +52,7 @@ The local environment exposes corpus variables such as `context_0`, model-query 
 
 **Borrow experimentally.** A corpus outside the root model prompt, selective inspection, bounded subquestions, and explicit usage accounting could help exhaustive comparisons over many meetings. A benchmark should compare these against the simpler tool loop on the same corpus and models.
 
-**Do not adopt by default.** This library does not supply MacParakeet's meeting picker, transcript revision semantics, citation contract, or selected-source lifecycle. Persistent Python variables can retain removed material. Timeout checks between iterations are not proof that arbitrary generated code can be forcibly interrupted. Cost bounds depend on backend accounting. Any experiment needs a separate process/execution policy and application-owned evidence handles; Python strings alone are insufficient provenance.
+**Do not adopt by default.** This library does not supply Sotto's meeting picker, transcript revision semantics, citation contract, or selected-source lifecycle. Persistent Python variables can retain removed material. Timeout checks between iterations are not proof that arbitrary generated code can be forcibly interrupted. Cost bounds depend on backend accounting. Any experiment needs a separate process/execution policy and application-owned evidence handles; Python strings alone are insufficient provenance.
 
 ## License boundaries
 
@@ -62,7 +62,7 @@ These are direct readings of repository license files, not a complete dependency
 - **AnythingLLM:** root license is MIT, but the `open-computer` subtree carries AGPL-3.0. That subtree was not needed for the retrieved chat patterns. Check the exact files and dependencies before importing code. [Root license](https://github.com/Mintplex-Labs/anything-llm/blob/1f20188bd3c2c6e44bc132cc4a0777b1bf23708a/LICENSE), [open-computer license](https://github.com/Mintplex-Labs/anything-llm/blob/1f20188bd3c2c6e44bc132cc4a0777b1bf23708a/open-computer/LICENSE).
 - **RLM:** root license is MIT. This does not determine licenses or terms for optional environment providers, model services, or dependencies. [License](https://github.com/alexzhang13/rlm/blob/d04208afbad29ca675ab13478c40ee8bebc84bfe/LICENSE).
 
-## What model-agnostic should mean for MacParakeet
+## What model-agnostic should mean for Sotto
 
 The proposed contract should keep selected source IDs/revisions, evidence handles, conversation state, tool schemas, run budgets, and cancellation outside provider-specific messages. An adapter translates normalized model events into text deltas, complete tool calls, usage, completion, and errors. The application validates tool names/arguments and source scope before execution.
 

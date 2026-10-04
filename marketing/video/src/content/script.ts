@@ -1,5 +1,5 @@
 /**
- * The locked MacParakeet marketing script — single source of truth for every
+ * The locked Sotto marketing script — single source of truth for every
  * composition in this project.
  *
  * Human-readable spec: docs/marketing.md
@@ -24,7 +24,7 @@ export const SCRIPT = {
       title: 'Dictate anywhere',
       caption: 'Apple Silicon · local dictation · offline after setup',
       durationSec: 16,
-      vo: 'MacParakeet dictates anywhere on your Mac. Tap a hotkey, speak, the text appears. Speech recognition stays local and works offline after model setup.',
+      vo: 'Sotto dictates anywhere on your Mac. Tap a hotkey, speak, the text appears. Speech recognition stays local and works offline after model setup.',
       screencast: 'screencasts/dictation.mp4',
     },
     transcription: {
@@ -38,13 +38,13 @@ export const SCRIPT = {
       title: 'Record meetings, live notes, local transcription',
       caption: 'System audio + mic · Live notes · Local transcription',
       durationSec: 16,
-      vo: "And during a meeting, MacParakeet records both sides — system audio plus your mic — gives you a live notepad, and when you're done, hands you the transcript and the summary.",
+      vo: "And during a meeting, Sotto records both sides — system audio plus your mic — gives you a live notepad, and when you're done, hands you the transcript and the summary.",
       screencast: 'screencasts/meeting.mp4',
     },
   },
   bridges: {
     openingLine: 'Three things people use voice for on a Mac. Most apps do one.',
-    closingLine: 'Free. Open source. Built for Apple Silicon. MacParakeet.',
+    closingLine: 'Free. Open source. Built for Apple Silicon. Sotto.',
   },
 } as const;
 

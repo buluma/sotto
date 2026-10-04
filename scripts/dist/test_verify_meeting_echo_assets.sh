@@ -141,7 +141,7 @@ assert_fail_contains() {
 APP1="$(make_app "Fixture Exact")"
 make_dylib "$APP1/Contents/Frameworks/liblocalvqe.dylib" "arm64:14.2"
 add_fixture_model "$APP1"
-out="$(assert_pass "dylib minos equal to app minimum" "$APP1" env MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION=14.2)"
+out="$(assert_pass "dylib minos equal to app minimum" "$APP1" env SOTTO_MEETING_ECHO_MIN_MACOS_VERSION=14.2)"
 [[ "$out" == *"deployment targets verified against app minimum: 14.2"* ]] || {
   printf 'FAIL: expected deployment target success message\n%s\n' "$out" >&2
   exit 1
@@ -156,7 +156,7 @@ assert_fail_contains \
   "dylib above app minimum is rejected" \
   "$APP2" \
   "requires a newer macOS than the app supports" \
-  env MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION=14.2
+  env SOTTO_MEETING_ECHO_MIN_MACOS_VERSION=14.2
 echo "PASS: dylib above app minimum is rejected"
 
 # --- Universal dylib with mixed per-arch minimums: only the offending slice
@@ -168,12 +168,12 @@ assert_fail_contains \
   "universal dylib with one over-limit slice is rejected" \
   "$APP3" \
   "Architecture: x86_64" \
-  env MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION=14.2
+  env SOTTO_MEETING_ECHO_MIN_MACOS_VERSION=14.2
 
 APP3b="$(make_app "Fixture Universal OK")"
 make_dylib "$APP3b/Contents/Frameworks/liblocalvqe.dylib" "arm64:14.2" "x86_64:14.2"
 add_fixture_model "$APP3b"
-assert_pass "universal dylib with both slices at the limit passes" "$APP3b" env MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION=14.2 >/dev/null
+assert_pass "universal dylib with both slices at the limit passes" "$APP3b" env SOTTO_MEETING_ECHO_MIN_MACOS_VERSION=14.2 >/dev/null
 echo "PASS: universal dylibs are inspected per architecture slice"
 
 # --- Numeric comparison, not lexical: 14.10 dylib against 14.2 app minimum
@@ -185,7 +185,7 @@ assert_fail_contains \
   "numeric comparison rejects 14.10 against app minimum 14.2" \
   "$APP4" \
   "requires a newer macOS than the app supports" \
-  env MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION=14.2
+  env SOTTO_MEETING_ECHO_MIN_MACOS_VERSION=14.2
 echo "PASS: version comparison is numeric, not lexical"
 
 # --- Every bundled LocalVQE dependency is inspected, not just liblocalvqe ---
@@ -197,7 +197,7 @@ assert_fail_contains \
   "a bundled dependency other than liblocalvqe.dylib is also inspected" \
   "$APP5" \
   "libggml-cpu.dylib" \
-  env MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION=14.2
+  env SOTTO_MEETING_ECHO_MIN_MACOS_VERSION=14.2
 echo "PASS: every bundled LocalVQE dylib is inspected, not only liblocalvqe.dylib"
 
 # --- A hidden (dot-prefixed) bundled dependency is inspected too, not
@@ -210,7 +210,7 @@ assert_fail_contains \
   "a hidden dot-prefixed bundled dependency is also inspected" \
   "$APP5b" \
   ".libggml-hidden.dylib" \
-  env MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION=14.2
+  env SOTTO_MEETING_ECHO_MIN_MACOS_VERSION=14.2
 echo "PASS: hidden dot-prefixed bundled dylibs are inspected, not skipped"
 
 # --- Malformed/corrupt dylib (no parseable version) is rejected ------------
@@ -222,7 +222,7 @@ assert_fail_contains \
   "a corrupt/unparseable bundled dylib is rejected" \
   "$APP6" \
   "could not determine a minimum OS version" \
-  env MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION=14.2
+  env SOTTO_MEETING_ECHO_MIN_MACOS_VERSION=14.2
 echo "PASS: malformed/unparseable dylib version is rejected"
 
 # --- Expected minimum resolution: overrides can tighten the bundle ceiling;
@@ -237,14 +237,14 @@ assert_fail_contains \
   "override tightens a looser Info.plist ceiling" \
   "$APP7" \
   "requires a newer macOS than the app supports" \
-  env MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION=14.0
+  env SOTTO_MEETING_ECHO_MIN_MACOS_VERSION=14.0
 # An override may tighten the ceiling, but cannot weaken the bundle contract.
 write_info_plist_min_version "$APP7" "14.0"
 assert_fail_contains \
   "override cannot raise the ceiling above the advertised minimum" \
   "$APP7" \
   "requires a newer macOS than the app supports" \
-  env MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION=26.0
+  env SOTTO_MEETING_ECHO_MIN_MACOS_VERSION=26.0
 echo "PASS: explicit ceilings cannot weaken the bundle's advertised minimum"
 
 # An explicit ceiling cannot conceal invalid bundle metadata.
@@ -257,14 +257,14 @@ for invalid_min in invalid missing; do
     "override cannot hide an invalid or absent plist minimum" \
     "$APP7" \
     "bundle Info.plist must carry a valid LSMinimumSystemVersion" \
-    env MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION=26
+    env SOTTO_MEETING_ECHO_MIN_MACOS_VERSION=26
 done
 write_info_plist_min_version "$APP7" "14.2"
 assert_fail_contains \
   "invalid override cannot hide behind valid plist minimum" \
   "$APP7" \
-  "MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION must be a valid macOS version" \
-  env MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION=invalid
+  "SOTTO_MEETING_ECHO_MIN_MACOS_VERSION must be a valid macOS version" \
+  env SOTTO_MEETING_ECHO_MIN_MACOS_VERSION=invalid
 echo "PASS: existing plist and explicit override must each be valid"
 
 APP8="$(make_app "Fixture No Minimum")"
@@ -296,7 +296,7 @@ if ! restricted_shasum_out="$(PATH="$RESTRICTED_BIN" shasum -a 256 "$APP9/Conten
   exit 1
 fi
 FIXTURE_MODEL_SHA256="$(shasum -a 256 "$APP9/Contents/Resources/MeetingEchoSuppression/fixture-model.gguf" | awk '{print $1}')"
-if out="$(run_restricted env MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION=14.2 STRICT_MEETING_ECHO_ASSETS=1 MACPARAKEET_MEETING_ECHO_MODEL_SHA256="$FIXTURE_MODEL_SHA256")"; then
+if out="$(run_restricted env SOTTO_MEETING_ECHO_MIN_MACOS_VERSION=14.2 STRICT_MEETING_ECHO_ASSETS=1 SOTTO_MEETING_ECHO_MODEL_SHA256="$FIXTURE_MODEL_SHA256")"; then
   printf 'FAIL: strict mode should fail when otool/lipo are unavailable\n%s\n' "$out" >&2
   exit 1
 fi
@@ -306,7 +306,7 @@ fi
 }
 echo "PASS: strict mode rejects when otool/lipo are unavailable"
 
-if ! out="$(run_restricted env MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION=14.2 STRICT_MEETING_ECHO_ASSETS=0)"; then
+if ! out="$(run_restricted env SOTTO_MEETING_ECHO_MIN_MACOS_VERSION=14.2 STRICT_MEETING_ECHO_ASSETS=0)"; then
   printf 'FAIL: non-strict mode should tolerate missing otool/lipo\n%s\n' "$out" >&2
   exit 1
 fi
@@ -327,7 +327,7 @@ assert_fail_contains \
   "a symlinked bundled dylib above app minimum is still inspected and rejected" \
   "$APP11" \
   "libggml-symlinked.dylib" \
-  env MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION=14.2
+  env SOTTO_MEETING_ECHO_MIN_MACOS_VERSION=14.2
 echo "PASS: symlinked bundled dylibs are inspected like regular files"
 
 # A searchable but unreadable directory permits opening known assets while
@@ -335,7 +335,7 @@ echo "PASS: symlinked bundled dylibs are inspected like regular files"
 if [[ "$EUID" -ne 0 ]]; then
   chmod 111 "$APP11/Contents/Frameworks"
   inventory_status=0
-  inventory_output="$(run_verifier "$APP11" env MACPARAKEET_MEETING_ECHO_MIN_MACOS_VERSION=14.2)" || inventory_status=$?
+  inventory_output="$(run_verifier "$APP11" env SOTTO_MEETING_ECHO_MIN_MACOS_VERSION=14.2)" || inventory_status=$?
   chmod 755 "$APP11/Contents/Frameworks"
   if [[ "$inventory_status" -eq 0 || "$inventory_output" != *"could not enumerate bundled LocalVQE dylibs"* ]]; then
     printf 'FAIL: unreadable dylib inventory must fail explicitly\n%s\n' "$inventory_output" >&2

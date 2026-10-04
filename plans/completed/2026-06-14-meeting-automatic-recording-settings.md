@@ -96,10 +96,10 @@ information:
 
 ## Files
 
-- `Sources/MacParakeet/Views/Settings/SettingsView.swift` — reorder meeting card
+- `Sources/Sotto/Views/Settings/SettingsView.swift` — reorder meeting card
   body; replace `meetingCalendarSection` + standalone auto-stop row with
   `meetingAutomationSection`; reword stop toggle.
-- `Sources/MacParakeet/Views/Settings/CalendarSettingsView.swift` — adaptive
+- `Sources/Sotto/Views/Settings/CalendarSettingsView.swift` — adaptive
   start row replacing separate permission + mode rows; concise picker labels;
   a11y label; doc-comment refresh.
 - Docs: refresh `spec/04-ui-patterns.md` meeting-settings description if stale.

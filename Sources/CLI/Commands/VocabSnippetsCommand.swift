@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 struct VocabSnippetsCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(

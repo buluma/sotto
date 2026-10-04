@@ -124,7 +124,7 @@ hashes, eligible counts and transitions.
 
 ## Existing speaker-count slice
 
-Labeled public clips for checking whether MacParakeet honours Exact /
+Labeled public clips for checking whether Sotto honours Exact /
 `--speaker-count` / `--speaker-max`. Audio is **not** in git. Ground truth is
 RTTM speaker identity counts from [VoxConverse v0.3](https://github.com/joonson/voxconverse)
 (CC BY 4.0).
@@ -168,7 +168,7 @@ for the bind test.
 | Max-2 ceiling | `fyqoe`, `ledhe` | 3 | 4.8 min, 6.7 min |
 
 `rttm_speakers` is `unique(SPEAKER column 8)` in the v0.3 RTTM. That is the
-oracle count. Do not use MacParakeet library folders as labels. WAV duration
+oracle count. Do not use Sotto library folders as labels. WAV duration
 can exceed `rttm_end_s` by trailing silence (the Hugging Face test copies do);
 that does not change the speaker-count oracle.
 

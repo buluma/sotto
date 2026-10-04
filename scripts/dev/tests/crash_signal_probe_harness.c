@@ -1,6 +1,6 @@
 // Standalone child-process harness for CrashReporterSignalProbeTests. Compiled
 // (by that Swift test, at test time) directly against the production
-// Sources/MacParakeetObjCShims/MPKCrashSignalHandler.c and its header — this
+// Sources/SottoObjCShims/MPKCrashSignalHandler.c and its header — this
 // file does not reimplement any signal-handling logic itself. It only installs
 // the real handler with test-controlled metadata and then deliberately faults
 // or aborts, so the resulting on-disk report can be inspected by the test for

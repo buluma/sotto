@@ -1,0 +1,138 @@
+import Foundation
+import SottoViewModels
+
+@MainActor
+final class AppSettingsObserverCoordinator {
+    nonisolated static let settingsTabUserInfoKey = "settingsTab"
+
+    private let notificationCenter: NotificationCenter
+    private let onOpenOnboarding: () -> Void
+    private let onOpenSettings: (SettingsTab?) -> Void
+    private let onHotkeyTriggerChanged: () -> Void
+    private let onPushToTalkHotkeyTriggerChanged: () -> Void
+    private let onMeetingHotkeyTriggerChanged: () -> Void
+    private let onFileTranscriptionHotkeyTriggerChanged: () -> Void
+    private let onYouTubeTranscriptionHotkeyTriggerChanged: () -> Void
+    private let onDictationAIPolishHotkeyTriggerChanged: () -> Void
+    private let onAppearanceModeChanged: () -> Void
+    private let onMenuBarOnlyModeChanged: () -> Void
+    private let onMenuBarIconVisibilityChanged: () -> Void
+    private let onShowIdlePillChanged: () -> Void
+    private let onShowDiscoverChanged: () -> Void
+    private let onShowMeetingRecordingPillChanged: () -> Void
+    private let onInstantDictationChanged: () -> Void
+    private let onMicrophoneSelectionChanged: () -> Void
+    private let onMeetingAudioRetentionChanged: () -> Void
+
+    private var observerTokens: [NSObjectProtocol] = []
+
+    private static let plainChannels:
+        [(Notification.Name, @MainActor @Sendable (AppSettingsObserverCoordinator) -> Void)] = [
+            (.sottoHotkeyTriggerDidChange, { $0.onHotkeyTriggerChanged() }),
+            (.sottoPushToTalkHotkeyTriggerDidChange, { $0.onPushToTalkHotkeyTriggerChanged() }),
+            (.sottoMeetingHotkeyTriggerDidChange, { $0.onMeetingHotkeyTriggerChanged() }),
+            (.sottoFileTranscriptionHotkeyTriggerDidChange, { $0.onFileTranscriptionHotkeyTriggerChanged() }),
+            (.sottoYouTubeTranscriptionHotkeyTriggerDidChange, { $0.onYouTubeTranscriptionHotkeyTriggerChanged() }),
+            (.sottoDictationAIPolishHotkeyTriggerDidChange, { $0.onDictationAIPolishHotkeyTriggerChanged() }),
+            (.sottoAppearanceModeDidChange, { $0.onAppearanceModeChanged() }),
+            (.sottoMenuBarOnlyModeDidChange, { $0.onMenuBarOnlyModeChanged() }),
+            (.sottoMenuBarIconVisibilityDidChange, { $0.onMenuBarIconVisibilityChanged() }),
+            (.sottoShowIdlePillDidChange, { $0.onShowIdlePillChanged() }),
+            (.sottoShowMeetingRecordingPillDidChange, { $0.onShowMeetingRecordingPillChanged() }),
+            (.sottoInstantDictationDidChange, { $0.onInstantDictationChanged() }),
+            (.sottoMicrophoneSelectionDidChange, { $0.onMicrophoneSelectionChanged() }),
+            (.sottoMeetingAudioRetentionDidChange, { $0.onMeetingAudioRetentionChanged() }),
+        ]
+
+    init(
+        notificationCenter: NotificationCenter = .default,
+        onOpenOnboarding: @escaping () -> Void,
+        onOpenSettings: @escaping (SettingsTab?) -> Void,
+        onHotkeyTriggerChanged: @escaping () -> Void,
+        onPushToTalkHotkeyTriggerChanged: @escaping () -> Void,
+        onMeetingHotkeyTriggerChanged: @escaping () -> Void,
+        onFileTranscriptionHotkeyTriggerChanged: @escaping () -> Void,
+        onYouTubeTranscriptionHotkeyTriggerChanged: @escaping () -> Void,
+        onDictationAIPolishHotkeyTriggerChanged: @escaping () -> Void,
+        onAppearanceModeChanged: @escaping () -> Void,
+        onMenuBarOnlyModeChanged: @escaping () -> Void,
+        onMenuBarIconVisibilityChanged: @escaping () -> Void,
+        onShowIdlePillChanged: @escaping () -> Void,
+        onShowDiscoverChanged: @escaping () -> Void,
+        onShowMeetingRecordingPillChanged: @escaping () -> Void,
+        onInstantDictationChanged: @escaping () -> Void,
+        onMicrophoneSelectionChanged: @escaping () -> Void,
+        onMeetingAudioRetentionChanged: @escaping () -> Void
+    ) {
+        self.notificationCenter = notificationCenter
+        self.onOpenOnboarding = onOpenOnboarding
+        self.onOpenSettings = onOpenSettings
+        self.onHotkeyTriggerChanged = onHotkeyTriggerChanged
+        self.onPushToTalkHotkeyTriggerChanged = onPushToTalkHotkeyTriggerChanged
+        self.onMeetingHotkeyTriggerChanged = onMeetingHotkeyTriggerChanged
+        self.onFileTranscriptionHotkeyTriggerChanged = onFileTranscriptionHotkeyTriggerChanged
+        self.onYouTubeTranscriptionHotkeyTriggerChanged = onYouTubeTranscriptionHotkeyTriggerChanged
+        self.onDictationAIPolishHotkeyTriggerChanged = onDictationAIPolishHotkeyTriggerChanged
+        self.onAppearanceModeChanged = onAppearanceModeChanged
+        self.onMenuBarOnlyModeChanged = onMenuBarOnlyModeChanged
+        self.onMenuBarIconVisibilityChanged = onMenuBarIconVisibilityChanged
+        self.onShowIdlePillChanged = onShowIdlePillChanged
+        self.onShowDiscoverChanged = onShowDiscoverChanged
+        self.onShowMeetingRecordingPillChanged = onShowMeetingRecordingPillChanged
+        self.onInstantDictationChanged = onInstantDictationChanged
+        self.onMicrophoneSelectionChanged = onMicrophoneSelectionChanged
+        self.onMeetingAudioRetentionChanged = onMeetingAudioRetentionChanged
+    }
+
+    func startObserving() {
+        stopObserving()
+
+        observerTokens.append(notificationCenter.addObserver(
+            forName: .sottoOpenOnboarding, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.onOpenOnboarding() }
+        })
+
+        observerTokens.append(notificationCenter.addObserver(
+            forName: .sottoOpenSettings, object: nil, queue: .main
+        ) { [weak self] notification in
+            let tab = Self.settingsTab(from: notification)
+            Task { @MainActor in self?.onOpenSettings(tab) }
+        })
+
+        // Unlike the other settings, Discover opt-out must cancel work before
+        // a rapid re-enable or an already-ready feed completion can run.
+        // NotificationCenter delivers this observer on the main queue.
+        observerTokens.append(notificationCenter.addObserver(
+            forName: .sottoShowDiscoverDidChange, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.onShowDiscoverChanged()
+            }
+        })
+
+        for (name, invoke) in Self.plainChannels {
+            let token = notificationCenter.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                Task { @MainActor in
+                    guard let self else { return }
+                    invoke(self)
+                }
+            }
+            observerTokens.append(token)
+        }
+    }
+
+    nonisolated private static func settingsTab(from notification: Notification) -> SettingsTab? {
+        guard let raw = notification.userInfo?[settingsTabUserInfoKey] as? String else {
+            return nil
+        }
+        return SettingsTab(rawValue: raw)
+    }
+
+    func stopObserving() {
+        for token in observerTokens {
+            notificationCenter.removeObserver(token)
+        }
+        observerTokens.removeAll()
+    }
+}

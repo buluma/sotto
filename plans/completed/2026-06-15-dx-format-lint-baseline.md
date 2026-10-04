@@ -104,7 +104,7 @@ exit on failure.
 ## Git workflow
 
 - Branch: `advisor/dx-format-lint-baseline` off `origin/main`
-  (`git fetch origin && git worktree add -b advisor/dx-format-lint-baseline ../macparakeet-worktrees/dx-format-lint-baseline origin/main`).
+  (`git fetch origin && git worktree add -b advisor/dx-format-lint-baseline ../sotto-worktrees/dx-format-lint-baseline origin/main`).
 - Commit message style: this repo uses rich messages for significant changes
   (`docs/commit-guidelines.md`), but a tooling-only change may use a concise
   subject + 2–3 bullet body. Example subject: `DX: add swift-format config, .editorconfig, and dev inner-loop scripts`.
@@ -164,7 +164,7 @@ indent and ~100–120 col lines:
 }
 ```
 
-**Verify**: `xcrun swift-format lint --configuration .swift-format Sources/MacParakeetCore/AppNotifications.swift`
+**Verify**: `xcrun swift-format lint --configuration .swift-format Sources/SottoCore/AppNotifications.swift`
 → runs and exits (warnings about that file are acceptable; the point is the
 config parses and the tool runs).
 

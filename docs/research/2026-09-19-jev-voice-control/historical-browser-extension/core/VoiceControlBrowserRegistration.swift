@@ -30,7 +30,7 @@ public struct VoiceControlBrowserRegistration: Sendable {
             case .invalidExtensionID:
                 return "Enter the extension's exact 32-letter ID from your browser's extensions page."
             case .missingHost:
-                return "This app does not contain its browser helper. Install a complete MacParakeet build."
+                return "This app does not contain its browser helper. Install a complete Sotto build."
             case .insecurePath:
                 return
                     "Browser setup found an unexpected file owner, permission, or symbolic link. Existing files were preserved."
@@ -51,7 +51,7 @@ public struct VoiceControlBrowserRegistration: Sendable {
 
     public static func bundledHostURL(bundle: Bundle = .main) -> URL? {
         guard let executable = bundle.executableURL else { return nil }
-        let host = executable.deletingLastPathComponent().appendingPathComponent("macparakeet-browser-host")
+        let host = executable.deletingLastPathComponent().appendingPathComponent("sotto-browser-host")
         return FileManager.default.isExecutableFile(atPath: host.path) ? host : nil
     }
 
@@ -93,7 +93,7 @@ public struct VoiceControlBrowserRegistration: Sendable {
             throw RegistrationError.missingHost
         }
         let support = homeDirectory.appendingPathComponent("Library/Application Support", isDirectory: true)
-        let directory = support.appendingPathComponent("MacParakeet/VoiceControlBrowser", isDirectory: true)
+        let directory = support.appendingPathComponent("Sotto/VoiceControlBrowser", isDirectory: true)
         try ensureDirectory(directory, privateMode: true)
         let lockURL = directory.appendingPathComponent("bridge.lock")
         let lock = Darwin.open(lockURL.path, O_RDWR | O_CREAT | O_NOFOLLOW, 0o600)
@@ -124,11 +124,11 @@ public struct VoiceControlBrowserRegistration: Sendable {
         let manifestDirectory = support.appendingPathComponent(browser.supportPath, isDirectory: true)
             .appendingPathComponent("NativeMessagingHosts", isDirectory: true)
         try ensureDirectory(manifestDirectory, privateMode: false)
-        let manifestURL = manifestDirectory.appendingPathComponent("com.macparakeet.voice_control.json")
+        let manifestURL = manifestDirectory.appendingPathComponent("com.sotto.voice_control.json")
         let oldManifest = try readOwnedRegularFile(manifestURL, privateMode: false)
         if let oldManifest {
             guard let decoded = try? JSONDecoder().decode(Manifest.self, from: oldManifest),
-                decoded.name == "com.macparakeet.voice_control", decoded.type == "stdio",
+                decoded.name == "com.sotto.voice_control", decoded.type == "stdio",
                 decoded.allowed_origins == [existing?.extensionOrigin ?? origin]
             else {
                 throw RegistrationError.conflictingManifest
@@ -144,8 +144,8 @@ public struct VoiceControlBrowserRegistration: Sendable {
         let configData = try encoder.encode(configuration)
         let manifestData = try encoder.encode(
             Manifest(
-                name: "com.macparakeet.voice_control",
-                description: "MacParakeet Voice Control", path: hostURL.standardizedFileURL.path,
+                name: "com.sotto.voice_control",
+                description: "Sotto Voice Control", path: hostURL.standardizedFileURL.path,
                 type: "stdio", allowed_origins: [origin]))
         // Stage both files before publishing either. The advisory lock also excludes the active bridge.
         let stagedConfig = try stage(configData, beside: configURL)

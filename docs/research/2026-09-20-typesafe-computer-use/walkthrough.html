@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Jev, computer use, and what MacParakeet is proposing — developer walkthrough</title>
+<title>Jev, computer use, and what Sotto is proposing — developer walkthrough</title>
 <style>
   :root{--bg:#0f1115;--panel:#171a21;--ink:#e6e8ee;--muted:#9aa3b2;--line:#2a2f3a;--acc:#f28c6b;--blue:#6ea8fe;--green:#5ed3a0;--yellow:#f3d26b;--red:#ff7b7b;--mono:ui-monospace,SFMono-Regular,Menlo,monospace}
   *{box-sizing:border-box}
@@ -59,7 +59,7 @@
 <body>
 <main>
 
-<h1>Jev, computer use, and what MacParakeet is proposing</h1>
+<h1>Jev, computer use, and what Sotto is proposing</h1>
 <p class="sub">Developer walkthrough · 2026-09-20 · companion to <code>docs/research/2026-09-20-typesafe-computer-use/README.md</code></p>
 
 <div class="card tldr">
@@ -276,7 +276,7 @@ stop if kind in {done, none} or confidence &lt; 0.4</code></pre></div>
 <!-- ============================================================ -->
 <h2 id="space">4½. The real work: mapping the action space</h2>
 
-<p>Your guess is correct. Jev can only pick from options it is handed, and it can only pick well if every option (a) is something the host can execute in one step, (b) is distinct from every other option, and (c) is legal right now. So the bulk of the code in both systems is a <b>compiler from screen facts to a closed, legal, executable option set</b>. The Jev call is a few lines. Below is how MacParakeet does it, stage by stage.</p>
+<p>Your guess is correct. Jev can only pick from options it is handed, and it can only pick well if every option (a) is something the host can execute in one step, (b) is distinct from every other option, and (c) is legal right now. So the bulk of the code in both systems is a <b>compiler from screen facts to a closed, legal, executable option set</b>. The Jev call is a few lines. Below is how Sotto does it, stage by stage.</p>
 
 <div class="flow">
   <div class="node code"><b>① AX facts</b><small>role, label, frame, actions, settable, focused, value, enabled, secure</small></div>
@@ -444,7 +444,7 @@ answer   = { choice: "n:14", probabilities: { n:14: .83, n:16: .11, insufficient
 
 <div class="steps">
 <div class="card"><b>Observability and replay first</b> <span class="tag code">S</span><br>
-Record the full probability map per head and the offered keys in the local session log. Persist a <b>redacted snapshot fixture</b> per observation (ids, roles, labels, operations, focus; <em>no values</em>). Add <code>macparakeet-cli voice-control replay &lt;snapshot.json&gt; --goal "…"</code> that runs router + Jev and prints the compiled action or distribution without touching the screen. Add <code>--dry-run</code> ("would do: press 'Search flights' · actor local · route flight_plan"). Emit a per-turn timing line: <code>observe 0.41s  route 0.00s  jev 0.24s  execute 0.13s  verify 0.36s</code>.
+Record the full probability map per head and the offered keys in the local session log. Persist a <b>redacted snapshot fixture</b> per observation (ids, roles, labels, operations, focus; <em>no values</em>). Add <code>sotto-cli voice-control replay &lt;snapshot.json&gt; --goal "…"</code> that runs router + Jev and prints the compiled action or distribution without touching the screen. Add <code>--dry-run</code> ("would do: press 'Search flights' · actor local · route flight_plan"). Emit a per-turn timing line: <code>observe 0.41s  route 0.00s  jev 0.24s  execute 0.13s  verify 0.36s</code>.
 <div class="rec"><b>Why first:</b> every later change becomes measurable on saved snapshots instead of live Google Flights runs. The recorded overlay stall becomes a fixture.</div></div>
 
 <div class="card"><b>Pure AX walk over an injectable source</b> <span class="tag code">M</span><br>

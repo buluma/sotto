@@ -21,7 +21,7 @@ before shipping (see [Fix](#fix-implemented) and [Open questions](#open-question
 
 ## Symptom (as reported)
 
-- MacParakeet 0.8.7 (`20260918190255`), macOS 27.0, Apple M5 Pro.
+- Sotto 0.8.7 (`20260918190255`), macOS 27.0, Apple M5 Pro.
 - `instantDictationEnabled = 1`, `speechRecognitionEngine = whisper`, built-in
   mic selected. App idle on the Transcribe tab.
 - An `AVAudioEngine` teardown/rebuild cycle repeats at ~1.3 Hz (period
@@ -49,20 +49,20 @@ refresh debounce:
    each start (the `75 → 130 → 70` device churn, with the four `-10877`
    throws while parked on the 0-input aggregate).
 3. The observer, for a **running (non-`prepared`) engine, posts
-   `macParakeetMicrophoneSelectionDidChange` unconditionally** — with no check
+   `sottoMicrophoneSelectionDidChange` unconditionally** — with no check
    that the route/format actually changed
-   (`Sources/MacParakeetCore/Audio/MicrophoneEnginePlatform.swift:1704-1709`).
+   (`Sources/SottoCore/Audio/MicrophoneEnginePlatform.swift:1704-1709`).
 4. `AppSettingsObserverCoordinator` observes it
-   (`Sources/MacParakeet/App/AppSettingsObserverCoordinator.swift:41`) →
+   (`Sources/Sotto/App/AppSettingsObserverCoordinator.swift:41`) →
    `AppDelegate.onMicrophoneSelectionChanged`
-   (`Sources/MacParakeet/AppDelegate.swift:366`) →
+   (`Sources/Sotto/AppDelegate.swift:366`) →
    `applyInstantDictationPreference(refreshWarmCapture: true)` →
    `AudioRecorder.refreshInstantDictationWarmCapture()`.
 5. After the 0.5 s trailing debounce
-   (`Sources/MacParakeet/App/AppEnvironment.swift:220`), it does
+   (`Sources/Sotto/App/AppEnvironment.swift:220`), it does
    `stopWarmCapture()` + `restartPassiveSubscribers()` +
    `startWarmCaptureIfNeeded()`
-   (`Sources/MacParakeetCore/Audio/AudioRecorder.swift:342-348`) → full
+   (`Sources/SottoCore/Audio/AudioRecorder.swift:342-348`) → full
    teardown + fresh `AVAudioEngine()` + start.
 6. The fresh start emits another config change → back to step 2.
 
@@ -123,7 +123,7 @@ All three measured states match.
 
 | Fact | Evidence |
 | --- | --- |
-| Vulnerable wiring landed | `79fd7cf3` "Harden Bluetooth microphone startup and recovery (#862)", **2026-07-22** — confirmed via `git log -L 1704,1709` as the commit that added the `macParakeetMicrophoneSelectionDidChange` post in the config-change observer's running/non-prepared path (above the `prepared` teardown check). Its intent was to re-evaluate warm-capture eligibility on Bluetooth transport/profile flips behind a stable device ID. |
+| Vulnerable wiring landed | `79fd7cf3` "Harden Bluetooth microphone startup and recovery (#862)", **2026-07-22** — confirmed via `git log -L 1704,1709` as the commit that added the `sottoMicrophoneSelectionDidChange` post in the config-change observer's running/non-prepared path (above the `prepared` teardown check). Its intent was to re-evaluate warm-capture eligibility on Bluetooth transport/profile flips behind a stable device ID. |
 | (Earlier false lead) | `990a080f` "Observe idle microphone route changes", 2026-07-11 — added the identical post inside the **HAL default-input/output listeners**, a different location. A `git log -S` match on the string alone misattributes the loop to this commit; `-L` on the observer lines corrects it to #862. |
 | Warm-hold path origin | `be78bc96` "Add opt-in instant dictation pre-roll (#418)", 2026-06-07 |
 | Debounce (#481) | `d6a6c7e0`, 2026-06-10 — paces but does not break the loop |
@@ -143,7 +143,7 @@ The implemented fix is a **compound guard in the configuration-change observer**
 self-emitted configuration change whose input format **and** resolved route are
 unchanged on a **positively non-Bluetooth** input, the observer absorbs it —
 logging `shared_mic_engine_configuration_change_ignored reason=unchanged_running_route`
-and returning **without** posting `macParakeetMicrophoneSelectionDidChange` and
+and returning **without** posting `sottoMicrophoneSelectionDidChange` and
 without recovery. This mirrors the guard the `prepared` branch already has and
 breaks the loop at its source: no post → no warm refresh → no rebuild → no new
 configuration change. Because the benign refresh no longer fires, the pre-roll
@@ -327,15 +327,15 @@ state fires before finalizing the fix (see
 
 ## Key references
 
-- `Sources/MacParakeetCore/Audio/MicrophoneEnginePlatform.swift` — config-change
+- `Sources/SottoCore/Audio/MicrophoneEnginePlatform.swift` — config-change
   observer (`:1643-1722`), running-branch post (`:1704-1709`), `prepared`
   absorb guard (`:1679-1698`), `markPreparedLocked` (`:1440-1465`),
   `tearDownLocked` (`:1563-1600`), route-change listener post (`:2185`).
-- `Sources/MacParakeetCore/Audio/AudioRecorder.swift` —
+- `Sources/SottoCore/Audio/AudioRecorder.swift` —
   `refreshInstantDictationWarmCapture` (`:303-349`), warm start/stop
   (`:1032-1134`).
-- `Sources/MacParakeet/App/AppSettingsObserverCoordinator.swift:41`,
-  `Sources/MacParakeet/AppDelegate.swift:366` / `:898-922`,
-  `Sources/MacParakeet/App/AppEnvironment.swift:201,220`.
-- `Sources/MacParakeetCore/Audio/README.md` — "Warm-capture refreshes are
+- `Sources/Sotto/App/AppSettingsObserverCoordinator.swift:41`,
+  `Sources/Sotto/AppDelegate.swift:366` / `:898-922`,
+  `Sources/Sotto/App/AppEnvironment.swift:201,220`.
+- `Sources/SottoCore/Audio/README.md` — "Warm-capture refreshes are
   debounced (issue #481)"; the shared-source self-heal contract.

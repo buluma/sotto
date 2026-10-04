@@ -8,7 +8,7 @@ Status: Active; foundation workspace implemented
 Build a dedicated top-level Meetings workspace while keeping meeting recordings
 visible in Library.
 
-The first foundation slice should be thin. MacParakeet already has the core
+The first foundation slice should be thin. Sotto already has the core
 meeting data model, capture stack, transcript artifact, chat, prompts, retained
 audio, calendar coordination, and CLI surface. The Meetings workspace should
 compose those existing capabilities into a workflow surface rather than create a
@@ -98,12 +98,12 @@ The view model should aggregate existing sources:
 
 Expected files:
 
-- `Sources/MacParakeet/Views/Meetings/MeetingsView.swift`
-- `Sources/MacParakeetViewModels/MeetingsWorkspaceViewModel.swift`
-- `Sources/MacParakeet/Views/MainWindowView.swift`
-- `Sources/MacParakeet/Views/MainWindowState.swift`
-- `Sources/MacParakeet/App/AppWindowCoordinator.swift`
-- `Sources/MacParakeet/App/AppEnvironmentConfigurer.swift`
+- `Sources/Sotto/Views/Meetings/MeetingsView.swift`
+- `Sources/SottoViewModels/MeetingsWorkspaceViewModel.swift`
+- `Sources/Sotto/Views/MainWindowView.swift`
+- `Sources/Sotto/Views/MainWindowState.swift`
+- `Sources/Sotto/App/AppWindowCoordinator.swift`
+- `Sources/Sotto/App/AppEnvironmentConfigurer.swift`
 
 Tests:
 

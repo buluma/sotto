@@ -1,4 +1,4 @@
-# MacParakeet 0.8.8
+# Sotto 0.8.8
 
 Retry failed dictations, edit transcripts and saved AI results, and browse your Library faster. This update also adds separate AI model choices for cleanup and analysis, more output languages, and automatic speaker detection powered by Nemotron.
 
@@ -31,7 +31,7 @@ Retry failed dictations, edit transcripts and saved AI results, and browse your 
 ## Setup and speech models
 
 - **Four-step onboarding with dictation practice.** Rehearse your shortcut while speech models prepare, then try a real dictation. Practice can be skipped. [#1125](https://github.com/moona3k/macparakeet/pull/1125)
-- **Orukeet preview.** Try an optional Parakeet variant in speech settings. Parakeet v3 remains the default. Orukeet requires a separate download and does not support live dictation preview or recognition-time custom vocabulary. [@Nathan-Roll1](https://github.com/Nathan-Roll1) contributed the MacParakeet integration for [Oruk’s Orukeet model](https://huggingface.co/oruk/orukeet). [#1091](https://github.com/moona3k/macparakeet/pull/1091)
+- **Orukeet preview.** Try an optional Parakeet variant in speech settings. Parakeet v3 remains the default. Orukeet requires a separate download and does not support live dictation preview or recognition-time custom vocabulary. [@Nathan-Roll1](https://github.com/Nathan-Roll1) contributed the Sotto integration for [Oruk’s Orukeet model](https://huggingface.co/oruk/orukeet). [#1091](https://github.com/moona3k/macparakeet/pull/1091)
 - **Nemotron automatic speaker detection.** Automatic mode supports up to eight speakers per analyzed source. Explicit speaker-count settings continue to use Community-1. An additional model download and initial setup may be needed before offline use. Speaker labels may still need correction. [#1152](https://github.com/moona3k/macparakeet/pull/1152)
 - **Replace an entire vocabulary during import.** Preview the replacement before confirming. It replaces manual words and snippets while keeping unmatched learned recognition terms. Add new entries and Replace duplicates remain available. [#1067](https://github.com/moona3k/macparakeet/pull/1067)
 
@@ -47,6 +47,6 @@ Requires **Apple Silicon and macOS 14.2 or later**. Apple Intelligence additiona
 
 Cross-recording Ask, Jev Voice Control, voice profiles, encrypted share links, and in-process MLX remain experimental and disabled in normal release builds.
 
-To update, choose **Check for Updates…** in MacParakeet, or download `MacParakeet.dmg` and drag the app to Applications.
+To update, choose **Check for Updates…** in Sotto, or download `Sotto.dmg` and drag the app to Applications.
 
 [All changes since 0.8.7](https://github.com/moona3k/macparakeet/compare/v0.8.7...v0.8.8)

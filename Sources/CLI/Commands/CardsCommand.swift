@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 extension CardSource: ExpressibleByArgument {}
 
@@ -66,7 +66,7 @@ struct CardsListCommand: AsyncParsableCommand {
                     try printCardNDJSON(row)
                 }
             } else if rows.isEmpty {
-                print("No knowledge cards found. Run `macparakeet-cli cards generate --stale`.")
+                print("No knowledge cards found. Run `sotto-cli cards generate --stale`.")
             } else {
                 let dateFormatter = ISO8601DateFormatter()
                 for row in rows {

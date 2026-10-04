@@ -6,7 +6,7 @@
 ## Why this doc
 
 Every quarter someone pitches an "AI does QA" tool. Most are web-first or
-mobile-first. MacParakeet is a menu-bar macOS app with a non-activating
+mobile-first. Sotto is a menu-bar macOS app with a non-activating
 `KeylessPanel` overlay, global dictation hotkeys, and TCC-gated
 microphone/screen-recording flows. The general AI-QA frontier doesn't speak
 our shape yet. This doc tracks who's close, where the real gaps are, and the
@@ -26,7 +26,7 @@ hybrid 2026 play that actually works for us today.
 
 ### Backend / contract
 
-Mostly N/A for MacParakeet — we're not a REST product. Two slivers worth a
+Mostly N/A for Sotto — we're not a REST product. Two slivers worth a
 beat:
 
 - **Schemathesis** (Apache-2.0, property-based fuzzing from OpenAPI) on the
@@ -50,7 +50,7 @@ beat:
 | **Hammerspoon** (Lua + `hs.eventtap`) | Mature classic | Synthesizes Fn holds and Fn+key chords, drives menu-bar items, watches system events | Not LLM-aware; no assertion library; **but the only reliable Fn-chord simulator in existence** |
 | Maestro, Sauce Labs, BrowserStack, TestSprite, testRigor | Mobile/web-first | — | None target macOS-app native; Sauce's Apple Silicon support is browser-only |
 
-## What blocks "describe a flow → agent verifies it" for MacParakeet today
+## What blocks "describe a flow → agent verifies it" for Sotto today
 
 These are the seven concrete blockers no off-the-shelf tool solves end-to-end
 in 2026:
@@ -76,9 +76,9 @@ in 2026:
    is documented flaky; Appium-mac2 has open issues; AX trees expose targets
    but `NSDraggingSession` isn't fully scriptable. Hammerspoon synthesizes
    drag events; AX-tree agents can't.
-7. **Audio I/O verification** — the actual point of MacParakeet. No AI
+7. **Audio I/O verification** — the actual point of Sotto. No AI
    testing framework verifies dictation produces correct text. Our existing
-   `swift run macparakeet-cli transcribe` against fixtures is the right
+   `swift run sotto-cli transcribe` against fixtures is the right
    primitive; the gap is wiring an agent loop on top (record → transcribe →
    assert WER under threshold).
 
@@ -88,12 +88,12 @@ For a Mac menu-bar app with global hotkeys and non-activating panels, the AI
 QA frontier is **12–18 months from a turnkey product**. The right move is a
 four-layer hybrid:
 
-1. **CLI as the primary verification surface.** `macparakeet-cli` is already
+1. **CLI as the primary verification surface.** `sotto-cli` is already
    semver-tracked (see `Sources/CLI/CHANGELOG.md`). Most behavior changes
    can be asserted headlessly through it.
 2. **`swift-snapshot-testing` on a pinned CI Mac** for the design-system
    surfaces (`AssistantHead`, idle pill, dictation overlay, meetings panel).
-   `MacParakeetViewModels` is already separated and snapshot-test-shaped.
+   `SottoViewModels` is already separated and snapshot-test-shaped.
 3. **`mcp-server-macos-use` + Claude Code** for exploratory/dogfooding
    sessions. Closest thing to "describe a flow → agent verifies it" that
    exists for Mac native today; speaks structured AX trees instead of slow

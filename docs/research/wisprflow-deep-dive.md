@@ -156,7 +156,7 @@ Highly polarized -- users either love it or hate it. The 1-star reviews cluster 
 - Must start a new session for longer dictation
 - Breaks flow for long-form content
 
-## Key Weaknesses -- MacParakeet Opportunities
+## Key Weaknesses -- Sotto Opportunities
 
 ### 1. Cloud Dependency = Privacy Risk + Latency
 
@@ -165,37 +165,37 @@ WisprFlow sends all audio to cloud servers for transcription. Context awareness 
 - **Privacy risk**: Every word spoken + screen content transmitted to third party. Unacceptable for legal, medical, financial, classified, or any sensitive context.
 - **Latency**: Server round-trip adds 2-5 seconds minimum, 20-30 seconds during peak. Local Parakeet on Apple Silicon is faster than the network round-trip.
 
-**MacParakeet advantage:** 100% local. Parakeet runs on-device. Qwen3-8B runs on-device. Zero network latency. Zero privacy risk.
+**Sotto advantage:** 100% local. Parakeet runs on-device. Qwen3-8B runs on-device. Zero network latency. Zero privacy risk.
 
 ### 2. $144-180/Year Subscription
 
 WisprFlow Pro costs $12-15/month, every month, forever. For a tool that could run locally on the user's own hardware, this is hard to justify.
 
-**MacParakeet advantage:** current public build is free/GPL and runs locally. Future monetization should sell official convenience, support, hosted services, or team workflows rather than a required cloud STT subscription.
+**Sotto advantage:** current public build is free/GPL and runs locally. Future monetization should sell official convenience, support, hosted services, or team workflows rather than a required cloud STT subscription.
 
 ### 3. Poor Reliability (~60%)
 
 4 out of 10 dictations having issues is unacceptable for a productivity tool. Users cannot trust it for important work.
 
-**MacParakeet advantage:** Local processing eliminates server-side failure modes. No network timeouts, no server overload, no cloud outages.
+**Sotto advantage:** Local processing eliminates server-side failure modes. No network timeouts, no server overload, no cloud outages.
 
 ### 4. No Local Option
 
 Some users want voice-to-text but cannot or will not send audio to the cloud. WisprFlow offers no local alternative.
 
-**MacParakeet advantage:** Local-only by design. This is not a fallback -- it is the architecture.
+**Sotto advantage:** Local-only by design. This is not a fallback -- it is the architecture.
 
 ### 5. Context Awareness Privacy Problem
 
 WisprFlow's context awareness reads screen content via accessibility APIs and sends it to cloud servers. Users who need context-aware dictation but can't share screen data have no option.
 
-**MacParakeet advantage:** Context awareness via local Qwen3-8B -- read screen context locally, process locally, never transmit. Same feature, zero privacy risk. (Future)
+**Sotto advantage:** Context awareness via local Qwen3-8B -- read screen context locally, process locally, never transmit. Same feature, zero privacy risk. (Future)
 
 ## Feature Parity Matrix
 
-What MacParakeet needs to match or beat WisprFlow:
+What Sotto needs to match or beat WisprFlow:
 
-| Feature | WisprFlow | MacParakeet Target | Local? |
+| Feature | WisprFlow | Sotto Target | Local? |
 |---------|-----------|-------------------|--------|
 | Push-to-talk (hold Fn) | Yes | v0.1 | Yes |
 | Double-tap persistent mode | Yes | v0.1 | Yes |
@@ -216,7 +216,7 @@ What MacParakeet needs to match or beat WisprFlow:
 | Offline operation | No | Always (by design) | Yes |
 | Privacy (no cloud) | No | Always (by design) | Yes |
 
-## MacParakeet's Positioning
+## Sotto's Positioning
 
 **WisprFlow, but local.**
 
@@ -229,13 +229,13 @@ Then go further:
 - **Reliable** = no cloud outages, no "works 60% of the time"
 - **Context awareness without cloud** = same feature, zero privacy risk
 
-Command Mode via local Qwen3-8B is the key Pro feature. WisprFlow proves the demand. MacParakeet delivers it without the cloud.
+Command Mode via local Qwen3-8B is the key Pro feature. WisprFlow proves the demand. Sotto delivers it without the cloud.
 
-## Technical Notes for MacParakeet Implementation
+## Technical Notes for Sotto Implementation
 
 ### What We Can Replicate Locally
 
-| WisprFlow Feature | MacParakeet Local Implementation |
+| WisprFlow Feature | Sotto Local Implementation |
 |-------------------|--------------------------------|
 | Cloud STT | Parakeet via FluidAudio CoreML/ANE (v3 default, v2 and Unified English opt-ins; ~155x faster) |
 | Cloud LLM refinement | Qwen3-8B via MLX-Swift (on-device, ~2s cold start) |

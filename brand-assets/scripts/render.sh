@@ -32,7 +32,7 @@ for tint_name in ink paper coral; do
     paper) hex="#F8F4EC" ;;
     coral) hex="#E86B3B" ;;
   esac
-  sed "s|currentColor|$hex|g" "marks/parakeet-line.svg" \
+  sed "s|currentColor|$hex|g" "marks/sotto-line.svg" \
     > "$WORK/parakeet-line-${tint_name}.svg"
   for size in 256 512 1024 2048 4096; do
     rsvg-convert -w "$size" -h "$size" \

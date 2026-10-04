@@ -2,7 +2,7 @@
   {
     "name": "track-1-en-verified",
     "command": [
-      "<QA_ROOT>/macparakeet-cli-runtime",
+      "<QA_ROOT>/sotto-cli-runtime",
       "transcribe",
       "<QA_ROOT>/audio-runtime/two-tracks.mkv",
       "--database",
@@ -24,7 +24,7 @@
     ],
     "environment": {
       "CFFIXED_USER_HOME": "<QA_ROOT>/isolated-home",
-      "MACPARAKEET_TELEMETRY": "0",
+      "SOTTO_TELEMETRY": "0",
       "DO_NOT_TRACK": "1"
     },
     "timeoutSeconds": 180,
@@ -49,7 +49,7 @@
   {
     "name": "track-2-ja",
     "command": [
-      "<QA_ROOT>/macparakeet-cli-runtime",
+      "<QA_ROOT>/sotto-cli-runtime",
       "transcribe",
       "<QA_ROOT>/audio-runtime/two-tracks.mkv",
       "--database",
@@ -71,7 +71,7 @@
     ],
     "environment": {
       "CFFIXED_USER_HOME": "<QA_ROOT>/isolated-home",
-      "MACPARAKEET_TELEMETRY": "0",
+      "SOTTO_TELEMETRY": "0",
       "DO_NOT_TRACK": "1"
     },
     "timeoutSeconds": 180,
@@ -96,7 +96,7 @@
   {
     "name": "track-0-invalid",
     "command": [
-      "<QA_ROOT>/macparakeet-cli-runtime",
+      "<QA_ROOT>/sotto-cli-runtime",
       "transcribe",
       "<QA_ROOT>/audio-runtime/two-tracks.mkv",
       "--database",
@@ -118,7 +118,7 @@
     ],
     "environment": {
       "CFFIXED_USER_HOME": "<QA_ROOT>/isolated-home",
-      "MACPARAKEET_TELEMETRY": "0",
+      "SOTTO_TELEMETRY": "0",
       "DO_NOT_TRACK": "1"
     },
     "timeoutSeconds": 180,
@@ -131,7 +131,7 @@
   {
     "name": "track-3-missing",
     "command": [
-      "<QA_ROOT>/macparakeet-cli-runtime",
+      "<QA_ROOT>/sotto-cli-runtime",
       "transcribe",
       "<QA_ROOT>/audio-runtime/two-tracks.mkv",
       "--database",
@@ -153,7 +153,7 @@
     ],
     "environment": {
       "CFFIXED_USER_HOME": "<QA_ROOT>/isolated-home",
-      "MACPARAKEET_TELEMETRY": "0",
+      "SOTTO_TELEMETRY": "0",
       "DO_NOT_TRACK": "1"
     },
     "timeoutSeconds": 180,
@@ -166,7 +166,7 @@
   {
     "name": "diarization-auto",
     "command": [
-      "<QA_ROOT>/macparakeet-cli-runtime",
+      "<QA_ROOT>/sotto-cli-runtime",
       "transcribe",
       "<QA_OUTPUT>/two-public-speakers.wav",
       "--database",
@@ -184,7 +184,7 @@
     ],
     "environment": {
       "CFFIXED_USER_HOME": "<QA_ROOT>/isolated-home",
-      "MACPARAKEET_TELEMETRY": "0",
+      "SOTTO_TELEMETRY": "0",
       "DO_NOT_TRACK": "1"
     },
     "timeoutSeconds": 180,
@@ -209,7 +209,7 @@
   {
     "name": "diarization-exact-2",
     "command": [
-      "<QA_ROOT>/macparakeet-cli-runtime",
+      "<QA_ROOT>/sotto-cli-runtime",
       "transcribe",
       "<QA_OUTPUT>/two-public-speakers.wav",
       "--database",
@@ -229,7 +229,7 @@
     ],
     "environment": {
       "CFFIXED_USER_HOME": "<QA_ROOT>/isolated-home",
-      "MACPARAKEET_TELEMETRY": "0",
+      "SOTTO_TELEMETRY": "0",
       "DO_NOT_TRACK": "1"
     },
     "timeoutSeconds": 180,

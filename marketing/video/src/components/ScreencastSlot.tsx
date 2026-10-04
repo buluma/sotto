@@ -17,7 +17,7 @@ interface ScreencastSlotProps {
 }
 
 /**
- * Slot for a screencast clip captured from MacParakeet.
+ * Slot for a screencast clip captured from Sotto.
  *
  * Renders a branded placeholder by default. When you've recorded the
  * actual screencast (via Screen Studio) and dropped it into

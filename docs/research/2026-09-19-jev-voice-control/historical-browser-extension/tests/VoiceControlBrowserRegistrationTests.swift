@@ -1,7 +1,7 @@
 import Darwin
 import Foundation
 import XCTest
-@testable import MacParakeetCore
+@testable import SottoCore
 
 final class VoiceControlBrowserRegistrationTests: XCTestCase {
     private let firstID = String(repeating: "a", count: 32)
@@ -15,11 +15,11 @@ final class VoiceControlBrowserRegistrationTests: XCTestCase {
         return root
     }
     private func config(_ home: URL) -> URL {
-        home.appendingPathComponent("Library/Application Support/MacParakeet/VoiceControlBrowser/pairing.json")
+        home.appendingPathComponent("Library/Application Support/Sotto/VoiceControlBrowser/pairing.json")
     }
     private func manifest(_ home: URL) -> URL {
         home.appendingPathComponent(
-            "Library/Application Support/Google/Chrome/NativeMessagingHosts/com.macparakeet.voice_control.json")
+            "Library/Application Support/Google/Chrome/NativeMessagingHosts/com.sotto.voice_control.json")
     }
 
     func testRegistersPrivatePairingAndExactOriginIdempotently() async throws {

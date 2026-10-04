@@ -5,8 +5,8 @@ The baseline GUI passed the observed vocabulary bulk-deletion, track-selection, 
 ## Candidate, isolation, and evidence
 
 - Root performed the live interactions and database checks. This report was assembled from those contemporaneous observations, inspected screenshots, and saved persistence/validator outputs; the documenting agent performed no GUI actions.
-- The GUI was a copied Xcode Release dev product with unique bundle ID `com.macparakeet.qa.release080`, displayed version `0.8.0`, and observed PID `98237`. It was a QA copy, not the notarized distribution artifact.
-- Root verified the redirected Foundation home and actual open SQLite path under `/tmp/macparakeet-080-qa/isolated-home`. The unique bundle ID isolated ordinary GUI preferences. Fixed named preference suites and shared Keychain services were not assumed isolated; no saved provider credentials were changed.
+- The GUI was a copied Xcode Release dev product with unique bundle ID `com.sotto.qa.release080`, displayed version `0.8.0`, and observed PID `98237`. It was a QA copy, not the notarized distribution artifact.
+- Root verified the redirected Foundation home and actual open SQLite path under `/tmp/sotto-080-qa/isolated-home`. The unique bundle ID isolated ordinary GUI preferences. Fixed named preference suites and shared Keychain services were not assumed isolated; no saved provider credentials were changed.
 - Telemetry was disabled. Fixtures were synthetic vocabulary/snippets and a local two-track media fixture containing public audio. Personal databases, recordings, and transcripts were not copied into the QA environment.
 - [Curated evidence manifest](evidence/gui/manifest.json) records SHA-256 hashes, dimensions, and source filenames for 13 individually inspected app-window screenshots and four reviewed log/JSON copies. All were copied unchanged. File-panel screenshots, Apple Recents metadata, and raw AX trees are excluded.
 
@@ -46,7 +46,7 @@ The [database receipt](evidence/gui/gui-track-persistence.json) contains exactly
 
 ## DAPT export from the GUI
 
-Root selected DAPT in the export popover and used the native save flow. The first attempt failed because the redirected fixture home lacked a `Downloads` directory. Root created that owned directory and repeated the export; the app showed a success toast and wrote `/tmp/macparakeet-080-qa/isolated-home/Downloads/two-tracks.dapt.xml`.
+Root selected DAPT in the export popover and used the native save flow. The first attempt failed because the redirected fixture home lacked a `Downloads` directory. Root created that owned directory and repeated the export; the app showed a success toast and wrote `/tmp/sotto-080-qa/isolated-home/Downloads/two-tracks.dapt.xml`.
 
 The actual exported file was passed to the local BBC TTML validator in DAPT mode. Root recorded **exit 0**. The [validation log](evidence/gui/gui-dapt-validation.log) reports a valid DAPT document; the [structured result](evidence/gui/gui-dapt-bbc.json) contains 19 passes, three informational results, and one optional missing-copyright warning. Its `xml_xsd` result explicitly reports that DAPT XSD validation passed. Validator provenance and the separate three-fixture validation matrix are documented in [dapt-runtime.md](dapt-runtime.md).
 

@@ -4,18 +4,18 @@ All **24 command invocations passed their expected outcomes**. This is script an
 
 ## Provenance and method
 
-- Checkout: `/Users/dmoon/code/macparakeet-qa`.
+- Checkout: `/Users/dmoon/code/sotto-qa`.
 - Source HEAD: `df98cfbd41a150f8ee510dd1333bfa6db176e342`. The checked scripts matched HEAD after the run. Other agents' ongoing source and documentation edits were preserved.
 - First command started: `2026-09-07T22:39:33.605556+00:00`.
 - Environment: macOS 26.6.2 (25G83), Python 3.14.6, system Bash and Apple command-line tools.
-- Each command received an owned `TMPDIR` under `/tmp/macparakeet-080-qa/package-preflight/tmp/`, plus `MACPARAKEET_TELEMETRY=0`. The development-version signing override was removed from the test environment.
+- Each command received an owned `TMPDIR` under `/tmp/sotto-080-qa/package-preflight/tmp/`, plus `SOTTO_TELEMETRY=0`. The development-version signing override was removed from the test environment.
 - The root agent explicitly permitted standalone `swiftc` helper fixtures. No SwiftPM/Xcode product build or test suite ran here. No signing, notarization, publication, production app quit, audio capture, desktop input, or app activation occurred.
 - The AppKit suite launches only its own accessory apps without windows, activation, or dialogs. Its exact executable paths stay inside its temporary ownership root. The pure helper suite terminates only its own copied `sleep` and shell children.
 
-The reusable local runner is `/tmp/macparakeet-080-qa/package-preflight/run_preflight.py`. Run it with:
+The reusable local runner is `/tmp/sotto-080-qa/package-preflight/run_preflight.py`. Run it with:
 
 ```sh
-python3 /tmp/macparakeet-080-qa/package-preflight/run_preflight.py
+python3 /tmp/sotto-080-qa/package-preflight/run_preflight.py
 ```
 
 The runner overwrites its own logs and fixtures when rerun. Save the current evidence first if retaining multiple runs.
@@ -25,7 +25,7 @@ The runner overwrites its own logs and fixtures when rerun. Save the current evi
 | Check | Exact command or command family | Observed result |
 | --- | --- | --- |
 | Shell syntax | `bash -n <script>` for all nine `scripts/dist/*.sh` files and the three shutdown shell scripts | 12 commands, exit 0 each |
-| App entitlement plist | `plutil -lint scripts/dist/MacParakeet.entitlements` | Exit 0 |
+| App entitlement plist | `plutil -lint scripts/dist/Sotto.entitlements` | Exit 0 |
 | Privacy validator fixtures | `bash scripts/dist/test_verify_app_privacy_surface.sh` | Exit 0; 11 fixtures: 2 accepted, 9 rejected |
 | Release-version fixtures | `bash scripts/dist/test_verify_release_version.sh` | Exit 0; 10 fixtures: 2 accepted, 8 rejected |
 | Shutdown helper and wrapper | `bash scripts/dev/test_stop_app_processes.sh` | Exit 0; all 8 PASS groups; 7.139 seconds |
@@ -44,20 +44,20 @@ The echo probes are additional local harness cases, not an existing checked-in t
 
 All paths below are local, synthetic evidence:
 
-- [Runner output](/tmp/macparakeet-080-qa/package-preflight/runner.log)
-- [Exact argument vectors, environment overrides, statuses, timings, and raw-log paths](/tmp/macparakeet-080-qa/package-preflight/results.json)
-- [Source SHA256 inventory and tool/platform metadata](/tmp/macparakeet-080-qa/package-preflight/metadata.json)
-- [Cleanup evidence](/tmp/macparakeet-080-qa/package-preflight/cleanup.json)
-- [Shutdown helper raw log](/tmp/macparakeet-080-qa/package-preflight/logs/stop-app-processes-fixtures.log)
-- [AppKit fixture raw log](/tmp/macparakeet-080-qa/package-preflight/logs/stop-app-appkit-fixtures.log)
-- [Privacy fixture raw log](/tmp/macparakeet-080-qa/package-preflight/logs/privacy-fixtures.log)
-- [Version fixture raw log](/tmp/macparakeet-080-qa/package-preflight/logs/release-version-fixtures.log)
+- [Runner output](/tmp/sotto-080-qa/package-preflight/runner.log)
+- [Exact argument vectors, environment overrides, statuses, timings, and raw-log paths](/tmp/sotto-080-qa/package-preflight/results.json)
+- [Source SHA256 inventory and tool/platform metadata](/tmp/sotto-080-qa/package-preflight/metadata.json)
+- [Cleanup evidence](/tmp/sotto-080-qa/package-preflight/cleanup.json)
+- [Shutdown helper raw log](/tmp/sotto-080-qa/package-preflight/logs/stop-app-processes-fixtures.log)
+- [AppKit fixture raw log](/tmp/sotto-080-qa/package-preflight/logs/stop-app-appkit-fixtures.log)
+- [Privacy fixture raw log](/tmp/sotto-080-qa/package-preflight/logs/privacy-fixtures.log)
+- [Version fixture raw log](/tmp/sotto-080-qa/package-preflight/logs/release-version-fixtures.log)
 
 ## Actual artifact checks still owned by the release run
 
 The governing instructions are [distribution.md](../../../docs/distribution.md). Source inspection of [build_app_bundle.sh](../../../scripts/dist/build_app_bundle.sh), [sign_notarize.sh](../../../scripts/dist/sign_notarize.sh), and the three validators identifies these remaining checks:
 
-1. **Provenance and version:** build from the final verified source. Check `CFBundleShortVersionString` is exactly `0.8.0`, `CFBundleVersion` is the intended increasing build number, `MacParakeetGitCommit` matches that source, and the bundled CLI reports `4.0.0`, the major bump recorded in [Sources/CLI/CHANGELOG.md](../../../Sources/CLI/CHANGELOG.md) for the breaking `export --stdout --format txt` behavior. `verify_release_version.sh` checks release-shaped metadata, not that it equals the intended release or exceeds the prior build. With `SKIP_BUILD=1`, the builder can stamp current metadata onto reused binaries, so metadata alone is not proof of binary provenance.
+1. **Provenance and version:** build from the final verified source. Check `CFBundleShortVersionString` is exactly `0.8.0`, `CFBundleVersion` is the intended increasing build number, `SottoGitCommit` matches that source, and the bundled CLI reports `4.0.0`, the major bump recorded in [Sources/CLI/CHANGELOG.md](../../../Sources/CLI/CHANGELOG.md) for the breaking `export --stdout --format txt` behavior. `verify_release_version.sh` checks release-shaped metadata, not that it equals the intended release or exceeds the prior build. With `SKIP_BUILD=1`, the builder can stamp current metadata onto reused binaries, so metadata alone is not proof of binary provenance.
 2. **Bundle portability:** confirm the Apple Silicon app/CLI, compiled resource bundles/assets, icon, legal notices, Sparkle framework, and `@executable_path/../Frameworks` rpath. Inspect actual binary dependencies; exercise the packaged FFmpeg, yt-dlp, and Node helpers. The distribution guide specifically requires `yt-dlp --version` after signing because its embedded Python runtime can fail despite successful signature verification. Runtime resource lookup needs the packaged app smoke owned by root.
 3. **Meeting echo assets:** run `REQUIRE_MEETING_ECHO_ASSETS=1 scripts/dist/verify_meeting_echo_assets.sh "$QA_APP"`. This requires the paired executable Mach-O library and exactly one model, required LocalVQE symbols, the expected model checksum, and portable dylib references. For a custom model, supply its expected checksum. The script defaults to allowing no assets unless required mode is set.
 4. **Signed app:** after signing, run the commands below against the final bundle. The privacy check verifies required permission strings/entitlements, signing identity, and the ATS allowlist. Inspect the actual entitlement dump when reviewing the complete signed surface.
@@ -67,7 +67,7 @@ The governing instructions are [distribution.md](../../../docs/distribution.md).
 # QA_APP is the final release candidate bundle path.
 scripts/dist/verify_release_version.sh "$QA_APP"
 plutil -p "$QA_APP/Contents/Info.plist"
-"$QA_APP/Contents/MacOS/macparakeet-cli" --version
+"$QA_APP/Contents/MacOS/sotto-cli" --version
 codesign --verify --deep --strict --verbose=2 "$QA_APP"
 scripts/dist/verify_app_privacy_surface.sh "$QA_APP"
 REQUIRE_MEETING_ECHO_ASSETS=1 VERIFY_CODE_SIGNATURES=1   scripts/dist/verify_meeting_echo_assets.sh "$QA_APP"

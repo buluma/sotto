@@ -2,14 +2,14 @@ import ArgumentParser
 import Foundation
 import XCTest
 @testable import CLI
-@testable import MacParakeetCore
+@testable import SottoCore
 
 final class TransformsCommandTests: XCTestCase {
 
     // MARK: - Command parsing
 
     func testParsesListAsDefaultSubcommand() throws {
-        // `macparakeet-cli transforms` (no subcommand) → ListSubcommand.
+        // `sotto-cli transforms` (no subcommand) → ListSubcommand.
         let cmd = try TransformsCommand.parseAsRoot([])
         XCTAssertTrue(cmd is TransformsCommand.ListSubcommand,
                       "Bare `transforms` should default to ListSubcommand.")
@@ -290,7 +290,7 @@ final class TransformsCommandTests: XCTestCase {
         XCTAssertEqual(entry.transformName, "Sharpen")
         XCTAssertEqual(entry.inputText, "rough")
         XCTAssertEqual(entry.outputText, "polished")
-        XCTAssertEqual(entry.sourceAppDisplayName, "macparakeet-cli")
+        XCTAssertEqual(entry.sourceAppDisplayName, "sotto-cli")
         XCTAssertEqual(entry.capturePath, "file")
         XCTAssertEqual(entry.replacementPath, "stdout")
     }
@@ -481,7 +481,7 @@ final class TransformsCommandTests: XCTestCase {
     }
 
     func testAppHotkeyCollisionAllowsChordSharingBareModifierDictationHotkey() throws {
-        let suiteName = makeIsolatedDefaultsSuite("com.macparakeet.tests.transforms.")
+        let suiteName = makeIsolatedDefaultsSuite("com.sotto.tests.transforms.")
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
 
         HotkeyTrigger.option.save(

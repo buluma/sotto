@@ -7,15 +7,15 @@ authors: Codex/GPT, Daniel Moon
 
 # Speaker Diarization and Speaker Identification Frontier
 
-> Status: **RESEARCH** - current-state survey and MacParakeet recommendation.
+> Status: **RESEARCH** - current-state survey and Sotto recommendation.
 > Evidence date: 2026-06-14.
 > Related: `spec/adr/010-speaker-diarization.md`,
 > `docs/research/meeting-dual-stream-transcription-pipeline.md`,
-> `Sources/MacParakeetCore/Services/Diarization/`.
+> `Sources/SottoCore/Services/Diarization/`.
 
 ## TL;DR
 
-MacParakeet does not need "diarization support" from a blank slate. It already
+Sotto does not need "diarization support" from a blank slate. It already
 has the right local-first spine:
 
 - offline FluidAudio diarization for file/URL transcription
@@ -50,7 +50,7 @@ For models, the current recommendation is:
   numbers in FluidAudio's current docs.
 - **Do not integrate WhisperX/pyannote Python directly into the app core.**
   They are useful references and CLI/prototype tools, but they work against
-  MacParakeet's Swift/CoreML/local-app shape.
+  Sotto's Swift/CoreML/local-app shape.
 - **Do not use cloud diarization as the product architecture.** Commercial APIs
   are useful benchmark references, not the default privacy model.
 
@@ -59,7 +59,7 @@ For models, the current recommendation is:
 These are frequently collapsed in product conversations, but they have
 different failure modes and UX contracts.
 
-| Concept | Meaning | MacParakeet stance |
+| Concept | Meaning | Sotto stance |
 | --- | --- | --- |
 | Source/channel attribution | Which capture source produced the audio, such as microphone vs system. | Strongest signal. Preserve it whenever available. |
 | Speaker diarization | Anonymous "who spoke when" within an audio stream. | Useful, approximate, non-fatal. |
@@ -70,7 +70,7 @@ different failure modes and UX contracts.
 The important product rule: diarization can say "same/different speaker
 cluster"; it cannot know a person's real name without another source of truth.
 
-## Current MacParakeet State
+## Current Sotto State
 
 Current code already implements a substantial subset of the target
 architecture:
@@ -105,7 +105,7 @@ FluidAudio checkout now documents:
 - speaker enrollment APIs
 - timeline segments with finalized vs tentative state
 
-That does not mean MacParakeet should flip to streaming diarization as truth.
+That does not mean Sotto should flip to streaming diarization as truth.
 It means the research/experiment surface is available in Swift/CoreML if we
 want a tentative live layer.
 
@@ -121,7 +121,7 @@ can run offline after model download. The public benchmark table shows
 community-1 improving over 3.1 across many datasets, with pyannoteAI
 `precision-2` better still as a cloud/commercial model.
 
-MacParakeet implication: community-1 style diarization is the right final-pass
+Sotto implication: community-1 style diarization is the right final-pass
 baseline, but the Python package itself is not the right app integration.
 FluidAudio's CoreML port is the local Swift path.
 
@@ -137,7 +137,7 @@ The docs state that the embedding runner emits 256-dimensional L2-normalized
 embeddings, and the current API includes disk-backed streaming audio sources so
 large meetings do not have to be loaded entirely into memory.
 
-MacParakeet implication: keep this as the canonical post-stop diarizer. The
+Sotto implication: keep this as the canonical post-stop diarizer. The
 implementation already matches local-first and SwiftPM packaging constraints.
 
 **DiariZen.** DiariZen is research-frontier strong. Its README reports DER
@@ -146,7 +146,7 @@ VoxConverse, and other datasets. Its v2 large model reports, for example,
 13.9 DER on AMI-SDM and 10.8 on AliMeeting far, versus pyannote 3.1 at 22.4
 and 24.4 respectively in the same table.
 
-MacParakeet implication: track this for offline benchmark comparison, but do
+Sotto implication: track this for offline benchmark comparison, but do
 not ship it now. The toolkit is Python/Jupyter-heavy and its pretrained weights
 are CC BY-NC 4.0, which is not product-compatible for a general GPL app
 release.
@@ -157,7 +157,7 @@ pyannote diarization, word-speaker assignment. Its README also calls out the
 core limitation: overlapping speech is not handled particularly well and
 diarization is far from perfect.
 
-MacParakeet implication: use as reference for alignment UX and failure
+Sotto implication: use as reference for alignment UX and failure
 language, not as an app dependency.
 
 ### Streaming/Live Diarization
@@ -171,7 +171,7 @@ four speakers, and benchmark rows show degradation on >=5 speaker subsets.
 FluidAudio's CoreML benchmark for Sortformer on AMI SDM reports 31.7 average
 DER with the NVIDIA high-latency config.
 
-MacParakeet implication: Sortformer may be useful when the meeting is known to
+Sotto implication: Sortformer may be useful when the meeting is known to
 have <=4 speakers and the UX wants fast tentative turns. It should not be the
 canonical final diarizer.
 
@@ -182,7 +182,7 @@ high and flexible number of speakers, up to 8, and very long recordings such as
 one hour. FluidAudio exposes `LSEENDDiarizer` and reports 20.7 average DER on
 AMI SDM for the `.ami` CoreML bundle with 500 ms step size.
 
-MacParakeet implication: if we experiment with live speaker turns, LS-EEND is
+Sotto implication: if we experiment with live speaker turns, LS-EEND is
 the better first candidate than Sortformer. It has a better speaker-count shape
 for meetings and better FluidAudio-reported AMI SDM numbers.
 
@@ -205,11 +205,11 @@ The most relevant open-source families are:
   with CAM++, ERes2Net, ECAPA, ResNet, and multimodal recipes.
 - **pyannote embedding:** simple pretrained embedding extraction for speaker
   verification workflows.
-- **FluidAudio enrollment APIs:** the most relevant MacParakeet-native path
+- **FluidAudio enrollment APIs:** the most relevant Sotto-native path
   because it keeps the stack in Swift/CoreML and can reuse loaded diarization
   models.
 
-MacParakeet implication: build a local speaker profile layer before choosing a
+Sotto implication: build a local speaker profile layer before choosing a
 new identity model. A better embedding model without a conservative product
 contract will still create false-name trust failures.
 
@@ -232,7 +232,7 @@ Top relevant results:
 | 10,119 | `pyannote/pyannote-audio` | De facto open-source diarization toolkit. |
 | 5,563 | `MahmoudAshraf97/whisper-diarization` | Popular Whisper + diarization wrapper. |
 | 2,990 | `modelscope/3D-Speaker` | Speaker verification, recognition, and diarization toolkit. |
-| 2,186 | `FluidInference/FluidAudio` | Swift/CoreML STT, VAD, diarization; directly relevant to MacParakeet. |
+| 2,186 | `FluidInference/FluidAudio` | Swift/CoreML STT, VAD, diarization; directly relevant to Sotto. |
 | 1,872 | `wq2012/awesome-diarization` | Curated paper/resource tracker. |
 | 1,274 | `FunAudioLLM/Fun-ASR` | Large ASR model family with timestamps and diarization. |
 | 478 | `BUTSpeechFIT/DiariZen` | Strong current research toolkit and benchmarks. |
@@ -243,9 +243,9 @@ Current ecosystem themes:
 - Local-first meeting products are converging on **Parakeet or Whisper for ASR
   plus diarization plus local LLM summarization**.
 - Python wrapper stacks remain popular, but they carry the exact dependency,
-  GPU, model-license, and runtime-shape issues MacParakeet has been avoiding.
+  GPU, model-license, and runtime-shape issues Sotto has been avoiding.
 - ONNX deployment stacks are growing, especially for embedded/mobile, but
-  MacParakeet already has a stronger Apple-platform path through CoreML.
+  Sotto already has a stronger Apple-platform path through CoreML.
 - Swift/CoreML diarization is still much rarer than Python diarization, which
   makes FluidAudio strategically valuable.
 
@@ -270,11 +270,11 @@ The best industry practice is not "always diarize everything." It is:
    transcription processes distinct channels separately, while diarization
    labels unique speakers regardless of channel.
 2. **Use diarization inside a source/channel when multiple people may be
-   present there.** This matches MacParakeet's meeting approach: `Me` from
+   present there.** This matches Sotto's meeting approach: `Me` from
    microphone source attribution; anonymous `Others N` from system-side
    diarization.
 3. **Use speaker count hints when known.** pyannote supports exact, min, and
-   max speaker constraints; MacParakeet already exposes the equivalent shape in
+   max speaker constraints; Sotto already exposes the equivalent shape in
    `SpeakerDiarizationConstraint`.
 4. **Treat channel labels and speaker labels independently.** AssemblyAI's docs
    note that speaker options are applied per channel when multichannel and
@@ -288,7 +288,7 @@ The best industry practice is not "always diarize everything." It is:
 7. **Do not silently name people from voiceprints.** Identity requires consent,
    deletion controls, confidence thresholds, and UI for correction.
 
-## Recommended MacParakeet Plan
+## Recommended Sotto Plan
 
 ### Phase 0: Reconcile Docs
 
@@ -424,7 +424,7 @@ Benchmarks should compare:
 ## Bottom Line
 
 The frontier is not "find the one diarization model." The frontier for
-MacParakeet is a layered speaker memory system:
+Sotto is a layered speaker memory system:
 
 ```text
 source attribution -> anonymous diarization -> local speaker profiles ->

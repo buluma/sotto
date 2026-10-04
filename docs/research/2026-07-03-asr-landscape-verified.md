@@ -10,7 +10,7 @@
 
 ## Runtimes on Apple Silicon
 
-| Runtime | State (verified) | Verdict for MacParakeet |
+| Runtime | State (verified) | Verdict for Sotto |
 |---------|------------------|-------------------------|
 | **FluidAudio** (FluidInference) | v0.15.4 (2026-06-16), active. Documented ASR: Parakeet TDT v2, v3, TDT-CTC-110M, **Parakeet Japanese**, **Parakeet CTC keyword/custom-vocab builds**, Parakeet EOU streaming, Nemotron Speech Streaming 0.6B (EN + Multilingual), Cohere Transcribe, SenseVoiceSmall, Paraformer-large-zh. Plus Silero VAD and diarization via Sortformer, LS-EEND, and pyannote CoreML. Source: `github.com/FluidInference/FluidAudio` + `Documentation/Models.md`. | Center of gravity. Nearly every model we would plausibly want through 2027 ships here or will land here. |
 | **WhisperKit** (Argmax) | Whisper-only; open-source SDK explicitly scoped to OpenAI Whisper. Diarization is a separate kit, **SpeakerKit** (pyannote). No Parakeet or non-Whisper ASR support found (claims of "Speakerbox"/Parakeet-in-WhisperKit: **refuted**). Source: `github.com/argmaxinc/argmax-oss-swift` (v1.0.0, 2026-05-01). | Legacy multilingual fallback. Maintained, not growing. |

@@ -378,7 +378,7 @@ cut off at the crash). Recovery + coverage repair compound cleanly.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                     MacParakeetCore (new, pure)                    │
+│                     SottoCore (new, pure)                    │
 │                                                                    │
 │  MeetingMicHealthMonitor  (pure; state passed in)                  │
 │    ├── ingest(micSignal, systemSignal, now) -> [HealthEvent]       │
@@ -396,7 +396,7 @@ cut off at the crash). Recovery + coverage repair compound cleanly.
                           │  (deterministic, table-tested)
                           ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│              MacParakeetCore (thin service layer)                  │
+│              SottoCore (thin service layer)                  │
 │                                                                    │
 │  MeetingAudioCaptureService / SharedMicrophoneStream /             │
 │  SystemAudioStream  → feed liveness signals to the monitor         │
@@ -410,7 +410,7 @@ cut off at the crash). Recovery + coverage repair compound cleanly.
                           │
                           ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│                    MacParakeet (app layer)                         │
+│                    Sotto (app layer)                         │
 │                                                                    │
 │  MeetingRecordingPanelViewModel / PillViewModel                    │
 │    └── micHealthWarning surface (gentle, non-blocking)             │
@@ -526,7 +526,7 @@ without a mic, a meeting, or an STT model. The audio/STT plumbing that
 
 ## Implementation Direction
 
-### Core types (MacParakeetCore)
+### Core types (SottoCore)
 
 - `MeetingMicHealthMonitor` — pure. `ingest(micSignal:systemSignal:now:)
   -> [HealthEvent]`; holds no clock, takes `now` in. Signatures
@@ -538,10 +538,10 @@ without a mic, a meeting, or an STT model. The audio/STT plumbing that
   `RepairPlan` is `.accept` / `.selective(gaps: [SpeechRegion])` /
   `.fullReTranscribe`. Coverage-ratio math + ≥0.8 s gap detection live
   here; no STT, no audio I/O.
-- New `Sources/MacParakeetCore/Audio/MeetingMicHealthMonitor.swift` and
-  `Sources/MacParakeetCore/Services/MeetingRecording/MeetingTranscriptCoverageRepair.swift`.
+- New `Sources/SottoCore/Audio/MeetingMicHealthMonitor.swift` and
+  `Sources/SottoCore/Services/MeetingRecording/MeetingTranscriptCoverageRepair.swift`.
 
-### Service layer (MacParakeetCore)
+### Service layer (SottoCore)
 
 - `MicrophoneEnginePlatform` tracks five-second post-start callback gaps and
   two seconds of continuous empty/invalid callbacks, converging those failures
@@ -549,7 +549,7 @@ without a mic, a meeting, or an STT model. The audio/STT plumbing that
   clock/timer, route re-resolution, replacement startup readiness and generation
   checks, and Stop cancellation once for every shared-stream consumer. Valid
   silence after successful startup commit is not a recovery signal.
-- `MeetingAudioCaptureService` (`Sources/MacParakeetCore/Audio/`) feeds
+- `MeetingAudioCaptureService` (`Sources/SottoCore/Audio/`) feeds
   per-buffer liveness signals (arrival timestamp + non-silent flag for
   mic, activity flag for system) into `MeetingMicHealthMonitor`. The
   existing `MeetingAudioCaptureEvent` stream (`.microphoneBuffer` /
@@ -568,14 +568,14 @@ without a mic, a meeting, or an STT model. The audio/STT plumbing that
 ### App / ViewModels
 
 - `MeetingRecordingPanelViewModel` / `MeetingRecordingPillViewModel`
-  (`Sources/MacParakeetViewModels/`) — add a non-blocking
+  (`Sources/SottoViewModels/`) — add a non-blocking
   `micHealthWarning` surface next to the existing `micLevel` /
   `systemLevel`. Gentle copy, dismissible, never modal.
 
 ### Feature gate (staged rollout)
 
 - Add a single `AppFeatures.meetingCaptureReliabilityEnabled` kill-switch
-  (default-on intent) in `Sources/MacParakeetCore/AppFeatures.swift`,
+  (default-on intent) in `Sources/SottoCore/AppFeatures.swift`,
   following the existing flag-doc style. When off, the watchdog does not
   observe and the repair stage is skipped (the meeting finalizes exactly
   as today). The pure types and tests stay intact either way.
@@ -599,7 +599,7 @@ meeting after repair resolves. It is not part of the implemented event contract.
 
 > **Two-repo reminder.** Each new `TelemetryEventName` case MUST also be
 > added to `ALLOWED_EVENTS` in
-> `macparakeet-website/functions/api/telemetry.ts` **before** a
+> `sotto-website/functions/api/telemetry.ts` **before** a
 > client that emits it ships. The telemetry Worker returns HTTP 400 for the
 > *entire batch* if any event name is unknown. The client's permanent-rejection
 > policy drops valid co-batched events too. Deploy the allowlist change first.

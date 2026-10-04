@@ -2,7 +2,7 @@
 
 Current status: the `cp -RH` fix is applied at `3827999ddb84c8a8e0edcb3ac190e66813fc95fe`. Root rebuilt and signed the actual app; whole-app strict signature verification, the privacy-surface check, and signed LocalVQE asset verification passed. App notarization remains pending. This is not a release-ready verdict.
 
-The initial independent diagnosis inspected `afa6fb3db30685fe1fe3e374e02093ec117184f4` and did not modify production scripts or the actual artifact. The proposal, standalone fixture, and evidence are in `/tmp/macparakeet-080-qa/sparkle-packaging/`.
+The initial independent diagnosis inspected `afa6fb3db30685fe1fe3e374e02093ec117184f4` and did not modify production scripts or the actual artifact. The proposal, standalone fixture, and evidence are in `/tmp/sotto-080-qa/sparkle-packaging/`.
 
 ## Current notarization checkpoint
 
@@ -10,7 +10,7 @@ Root's signed-bundle log records the app as valid on disk, a verified privacy su
 
 Apple registered app submission `933ba8fc-4688-42f0-9776-5e24e393c7cf` at `2026-09-07T23:06:20.092Z`. Root observed `notarytool submit` terminate with SIGBUS/exit 138 despite the registered upload. Independent `notarytool info` calls succeeded and still reported **In Progress** at `2026-09-07T23:17:17Z`. This does not mean notarization was accepted.
 
-The investigator is polling that exact ID at 60-second intervals. No replacement submission, signing, stapling, DMG construction, or desktop manipulation has been performed by the investigator. The current script has no resume flag; rerunning it would repeat signing and upload. A continuation recipe is saved locally at `/tmp/macparakeet-080-qa/sparkle-packaging/notary-resume.md`: require the existing app submission to be Accepted, staple/validate/assess that app, then create and sign a DMG and submit that distinct artifact once. A direct compressed-image route can avoid Finder automation while root's GUI QA remains active.
+The investigator is polling that exact ID at 60-second intervals. No replacement submission, signing, stapling, DMG construction, or desktop manipulation has been performed by the investigator. The current script has no resume flag; rerunning it would repeat signing and upload. A continuation recipe is saved locally at `/tmp/sotto-080-qa/sparkle-packaging/notary-resume.md`: require the existing app submission to be Accepted, staple/validate/assess that app, then create and sign a DMG and submit that distinct artifact once. A direct compressed-image route can avoid Finder automation while root's GUI QA remains active.
 
 ## Confirmed failure
 
@@ -20,12 +20,12 @@ At the original inspected commit, `scripts/dist/build_app_bundle.sh:561` used:
 cp -R "$SPARKLE_FW" "$FRAMEWORKS_DIR/"
 ```
 
-The preferred Xcode source, `Release/PackageFrameworks/Sparkle.framework`, is itself an absolute symlink to `Release/Sparkle.framework`. macOS `cp -R` preserves a command-line symlink by default. Consequently, the original `dist/MacParakeet.app/Contents/Frameworks/Sparkle.framework` remained an absolute symlink into `.build/xcode-dev/Build/Products/Release/` instead of containing the framework.
+The preferred Xcode source, `Release/PackageFrameworks/Sparkle.framework`, is itself an absolute symlink to `Release/Sparkle.framework`. macOS `cp -R` preserves a command-line symlink by default. Consequently, the original `dist/Sotto.app/Contents/Frameworks/Sparkle.framework` remained an absolute symlink into `.build/xcode-dev/Build/Products/Release/` instead of containing the framework.
 
 Independent read-only verification reproduced the packaging failure:
 
 ```text
-codesign --verify --deep --strict --verbose=2 dist/MacParakeet.app
+codesign --verify --deep --strict --verbose=2 dist/Sotto.app
 exit 1
 invalid destination for symbolic link in bundle
 file modified: …/Contents/Frameworks/Sparkle.framework

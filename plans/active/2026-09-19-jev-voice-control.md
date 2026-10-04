@@ -1,4 +1,4 @@
-# Jev-powered Voice Control for MacParakeet
+# Jev-powered Voice Control for Sotto
 
 > **Governing implementation update — 2026-09-19:** The user's
 > [native Accessibility direction](../../docs/research/2026-09-19-jev-voice-control/native-accessibility-direction.md)
@@ -13,9 +13,9 @@
 > envelope; current implementation/evidence is in the capability matrix.
 
 
-**Status:** IMPLEMENTED behind `--enable-voice-control` (DEBUG). Native Flights results and microphone qualification remain open.  
-**Date:** 2026-09-19, updated 2026-09-20. **Owner:** MacParakeet product/core app.  
-**Origin:** User request for a full voice-control feature, deep source research, classifier/router mapping and excellent everyday UI/UX. Jev is the requested semantic decision engine.  
+**Status:** IMPLEMENTED behind `--enable-voice-control` (DEBUG). Native Flights results and microphone qualification remain open.
+**Date:** 2026-09-19, updated 2026-09-20. **Owner:** Sotto product/core app.
+**Origin:** User request for a full voice-control feature, deep source research, classifier/router mapping and excellent everyday UI/UX. Jev is the requested semantic decision engine.
 **Evidence:** [Research index](../../docs/research/2026-09-19-jev-voice-control/README.md), [evidence](../../docs/research/2026-09-19-jev-voice-control/evidence.md), [route catalog](../../docs/research/2026-09-19-jev-voice-control/routing-catalog.md), [evaluation](../../docs/research/2026-09-19-jev-voice-control/evaluation.md).
 
 ## Product decision
@@ -59,7 +59,7 @@ These are proposed high-value families, inferred from reference capabilities and
 | Spoken transforms | “Make this clearer”; “translate this selection into Spanish” | Snapshot selected input, route to configured text model, preview/replace with target verification. |
 | Forms | “Choose next Tuesday”; “set quantity to three”; “fill these two fields” | Parse exact quantities/dates locally; fill only supplied or explicitly approved values; validate field state. |
 | Files and system controls | “Open Downloads”; “rename this draft”; “volume down a little” | Named typed capabilities, bounded changes and identity checks; separate destructive confirmation. |
-| MacParakeet library actions | “Find yesterday’s meeting”; “copy that quote”; “export this transcript” | Prefer existing repositories/CLI-compatible domain operations to driving our own UI with clicks. |
+| Sotto library actions | “Find yesterday’s meeting”; “copy that quote”; “export this transcript” | Prefer existing repositories/CLI-compatible domain operations to driving our own UI with clicks. |
 | Cross-app transfer | “Copy this paragraph into that Notes window” | Explicit source and destination; preserve clipboard; stop on target mismatch. |
 | Bounded tasks | “Find a one-way flight and stop at the options”; “draft a reply using this note” | Stateful plan, one verified effect at a time, bounded budget, no hidden escalation. |
 | Recovery and control | “Not that”; “the second one”; “undo”; “pause”; “cancel” | Context-scoped repair, reversible-action receipts, immediate cancellation and honest state. |
@@ -152,7 +152,7 @@ Direct-control beta includes **two- or three-clause explicit sequences**, such a
 
 The first integrated milestone must demonstrate “find one-way flights from Zürich to London on September 20 and stop at the options,” with a resolved year/date, plus changed destinations, dates and paraphrases on held-out layouts. This is a goal over generic browser capabilities, not a hardcoded flight script. Jev repeatedly selects operation and target from the current page; exact supplied text uses committed source spans, while generated text uses the optional writing provider only when needed.
 
-Build the bounded task lifecycle alongside the command core and browser adapter, rather than defer it to slice 6. Show progress, permit correction and local Stop between every effect, and verify route/date/results before claiming success. Prove the loop first on deterministic dynamic-page fixtures, then on a real browser workflow. Include loading, missing controls, ambiguous dates, changed focus and “actually, Friday.” The supplied demo’s 7.1 seconds is an external demonstration, not a MacParakeet benchmark or release promise.
+Build the bounded task lifecycle alongside the command core and browser adapter, rather than defer it to slice 6. Show progress, permit correction and local Stop between every effect, and verify route/date/results before claiming success. Prove the loop first on deterministic dynamic-page fixtures, then on a real browser workflow. Include loading, missing controls, ambiguous dates, changed focus and “actually, Friday.” The supplied demo’s 7.1 seconds is an external demonstration, not a Sotto benchmark or release promise.
 
 ### Observation and execution adapters
 
@@ -162,7 +162,7 @@ Build the bounded task lifecycle alongside the command core and browser adapter,
 
 **Visual fallback:** local OCR can create text-region candidates when semantics are unavailable. Mark provenance and lower assurance. First release of OCR uses highlighted user-confirmed targeting; no model-generated coordinate guesses. A local numbered grid remains available for unlabeled/canvas controls. Rich screenshot interpretation is an optional later provider surface, not an ability Jev has today.
 
-**Domain actions:** directly invoke known MacParakeet domain services, supported OS APIs and approved app adapters where they provide a clearer contract. Jev chooses a capability/arguments; it never returns shell, AppleScript, JavaScript, selectors or executable source. Generic “press Return” is not automatically harmless: policy checks the focused control and potential submission.
+**Domain actions:** directly invoke known Sotto domain services, supported OS APIs and approved app adapters where they provide a clearer contract. Jev chooses a capability/arguments; it never returns shell, AppleScript, JavaScript, selectors or executable source. Generic “press Return” is not automatically harmless: policy checks the focused control and potential submission.
 
 ### Transaction, identity and verification
 
@@ -193,7 +193,7 @@ A referent entry contains kind (selection/result/control/action), candidate-set 
 
 Known harmless actions can run after commitment without a confirmation dialog. Ambiguity prompts for a target/slot. Sending, purchasing, destructive changes and meaningful external submissions show an action-specific confirmation, including the relevant destination/content. Reviewed adapters distinguish navigation/disclosure/focus actions from external submissions using current control context, form/destination/account evidence and explicit capability metadata. A generic link, toggle or visually harmless label is not automatically reversible. Unknown-consequence controls ask for confirmation or stop; they do not inherit a low-risk label from model confidence. Clarification identifies intent; it does not authorize consequences. Confirmation expires on context/argument change, cancellation, session end or a short configurable timeout to be tuned in usability testing.
 
-Cross-app drafting requires an explicit **read-content capability** in addition to control discovery. It returns a bounded content snapshot with source app/document/selection identity, capture time, exact text/ranges, origin, sensitivity labels, completeness and truncation reason. A partial read cannot silently stand for the full document. Read only user-requested sources; do not treat page instructions as authority. Bind the draft to that snapshot and show the source beside the preview. A changed source requires refresh or explicit use of the earlier snapshot. Consent to target-label routing does not automatically grant a separate generative provider access to document bodies. Existing MacParakeet library reads should use repository/CLI domain APIs; native/browser content reads need their own supported adapter and disclosure.
+Cross-app drafting requires an explicit **read-content capability** in addition to control discovery. It returns a bounded content snapshot with source app/document/selection identity, capture time, exact text/ranges, origin, sensitivity labels, completeness and truncation reason. A partial read cannot silently stand for the full document. Read only user-requested sources; do not treat page instructions as authority. Bind the draft to that snapshot and show the source beside the preview. A changed source requires refresh or explicit use of the earlier snapshot. Consent to target-label routing does not automatically grant a separate generative provider access to document bodies. Existing Sotto library reads should use repository/CLI domain APIs; native/browser content reads need their own supported adapter and disclosure.
 
 A multi-step request carries a goal, allowed apps/sites/capabilities, supplied data and concrete success conditions. Start with a bounded proposed budget of 12 dispatched actions / 30 model requests / 60 seconds / 2 no-progress attempts, then pause with progress preserved for explicit continuation. These are initial product limits to validate, not model limits. Prefer a direct capability sequence when it is known; invoke the optional planner only when decomposition actually requires it. Every planner-selected effect still passes the same local policy. Do not turn “open Settings” into a general reasoning loop.
 
@@ -213,8 +213,8 @@ All new names below are proposed. Current types and ownership are in [architectu
 
 | Slice | Deliverable and proposed location | Focused evidence |
 |---|---|---|
-| 0. Contracts and fixtures | Proposed ADR, `spec/contracts/voice-control.md`; sanitized AX/DOM/transcript fixtures under `Tests/MacParakeetTests/Fixtures/VoiceControl/`; update existing plan lineage deliberately | Exact route/terminal-state examples; baseline Apple Voice Control comparison; browser-bridge feasibility and engine latency measurement |
-| 1. Pure command and task core | `Sources/MacParakeetCore/Services/VoiceControl/`: turn/session state, bounded goal runner, candidate/action/result values, policy, receipts; Jev HTTP client separate from chat provider | Proposed `VoiceControlPolicyTests`, `VoiceControlSessionTests`, `JevDecisionClientTests`: malformed schema, unused-head uncertainty, stale revision, confirmation binding, cancel and unknown outcome |
+| 0. Contracts and fixtures | Proposed ADR, `spec/contracts/voice-control.md`; sanitized AX/DOM/transcript fixtures under `Tests/SottoTests/Fixtures/VoiceControl/`; update existing plan lineage deliberately | Exact route/terminal-state examples; baseline Apple Voice Control comparison; browser-bridge feasibility and engine latency measurement |
+| 1. Pure command and task core | `Sources/SottoCore/Services/VoiceControl/`: turn/session state, bounded goal runner, candidate/action/result values, policy, receipts; Jev HTTP client separate from chat provider | Proposed `VoiceControlPolicyTests`, `VoiceControlSessionTests`, `JevDecisionClientTests`: malformed schema, unused-head uncertainty, stale revision, confirmation binding, cancel and unknown outcome |
 | 2. Local observation/execution | Native adapter under Core System services; shared mutation arbitration with dictation/Transforms; cancellation-safe command text entry | Proposed `VoiceControlAXAdapterTests`, `VoiceControlExecutionTests`; existing `SelectionReplacementServiceTests`, `TransformExecutorTests`, `DictationFlowCoordinatorTests`; real TextEdit/Notes/Finder matrix |
 | 3. Native voice UX | App `VoiceControlCoordinator`, ViewModels `VoiceControlViewModel`, app views; hold and accessible session-toggle invocation, basic referent repair, clarification/help, local Stop, short explicit command sequences and capture via shared scheduler | Proposed `VoiceControlViewModelTests`, `VoiceControlSpeechTests`; existing Hotkey tests; manual readiness, correction, VoiceOver and multi-display checks |
 | 4. Browser control | Proposed `integrations/voice-control-browser/` extension/native bridge; authenticated protocol and DOM candidate adapter; integrate the early spoken-goal milestone | AX browser baseline measured first; richer advertised browser operations require this bridge. Browser fixtures via Playwright: tab/profile binding, iframe/shadow DOM, navigation during inference, removed node, bridge disconnect, no password exposure |

@@ -210,7 +210,7 @@ consent, bounded candidate storage and verified deletion controls.
 ## Repository context recorded in research
 
 - Diarization is centralized: `DiarizationService.diarize(audioURL:)`
-  (`Sources/MacParakeetCore/Services/Diarization/DiarizationService.swift:101-157`),
+  (`Sources/SottoCore/Services/Diarization/DiarizationService.swift:101-157`),
   actor, ANEInferenceGate-wrapped, normalizes to `S1/S2` + `SpeakerInfo(id:,label:)`.
 - Meeting path: mic track is identity-known (`speakerId = "microphone"` = Me); only
   the **system track** is diarized → `Others 1/2` (`TranscriptionService.swift:1266-1324`).
@@ -378,7 +378,7 @@ a separate opt-in, decided later.
   math on vectors normalized once at entry (Amendment 1); O(profiles × clusters),
   no new inference scheduling. Runtime cost remains to be measured.
   **Adapter prerequisite in the original baseline:** `DiarizationService.diarize()` dropped FluidAudio's
-  `speakerDatabase`/segment embeddings when building `MacParakeetDiarizationResult`
+  `speakerDatabase`/segment embeddings when building `SottoDiarizationResult`
   — Phase 1's first change is surfacing per-speaker embeddings through that
   adapter (behind the feature flag), otherwise the matcher has nothing to score.
 - **Assignment provenance**: do NOT extend `SpeakerInfo`, and do NOT add a column to

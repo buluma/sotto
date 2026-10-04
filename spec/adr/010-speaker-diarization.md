@@ -93,7 +93,7 @@ Three implementation boundaries remain material:
 
 ## Context (original decision)
 
-MacParakeet v0.4 adds speaker diarization to file transcription (F13). Users who transcribe interviews, podcasts, and meetings need to know "who said what" — not just the raw text.
+Sotto v0.4 adds speaker diarization to file transcription (F13). Users who transcribe interviews, podcasts, and meetings need to know "who said what" — not just the raw text.
 
 ### What is diarization?
 
@@ -224,7 +224,7 @@ If diarization fails (e.g. `noSpeechDetected`, model error, timeout), the ASR re
 
 Skip diarization for: dictation (single speaker by design), or when the corresponding Settings toggle is off.
 
-**CLI:** `macparakeet-cli transcribe` follows the saved file/URL speaker-detection preference; `macparakeet-cli retranscribe --kind meeting` follows the saved meeting speaker-detection preference when `--speaker-detection app-default` is used. When unset, both preferences default to on where supported. Use `--no-diarize` / `--speaker-detection off` to skip for one run, or a speaker-count constraint to force it on. Text output shows speaker labels at turn changes; JSON output includes all speaker data via Codable.
+**CLI:** `sotto-cli transcribe` follows the saved file/URL speaker-detection preference; `sotto-cli retranscribe --kind meeting` follows the saved meeting speaker-detection preference when `--speaker-detection app-default` is used. When unset, both preferences default to on where supported. Use `--no-diarize` / `--speaker-detection off` to skip for one run, or a speaker-count constraint to force it on. Text output shows speaker labels at turn changes; JSON output includes all speaker data via Codable.
 
 **Readiness contract:** Diarization remains a separate service from the STT scheduler, but when speaker detection is enabled (on by default where supported — see the 2026-07-03 amendment) the onboarding/ready-state path must account for diarization-model readiness before claiming file transcription is fully ready.
 
@@ -238,7 +238,7 @@ Skip diarization for: dictation (single speaker by design), or when the correspo
 > unless the user opts in. The default was deliberately flipped on→off in commit
 > `4a1d25133` ("Polish AI settings defaults"); the Settings copy reflects it
 > ("Optional. Adds speaker labels when audio is clear; leave off if labels are
-> unreliable."). Consequences: (a) `macparakeet-cli transcribe` does **not**
+> unreliable."). Consequences: (a) `sotto-cli transcribe` does **not**
 > diarize by default — it diarizes only when the stored preference is on, when
 > `--speaker-detection on` is passed, or when a speaker-count constraint
 > (`--speaker-count` / `--speaker-min` / `--speaker-max`) is given; `--no-diarize`
@@ -264,7 +264,7 @@ Skip diarization for: dictation (single speaker by design), or when the correspo
 > track after capture; microphone words remain source-labeled as `Me`.
 >
 > **2. The FluidAudio dependency surface has grown.** The core decision above
-> still stands — MacParakeet ships only the offline batch pipeline and uses
+> still stands — Sotto ships only the offline batch pipeline and uses
 > neither Sortformer nor streaming diarization. But the pinned FluidAudio now
 > also exposes streaming diarizers (`LSEENDDiarizer`, `SortformerDiarizer`) and
 > speaker-enrollment APIs. None are shipped. They are surveyed as a *future*
@@ -469,13 +469,13 @@ Source analysis establishes feasibility; real-audio and native-playback qualific
 
 Sortformer's 4-speaker cap is a non-starter. It's baked into the model architecture (static CoreML tensor shapes) — not a tuning parameter. A podcast with 5 guests, a panel discussion, or a meeting with 5+ people would silently miss or merge speakers. The offline pipeline has no such limit.
 
-Sortformer's strengths (noise robustness, overlapping speech) matter most for real-time meeting recording — Oatmeal's domain, not MacParakeet's. For file transcription of pre-recorded audio, the offline pipeline's higher accuracy and unlimited speakers are strictly better.
+Sortformer's strengths (noise robustness, overlapping speech) matter most for real-time meeting recording — Oatmeal's domain, not Sotto's. For file transcription of pre-recorded audio, the offline pipeline's higher accuracy and unlimited speakers are strictly better.
 
 ### Why not streaming diarization (original rationale)
 
-MacParakeet's file transcription is batch by nature — the entire audio file is available upfront. Streaming diarization trades 10-15% DER for latency benefits we don't need. The offline pipeline processes faster than realtime anyway (64-122x RTF), so there's no UX benefit to streaming.
+Sotto's file transcription is batch by nature — the entire audio file is available upfront. Streaming diarization trades 10-15% DER for latency benefits we don't need. The offline pipeline processes faster than realtime anyway (64-122x RTF), so there's no UX benefit to streaming.
 
-The original file-only rationale predates MacParakeet meeting recording. Current meetings still use offline final speaker assignment; tentative live diarization remains research, as recorded in the later amendments.
+The original file-only rationale predates Sotto meeting recording. Current meetings still use offline final speaker assignment; tentative live diarization remains research, as recorded in the later amendments.
 
 ### Why not a separate dependency
 
@@ -533,7 +533,7 @@ Rejected. 4-speaker hard limit and 32% DER. The architectural cap means 5+ speak
 
 ### Sortformer for streaming + offline for batch (hybrid)
 
-Rejected. Unnecessary complexity. MacParakeet doesn't need streaming diarization — all audio is available upfront for file transcription. One pipeline is simpler.
+Rejected. Unnecessary complexity. Sotto doesn't need streaming diarization — all audio is available upfront for file transcription. One pipeline is simpler.
 
 ### WhisperX (combined ASR + diarization)
 
@@ -545,7 +545,7 @@ Rejected. Would require reintroducing the Python subprocess we eliminated in ADR
 
 ### No diarization (defer indefinitely)
 
-Rejected. Speaker attribution is a core expectation for file transcription. Every competitor (MacWhisper, Superwhisper, VoiceInk) either has it or is adding it. Without it, MacParakeet's file transcription is incomplete for multi-speaker recordings.
+Rejected. Speaker attribution is a core expectation for file transcription. Every competitor (MacWhisper, Superwhisper, VoiceInk) either has it or is adding it. Without it, Sotto's file transcription is incomplete for multi-speaker recordings.
 
 ## References
 

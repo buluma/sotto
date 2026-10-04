@@ -1,23 +1,29 @@
-# MacParakeet: Architecture
+# Sotto: Architecture
 
 > Status: **ACTIVE** — implementation map, refreshed for the independent 2026-10-02 audit.
 > Source presence describes development capability. The
 > [release and flag table](README.md#release-channels-and-feature-flags)
 > governs availability; this document is not release qualification.
 
+## Personal fork boundary
+
+Sotto removes remote telemetry transport and the Sparkle app updater. Both
+executables use separate Sotto storage, preference and credential namespaces.
+Upstream user data is never moved or deleted automatically.
+
 ## System Overview
 
-MacParakeet has two executable products: the SwiftUI macOS app and the public
-`macparakeet-cli`. Both use Core services and the same local database model.
+Sotto has two executable products: the SwiftUI macOS app and the public
+`sotto-cli`. Both use Core services and the same local database model.
 The app composes one microphone source and one speech scheduler/runtime;
 a separate CLI process owns its own connections and speech runtime.
 
 ```mermaid
 flowchart TD
-    App[MacParakeet app: SwiftUI and AppKit coordinators] --> VM[MacParakeetViewModels]
-    App --> Core[MacParakeetCore services]
+    App[Sotto app: SwiftUI and AppKit coordinators] --> VM[SottoViewModels]
+    App --> Core[SottoCore services]
     VM --> Core
-    CLI[macparakeet-cli] --> Core
+    CLI[sotto-cli] --> Core
     App --> AskVM[AskWorkspaceViewModel]
     AskVM --> Ask[AskWorkspaceService]
     CLI --> Ask
@@ -30,24 +36,24 @@ flowchart TD
     Speech --> Whisper[WhisperKit]
     Core --> AI[RoutingLLMClient: configured HTTP or Local CLI]
     AI --> AppleAI[Apple Intelligence: on-device Foundation Models when selected]
-    App -. opt-in build and developer gate .-> MLX[MacParakeetLocalLLM]
+    App -. opt-in build and developer gate .-> MLX[SottoLocalLLM]
 ```
 
 ### Target and composition boundaries
 
 [Package.swift](../Package.swift) defines the build graph. The app composition
-root is [AppEnvironment](../Sources/MacParakeet/App/AppEnvironment.swift), with
+root is [AppEnvironment](../Sources/Sotto/App/AppEnvironment.swift), with
 app-level wiring in `AppEnvironmentConfigurer` and the app delegates/coordinators.
 
 | Target | Ownership |
 |---|---|
-| `MacParakeetCore` | Audio, STT, deterministic processing, database models/repositories, meeting settlement/recovery/artifacts, speaker corrections, retrieval, exports, LLM routing and system adapters. No SwiftUI view ownership; small AppKit adapters are allowed. |
-| `MacParakeetViewModels` | Testable `@Observable` presentation state, library and prompt flows, live and saved notes, async selection/context coordination. Depends on Core; some presentation helpers use AppKit/SwiftUI. |
-| `MacParakeet` | SwiftUI views, windows/panels, hotkey and menu integration, app lifecycle, dependency composition and feature coordinators. It is not literally free of orchestration logic. |
+| `SottoCore` | Audio, STT, deterministic processing, database models/repositories, meeting settlement/recovery/artifacts, speaker corrections, retrieval, exports, LLM routing and system adapters. No SwiftUI view ownership; small AppKit adapters are allowed. |
+| `SottoViewModels` | Testable `@Observable` presentation state, library and prompt flows, live and saved notes, async selection/context coordination. Depends on Core; some presentation helpers use AppKit/SwiftUI. |
+| `Sotto` | SwiftUI views, windows/panels, hotkey and menu integration, app lifecycle, dependency composition and feature coordinators. It is not literally free of orchestration logic. |
 | `CLI` | Argument parsing, stable automation output and command orchestration over Core. GUI hotkeys and live recording controls are outside its current contract. |
-| `MacParakeetObjCShims` | Small Objective-C exception-catching bridge for platform operations Swift `do/catch` cannot catch. |
-| `MacParakeetLocalLLM` | Optional in-process MLX implementation; linked only with `MACPARAKEET_ENABLE_MLX_LOCAL_LLM=1`. Normal package builds do not resolve this dependency graph. |
-| `MacParakeetTests`, `CLITests` | App/Core/ViewModel and public CLI verification. |
+| `SottoObjCShims` | Small Objective-C exception-catching bridge for platform operations Swift `do/catch` cannot catch. |
+| `SottoLocalLLM` | Optional in-process MLX implementation; linked only with `SOTTO_ENABLE_MLX_LOCAL_LLM=1`. Normal package builds do not resolve this dependency graph. |
+| `SottoTests`, `CLITests` | App/Core/ViewModel and public CLI verification. |
 
 Use injectable protocols at service boundaries and explicit ownership of
 process-wide resources. This is not a claim that every type has a protocol or
@@ -76,7 +82,7 @@ stop on derived audio and does not change the live microphone sent to a call.
 Dictation and meeting recording can run concurrently. Source lifecycle repair
 belongs to the source owners, which require actual replacement buffers before
 claiming recovery. Silence by itself is not proof of a dead source. See the
-[Audio subsystem guide](../Sources/MacParakeetCore/Audio/README.md),
+[Audio subsystem guide](../Sources/SottoCore/Audio/README.md),
 [audio pipeline](05-audio-pipeline.md), [ADR-015](adr/015-concurrent-dictation-meeting.md)
 and [ADR-025](adr/025-meeting-capture-reliability.md).
 
@@ -120,7 +126,7 @@ substituting a different engine.
 | Cohere | FluidAudio `CoherePipeline`, explicit local download, batch-only; no word timings, diarization alignment or live preview. |
 
 The capability registry, selected variants and supported language policies are
-in the [STT spec](06-stt-engine.md) and [STT subsystem guide](../Sources/MacParakeetCore/STT/README.md).
+in the [STT spec](06-stt-engine.md) and [STT subsystem guide](../Sources/SottoCore/STT/README.md).
 [ADR-026](adr/026-asr-engine-strategy.md) governs runtime expansion. Benchmark
 results in [benchmarks/asr](../benchmarks/asr/) describe their recorded hardware,
 datasets and builds; they are not current-release speed/memory guarantees.
@@ -161,7 +167,7 @@ from their pre-recognition snapshot. The same ownership rule applies to
 presentation: a successful Library favorite/delete/audio-detach mutation
 invalidates an older in-flight page snapshot before it can publish, retaining
 the requested pagination window.
-See the [database guide](../Sources/MacParakeetCore/Database/README.md) and
+See the [database guide](../Sources/SottoCore/Database/README.md) and
 [file audio-track contract](contracts/file-transcription-audio-tracks.md).
 
 Cancellation is checked after optional speaker detection and awaited text
@@ -314,12 +320,12 @@ is untimed. The
 
 | Data | Owner/location |
 |---|---|
-| Library, dictations, vocabulary, prompts/results, corrections, retrieval, cards, run metadata | GRDB `DatabaseManager` / repositories; normally `~/Library/Application Support/MacParakeet/macparakeet.db`. |
+| Library, dictations, vocabulary, prompts/results, corrections, retrieval, cards, run metadata | GRDB `DatabaseManager` / repositories; normally `~/Library/Application Support/Sotto/sotto.db`. |
 | Preferences and provider metadata | `AppRuntimePreferences` / `UserDefaults`; provider configuration excludes API-key contents. |
 | Provider credentials | Per-provider Keychain entries through `LLMConfigStore`. |
-| Meeting audio, locks, metadata and materialized artifacts | Configured meeting artifact root plus `{uuid}/` (default `~/Library/Application Support/MacParakeet/meeting-recordings/`); retained artifact folder pointers survive managed audio removal. |
+| Meeting audio, locks, metadata and materialized artifacts | Configured meeting artifact root plus `{uuid}/` (default `~/Library/Application Support/Sotto/meeting-recordings/`); retained artifact folder pointers survive managed audio removal. |
 | Dictation/file/media retained audio | App-managed paths and workflow-specific retention preferences; see `AppPaths` and storage contracts. |
-| Speech models and downloaded helper binaries | FluidAudio-managed caches, MacParakeet's Whisper cache and app `bin/` paths. |
+| Speech models and downloaded helper binaries | FluidAudio-managed caches, Sotto's Whisper cache and app `bin/` paths. |
 | Optional local LLM models | Explicitly downloaded `LLMModels/` directory; no model bundled or automatically downloaded. |
 | Ask runtime | Private bundled JavaScript helper plus official Node runtime in app/CLI packaging; model credentials and source access stay in Swift. |
 | Diagnostics | Bounded local audio log, OSLog and explicit exports; governed separately from transmitted telemetry. |
@@ -328,7 +334,7 @@ SQLite is the canonical structured record store, not a complete backup of all
 app state. `DatabaseManager(path:)` uses process-serialized migrations and a
 five-second busy timeout; CLI `health` uses read-only, non-migrating probes.
 Migration identifiers are historical schema labels, not app or CLI release
-versions. See [data model](01-data-model.md) and [AppPaths](../Sources/MacParakeetCore/Services/AppPaths.swift).
+versions. See [data model](01-data-model.md) and [AppPaths](../Sources/SottoCore/Services/AppPaths.swift).
 
 Core STT has no network dependency after model setup. Other surfaces include
 configured AI, model/helper/media downloads, updates, opt-out telemetry/crash
@@ -361,7 +367,7 @@ Package requirements below describe this audited revision; `Package.swift` and
 | SwiftStreamingMarkdown fork | Immutable revision pinned in `Package.swift`; app/test rendering and transitive macro plugin. |
 | MLX packages and Tokenizers | Opt-in graph only: exact `mlx-swift-lm 3.31.4`, `mlx-swift 0.31.4`, `swift-transformers 1.1.6..<1.2.0`. |
 
-`MACPARAKEET_SKIP_WHISPERKIT=1` also excludes the Markdown dependency graph for
+`SOTTO_SKIP_WHISPERKIT=1` also excludes the Markdown dependency graph for
 the first-party Swift 6 compatibility build. Normal builds include both.
 `yt-dlp` and FFmpeg are helper executables, not additional speech runtimes.
 
@@ -383,7 +389,7 @@ final gate, with one owner across the task and release workflow.
 swift build
 swift test --filter TextProcessingPipelineTests
 scripts/dev/run_app.sh
-swift run macparakeet-cli --help
+swift run sotto-cli --help
 ```
 
 Run from the worktree that owns the change. The development script owns GUI

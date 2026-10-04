@@ -1,6 +1,6 @@
 # Lessons from prior computer-use systems
 
-Local checkouts under `macparakeet/references/` (gitignored) informed this design. None of them were executed as part of Voice Control. Ideas transfer; transports do not. Native Accessibility remains the only adapter.
+Local checkouts under `sotto/references/` (gitignored) informed this design. None of them were executed as part of Voice Control. Ideas transfer; transports do not. Native Accessibility remains the only adapter.
 
 ## The loop that works
 

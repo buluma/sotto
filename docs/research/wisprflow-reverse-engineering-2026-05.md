@@ -1,6 +1,6 @@
 # WisprFlow Reverse Engineering — May 2026
 
-> Status: **ACTIVE**. Source-of-truth teardown from reverse-engineering the installed macOS app (v1.5.308, commit `4afc9a09`). Supersedes the HISTORICAL `wisprflow-deep-dive.md` (Feb 2026, web-research-only). Companion: `wisprflow-parity-2026-05.md` maps gaps to MacParakeet.
+> Status: **ACTIVE**. Source-of-truth teardown from reverse-engineering the installed macOS app (v1.5.308, commit `4afc9a09`). Supersedes the HISTORICAL `wisprflow-deep-dive.md` (Feb 2026, web-research-only). Companion: `wisprflow-parity-2026-05.md` maps gaps to Sotto.
 
 ## Method
 
@@ -236,7 +236,7 @@ Models: **Claude Haiku 4.5** and **Claude Sonnet 4.5** as options.
 
 ## Core Feature: Transforms
 
-Transforms are hotkey-triggered LLM rewrites on selected text — similar to MacParakeet's Transforms (ADR-022).
+Transforms are hotkey-triggered LLM rewrites on selected text — similar to Sotto's Transforms (ADR-022).
 
 ```javascript
 AriaWebClient.applyTransform(...)
@@ -834,7 +834,7 @@ Every dictation is categorized by input mode:
 
 ---
 
-## Key Architectural Takeaways for MacParakeet
+## Key Architectural Takeaways for Sotto
 
 ### What WisprFlow Does That We Don't
 
@@ -867,7 +867,7 @@ Every dictation is categorized by input mode:
 
 ### Architectural Differences
 
-| | WisprFlow | MacParakeet |
+| | WisprFlow | Sotto |
 |---|-----------|-------------|
 | **Runtime** | Electron + Swift helper | Native Swift (SwiftUI + AppKit) |
 | **STT** | Cloud (Baseten gRPC, Whisper fallback) | Local (Parakeet ANE, WhisperKit optional) |

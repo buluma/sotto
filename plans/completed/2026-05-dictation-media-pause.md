@@ -13,13 +13,13 @@ Related: [GitHub issue #351](https://github.com/moona3k/macparakeet/issues/351)
 
 ## Decision
 
-MacParakeet should support an opt-in dictation setting:
+Sotto should support an opt-in dictation setting:
 
 ```text
 Pause media while dictating
 ```
 
-When enabled, MacParakeet pauses currently playing media as dictation capture
+When enabled, Sotto pauses currently playing media as dictation capture
 starts, then resumes only the media session it paused after dictation exits
 capture. This should ship as a state-aware media-control feature, not as a
 blind play/pause toggle.
@@ -33,8 +33,8 @@ blind play/pause toggle.
 3. If meeting recording is already active, skip media pause for dictation so a
    user does not accidentally pause the meeting source.
 4. Pause only when a playable media session is actually playing.
-5. Resume only when MacParakeet successfully paused that session.
-6. Never send a "play" command if no media was paused by MacParakeet.
+5. Resume only when Sotto successfully paused that session.
+6. Never send a "play" command if no media was paused by Sotto.
 7. Failure must be silent and non-blocking: dictation should continue even if
    media state cannot be detected or controlled.
 
@@ -50,7 +50,7 @@ behavior.
 The risk is macOS implementation shape. A raw global play/pause media-key event
 is unsafe because it can start playback when nothing was playing, or resume
 something the user paused manually. The feature is only worth shipping if
-MacParakeet can track whether it actually paused media and resume only that
+Sotto can track whether it actually paused media and resume only that
 state.
 
 ## Architecture Shape
@@ -82,7 +82,7 @@ protocol SystemMediaControlling: Sendable {
 ```
 
 The returned token is the guardrail: no token means no resume. The token should
-represent the specific session MacParakeet paused, not just "we sent a pause
+represent the specific session Sotto paused, not just "we sent a pause
 key once".
 
 ## Spike Gate
@@ -128,7 +128,7 @@ Public Apple APIs were not sufficient for this exact feature:
 - `MPRemoteCommandCenter` is for registering the current app's handlers for
   system/external playback commands.
 - `CGEvent`/media-key synthesis can produce input events, but cannot safely
-  prove whether a global media session was playing or whether MacParakeet owns
+  prove whether a global media session was playing or whether Sotto owns
   the resume.
 
 Open-source macOS tools converge on the same private MediaRemote boundary:
@@ -139,7 +139,7 @@ Open-source macOS tools converge on the same private MediaRemote boundary:
   handling around macOS 15.4+ now-playing behavior.
 - Reversed MediaRemote headers define `kMRPlay = 0`, `kMRPause = 1`,
   `MRMediaRemoteSendCommand`, `MRMediaRemoteGetNowPlayingApplicationPID`, and
-  `MRMediaRemoteGetNowPlayingApplicationIsPlaying`; MacParakeet hard-codes only
+  `MRMediaRemoteGetNowPlayingApplicationIsPlaying`; Sotto hard-codes only
   the minimal command constants behind the adapter.
 
 ## Implementation Plan
@@ -207,7 +207,7 @@ Open-source macOS tools converge on the same private MediaRemote boundary:
     video resumes after capture exits.
   - Media already paused -> dictation does not start playback afterward.
   - Meeting recording active + media playing -> dictation does not pause media.
-  - User manually resumes media during dictation -> MacParakeet does not fight
+  - User manually resumes media during dictation -> Sotto does not fight
     the user on stop.
 
 ## Acceptance Criteria
@@ -215,7 +215,7 @@ Open-source macOS tools converge on the same private MediaRemote boundary:
 - The setting is off by default.
 - Dictation still starts if media control fails.
 - Media never starts if it was not playing before dictation.
-- Media resumes only when MacParakeet paused it.
+- Media resumes only when Sotto paused it.
 - Meeting recording is protected from accidental pause/resume.
 - No media metadata enters telemetry.
 - `swift test` passes.

@@ -1,12 +1,12 @@
 # DAPT Export v1
 
-> Status: ACTIVE - public structured-transcript boundary for MacParakeet.
+> Status: ACTIVE - public structured-transcript boundary for Sotto.
 
 ## Purpose
 
-MacParakeet exports W3C DAPT 1.0 original-language transcripts for downstream
+Sotto exports W3C DAPT 1.0 original-language transcripts for downstream
 translation, accessibility, editing, and archival workflows. This contract
-protects both the DAPT document shape and MacParakeet's rule that missing or
+protects both the DAPT document shape and Sotto's rule that missing or
 stale alignment metadata is omitted rather than invented.
 
 ## Producers
@@ -16,8 +16,8 @@ stale alignment metadata is omitted rather than invented.
 - `ExportService.exportToDAPT(transcription:url:)`
 - App single and bulk transcript export
 - Transcription and meeting auto-save
-- `macparakeet-cli export --format dapt`
-- `macparakeet-cli transcribe --format dapt`
+- `sotto-cli export --format dapt`
+- `sotto-cli transcribe --format dapt`
 
 ## Consumers
 

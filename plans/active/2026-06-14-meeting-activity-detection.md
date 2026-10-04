@@ -13,7 +13,7 @@ auto-stop — consumes the same signal layer this plan builds).
 
 ## What this plan closes out
 
-ADR-017 lets MacParakeet notice **scheduled** meetings from the calendar and
+ADR-017 lets Sotto notice **scheduled** meetings from the calendar and
 offer to record. But many real meetings never hit the calendar — ad-hoc calls,
 someone else's invite, a quick huddle. For those, the user is back to the
 original ADR-014 failure mode: the first minutes are gone before anyone presses
@@ -72,7 +72,7 @@ Phase C/D land and a false-positive + idle-CPU pass clears.
   the feature is off, a recording is active, or no mic is in use; debounced
   refresh. Measured idle delta ~0% app-frontmost (PR #467 lesson — occluded
   reads 0% and lies).
-- **Self-exclusion:** MacParakeet's own capture is subtracted before fusion — an
+- **Self-exclusion:** Sotto's own capture is subtracted before fusion — an
   active recording can never re-trigger detection on itself.
 - **Never auto-record without opt-in:** default `.off`; recording starts only on
   explicit confirmation, except the separately-opted-in `.autoStart` mode, which
@@ -89,13 +89,13 @@ structure (tiers, self-exclusion, dwell, suppression) is in place and tested.
 
 | File | Change |
 |------|--------|
-| `Sources/MacParakeetCore/AppFeatures.swift` | Add `meetingActivityDetectionEnabled: Bool = false`. Doc-comment mirrors `calendarEnabled`'s framing (what's hidden when off; intact services). |
-| `Sources/MacParakeetCore/MeetingDetection/AudioProcessActivityCollector.swift` *(new)* | Public CoreAudio wrapper. `kAudioHardwarePropertyProcessObjectList` + per-object `IsRunningInput/Output` / `PID` / `BundleID`. Installs property listeners (`AudioObjectAddPropertyListenerBlock`); emits `ProcessAudioSnapshot`. **Excludes our own PID/bundle ID at the source.** Tears down listeners on stop. |
-| `Sources/MacParakeetCore/MeetingDetection/MeetingAppRegistry.swift` *(new)* | Static bundle-ID → `MeetingApp` + trust-tier map (Zoom `us.zoom.xos`; Teams `com.microsoft.teams2`/`com.microsoft.teams`; Webex `com.cisco.webexmeetingsapp`/`Cisco-Systems.Spark`; Slack `com.tinyspeck.slackmacgap`; FaceTime `com.apple.FaceTime`; browser bundle IDs). |
-| `Sources/MacParakeetCore/MeetingDetection/ActivitySignalSnapshot.swift` *(new)* | Plain `Sendable` struct: mic-holders, output-holders, camera state (field present, set in Phase B), frontmost bundle ID, browser bundle IDs with recognized meeting URLs. The shared contract ADR-023 also consumes. |
-| `Sources/MacParakeetCore/MeetingDetection/MeetingActivityDetector.swift` *(new)* | Pure `enum`, `static evaluate(signal:now:config:activeRecording:candidate:suppressedIdentities:) -> [DetectionEvent]`. `DetectionEvent`: `.promptToRecord` / `.autoStartDue` / `.signalCleared`. App-signal fusion + tiers + self-exclusion + identity-scoped dwell + suppression. No stored state. Mirrors `MeetingMonitor`. |
-| `Sources/MacParakeetCore/MeetingDetection/MeetingActivityDetectionMode.swift` *(new)* | `.off` / `.prompt` / `.autoStart`, `Codable`/`Sendable`. |
-| `Tests/MacParakeetTests/MeetingDetection/MeetingActivityDetectorTests.swift` *(new)* | Table tests mirroring `MeetingMonitorTests`: mic-alone does not trigger; mic + dedicated-app triggers; chat-app without full-duplex does not; self-PID excluded; dwell gate (candidate must persist); declined identity suppressed for cooldown; `.signalCleared` when signal drops. |
+| `Sources/SottoCore/AppFeatures.swift` | Add `meetingActivityDetectionEnabled: Bool = false`. Doc-comment mirrors `calendarEnabled`'s framing (what's hidden when off; intact services). |
+| `Sources/SottoCore/MeetingDetection/AudioProcessActivityCollector.swift` *(new)* | Public CoreAudio wrapper. `kAudioHardwarePropertyProcessObjectList` + per-object `IsRunningInput/Output` / `PID` / `BundleID`. Installs property listeners (`AudioObjectAddPropertyListenerBlock`); emits `ProcessAudioSnapshot`. **Excludes our own PID/bundle ID at the source.** Tears down listeners on stop. |
+| `Sources/SottoCore/MeetingDetection/MeetingAppRegistry.swift` *(new)* | Static bundle-ID → `MeetingApp` + trust-tier map (Zoom `us.zoom.xos`; Teams `com.microsoft.teams2`/`com.microsoft.teams`; Webex `com.cisco.webexmeetingsapp`/`Cisco-Systems.Spark`; Slack `com.tinyspeck.slackmacgap`; FaceTime `com.apple.FaceTime`; browser bundle IDs). |
+| `Sources/SottoCore/MeetingDetection/ActivitySignalSnapshot.swift` *(new)* | Plain `Sendable` struct: mic-holders, output-holders, camera state (field present, set in Phase B), frontmost bundle ID, browser bundle IDs with recognized meeting URLs. The shared contract ADR-023 also consumes. |
+| `Sources/SottoCore/MeetingDetection/MeetingActivityDetector.swift` *(new)* | Pure `enum`, `static evaluate(signal:now:config:activeRecording:candidate:suppressedIdentities:) -> [DetectionEvent]`. `DetectionEvent`: `.promptToRecord` / `.autoStartDue` / `.signalCleared`. App-signal fusion + tiers + self-exclusion + identity-scoped dwell + suppression. No stored state. Mirrors `MeetingMonitor`. |
+| `Sources/SottoCore/MeetingDetection/MeetingActivityDetectionMode.swift` *(new)* | `.off` / `.prompt` / `.autoStart`, `Codable`/`Sendable`. |
+| `Tests/SottoTests/MeetingDetection/MeetingActivityDetectorTests.swift` *(new)* | Table tests mirroring `MeetingMonitorTests`: mic-alone does not trigger; mic + dedicated-app triggers; chat-app without full-duplex does not; self-PID excluded; dwell gate (candidate must persist); declined identity suppressed for cooldown; `.signalCleared` when signal drops. |
 
 **Ship criteria:** `swift test` green. Detector returns correct events for
 fabricated snapshots. Collector compiles and excludes self. No user-visible
@@ -105,11 +105,11 @@ change (flag off, no coordinator).
 
 | File | Change |
 |------|--------|
-| `Sources/MacParakeetCore/MeetingDetection/CameraActivityCollector.swift` *(new)* | CoreMediaIO wrapper. `kCMIODevicePropertyDeviceIsRunningSomewhere` property listener; emits `cameraRunning: Bool` on transitions. Tears down on stop. Treats unavailability as "no camera signal" (fail closed). |
-| `Sources/MacParakeetCore/MeetingDetection/ActivitySignalSnapshot.swift` | Camera state now populated. |
-| `Sources/MacParakeetCore/MeetingDetection/MeetingActivityDetector.swift` | Complete the fusion rule: **mic active AND (camera active OR recognized app/URL)**; camera-alone never triggers. Graduated tiers finalized — dedicated apps (running + mic), chat apps (full-duplex audio), browsers (frontmost or recognized URL). Self-exclusion applied across both signal types. |
-| `Sources/MacParakeetCore/MeetingDetection/MeetingLinkParser` *(reused — no new file)* | Used by the coordinator/snapshot builder to recognize a browser meeting URL. No change to the parser. |
-| `Tests/MacParakeetTests/MeetingDetection/MeetingActivityDetectorTests.swift` | Extend: camera-alone (Photo Booth / scanner) does NOT trigger; mic + camera triggers; mic + camera but self-only is excluded; browser frontmost-with-URL triggers, browser-background does not; chat full-duplex triggers, half-duplex does not. |
+| `Sources/SottoCore/MeetingDetection/CameraActivityCollector.swift` *(new)* | CoreMediaIO wrapper. `kCMIODevicePropertyDeviceIsRunningSomewhere` property listener; emits `cameraRunning: Bool` on transitions. Tears down on stop. Treats unavailability as "no camera signal" (fail closed). |
+| `Sources/SottoCore/MeetingDetection/ActivitySignalSnapshot.swift` | Camera state now populated. |
+| `Sources/SottoCore/MeetingDetection/MeetingActivityDetector.swift` | Complete the fusion rule: **mic active AND (camera active OR recognized app/URL)**; camera-alone never triggers. Graduated tiers finalized — dedicated apps (running + mic), chat apps (full-duplex audio), browsers (frontmost or recognized URL). Self-exclusion applied across both signal types. |
+| `Sources/SottoCore/MeetingDetection/MeetingLinkParser` *(reused — no new file)* | Used by the coordinator/snapshot builder to recognize a browser meeting URL. No change to the parser. |
+| `Tests/SottoTests/MeetingDetection/MeetingActivityDetectorTests.swift` | Extend: camera-alone (Photo Booth / scanner) does NOT trigger; mic + camera triggers; mic + camera but self-only is excluded; browser frontmost-with-URL triggers, browser-background does not; chat full-duplex triggers, half-duplex does not. |
 
 **Ship criteria:** `swift test` green. Full fusion matrix covered by table tests.
 Still flag-off / no UI.
@@ -118,16 +118,16 @@ Still flag-off / no UI.
 
 | File | Change |
 |------|--------|
-| `Sources/MacParakeetViewModels/SettingsViewModel.swift` | New `meetingActivityDetectionMode: MeetingActivityDetectionMode` persisted under a `MeetingActivityDetection.*` `UserDefaults` namespace. `didSet` posts the new notification + `Telemetry.send(.settingChanged(setting: .meetingActivityDetectionMode))`. Mirror the `calendarAutoStartMode` block exactly. |
-| `Sources/MacParakeetCore/AppNotifications.swift` | Add `macParakeetMeetingActivitySettingsDidChange`. |
-| `Sources/MacParakeet/App/MeetingActivityDetectionCoordinator.swift` *(new)* | `@MainActor`. Owns both collectors; subscribes to settings + `NSWorkspace` (frontmost-app / wake) notifications via `NSWorkspace.shared.notificationCenter`; debounced refresh on a `RunLoop.common` timer; reentrancy/coalescing guard; `testHook_` seam. Builds `ActivitySignalSnapshot`, calls `MeetingActivityDetector.evaluate(...)`, holds the current identity-scoped `Candidate` + `suppressedIdentities`, drives the prompt. Routes confirm → `MeetingRecordingFlowCoordinator.startRecording(trigger: .activityDetection)`; no-ops when a recording is already active. Tears down collectors when mode is `.off` / a recording is active / no mic in use. |
-| `Sources/MacParakeet/Views/MeetingRecording/MeetingActivityPromptController.swift` *(new)* | Non-activating `KeylessPanel` "Record this meeting?" prompt with Record / Not now. "Not now" suppresses the current `MeetingIdentity` for the cooldown. |
-| `Sources/MacParakeet/App/AppEnvironmentConfigurer.swift` | Construct + `.start()` the coordinator behind `AppFeatures.meetingActivityDetectionEnabled` (only when `meetingRecordingEnabled` is also true), where `MeetingAutoStartCoordinator` is wired. Add to `Runtime`. |
-| `Sources/MacParakeet/App/MeetingRecordingFlowCoordinator.swift` | Add `.activityDetection` to `TelemetryMeetingRecordingTrigger`; thread through `startRecording(trigger:)` like `.calendarAutoStart`. |
-| `Sources/MacParakeet/Views/Settings/` (Meeting Recording card) | Add the mode control, rendered only when `AppFeatures.meetingActivityDetectionEnabled` is `true`. |
-| `Sources/MacParakeetCore/Services/Telemetry/TelemetryEvent.swift` | Add `.meetingActivityDetectionShown/Accepted/Declined(signalSource:appCategory:)` + `TelemetrySettingName.meetingActivityDetectionMode`. Coarse enums only — no bundle IDs / app names. |
-| `../macparakeet-website/functions/api/telemetry.ts` | **Mirror every new `TelemetryEventName` into `ALLOWED_EVENTS`.** Deploy before shipping a flag-on build (the Worker rejects the whole batch on an unknown event). |
-| `Tests/MacParakeetTests/MeetingDetection/MeetingActivityDetectionCoordinatorTests.swift` *(new)* | Mirror `MeetingAutoStartCoordinatorTests`: active recording suppresses the prompt; decline suppresses the same identity for cooldown; mode `.off` tears collectors down; debounce coalesces bursts; confirm routes to the flow coordinator with `.activityDetection`. |
+| `Sources/SottoViewModels/SettingsViewModel.swift` | New `meetingActivityDetectionMode: MeetingActivityDetectionMode` persisted under a `MeetingActivityDetection.*` `UserDefaults` namespace. `didSet` posts the new notification + `Telemetry.send(.settingChanged(setting: .meetingActivityDetectionMode))`. Mirror the `calendarAutoStartMode` block exactly. |
+| `Sources/SottoCore/AppNotifications.swift` | Add `sottoMeetingActivitySettingsDidChange`. |
+| `Sources/Sotto/App/MeetingActivityDetectionCoordinator.swift` *(new)* | `@MainActor`. Owns both collectors; subscribes to settings + `NSWorkspace` (frontmost-app / wake) notifications via `NSWorkspace.shared.notificationCenter`; debounced refresh on a `RunLoop.common` timer; reentrancy/coalescing guard; `testHook_` seam. Builds `ActivitySignalSnapshot`, calls `MeetingActivityDetector.evaluate(...)`, holds the current identity-scoped `Candidate` + `suppressedIdentities`, drives the prompt. Routes confirm → `MeetingRecordingFlowCoordinator.startRecording(trigger: .activityDetection)`; no-ops when a recording is already active. Tears down collectors when mode is `.off` / a recording is active / no mic in use. |
+| `Sources/Sotto/Views/MeetingRecording/MeetingActivityPromptController.swift` *(new)* | Non-activating `KeylessPanel` "Record this meeting?" prompt with Record / Not now. "Not now" suppresses the current `MeetingIdentity` for the cooldown. |
+| `Sources/Sotto/App/AppEnvironmentConfigurer.swift` | Construct + `.start()` the coordinator behind `AppFeatures.meetingActivityDetectionEnabled` (only when `meetingRecordingEnabled` is also true), where `MeetingAutoStartCoordinator` is wired. Add to `Runtime`. |
+| `Sources/Sotto/App/MeetingRecordingFlowCoordinator.swift` | Add `.activityDetection` to `TelemetryMeetingRecordingTrigger`; thread through `startRecording(trigger:)` like `.calendarAutoStart`. |
+| `Sources/Sotto/Views/Settings/` (Meeting Recording card) | Add the mode control, rendered only when `AppFeatures.meetingActivityDetectionEnabled` is `true`. |
+| `Sources/SottoCore/Services/Telemetry/TelemetryEvent.swift` | Add `.meetingActivityDetectionShown/Accepted/Declined(signalSource:appCategory:)` + `TelemetrySettingName.meetingActivityDetectionMode`. Coarse enums only — no bundle IDs / app names. |
+| `../sotto-website/functions/api/telemetry.ts` | **Mirror every new `TelemetryEventName` into `ALLOWED_EVENTS`.** Deploy before shipping a flag-on build (the Worker rejects the whole batch on an unknown event). |
+| `Tests/SottoTests/MeetingDetection/MeetingActivityDetectionCoordinatorTests.swift` *(new)* | Mirror `MeetingAutoStartCoordinatorTests`: active recording suppresses the prompt; decline suppresses the same identity for cooldown; mode `.off` tears collectors down; debounce coalesces bursts; confirm routes to the flow coordinator with `.activityDetection`. |
 
 **Ship criteria:** End-to-end with flag on locally: starting a Zoom/Teams call
 (mic + camera) surfaces a "Record this meeting?" prompt after the dwell; Record
@@ -139,12 +139,12 @@ measured app-frontmost.
 
 | File | Change |
 |------|--------|
-| `Sources/MacParakeet/App/MeetingActivityDetectionCoordinator.swift` | Handle `.autoStartDue` in `.autoStart` mode → reuse `MeetingCountdownToastController` (cancellable) → `startRecording(trigger: .activityAutoStart)`. |
-| `Sources/MacParakeet/App/MeetingRecordingFlowCoordinator.swift` | Add `.activityAutoStart` trigger case. |
-| `Sources/MacParakeet/Views/Settings/` (Meeting Recording card) | Unclamp the `.autoStart` option. |
-| `Sources/MacParakeetCore/MeetingDetection/` (snapshot surface) | Expose `ActivitySignalSnapshot` (via the coordinator) to the ADR-023 auto-stop consumer — the "meeting still happening?" signal. Exact handoff finalized with ADR-023. |
-| `Sources/MacParakeetCore/Services/Telemetry/TelemetryEvent.swift` + website | Add any `.autoStart`-specific telemetry; mirror to allowlist. |
-| `Tests/MacParakeetTests/MeetingDetection/MeetingActivityDetectionCoordinatorTests.swift` | `.autoStart`: countdown cancel does not start; completion routes `.activityAutoStart`; mode change mid-countdown closes it (ADR-017 mid-flight-teardown symmetry). |
+| `Sources/Sotto/App/MeetingActivityDetectionCoordinator.swift` | Handle `.autoStartDue` in `.autoStart` mode → reuse `MeetingCountdownToastController` (cancellable) → `startRecording(trigger: .activityAutoStart)`. |
+| `Sources/Sotto/App/MeetingRecordingFlowCoordinator.swift` | Add `.activityAutoStart` trigger case. |
+| `Sources/Sotto/Views/Settings/` (Meeting Recording card) | Unclamp the `.autoStart` option. |
+| `Sources/SottoCore/MeetingDetection/` (snapshot surface) | Expose `ActivitySignalSnapshot` (via the coordinator) to the ADR-023 auto-stop consumer — the "meeting still happening?" signal. Exact handoff finalized with ADR-023. |
+| `Sources/SottoCore/Services/Telemetry/TelemetryEvent.swift` + website | Add any `.autoStart`-specific telemetry; mirror to allowlist. |
+| `Tests/SottoTests/MeetingDetection/MeetingActivityDetectionCoordinatorTests.swift` | `.autoStart`: countdown cancel does not start; completion routes `.activityAutoStart`; mode change mid-countdown closes it (ADR-017 mid-flight-teardown symmetry). |
 
 **Ship criteria:** `.autoStart` mode records on detection after a cancellable
 countdown; ADR-023 receives the shared snapshot. Flag-on decision is separate,

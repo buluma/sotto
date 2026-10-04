@@ -10,7 +10,7 @@ remain recorded with their actual outcomes.
 
 - Reviewed main baseline: `9e849baf72b8f6939b618f584c3ca8c285ef497c`.
 - Starting candidate: `b884c948`, branch `codex/release-readiness-20260904`.
-- Execution checkout: `/Users/dmoon/orca/workspaces/macparakeet/release-readiness-20260904`.
+- Execution checkout: `/Users/dmoon/orca/workspaces/sotto/release-readiness-20260904`.
 - Scope: reliability, existing bugs, public CLI/agent contracts, and alignment of
   documentation/specifications/ADRs. No additive product roadmap or new capture
   architecture. Preserve user recordings and the normal database.

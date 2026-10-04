@@ -21,13 +21,13 @@ topic: app-aware-ai-profiles
 Generated in the style of `/ce-brainstorm` from:
 
 - GitHub issues `#117` and `#412`.
-- Fresh current-code inspection of MacParakeet `origin/main`.
+- Fresh current-code inspection of Sotto `origin/main`.
 - Fresh external research summarized in
   `docs/research/2026-06-app-aware-ai-profiles-competitor-research.md`.
 
 ## Problem
 
-MacParakeet's Dictation AI Formatter has one global prompt. That works for
+Sotto's Dictation AI Formatter has one global prompt. That works for
 generic cleanup, but it forces users to either write one overly broad prompt or
 manually change settings when moving between apps.
 
@@ -44,9 +44,9 @@ The user need is concrete:
 
 Let users define local app-aware AI Formatter profiles that choose a different
 formatter prompt based on the focused paste target at dictation finish time,
-while preserving MacParakeet's local-first privacy contract and existing global
-formatter fallback. If focus drifts to MacParakeet UI during teardown, the
-runtime may fall back to a start-time app snapshot captured before MacParakeet
+while preserving Sotto's local-first privacy contract and existing global
+formatter fallback. If focus drifts to Sotto UI during teardown, the
+runtime may fall back to a start-time app snapshot captured before Sotto
 can become frontmost.
 
 ## Non-Goals
@@ -76,7 +76,7 @@ can become frontmost.
 ### R1 - Global Fallback Preserved
 
 The existing global AI Formatter prompt remains the default behavior. If no
-enabled profile matches the focused app, MacParakeet uses the same prompt it
+enabled profile matches the focused app, Sotto uses the same prompt it
 uses today.
 
 Acceptance:
@@ -153,14 +153,14 @@ Acceptance:
 
 ### R6 - Local App Context
 
-MacParakeet captures local app context near dictation finish time, before the AI
+Sotto captures local app context near dictation finish time, before the AI
 Formatter prompt is resolved. It also keeps a start-time snapshot as a fallback
 for focus-drift cases where the stop/undo-time context is missing or identifies
-MacParakeet itself.
+Sotto itself.
 
 Acceptance:
 
-- Recording start captures a best-effort app snapshot before MacParakeet UI can
+- Recording start captures a best-effort app snapshot before Sotto UI can
   become frontmost.
 - Stop recording and undo-cancel both update the app context for the active
   dictation session.
@@ -219,7 +219,7 @@ Disallowed telemetry:
 
 ### R9 - Local History / Debuggability
 
-MacParakeet should preserve enough local metadata to explain a completed
+Sotto should preserve enough local metadata to explain a completed
 dictation's profile routing.
 
 Acceptance:
@@ -248,14 +248,14 @@ Acceptance:
 2. User creates profile "Slack casual" by entering Slack's bundle ID.
 3. User writes a prompt that keeps messages short and conversational.
 4. User dictates into Slack.
-5. MacParakeet matches the exact Slack bundle ID and uses the profile prompt.
+5. Sotto matches the exact Slack bundle ID and uses the profile prompt.
 6. History/debug metadata shows the matched profile.
 
 ### Flow B - Email Category
 
 1. User creates category profile "Professional email" for `email`.
 2. User dictates into Mail.
-3. MacParakeet maps Mail to `email` and uses the category prompt.
+3. Sotto maps Mail to `email` and uses the category prompt.
 4. If the user later creates an exact Mail profile, the exact profile wins.
 
 ### Flow C - Terminal Exact App
@@ -263,7 +263,7 @@ Acceptance:
 1. User creates profile "Terminal commands" for Terminal or iTerm.
 2. Prompt says to preserve CLI command names, flags, paths, and newlines.
 3. User dictates a shell command.
-4. MacParakeet uses the exact-app prompt and does not let a broader category
+4. Sotto uses the exact-app prompt and does not let a broader category
    profile override it.
 
 ### Flow D - Browser V1

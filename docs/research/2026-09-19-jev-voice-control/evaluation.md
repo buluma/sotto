@@ -2,7 +2,7 @@
 
 Research date: 2026-09-19. Status: **proposed experiment and release gates; no new measurements**. This document defines how to establish that the complete voice experience works. It does not declare the feature implemented, tested, or ready to ship.
 
-Inputs: [lessons from prior computer-use systems](references.md) and the MacParakeet Voice Control test surface. Current runtime honesty is in [evidence](evidence.md). This document defines gates; it does not declare them passed.
+Inputs: [lessons from prior computer-use systems](references.md) and the Sotto Voice Control test surface. Current runtime honesty is in [evidence](evidence.md). This document defines gates; it does not declare them passed.
 
 ## The decision this evaluation must support
 
@@ -10,11 +10,11 @@ Ship an explicitly enabled feature when people can reliably express common comma
 
 `activation → speech → transcript commitment → candidate observation → route/arguments → policy → target revalidation → execution → observed postcondition → understandable feedback`.
 
-Five synthetic Jev Choice calls took **216–293 ms including network time**. Those were text/model requests, not measured audio endpointing, UI discovery, action execution, or verified task completion. Author-reported timings from other computer-use systems are not independent MacParakeet measurements. All numerical gates below are initial product targets subject to evidence, not claims about achieved performance.
+Five synthetic Jev Choice calls took **216–293 ms including network time**. Those were text/model requests, not measured audio endpointing, UI discovery, action execution, or verified task completion. Author-reported timings from other computer-use systems are not independent Sotto measurements. All numerical gates below are initial product targets subject to evidence, not claims about achieved performance.
 
 ## Evidence ledger and experiment controls
 
-Each run needs a manifest: MacParakeet commit, model/API identifier and returned version if available, question-template/schema hash, executor/observer versions, browser/native app versions, macOS build, hardware and RAM, STT engine/model/language, activation mode, microphone/input route, network condition, thermal/power state, fixture seed, and test-case revision. Archive the held-out corpus revision and ground-truth annotations separately from tuning examples.
+Each run needs a manifest: Sotto commit, model/API identifier and returned version if available, question-template/schema hash, executor/observer versions, browser/native app versions, macOS build, hardware and RAM, STT engine/model/language, activation mode, microphone/input route, network condition, thermal/power state, fixture seed, and test-case revision. Archive the held-out corpus revision and ground-truth annotations separately from tuning examples.
 
 Record monotonic timestamps for activation, first audio, annotated final speech sample, last transcript revision, endpoint commitment, observation start/end, model request/response, preview shown, approval granted, preflight passed, input dispatch, postcondition verified, feedback published, cancellation requested/accepted, and last input dispatch. Store actual outcome and failure stage. Include stale, aborted, timed-out, retried, rejected, and uncompleted requests in counts and cost. Avoid recording user audio, full UI contents, or typed secrets by default; use consented lab recordings and synthetic fixtures for detailed traces.
 
@@ -34,7 +34,7 @@ Split by speaker, app/page template, and wording family, not randomly by adjacen
 | Postconditions | Independent application state after action, not merely model output | Exact requested effect and absence of unintended effects; verified vs unverified state | UI text can falsely imply a server-side send or save completed |
 | User experience | Moderated task sessions and opt-in dogfood | Completion, correction burden, mental model, discoverability, trust calibration | A small usability sample does not estimate rare harm rates |
 
-For browser actions, use real fixture interactions, including navigation, frame changes, overlays and delayed responses. Native tests must use supported native mechanisms; MacParakeet's instructions prohibit Orca computer-use. Unit tests may use fake clocks and backends; real-device verification must be labeled separately.
+For browser actions, use real fixture interactions, including navigation, frame changes, overlays and delayed responses. Native tests must use supported native mechanisms; Sotto's instructions prohibit Orca computer-use. Unit tests may use fake clocks and backends; real-device verification must be labeled separately.
 
 ## Existing tests: useful foundations and a critical semantic mismatch
 
@@ -42,18 +42,18 @@ These test sources exist and were inspected; **they were not run in this researc
 
 | Existing test source | Observed assertions / relevance | Proposed new coverage |
 |---|---|---|
-| `Tests/MacParakeetTests/DictationFlow/DictationFlowStateMachineTests.swift:1075` | Rejects asynchronous events with stale generations; additional cancellation/restart cases throughout file | Equivalent invariants for command decisions, target snapshots, approval and execution receipts |
-| `Tests/MacParakeetTests/Hotkey/HotkeyGestureControllerTests.swift:65–155,199–264` | Interruption, Escape, hold release, toggle gestures | Command activation versus dictation, switch-control alternative, local cancellation under delayed network |
-| `Tests/MacParakeetTests/Services/Transforms/TransformRunSerializerTests.swift:43–176` | Cooperative cancellation, cancellation-resistant body ordering, superseded queued work, preventing queued work after cancellation | Per-command revocable authority; late model completions cannot dispatch; second command cannot overlap unsafe effects |
-| `Tests/MacParakeetTests/Services/System/AccessibilityServiceTests.swift:6–91,159` | Unauthorized/no-focus errors, selected-text/range fallbacks, length/out-of-bounds handling | Full AX candidate identity/coverage, secure-field exclusion, element destruction and recycled labels |
-| `Tests/MacParakeetTests/Services/System/SelectionCaptureServiceTests.swift:42–159` | Clipboard fallback/change counts and preservation when user copies | Command capture provenance, selection changes while deciding, no capture in excluded apps |
-| `Tests/MacParakeetTests/Services/System/SelectionReplacementServiceTests.swift:130–173,194–262` | Preserves newly copied clipboard; target reactivation/focus checks prevent wrong-app paste | Current document/field identity and selection revision, stale approval, command-specific cancellation |
-| `Tests/MacParakeetTests/Services/System/StreamingCursorInserterTests.swift:135–197` | Interruption and Task cancellation deliberately flush the remaining text; partial failure reported at line 162 | A separate command text-entry contract must stop queued dispatch after cancellation while preserving existing dictation behavior |
-| `Tests/MacParakeetTests/STT/ParakeetUnifiedEngineLiveDictationTests.swift:8–68` | Runtime routing/conformance and inactive-session handling | Physical command speech recognition, critical slots, endpointing and correction timing |
+| `Tests/SottoTests/DictationFlow/DictationFlowStateMachineTests.swift:1075` | Rejects asynchronous events with stale generations; additional cancellation/restart cases throughout file | Equivalent invariants for command decisions, target snapshots, approval and execution receipts |
+| `Tests/SottoTests/Hotkey/HotkeyGestureControllerTests.swift:65–155,199–264` | Interruption, Escape, hold release, toggle gestures | Command activation versus dictation, switch-control alternative, local cancellation under delayed network |
+| `Tests/SottoTests/Services/Transforms/TransformRunSerializerTests.swift:43–176` | Cooperative cancellation, cancellation-resistant body ordering, superseded queued work, preventing queued work after cancellation | Per-command revocable authority; late model completions cannot dispatch; second command cannot overlap unsafe effects |
+| `Tests/SottoTests/Services/System/AccessibilityServiceTests.swift:6–91,159` | Unauthorized/no-focus errors, selected-text/range fallbacks, length/out-of-bounds handling | Full AX candidate identity/coverage, secure-field exclusion, element destruction and recycled labels |
+| `Tests/SottoTests/Services/System/SelectionCaptureServiceTests.swift:42–159` | Clipboard fallback/change counts and preservation when user copies | Command capture provenance, selection changes while deciding, no capture in excluded apps |
+| `Tests/SottoTests/Services/System/SelectionReplacementServiceTests.swift:130–173,194–262` | Preserves newly copied clipboard; target reactivation/focus checks prevent wrong-app paste | Current document/field identity and selection revision, stale approval, command-specific cancellation |
+| `Tests/SottoTests/Services/System/StreamingCursorInserterTests.swift:135–197` | Interruption and Task cancellation deliberately flush the remaining text; partial failure reported at line 162 | A separate command text-entry contract must stop queued dispatch after cancellation while preserving existing dictation behavior |
+| `Tests/SottoTests/STT/ParakeetUnifiedEngineLiveDictationTests.swift:8–68` | Runtime routing/conformance and inactive-session handling | Physical command speech recognition, critical slots, endpointing and correction timing |
 
 **Do not assume “cancel” means the same thing in existing dictation insertion and computer control.** `testCancellationFlushesRemainderWithoutThrowing` asserts the full string is inserted after task cancellation. Reusing this path for a stop-sensitive command without an explicit boundary would defeat the proposed stop guarantee. This is an integration design issue, not a claim that the existing dictation behavior is faulty.
 
-Prior computer-use systems supply regression scenarios below. Their own tests do not prove MacParakeet Voice Control: text/model fixtures are not acoustic tests; helper/focus tests are not end-to-end termination.
+Prior computer-use systems supply regression scenarios below. Their own tests do not prove Sotto Voice Control: text/model fixtures are not acoustic tests; helper/focus tests are not end-to-end termination.
 
 ## Representative workload
 
@@ -175,7 +175,7 @@ Populate p50/p95 only after trials. Every latency row reports N, failures, cold 
 | WhisperKit supported command model | Same definition | Same definition | Not measured |
 | Cohere Transcribe supported command model | Same definition | Same definition; do not assume streaming availability | Not measured |
 
-Engine names reflect MacParakeet's documented engine families; the precise command-mode adapter/model capability must be verified during implementation. An unsupported streaming adapter is “not supported,” not a zero-latency data point. First model download is a setup journey and is reported separately from cold recognition. Include M1-class baseline hardware and a newer Apple Silicon machine, normal and constrained memory, built-in/wired/Bluetooth microphones, quiet and everyday background noise, and warm/power-saving/thermal-load states. Use only reproducible, documented network profiles: normal broadband, elevated latency/loss, offline, and rate-limited service.
+Engine names reflect Sotto's documented engine families; the precise command-mode adapter/model capability must be verified during implementation. An unsupported streaming adapter is “not supported,” not a zero-latency data point. First model download is a setup journey and is reported separately from cold recognition. Include M1-class baseline hardware and a newer Apple Silicon machine, normal and constrained memory, built-in/wired/Bluetooth microphones, quiet and everyday background noise, and warm/power-saving/thermal-load states. Use only reproducible, documented network profiles: normal broadband, elevated latency/loss, offline, and rate-limited service.
 
 Initial sizing proposal: exploratory 20 warm + 10 cold trials per chosen engine/hardware pair to find bottlenecks; gate runs ≥100 warm and ≥40 cold trials per advertised configuration using varied utterances, with bootstrap intervals or another declared uncertainty method. These sample counts are planned, not recorded. A cold-start p95 from 10 trials is exploratory and should not be presented as stable.
 

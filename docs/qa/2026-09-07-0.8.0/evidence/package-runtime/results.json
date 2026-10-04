@@ -17,7 +17,7 @@
     "timed_out": false,
     "log": "app-notary-info.log",
     "apple_result": {
-      "name": "MacParakeet.app.zip",
+      "name": "Sotto.app.zip",
       "id": "52abbad6-6f63-49a6-a3de-4fd7f7ba2cb3",
       "message": "Successfully received submission info",
       "createdDate": "2026-09-07T23:28:55.173Z",
@@ -44,7 +44,7 @@
     "apple_result": {
       "status": "Accepted",
       "message": "Successfully received submission info",
-      "name": "MacParakeet.dmg",
+      "name": "Sotto.dmg",
       "id": "faa10966-3c5d-41e1-990f-bf2f9bafa45f",
       "createdDate": "2026-09-07T23:30:22.395Z"
     }
@@ -52,7 +52,7 @@
   {
     "name": "cli-version",
     "argv": [
-      "<REPO>/dist/MacParakeet.app/Contents/MacOS/macparakeet-cli",
+      "<REPO>/dist/Sotto.app/Contents/MacOS/sotto-cli",
       "--version"
     ],
     "started_at_utc": "2026-09-07T23:33:52.276816+00:00",
@@ -64,7 +64,7 @@
   {
     "name": "ffmpeg-version",
     "argv": [
-      "<REPO>/dist/MacParakeet.app/Contents/Resources/ffmpeg",
+      "<REPO>/dist/Sotto.app/Contents/Resources/ffmpeg",
       "-nostdin",
       "-version"
     ],
@@ -77,7 +77,7 @@
   {
     "name": "ytdlp-version",
     "argv": [
-      "<REPO>/dist/MacParakeet.app/Contents/Resources/yt-dlp",
+      "<REPO>/dist/Sotto.app/Contents/Resources/yt-dlp",
       "--ignore-config",
       "--no-cache-dir",
       "--version"
@@ -91,7 +91,7 @@
   {
     "name": "node-version",
     "argv": [
-      "<REPO>/dist/MacParakeet.app/Contents/Resources/node",
+      "<REPO>/dist/Sotto.app/Contents/Resources/node",
       "--version"
     ],
     "started_at_utc": "2026-09-07T23:34:02.479227+00:00",
@@ -106,7 +106,7 @@
       "codesign",
       "--display",
       "--verbose=4",
-      "<REPO>/dist/MacParakeet.app"
+      "<REPO>/dist/Sotto.app"
     ],
     "started_at_utc": "2026-09-07T23:34:03.380969+00:00",
     "elapsed_seconds": 0.036,
@@ -120,7 +120,7 @@
       "xcrun",
       "stapler",
       "validate",
-      "<REPO>/dist/MacParakeet.app"
+      "<REPO>/dist/Sotto.app"
     ],
     "started_at_utc": "2026-09-07T23:34:03.417572+00:00",
     "elapsed_seconds": 0.271,
@@ -136,7 +136,7 @@
       "--type",
       "execute",
       "--verbose=4",
-      "<REPO>/dist/MacParakeet.app"
+      "<REPO>/dist/Sotto.app"
     ],
     "started_at_utc": "2026-09-07T23:34:03.689377+00:00",
     "elapsed_seconds": 0.189,
@@ -149,12 +149,12 @@
     "argv": [
       "otool",
       "-L",
-      "<REPO>/dist/MacParakeet.app/Contents/MacOS/MacParakeet",
-      "<REPO>/dist/MacParakeet.app/Contents/MacOS/macparakeet-cli",
-      "<REPO>/dist/MacParakeet.app/Contents/Resources/ffmpeg",
-      "<REPO>/dist/MacParakeet.app/Contents/Resources/yt-dlp",
-      "<REPO>/dist/MacParakeet.app/Contents/Resources/node",
-      "<REPO>/dist/MacParakeet.app/Contents/Frameworks/liblocalvqe.dylib"
+      "<REPO>/dist/Sotto.app/Contents/MacOS/Sotto",
+      "<REPO>/dist/Sotto.app/Contents/MacOS/sotto-cli",
+      "<REPO>/dist/Sotto.app/Contents/Resources/ffmpeg",
+      "<REPO>/dist/Sotto.app/Contents/Resources/yt-dlp",
+      "<REPO>/dist/Sotto.app/Contents/Resources/node",
+      "<REPO>/dist/Sotto.app/Contents/Frameworks/liblocalvqe.dylib"
     ],
     "started_at_utc": "2026-09-07T23:34:03.878721+00:00",
     "elapsed_seconds": 0.084,

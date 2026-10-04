@@ -12,7 +12,7 @@
 
 ## Context
 
-MacParakeet ships three capture modes — system-wide dictation, file/media
+Sotto ships three capture modes — system-wide dictation, file/media
 transcription, and meeting recording — plus Transforms. Each mode is a solid
 standalone tool, and the product identity is a fast, private, local-first
 voice app for Mac. Three forces make it worth stating where those
@@ -29,11 +29,11 @@ modes converge:
    private too.
 3. **The local-first posture is a structural prerequisite no cloud product
    can copy.** A corpus of everything a user has said and heard is a
-   liability in the cloud and an asset on-device. MacParakeet's architecture
+   liability in the cloud and an asset on-device. Sotto's architecture
    is the only place such a corpus can credibly live.
 
 Separately, agents running on the user's machine are becoming a second
-consumer of local context. `macparakeet-cli` is already a versioned public
+consumer of local context. `sotto-cli` is already a versioned public
 contract, and third parties have built on it (community Obsidian plugin).
 
 ## Decision
@@ -43,7 +43,7 @@ contract, and third parties have built on it (community Obsidian plugin).
 **Every word you speak or hear on your Mac becomes private, permanent, and
 useful — on your machine, owned by you, readable by you and your agents.**
 
-Short form: **MacParakeet is the private speech memory of your Mac.**
+Short form: **Sotto is the private speech memory of your Mac.**
 
 The three capture modes are intake valves for one compounding local corpus:
 dictation captures what you say, meetings capture what you discuss,
@@ -56,14 +56,14 @@ states the destination those modes converge toward.
 The one genuinely new investment this direction demands: the Library evolves
 from a list of past sessions into the product's core surface — unified
 search across all three modes, question-answering over the corpus, and
-export. Scope guard: **search + QA + export, not a PKM.** MacParakeet does
+export. Scope guard: **search + QA + export, not a PKM.** Sotto does
 not become a note-taking app, a knowledge graph, or an editor.
 
 ### 3. Agent access is a first-class product surface
 
 Anything the user can do with their corpus, their local agents should be
 able to do through a stable contract. Near-term shape: read access to the
-corpus via `macparakeet-cli` (search/ask surfaces), governed by the existing
+corpus via `sotto-cli` (search/ask surfaces), governed by the existing
 CLI contract discipline (`spec/contracts/`, CLI CHANGELOG). MCP or deeper
 integrations remain demand-driven, not speculative.
 
@@ -113,9 +113,9 @@ terms of the north star.
 
 The boundary with Oatmeal (the separate "meeting memory" product concept in
 [spec/00-vision.md](../00-vision.md)) narrows under this north star:
-cross-mode search and corpus QA land in MacParakeet. Deeper intelligence
+cross-mode search and corpus QA land in Sotto. Deeper intelligence
 (entity extraction, knowledge graphs, team features) remains out of
-MacParakeet's scope. Whether Oatmeal continues as a distinct product is
+Sotto's scope. Whether Oatmeal continues as a distinct product is
 deliberately left open here.
 
 ## 2026-09-19 amendment: explicit voice actions

@@ -1,8 +1,8 @@
-# Integrations -- using `macparakeet-cli` from your agent
+# Integrations -- using `sotto-cli` from your agent
 
 > If you are a *coding agent working in this repo*, read
 > [`/AGENTS.md`](../AGENTS.md) instead. This directory is for agents (and the
-> people running them) that want to *call* `macparakeet-cli` to add local STT
+> people running them) that want to *call* `sotto-cli` to add local STT
 > to their stack.
 
 Examples describe the current development contract (see
@@ -24,7 +24,7 @@ testing.
   Apple Podcasts links/searches, and YouTube to text, with engine selection
   (Parakeet / Nemotron / Cohere / Whisper) and per-invocation language hints.
 - **Scriptable shared defaults** -- `config get|set|list` over the same
-  preference suite the GUI reads (`com.macparakeet.MacParakeet`). CLI-only
+  preference suite the GUI reads (`com.sotto.Sotto`). CLI-only
   installs work; a later GUI install picks up the same values.
 - **Stable JSON / read surfaces** -- every read-only command emits JSON with
   schemas pinned to the major CLI version. Failure envelopes carry a stable
@@ -61,7 +61,7 @@ The principle: if a use case can be automated, scripted, or driven by an agent,
 the CLI should support it through a stable contract. If it requires a user
 sitting at a keyboard, it lives in the .app.
 
-## What `macparakeet-cli` gives your agent
+## What `sotto-cli` gives your agent
 
 - **Local Parakeet speech-to-text** on Apple Silicon, with v3 for English plus
   supported European languages, v2 for English timestamped transcripts, and
@@ -73,7 +73,7 @@ sitting at a keyboard, it lives in the .app.
 - **Media URL transcription** via yt-dlp for public media URLs, plus native
   Apple Podcasts link resolution and freetext Apple Podcasts search through
   `transcribe --podcast`. The standalone Homebrew install uses Homebrew's
-  `yt-dlp`; the app bundle can seed a signed helper into MacParakeet's
+  `yt-dlp`; the app bundle can seed a signed helper into Sotto's
   Application Support folder before first media URL use.
 - **Persistent SQLite memory layer** -- saved transcriptions, dictations, and
   prompt outputs remain queryable; private/no-history operations deliberately
@@ -97,37 +97,37 @@ sitting at a keyboard, it lives in the .app.
 **Recommended for agents/headless Macs:**
 
 ```bash
-brew install moona3k/tap/macparakeet-cli
-macparakeet-cli --version
-macparakeet-cli health --json
+brew install moona3k/tap/sotto-cli
+sotto-cli --version
+sotto-cli health --json
 ```
 
 This installs the standalone CLI plus its Homebrew-managed `ffmpeg` and
-`yt-dlp` runtime dependencies. It does not require `MacParakeet.app`.
+`yt-dlp` runtime dependencies. It does not require `Sotto.app`.
 Parakeet, Nemotron, and Cohere CoreML caches are managed by FluidAudio.
 WhisperKit model downloads live under
-`~/Library/Application Support/MacParakeet/models/stt/whisper/`.
+`~/Library/Application Support/Sotto/models/stt/whisper/`.
 
 **Bundled app alternative:** after installing
-[MacParakeet](https://macparakeet.com), the same CLI surface is available at:
+[Sotto](https://macparakeet.com), the same CLI surface is available at:
 
 ```bash
-/Applications/MacParakeet.app/Contents/MacOS/macparakeet-cli --help
+/Applications/Sotto.app/Contents/MacOS/sotto-cli --help
 ```
 
-MacParakeet deliberately does not modify your shell configuration or install
+Sotto deliberately does not modify your shell configuration or install
 files into package-manager directories. If you want the bundled executable
-under the shorter `macparakeet-cli` command, use the Homebrew installation
+under the shorter `sotto-cli` command, use the Homebrew installation
 above or configure your own shell alias, PATH entry, or symlink. First check
 whether another copy is already available:
 
 ```bash
-command -v macparakeet-cli
+command -v sotto-cli
 ```
 
 The Homebrew CLI and the app-bundled CLI are released independently, so their
-versions can differ. Use `command -v macparakeet-cli` and
-`macparakeet-cli --version` to confirm which executable Terminal will run. Do
+versions can differ. Use `command -v sotto-cli` and
+`sotto-cli --version` to confirm which executable Terminal will run. Do
 not replace a Homebrew-managed link with an app-managed link.
 
 ## Why Apple Silicon specifically
@@ -153,13 +153,13 @@ write, and query startup can still create directories or migrate supported
 database schemas. Use `--help` for additional setup/helper details:
 
 ```bash
-macparakeet-cli spec --json
+sotto-cli spec --json
 ```
 
 ### Health probe (run at agent init)
 
 ```bash
-macparakeet-cli health --json
+sotto-cli health --json
 ```
 
 Reports model readiness, database accessibility, and binary dependencies
@@ -171,8 +171,8 @@ database search. Repair only a prerequisite for the requested operation, with
 user authorization; `health --repair-binaries` can fetch a managed helper.
 
 `database.status` is one of `ok`, `missing`, `schema_skew`, or `error`.
-`schema_skew` means the shared database was migrated by a newer MacParakeet
-app than this CLI build understands; upgrade `macparakeet-cli` and retry
+`schema_skew` means the shared database was migrated by a newer Sotto
+app than this CLI build understands; upgrade `sotto-cli` and retry
 rather than treating it as a database fault.
 
 ### Safe automation and isolation
@@ -187,7 +187,7 @@ rather than treating it as a database fault.
   isolate preferences, Keychain, models, downloads, or the audio/artifact paths
   stored in copied rows. Never run destructive commands against a copied
   production database that still points to original user files.
-- For source-build smoke work, set `MACPARAKEET_DEBUG_APP_STATE_DIR` to an
+- For source-build smoke work, set `SOTTO_DEBUG_APP_STATE_DIR` to an
   absolute test-owned directory to redirect app-support/artifact paths and
   speech/speaker model caches. `AppPaths` accepts this override in both Debug
   and Release binaries. It does **not** redirect the shared UserDefaults suite
@@ -196,7 +196,7 @@ rather than treating it as a database fault.
   user-state isolation is required.
 - `--no-history` avoids completed transcript retention, not all I/O. Transcribe
   can still initialize a database, use models/helpers, and emit telemetry.
-  `MACPARAKEET_TELEMETRY=0` disables telemetry for one invocation without
+  `SOTTO_TELEMETRY=0` disables telemetry for one invocation without
   changing shared preferences; it is not a network sandbox.
 - `search-reindex` writes derived indexes; `cards generate` additionally calls
   the configured LLM. `meetings artifact` refreshes files from SQLite, while
@@ -212,14 +212,14 @@ rather than treating it as a database fault.
 ### Transcribe a file
 
 ```bash
-macparakeet-cli transcribe /path/to/audio.mp3 --format json
+sotto-cli transcribe /path/to/audio.mp3 --format json
 ```
 
 For shell pipelines where stdout should contain only transcript text:
 
 ```bash
-macparakeet-cli transcribe /path/to/audio.mp3 --format transcript
-macparakeet-cli transcribe /path/to/audio.mp3 --format transcript --no-history | pbcopy
+sotto-cli transcribe /path/to/audio.mp3 --format transcript
+sotto-cli transcribe /path/to/audio.mp3 --format transcript --no-history | pbcopy
 ```
 
 For a local container with multiple embedded audio streams, select one with a
@@ -227,7 +227,7 @@ one-based track number. The choice is persisted with saved history and reused
 by retranscription:
 
 ```bash
-macparakeet-cli transcribe /path/to/episode.mkv --audio-track 2 --format json
+sotto-cli transcribe /path/to/episode.mkv --audio-track 2 --format json
 ```
 
 `--audio-track` works for local files and folders only; media URLs and podcast
@@ -238,15 +238,15 @@ To write a subtitle or structured DAPT transcript directly, use
 `export` step):
 
 ```bash
-macparakeet-cli transcribe /path/to/audio.mp3 --format vtt --output-dir .
+sotto-cli transcribe /path/to/audio.mp3 --format vtt --output-dir .
 # -> ./audio.vtt   (same renderer as `export --format vtt`)
-macparakeet-cli transcribe /path/to/interview.mp3 --format dapt --output-dir .
+sotto-cli transcribe /path/to/interview.mp3 --format dapt --output-dir .
 # -> ./interview.dapt.xml
 ```
 
 A single input without `--output-dir` prints the selected document to stdout,
 so you can also redirect it:
-`macparakeet-cli transcribe interview.mp3 --format dapt > interview.dapt.xml`.
+`sotto-cli transcribe interview.mp3 --format dapt > interview.dapt.xml`.
 DAPT preserves automatic word timing and speaker attribution when they are
 aligned with the transcript. A corrected or merged timed line is emitted once
 for its preserved segment envelope; its rewritten words are not assigned the
@@ -259,8 +259,8 @@ transcript rather than inventing timing or attribution.
 To re-export something already in your library, list it and export by id:
 
 ```bash
-macparakeet-cli history transcriptions          # note the subcommand; lists ids
-macparakeet-cli export <id> --format dapt
+sotto-cli history transcriptions          # note the subcommand; lists ids
+sotto-cli export <id> --format dapt
 ```
 
 To rerun STT for an existing saved item without creating a new library row,
@@ -269,8 +269,8 @@ use `retranscribe`. It requires retained source audio and an explicit
 existing record:
 
 ```bash
-macparakeet-cli retranscribe <id-or-prefix-or-title> --update --json
-macparakeet-cli retranscribe <id> --kind meeting --update --engine cohere --language ja --envelope
+sotto-cli retranscribe <id-or-prefix-or-title> --update --json
+sotto-cli retranscribe <id> --kind meeting --update --engine cohere --language ja --envelope
 ```
 
 `retranscribe` resolves dictations by UUID/prefix, transcriptions by
@@ -283,7 +283,7 @@ supports the same speech-engine, model, language, and processing-mode flags as
 meetings.
 
 `--no-history` avoids retaining the completed transcription in the shared
-MacParakeet history. For media URL and podcast inputs, downloaded audio is
+Sotto history. For media URL and podcast inputs, downloaded audio is
 temporary when `--no-history` is set.
 
 Parakeet is the default local engine for compatibility with existing scripts:
@@ -301,26 +301,26 @@ explicit language.
 Nemotron, Cohere, and Whisper require local model downloads before first use:
 
 ```bash
-macparakeet-cli models download nemotron-multilingual-1120ms
-macparakeet-cli models download cohere-transcribe
-macparakeet-cli models download whisper-large-v3-v20240930-turbo-632MB
+sotto-cli models download nemotron-multilingual-1120ms
+sotto-cli models download cohere-transcribe
+sotto-cli models download whisper-large-v3-v20240930-turbo-632MB
 ```
 
 Agents can inspect and switch the shared default speech model:
 
 ```bash
-macparakeet-cli models list --json
-macparakeet-cli models select parakeet-v3 --json
-macparakeet-cli models select parakeet-v2 --json
-macparakeet-cli models select nemotron-multilingual-1120ms --json
-macparakeet-cli models select cohere-transcribe --json
-macparakeet-cli models select whisper-large-v3-v20240930-turbo-632MB --json
+sotto-cli models list --json
+sotto-cli models select parakeet-v3 --json
+sotto-cli models select parakeet-v2 --json
+sotto-cli models select nemotron-multilingual-1120ms --json
+sotto-cli models select cohere-transcribe --json
+sotto-cli models select whisper-large-v3-v20240930-turbo-632MB --json
 ```
 
 ```bash
-macparakeet-cli transcribe /path/to/spanish.mp3 --engine nemotron --language auto --format json
-macparakeet-cli transcribe /path/to/japanese.m4a --engine cohere --language ja --format json
-macparakeet-cli transcribe /path/to/korean.mp3 --engine whisper --language ko --format json
+sotto-cli transcribe /path/to/spanish.mp3 --engine nemotron --language auto --format json
+sotto-cli transcribe /path/to/japanese.m4a --engine cohere --language ja --format json
+sotto-cli transcribe /path/to/korean.mp3 --engine whisper --language ko --format json
 ```
 
 To test the same defaults a user selected in the GUI, make every app-default
@@ -332,7 +332,7 @@ audio-retention, and YouTube-quality defaults. This does not exercise GUI-only
 UI, playback, hotkey, export, or optional AI formatter output.
 
 ```bash
-macparakeet-cli transcribe /path/to/audio.mp3 \
+sotto-cli transcribe /path/to/audio.mp3 \
   --engine app-default \
   --parakeet-model app-default \
   --speaker-detection app-default \
@@ -346,8 +346,8 @@ For a specific file or recording where the speaker count is known, constrain
 speaker detection per run instead of changing the saved default:
 
 ```bash
-macparakeet-cli transcribe /path/to/interview.mp3 --speaker-count 2 --format json
-macparakeet-cli transcribe /path/to/panel.mp3 --speaker-min 2 --speaker-max 4 --format json
+sotto-cli transcribe /path/to/interview.mp3 --speaker-count 2 --format json
+sotto-cli transcribe /path/to/panel.mp3 --speaker-min 2 --speaker-max 4 --format json
 ```
 
 Those constraint flags imply speaker detection when `--speaker-detection` is
@@ -360,19 +360,19 @@ as pre-run setup: a running GUI may cache some settings until relaunch or an
 in-app change.
 
 ```bash
-macparakeet-cli config set speech-engine whisper
-macparakeet-cli config set parakeet-model v3
-macparakeet-cli config set nemotron-language auto
-macparakeet-cli config set whisper-language ko
-macparakeet-cli config set cohere-language ja
-macparakeet-cli config set processing-mode raw
-macparakeet-cli config set remove-um-filler off
-macparakeet-cli config set speaker-detection off
-macparakeet-cli config set meeting-speaker-detection off
-macparakeet-cli config set custom-vocabulary-boosting on
-macparakeet-cli config set start-meetings-muted on
-macparakeet-cli config set save-transcription-audio off
-macparakeet-cli config set youtube-audio-quality m4a
+sotto-cli config set speech-engine whisper
+sotto-cli config set parakeet-model v3
+sotto-cli config set nemotron-language auto
+sotto-cli config set whisper-language ko
+sotto-cli config set cohere-language ja
+sotto-cli config set processing-mode raw
+sotto-cli config set remove-um-filler off
+sotto-cli config set speaker-detection off
+sotto-cli config set meeting-speaker-detection off
+sotto-cli config set custom-vocabulary-boosting on
+sotto-cli config set start-meetings-muted on
+sotto-cli config set save-transcription-audio off
+sotto-cli config set youtube-audio-quality m4a
 ```
 
 `--engine whisper` uses Whisper with auto-detected language unless `--language`
@@ -383,23 +383,23 @@ are used when `--engine app-default` resolves to that engine.
 ### Transcribe a media URL
 
 ```bash
-macparakeet-cli transcribe "https://www.facebook.com/reel/..." --format json
+sotto-cli transcribe "https://www.facebook.com/reel/..." --format json
 ```
 
 ### Transcribe a podcast
 
 ```bash
-macparakeet-cli transcribe "https://podcasts.apple.com/us/podcast/example/id123456789?i=987654321" --format json
-macparakeet-cli transcribe --podcast "Lex Fridman episode 400" --format json
+sotto-cli transcribe "https://podcasts.apple.com/us/podcast/example/id123456789?i=987654321" --format json
+sotto-cli transcribe --podcast "Lex Fridman episode 400" --format json
 ```
 
 ### Look up past transcriptions
 
 ```bash
-macparakeet-cli history transcriptions --json
-macparakeet-cli history search-transcriptions "design review" --json
-macparakeet-cli history rename <id> --title "Q3 vendor notes" --json
-macparakeet-cli history favorite <id> --json
+sotto-cli history transcriptions --json
+sotto-cli history search-transcriptions "design review" --json
+sotto-cli history rename <id> --title "Q3 vendor notes" --json
+sotto-cli history favorite <id> --json
 ```
 
 `history rename` matches the GUI: meeting rows change the meeting title;
@@ -409,9 +409,9 @@ file. URL/podcast rows are rejected.
 ### Search the transcript knowledge layer
 
 ```bash
-macparakeet-cli search '"cache busting" OR sparkle*' --json
-macparakeet-cli search 'decision AND parser' --source meeting --speaker Dana --limit 20 --json
-macparakeet-cli search '重要な会議' --since 2026-01-01 --json
+sotto-cli search '"cache busting" OR sparkle*' --json
+sotto-cli search 'decision AND parser' --source meeting --speaker Dana --limit 20 --json
+sotto-cli search '重要な会議' --since 2026-01-01 --json
 ```
 
 `search` returns citation-ready segment hits with recording metadata, `seq`,
@@ -426,15 +426,15 @@ If an upgraded library lacks the segment index, explicitly authorize one
 deterministic local rebuild (a database write, not a provider call):
 
 ```bash
-macparakeet-cli search-reindex --json
+sotto-cli search-reindex --json
 ```
 
 Drill into either a meeting or file/URL transcription without loading the
 whole transcript:
 
 ```bash
-macparakeet-cli transcript <id> --around 00:12:30 --window 30s --json
-macparakeet-cli transcript <id> --around-seq 18 --context 2 --json
+sotto-cli transcript <id> --around 00:12:30 --window 30s --json
+sotto-cli transcript <id> --around-seq 18 --context 2 --json
 ```
 
 Legacy/no-timing rows remain searchable. Their segments have `startMs: null`,
@@ -447,10 +447,10 @@ Cards are compact, regenerable index entries for deciding which transcript to
 open and where to verify candidate decisions/actions:
 
 ```bash
-macparakeet-cli cards list --since 2026-01-01 --source meeting --json
-macparakeet-cli cards list --limit 1000 --ndjson
-macparakeet-cli cards generate --stale --json
-macparakeet-cli cards generate <id-or-prefix> --json
+sotto-cli cards list --since 2026-01-01 --source meeting --json
+sotto-cli cards list --limit 1000 --ndjson
+sotto-cli cards generate --stale --json
+sotto-cli cards generate <id-or-prefix> --json
 ```
 
 `cards list` joins title, recording date, nullable duration, source, and
@@ -466,7 +466,7 @@ Use `cards list` to route across recordings, `search` for concrete phrases, and
 (plus timestamp when available) in citations. Dictations use the separate
 `history search` path; segment/card retrieval is not a cross-mode Ask endpoint.
 
-Card generation uses the provider already opted into in MacParakeet Settings.
+Card generation uses the provider already opted into in Sotto Settings.
 Progress and per-recording token counts go to stderr. JSON stdout reports
 aggregate prompt/completion/total tokens; `estimatedCostUSD` is explicitly
 `null` because model pricing is not available as a reliable local contract.
@@ -489,16 +489,16 @@ revision into each mutation or send so stale writes fail instead of overwriting
 another app or CLI change.
 
 ```bash
-macparakeet-cli ask sources --enable-ask-workspace --search pricing --type meeting --limit 20
-macparakeet-cli ask new --enable-ask-workspace --source <recording-uuid-1> --source <recording-uuid-2>
-macparakeet-cli ask show --enable-ask-workspace <conversation-uuid>
-macparakeet-cli ask select --enable-ask-workspace <conversation-uuid> --revision 1 \
+sotto-cli ask sources --enable-ask-workspace --search pricing --type meeting --limit 20
+sotto-cli ask new --enable-ask-workspace --source <recording-uuid-1> --source <recording-uuid-2>
+sotto-cli ask show --enable-ask-workspace <conversation-uuid>
+sotto-cli ask select --enable-ask-workspace <conversation-uuid> --revision 1 \
   --source <recording-uuid-1> --source <recording-uuid-3>
-macparakeet-cli ask draft --enable-ask-workspace <conversation-uuid> "What changed in the decision?" --revision 2
-macparakeet-cli ask send --enable-ask-workspace <conversation-uuid> \
+sotto-cli ask draft --enable-ask-workspace <conversation-uuid> "What changed in the decision?" --revision 2
+sotto-cli ask send --enable-ask-workspace <conversation-uuid> \
   --question "What changed in the decision?" --revision 3 \
   --provider openai --model gpt-4o --api-key-env OPENAI_API_KEY --allow-remote
-macparakeet-cli ask evidence --enable-ask-workspace <recording-uuid> \
+sotto-cli ask evidence --enable-ask-workspace <recording-uuid> \
   --source-revision <revision-from-citation> --segment 4
 ```
 
@@ -519,19 +519,19 @@ standalone CLI release.
 ### Search past dictations
 
 ```bash
-macparakeet-cli history dictations --json
-macparakeet-cli history search "what did I say about" --json
+sotto-cli history dictations --json
+sotto-cli history search "what did I say about" --json
 ```
 
 ### List or run a prompt against a transcription
 
 ```bash
-macparakeet-cli prompts list --json
-macparakeet-cli prompts history "Action items" --json
-macparakeet-cli prompts show "Action items" --version 2 --json
-macparakeet-cli prompts diff "Action items" --from 1 --to 2 --json
-macparakeet-cli prompts restore "Action items" --version 1 --json
-macparakeet-cli prompts run "Action items" \
+sotto-cli prompts list --json
+sotto-cli prompts history "Action items" --json
+sotto-cli prompts show "Action items" --version 2 --json
+sotto-cli prompts diff "Action items" --from 1 --to 2 --json
+sotto-cli prompts restore "Action items" --version 1 --json
+sotto-cli prompts run "Action items" \
   --transcription <id-or-prefix> \
   --provider anthropic \
   --api-key-env ANTHROPIC_API_KEY \
@@ -543,7 +543,7 @@ Prompt objects returned by `prompts list/show --json` include additive optional
 `inferenceSettings` (`temperature`, `topP`, `topK`, `maxTokens`, and
 `thinkingMode`, plus optional `reasoningEffort`: `low`, `medium`, `high`, or
 `xhigh`). Reasoning effort applies only when thinking is enabled. A blank value
-means the prompt inherits MacParakeet's current
+means the prompt inherits Sotto's current
 prompt-result defaults. `prompts run --json` includes additive optional
 `effectiveSettings` in its LLM result envelope. When present, it is the
 provider/model-filtered receipt of settings actually sent, not a copy of the
@@ -569,9 +569,9 @@ settings as well. The CLI does not emit per-result requested-settings or
 unsupported-field metadata.
 
 ```bash
-macparakeet-cli prompts set "Summary" --temperature 0.3 --max-tokens 2048 --json
-macparakeet-cli prompts set "Summary" --thinking-mode enabled --reasoning-effort high --json
-macparakeet-cli prompts set "Summary" --active-model --provider-default-settings --json
+sotto-cli prompts set "Summary" --temperature 0.3 --max-tokens 2048 --json
+sotto-cli prompts set "Summary" --thinking-mode enabled --reasoning-effort high --json
+sotto-cli prompts set "Summary" --active-model --provider-default-settings --json
 ```
 
 Prompt history is immutable. Restoring an old version creates and activates a
@@ -602,13 +602,13 @@ or version history. Recording labels are separate: they classify recordings
 and can control which transcript prompts are available.
 
 ```bash
-macparakeet-cli prompts collections list --json
-macparakeet-cli prompts collections add --name "Customer meetings" --json
-macparakeet-cli prompts set "Summary" --collection <collection-uuid> --json
-macparakeet-cli prompts collections rename <collection-uuid> --name "Customer calls" --json
-macparakeet-cli prompts collections reorder <first-uuid> <second-uuid> --json
-macparakeet-cli prompts set "Summary" --no-collection --json
-macparakeet-cli prompts collections delete <collection-uuid> --json
+sotto-cli prompts collections list --json
+sotto-cli prompts collections add --name "Customer meetings" --json
+sotto-cli prompts set "Summary" --collection <collection-uuid> --json
+sotto-cli prompts collections rename <collection-uuid> --name "Customer calls" --json
+sotto-cli prompts collections reorder <first-uuid> <second-uuid> --json
+sotto-cli prompts set "Summary" --no-collection --json
+sotto-cli prompts collections delete <collection-uuid> --json
 ```
 
 Use the full collection UUID returned by `list` or `add`. Reordering requires
@@ -634,17 +634,17 @@ prompt appears in the empty Ask state and sparkle menu. They are not persistent
 transcript result templates.
 
 ```bash
-macparakeet-cli quick-prompts list --json
-macparakeet-cli quick-prompts list --pinned true --json
-macparakeet-cli quick-prompts pin "Action items" --json
-macparakeet-cli quick-prompts unpin "Tell me more" --json
-macparakeet-cli quick-prompts set "Tell me more" --prompt "Expand with more detail from the meeting." --json
-macparakeet-cli quick-prompts export --out ask-prompts.json --include-builtins --json
-macparakeet-cli quick-prompts import ask-prompts.json --mode merge --dry-run --json
+sotto-cli quick-prompts list --json
+sotto-cli quick-prompts list --pinned true --json
+sotto-cli quick-prompts pin "Action items" --json
+sotto-cli quick-prompts unpin "Tell me more" --json
+sotto-cli quick-prompts set "Tell me more" --prompt "Expand with more detail from the meeting." --json
+sotto-cli quick-prompts export --out ask-prompts.json --include-builtins --json
+sotto-cli quick-prompts import ask-prompts.json --mode merge --dry-run --json
 ```
 
 The bundle envelope is stable within the CLI major version:
-`schema: "macparakeet.quick_prompts"`, `version: 1`. Each prompt carries
+`schema: "sotto.quick_prompts"`, `version: 1`. Each prompt carries
 `isPinned: Bool` for after-response strip placement.
 
 ### Inspect meeting recordings
@@ -657,7 +657,7 @@ receipts. Read the existing content first, then supply it as a write
 precondition. A stale precondition fails with `conflict`; reload before retrying.
 
 ```bash
-macparakeet-cli meetings results edit <meeting-id> <result-uuid> \
+sotto-cli meetings results edit <meeting-id> <result-uuid> \
   --expected-content-file original.md --file edited.md --json
 ```
 
@@ -672,7 +672,7 @@ segment IDs from the latest `meetings transcript --format json` response:
 ```
 
 ```bash
-macparakeet-cli meetings corrections revise-text <meeting-id> \
+sotto-cli meetings corrections revise-text <meeting-id> \
   --expected-revision 0 --file changes.json --json
 ```
 
@@ -683,11 +683,11 @@ Use `--database <path>` for an owned database; see the isolation rules below.
 ### Inspect and configure AI task routes
 
 ```bash
-macparakeet-cli llm routes list --json
-macparakeet-cli llm routes set cleanup --provider ollama --model <local-model> --json
-macparakeet-cli llm routes set analysis --provider anthropic \
+sotto-cli llm routes list --json
+sotto-cli llm routes set cleanup --provider ollama --model <local-model> --json
+sotto-cli llm routes set analysis --provider anthropic \
   --model <analysis-model> --api-key-env ANTHROPIC_API_KEY --json
-macparakeet-cli llm routes reset analysis --json
+sotto-cli llm routes reset analysis --json
 ```
 
 List reports default, cleanup, analysis and transform routes with effective
@@ -720,35 +720,35 @@ not be confirmed after mutation; inspect the current routes before retrying.
 ### Other meeting commands
 
 ```bash
-macparakeet-cli meetings list --json
-macparakeet-cli meetings list --type "Customer" --label "QBR" --json
-macparakeet-cli meetings list --unclassified --json
-macparakeet-cli meetings show <id-or-prefix-or-title> --json
-macparakeet-cli meetings transcript <id> --format text
-macparakeet-cli meetings transcript <id> --format json
-macparakeet-cli meetings artifact <id> --json
-macparakeet-cli meetings notes get <id> --json
-macparakeet-cli meetings notes append <id> --text "Decision: ship the parser"
-macparakeet-cli meetings notes clear <id> --json
-macparakeet-cli meetings results list <id> --json
-macparakeet-cli meetings results add <id> \
+sotto-cli meetings list --json
+sotto-cli meetings list --type "Customer" --label "QBR" --json
+sotto-cli meetings list --unclassified --json
+sotto-cli meetings show <id-or-prefix-or-title> --json
+sotto-cli meetings transcript <id> --format text
+sotto-cli meetings transcript <id> --format json
+sotto-cli meetings artifact <id> --json
+sotto-cli meetings notes get <id> --json
+sotto-cli meetings notes append <id> --text "Decision: ship the parser"
+sotto-cli meetings notes clear <id> --json
+sotto-cli meetings results list <id> --json
+sotto-cli meetings results add <id> \
   --name "Agent Notes" \
   --content "Decision: ship the parser" \
   --json
-macparakeet-cli meetings export <id> --format md --stdout
+sotto-cli meetings export <id> --format md --stdout
 
 # Timed transcript corrections use the revision from the last JSON read.
-macparakeet-cli meetings corrections edit-line <id> \
+sotto-cli meetings corrections edit-line <id> \
   --segment <segment-uuid> --text "Corrected line." --expected-revision 0 --json
-macparakeet-cli meetings corrections merge-lines <id> \
+sotto-cli meetings corrections merge-lines <id> \
   --segment <first-uuid> --segment <second-uuid> --expected-revision 1 --json
-macparakeet-cli meetings corrections rename <id> \
+sotto-cli meetings corrections rename <id> \
   --speaker S1 --label "Alice" --expected-revision 2 --json
-macparakeet-cli meetings corrections assign <id> \
+sotto-cli meetings corrections assign <id> \
   --segment <segment-uuid> --to-speaker S2 --expected-revision 3 --json
-macparakeet-cli meetings corrections merge-speakers <id> \
+sotto-cli meetings corrections merge-speakers <id> \
   --from S2 --into S1 --expected-revision 4 --json
-macparakeet-cli meetings corrections undo <id> --expected-revision 5 --json
+sotto-cli meetings corrections undo <id> --expected-revision 5 --json
 ```
 
 The two meeting transcript JSON views expose the effective corrected text and
@@ -771,7 +771,7 @@ already saved its meeting and audio, so open that meeting and retry
 transcription rather than importing again:
 
 ```bash
-macparakeet-cli meetings import ~/Downloads/partnership.m4a \
+sotto-cli meetings import ~/Downloads/partnership.m4a \
   --title "Partnership discussion" \
   --started-at 2026-05-14 \
   --json
@@ -784,16 +784,16 @@ and best-effort knowledge-card generation; the
 original recording is never modified, retranscribed, or deleted:
 
 ```bash
-macparakeet-cli meetings split preview <meeting> --cut 1800000 --json
-macparakeet-cli meetings split create <meeting> \
+sotto-cli meetings split preview <meeting> --cut 1800000 --json
+sotto-cli meetings split create <meeting> \
   --cut 1800000 \
   --title "Standup: Part 1" \
   --title "Standup: Part 2" \
   --json
-macparakeet-cli meetings split status <operation-id> --json
-macparakeet-cli meetings split status --source <meeting> --json
-macparakeet-cli meetings split resume <operation-id> --json
-macparakeet-cli meetings split discard <operation-id> --json
+sotto-cli meetings split status <operation-id> --json
+sotto-cli meetings split status --source <meeting> --json
+sotto-cli meetings split resume <operation-id> --json
+sotto-cli meetings split discard <operation-id> --json
 ```
 
 `preview` performs no writes. `create` publishes the audio parts and
@@ -824,13 +824,13 @@ per-invocation engine/model override flags.
 Manage local meeting classification and assign it atomically:
 
 ```bash
-macparakeet-cli meetings types list --json
-macparakeet-cli meetings types add --name "Customer" --json
-macparakeet-cli meetings labels add --name "QBR" --json
-macparakeet-cli meetings labels set "QBR" --color blue --json
-macparakeet-cli meetings labels set "QBR" --automatic-color --json
-macparakeet-cli meetings classify <meeting> --type "Customer" --add-label "QBR" --json
-macparakeet-cli meetings classify <meeting> --type none --remove-label "QBR" --json
+sotto-cli meetings types list --json
+sotto-cli meetings types add --name "Customer" --json
+sotto-cli meetings labels add --name "QBR" --json
+sotto-cli meetings labels set "QBR" --color blue --json
+sotto-cli meetings labels set "QBR" --automatic-color --json
+sotto-cli meetings classify <meeting> --type "Customer" --add-label "QBR" --json
+sotto-cli meetings classify <meeting> --type none --remove-label "QBR" --json
 ```
 
 The compatibility surface retains zero or one primary type and any number of
@@ -846,7 +846,7 @@ Use `meetings notes` for user-authored notes. Use `meetings results add` for
 externally generated summaries, decisions, action items, or other agent output;
 those rows are stored as `PromptResult` records rather than overwriting
 `userNotes`. Meeting result JSON and `prompt-results.json` include additive
-optional `inferenceSettingsSnapshot` when MacParakeet recorded an effective
+optional `inferenceSettingsSnapshot` when Sotto recorded an effective
 provider/model-filtered inference receipt for that result.
 Library-generated results also carry optional `promptId`, `promptVersionId`,
 `providerSnapshot`, and `modelSnapshot` receipts. Older or externally added
@@ -883,20 +883,20 @@ use `meetings artifact <id> --json` (`markdownPath`) or
 Future meeting sessions are stored under the configured artifact root:
 
 ```bash
-macparakeet-cli config get meeting-artifacts-folder
-macparakeet-cli config set meeting-artifacts-folder ~/Documents/MacParakeet/Meetings
-macparakeet-cli config set meeting-artifacts-folder default
+sotto-cli config get meeting-artifacts-folder
+sotto-cli config set meeting-artifacts-folder ~/Documents/Sotto/Meetings
+sotto-cli config set meeting-artifacts-folder default
 ```
 
 For post-meeting local automation, configure a disabled-by-default hook. The
-hook path must be an absolute executable path; MacParakeet runs it without a
+hook path must be an absolute executable path; Sotto runs it without a
 shell, sends a `meeting.completed` JSON event on stdin, times out, and writes
 `automation-hook-result.json` back into the meeting folder.
 
 ```bash
-macparakeet-cli config set meeting-hook-path /absolute/path/to/hook
-macparakeet-cli config set meeting-hook-timeout 20
-macparakeet-cli config set meeting-hook-enabled on
+sotto-cli config set meeting-hook-path /absolute/path/to/hook
+sotto-cli config set meeting-hook-timeout 20
+sotto-cli config set meeting-hook-enabled on
 ```
 
 Meeting commands that support `--envelope` return an opt-in success envelope:
@@ -951,7 +951,7 @@ on the exit code first.
 ## Use it as an agent skill
 
 The clean integration shape is a thin skill wrapper around
-`macparakeet-cli`, not a second transcription implementation. The skill's job
+`sotto-cli`, not a second transcription implementation. The skill's job
 is to teach an agent when to call the CLI, how to parse the JSON envelopes, and
 which operations are deterministic local database reads/writes.
 
@@ -961,13 +961,13 @@ the body gives concise operating instructions. The same pattern ports to Codex,
 OpenClaw, Hermes, or any agent framework that can shell out to local tools.
 
 ```text
-macparakeet-stt/
+sotto-stt/
   SKILL.md
 ```
 
 The reusable skill lives at
-[`integrations/skill/macparakeet-stt/SKILL.md`](skill/macparakeet-stt/SKILL.md).
-Use that file directly when packaging MacParakeet for Codex, Claude Code,
+[`integrations/skill/sotto-stt/SKILL.md`](skill/sotto-stt/SKILL.md).
+Use that file directly when packaging Sotto for Codex, Claude Code,
 OpenClaw, Hermes, or another local agent framework.
 
 ## Conventions
@@ -1005,7 +1005,7 @@ OpenClaw, Hermes, or another local agent framework.
   The app also checks Sparkle updates and refreshes Discover's public feed
   at launch when **Show Discover in the sidebar** is enabled (the default),
   independently of telemetry. Turning that preference off cancels pending
-  feed requests and prevents new loads; the CLI does not launch the feed refresh. No captured audio is sent to an LLM by MacParakeet.
+  feed requests and prevents new loads; the CLI does not launch the feed refresh. No captured audio is sent to an LLM by Sotto.
   Legacy activation validation can also contact LemonSqueezy during app setup
   or CLI `transcribe --enforce-entitlements` when stored activation state needs
   refresh; current free builds remain unlocked regardless of that result.
@@ -1018,16 +1018,16 @@ OpenClaw, Hermes, or another local agent framework.
   `error_type`) — never the file path, URL, transcript, language value, or any
   user content (random per-process session UUID, no persistent identifier).
   Disable it any of four ways:
-    - `MACPARAKEET_TELEMETRY=0` (per process)
+    - `SOTTO_TELEMETRY=0` (per process)
     - `DO_NOT_TRACK=1` (industry-standard signal, also honored)
-    - `macparakeet-cli config set telemetry off` (persists in the shared
+    - `sotto-cli config set telemetry off` (persists in the shared
       UserDefaults suite the GUI reads)
-    - "Help improve MacParakeet" toggle in the GUI Settings → Privacy card
+    - "Help improve Sotto" toggle in the GUI Settings → Privacy card
 
   Auto-disabled in CI environments (`CI`, `GITHUB_ACTIONS`, `GITLAB_CI`,
   `BUILDKITE`, `CIRCLECI`, `TRAVIS`, `JENKINS_URL`, `TF_BUILD`,
   `TEAMCITY_VERSION` — any one set to a truthy value). Override CI auto-
-  disable with `MACPARAKEET_TELEMETRY=1`. This explicit force-on also overrides
+  disable with `SOTTO_TELEMETRY=1`. This explicit force-on also overrides
   `DO_NOT_TRACK=1` and the saved off preference. See `docs/telemetry.md` for the
   full event catalog and the structured-error privacy contract. For read-only
   local audio-log JSON queries from a source checkout, see
@@ -1044,14 +1044,14 @@ OpenClaw, Hermes, or another local agent framework.
 - **Hermes Agent:** [`hermes/README.md`](./hermes/README.md)
 - **Claude Code / Codex CLI / generic skill consumers:** use the
   Claude Code-style `SKILL.md` sketch above for external agents that call
-  `macparakeet-cli`. Coding agents working inside this repository should read
+  `sotto-cli`. Coding agents working inside this repository should read
   [`/AGENTS.md`](../AGENTS.md) instead.
 
 ## Reporting issues
 
 Open an issue at <https://github.com/moona3k/macparakeet/issues> with the
 `integration` label. Include the agent platform, the CLI version
-(`macparakeet-cli --version`), and a minimal repro.
+(`sotto-cli --version`), and a minimal repro.
 
 ### Updating prompt label availability
 

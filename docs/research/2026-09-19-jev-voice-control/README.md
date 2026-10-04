@@ -1,6 +1,6 @@
 # Voice Control
 
-MacParakeet Voice Control turns ordinary speech or a typed inbox command into action on the app already in front of you. Observation and effects use native macOS Accessibility. Jev chooses among competing options when the host cannot compile a unique next step. It does not browse or write scripts. It can judge observed landings; it does not issue receipts.
+Sotto Voice Control turns ordinary speech or a typed inbox command into action on the app already in front of you. Observation and effects use native macOS Accessibility. Jev chooses among competing options when the host cannot compile a unique next step. It does not browse or write scripts. It can judge observed landings; it does not issue receipts.
 
 This is a DEBUG experiment (`--enable-voice-control`). Live Google Flights results and the integrated microphone path are still unproven. Ordinary dictation is unchanged.
 

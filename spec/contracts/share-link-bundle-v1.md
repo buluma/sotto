@@ -38,7 +38,7 @@ The service stores this JSON object:
 
 ```json
 {
-  "schema": "com.macparakeet.share-envelope",
+  "schema": "com.sotto.share-envelope",
   "schemaVersion": 1,
   "algorithm": "A256GCM",
   "nonce": "base64url-12-random-bytes",
@@ -59,7 +59,7 @@ Stable rules:
 The exact additional authenticated data is the UTF-8 encoding of this sequence, with `\0` representing one zero byte:
 
 ```text
-com.macparakeet.share-envelope\0v1\0<locator>\0<content-revision>
+com.sotto.share-envelope\0v1\0<locator>\0<content-revision>
 ```
 
 `content-revision` is an unpadded base-10 integer beginning at `1` and increasing by exactly one for each explicit snapshot update.
@@ -71,7 +71,7 @@ The authenticated plaintext is UTF-8 JSON with this shape:
 
 ```json
 {
-  "schema": "com.macparakeet.share-bundle",
+  "schema": "com.sotto.share-bundle",
   "schemaVersion": 1,
   "publishedAt": "2026-09-11T22:00:00Z",
   "title": "Optional selected display title",

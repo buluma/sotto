@@ -10,12 +10,12 @@
 > Related spec: `spec/05-audio-pipeline.md`
 > Regression commit being reverted: `97134e9b` ("Refactor meeting recording to VPIO-first pipeline", 2026-04-10)
 > Related files (will be edited):
-> - `Sources/MacParakeetCore/Services/MeetingRecordingService.swift` (1 default flip; no audit-driven rewire needed — verified intact)
-> - `Sources/MacParakeetCore/Audio/MeetingAudioCaptureService.swift` (3 default flips + remove stale comment; no reorder — mic already starts before tap on main)
-> - `Sources/MacParakeetCore/Audio/MicrophoneCapture.swift` (1 default flip + diagnostic logging)
-> - `Sources/MacParakeetCore/Audio/SystemAudioTap.swift` (diagnostic logging + `lastPinnedOutputUID` ivar)
-> - `Tests/MacParakeetTests/Services/MeetingRecordingServiceTests.swift` (only if tests fail after default flip; reviewed reads suggest likely no changes)
-> - `Tests/MacParakeetTests/Audio/MeetingAudioCaptureServiceTests.swift` (verified by reading file: NO changes needed — existing VPIO tests use explicit args and test the dead-code fallback path, which we are keeping)
+> - `Sources/SottoCore/Services/MeetingRecordingService.swift` (1 default flip; no audit-driven rewire needed — verified intact)
+> - `Sources/SottoCore/Audio/MeetingAudioCaptureService.swift` (3 default flips + remove stale comment; no reorder — mic already starts before tap on main)
+> - `Sources/SottoCore/Audio/MicrophoneCapture.swift` (1 default flip + diagnostic logging)
+> - `Sources/SottoCore/Audio/SystemAudioTap.swift` (diagnostic logging + `lastPinnedOutputUID` ivar)
+> - `Tests/SottoTests/Services/MeetingRecordingServiceTests.swift` (only if tests fail after default flip; reviewed reads suggest likely no changes)
+> - `Tests/SottoTests/Audio/MeetingAudioCaptureServiceTests.swift` (verified by reading file: NO changes needed — existing VPIO tests use explicit args and test the dead-code fallback path, which we are keeping)
 > - `spec/05-audio-pipeline.md` (bullets around 157–161, ASCII diagram at 130–155)
 
 ## Problem
@@ -57,7 +57,7 @@ Restore concurrent dictation + active meeting recording (ADR-015) by removing VP
 
 - Ripping out the `MeetingMicProcessingMode` enum / `VPIOConditioner` / VPIO code paths. Leave as dead code for reversibility.
 - Route-change handling (`kAudioHardwarePropertyDefaultOutputDevice` listener).
-- Self-capture exclusion (excluding MacParakeet's own bundle ID from the process tap).
+- Self-capture exclusion (excluding Sotto's own bundle ID from the process tap).
 - Bluetooth HFP downgrade testing.
 - Clock / sample-rate drift handling in `MeetingAudioPairJoiner`.
 - WebRTC AEC3 integration.
@@ -80,15 +80,15 @@ Execute in order. After each step, either run `swift build` or `swift test` to c
 
 There are **5 defaults** to flip (grep-verified on 2026-04-11). All of them must be updated for the flip to be consistent across constructors, otherwise a caller hitting a different constructor can re-enable VPIO.
 
-Edit `Sources/MacParakeetCore/Services/MeetingRecordingService.swift`:
+Edit `Sources/SottoCore/Services/MeetingRecordingService.swift`:
 - Line 83 (`public init(micProcessingMode:audioCaptureService:audioConverter:sttTranscriber:fileManager:)`) — change default `.vpioPreferred` → `.raw`.
 
-Edit `Sources/MacParakeetCore/Audio/MeetingAudioCaptureService.swift`:
+Edit `Sources/SottoCore/Audio/MeetingAudioCaptureService.swift`:
 - Line 59 (`public init(micProcessingMode:)`) — change default `.vpioPreferred` → `.raw`.
 - Line 73 (`init(microphoneCaptureFactory:systemAudioTapFactory:micProcessingMode:)`) — change default `.vpioPreferred` → `.raw`.
 - Line 83 (`init(microphoneCapture:systemAudioTapFactory:micProcessingMode:)`) — change default `.vpioPreferred` → `.raw`.
 
-Edit `Sources/MacParakeetCore/Audio/MicrophoneCapture.swift`:
+Edit `Sources/SottoCore/Audio/MicrophoneCapture.swift`:
 - Line 46 (`public func start(processingMode:handler:)`) — change default `.vpioPreferred` → `.raw`.
 
 **Sanity grep after edits:**
@@ -111,7 +111,7 @@ Run `swift build` after this step. Should compile (no API surface change, only d
 
 **Status as of this plan revision**: the tap-before-mic reorder that was introduced during investigation on 2026-04-11 has been **reverted in the working copy** before this plan was committed. The branch that carries this plan already shows the correct order (mic first, then tap) on main.
 
-**Action**: verify `Sources/MacParakeetCore/Audio/MeetingAudioCaptureService.swift` `start(handler:)` (around lines 114–175) calls `microphoneCapture.start(...)` BEFORE `tap.start(...)`. If not, restore the original order:
+**Action**: verify `Sources/SottoCore/Audio/MeetingAudioCaptureService.swift` `start(handler:)` (around lines 114–175) calls `microphoneCapture.start(...)` BEFORE `tap.start(...)`. If not, restore the original order:
 
 ```swift
 do {
@@ -141,7 +141,7 @@ Run `swift build`. Should compile.
 
 **Predicted outcome**: **Zero changes needed in `MeetingAudioCaptureServiceTests.swift`.** But do not assume — run the tests and only update what actually breaks.
 
-For `Tests/MacParakeetTests/Services/MeetingRecordingServiceTests.swift:480` — the plan author did not read this file, so the correct treatment of the `.vpioPreferred` reference there is unknown in advance. It could be a VPIO-specific test (leave as-is) or a default-assumed test (update). **Read the test before deciding.**
+For `Tests/SottoTests/Services/MeetingRecordingServiceTests.swift:480` — the plan author did not read this file, so the correct treatment of the `.vpioPreferred` reference there is unknown in advance. It could be a VPIO-specific test (leave as-is) or a default-assumed test (update). **Read the test before deciding.**
 
 **Execution protocol:**
 
@@ -159,8 +159,8 @@ grep -rn "\.vpioPreferred" Sources/ Tests/
 ```
 
 Expected remaining references:
-- `Sources/MacParakeetCore/Audio/MeetingMicProcessingMode.swift` — enum declaration (`case vpioPreferred`).
-- `Sources/MacParakeetCore/Audio/MicrophoneCapture.swift:189` — the `case .vpioPreferred:` switch arm in `configureInputProcessing`.
+- `Sources/SottoCore/Audio/MeetingMicProcessingMode.swift` — enum declaration (`case vpioPreferred`).
+- `Sources/SottoCore/Audio/MicrophoneCapture.swift:189` — the `case .vpioPreferred:` switch arm in `configureInputProcessing`.
 - Logging strings in `MicrophoneCapture.swift` lines 192, 196 — the info/warning log formats that mention `requested=vpioPreferred`. Keep as-is; they will simply not fire after the flip.
 - Tests explicitly testing VPIO fallback (lines 119–194 of `MeetingAudioCaptureServiceTests.swift`) — VPIO-specific test coverage that stays.
 - Possibly the `MockMeetingMicrophoneCapture` default at line 283 — harmless placeholder.
@@ -224,7 +224,7 @@ Design:
 - Schedule a 2-second watchdog that logs a warning if no buffer has arrived. Cancel on first buffer and on teardown.
 - Log `_first_buffer` on first buffer received (low volume, once per capture session).
 
-**`Sources/MacParakeetCore/Audio/SystemAudioTap.swift`:**
+**`Sources/SottoCore/Audio/SystemAudioTap.swift`:**
 
 Add a new stored property to the class (near the other `tapID`/`aggregateDeviceID` ivars):
 
@@ -308,7 +308,7 @@ lastPinnedOutputUID = nil
 watchdogLock.unlock()
 ```
 
-**`Sources/MacParakeetCore/Audio/MicrophoneCapture.swift`:**
+**`Sources/SottoCore/Audio/MicrophoneCapture.swift`:**
 
 Add parallel stored properties:
 
@@ -466,7 +466,7 @@ This is the critical validation step. The unit tests cannot catch VPIO/HAL issue
 5. Stop meeting recording.
 6. **Expected**:
    - Meeting is saved with a transcript.
-   - Both mic and system streams produced real audio (check `~/Library/Application Support/MacParakeet/meeting-recordings/<uuid>/` for `microphone.m4a` and `system.m4a`, both should be much larger than 557 bytes — at least tens of KB each).
+   - Both mic and system streams produced real audio (check `~/Library/Application Support/Sotto/meeting-recordings/<uuid>/` for `microphone.m4a` and `system.m4a`, both should be much larger than 557 bytes — at least tens of KB each).
    - Transcript contains the Safari video's speech, attributed to the system source.
 7. **Check logs**: `tap_started` and `mic_started` both present; neither `tap_no_buffers_2s` nor `mic_no_buffers_2s` warning.
 
@@ -529,12 +529,12 @@ Key points to include in the commit message:
 - ADRs applied: ADR-014 (meeting recording), ADR-015 (concurrent dictation + meeting).
 
 **Staging**: add the specific edited files by name. Do not `git add -A`. The staged set should be:
-- `Sources/MacParakeetCore/Audio/MeetingAudioCaptureService.swift`
-- `Sources/MacParakeetCore/Audio/MicrophoneCapture.swift`
-- `Sources/MacParakeetCore/Audio/SystemAudioTap.swift`
-- `Sources/MacParakeetCore/Services/MeetingRecordingService.swift` (only if step 4 audit required changes)
-- `Tests/MacParakeetTests/Audio/MeetingAudioCaptureServiceTests.swift`
-- `Tests/MacParakeetTests/Services/MeetingRecordingServiceTests.swift`
+- `Sources/SottoCore/Audio/MeetingAudioCaptureService.swift`
+- `Sources/SottoCore/Audio/MicrophoneCapture.swift`
+- `Sources/SottoCore/Audio/SystemAudioTap.swift`
+- `Sources/SottoCore/Services/MeetingRecordingService.swift` (only if step 4 audit required changes)
+- `Tests/SottoTests/Audio/MeetingAudioCaptureServiceTests.swift`
+- `Tests/SottoTests/Services/MeetingRecordingServiceTests.swift`
 - `spec/05-audio-pipeline.md`
 - `docs/research/vpio-process-tap-conflict.md` (already written by the prior session)
 - `plans/active/2026-04-drop-vpio-meeting-recording.md` (this plan)

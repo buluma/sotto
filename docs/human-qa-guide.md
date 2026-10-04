@@ -43,19 +43,19 @@ scripts/dev/run_app.sh
 ```
 
 Builds, signs, and launches the dev build. Its separate bundle identifier
-(`com.macparakeet.dev`) separates standard GUI preferences and macOS permissions.
-It also uses `~/Library/Application Support/MacParakeet-Dev` for its database,
+(`com.sotto.dev`) separates standard GUI preferences and macOS permissions.
+It also uses `~/Library/Application Support/Sotto-Dev` for its database,
 artifacts, model caches, and logs, keeping stable app data untouched.
 
 Destructive QA requires verified throwaway data. Set
-`MACPARAKEET_DEBUG_APP_STATE_DIR` to an absolute temporary directory to replace
+`SOTTO_DEBUG_APP_STATE_DIR` to an absolute temporary directory to replace
 the default Dev state root for app data, artifacts, model caches, and logs. The
 launcher forwards that override in both Debug and optimized Release configurations.
 Verify the resolved path before testing deletion or recovery.
 
 The data override does not isolate preferences or Keychain. CLI configuration
-commands still use `com.macparakeet.MacParakeet` preferences, and GUI LLM credentials
-use the shared `com.macparakeet.llm` Keychain service. Keep provider credential
+commands still use `com.sotto.Sotto` preferences, and GUI LLM credentials
+use the shared `com.sotto.llm` Keychain service. Keep provider credential
 changes out of a shared-account QA run; use a disposable macOS account when full
 user-state isolation is needed. See the
 [integration isolation rules](../integrations/README.md#safe-automation-and-isolation).

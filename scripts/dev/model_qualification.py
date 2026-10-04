@@ -12,7 +12,7 @@ import signal
 import subprocess
 import sys
 
-ACCOUNT = "macparakeet-e2e"
+ACCOUNT = "sotto-e2e"
 NETWORK_PROFILE = "(version 1)(allow default)(deny network*)"
 SANDBOX = Path("/usr/bin/sandbox-exec")
 
@@ -98,7 +98,7 @@ def qualify(args):
     # A fresh directory prevents stale results or database rows from looking like a pass.
     output.mkdir(parents=True, exist_ok=False)
     env = os.environ.copy()
-    env.update(MACPARAKEET_DEBUG_APP_STATE_DIR=str(state), MACPARAKEET_TELEMETRY="0")
+    env.update(SOTTO_DEBUG_APP_STATE_DIR=str(state), SOTTO_TELEMETRY="0")
     evidence = {"result": "fail", "model": pin["model"], "modelManifestSHA256": sha256(args.manifest),
                 "cli": str(cli), "cliSHA256": sha256(cli), "os": platform.platform(),
                 "architecture": platform.machine(), "account": account.pw_name,

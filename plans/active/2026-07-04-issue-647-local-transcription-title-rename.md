@@ -25,7 +25,7 @@ derived-title fallback or reimplement rename.
 
 ## Goal Capsule
 
-Issue #647 has two asks: rename Local transcription titles, and optionally copy imported audio or video into MacParakeet so deleting the original source file does not break playback. This plan deliberately focuses on the first ask only.
+Issue #647 has two asks: rename Local transcription titles, and optionally copy imported audio or video into Sotto so deleting the original source file does not break playback. This plan deliberately focuses on the first ask only.
 
 The goal is to make Local Library transcriptions user-renamable without corrupting source-file metadata. A renamed Local transcription should show the user's title in the Library and detail surfaces, survive app relaunch, participate in search and title sort, and leave `fileName` / `filePath` available as source identity.
 
@@ -35,7 +35,7 @@ The accepted owner direction in the issue is that renaming should be the common-
 
 ### Actors
 
-- A1. A MacParakeet user managing imported local file transcriptions in the Library.
+- A1. A Sotto user managing imported local file transcriptions in the Library.
 - A2. A reviewer validating that the feature is a title/display change, not a file retention or source-file rename change.
 - A3. A future CLI or integration user reading saved transcription metadata.
 
@@ -49,7 +49,7 @@ The accepted owner direction in the issue is that renaming should be the common-
 - R6. Existing meeting rename behavior remains unchanged: meeting titles continue to use `fileName`, `updateFileName`, and meeting artifact refresh behavior.
 - R7. Existing transcript-derived titles remain intact. Retranscription or derived-field backfill may refresh `derivedTitle`, but must not erase a user title override.
 - R8. Export and automation behavior is not silently broadened. The GUI may use the effective title for suggested export filenames where the user expects the visible title, but public CLI exact-name resolution and output changes need explicit contract review before changing `integrations/README.md`.
-- R9. Copying imported media into MacParakeet storage is out of scope for this plan. No retention, import-copy, or audio-player fallback behavior changes ship with this title rename.
+- R9. Copying imported media into Sotto storage is out of scope for this plan. No retention, import-copy, or audio-player fallback behavior changes ship with this title rename.
 
 ### Acceptance Examples
 
@@ -82,11 +82,11 @@ Out of scope:
 
 ## Verified Current State
 
-- `Sources/MacParakeet/Views/Transcription/TranscriptionLibraryView.swift` builds Library card and context menus in `libraryMenuItems(for:)`. The current menu has `Open`, `Select Many...`, meeting-only audio/artifact actions, favorite, and delete. There is no rename action for Local rows.
-- `Sources/MacParakeet/Views/Transcription/TranscriptionThumbnailCard.swift` has a private `displayTitle` helper. Meetings use `fileName`; non-meeting rows use non-empty `derivedTitle`, then `fileName`.
-- `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift` has an inline title editor only when `sourceType == .meeting`. The displayed title is effectively the current transcription's `fileName`.
-- `Sources/MacParakeetCore/Models/Transcription.swift` stores `fileName`, `filePath`, `derivedTitle`, and `derivedSnippet`. There is no custom or override title field.
-- `Sources/MacParakeetCore/Database/TranscriptionRepository.swift` exposes `updateFileName(id:fileName:)`. Its implementation changes both `fileName` and `derivedTitle`, with comments saying this is meeting-only behavior.
+- `Sources/Sotto/Views/Transcription/TranscriptionLibraryView.swift` builds Library card and context menus in `libraryMenuItems(for:)`. The current menu has `Open`, `Select Many...`, meeting-only audio/artifact actions, favorite, and delete. There is no rename action for Local rows.
+- `Sources/Sotto/Views/Transcription/TranscriptionThumbnailCard.swift` has a private `displayTitle` helper. Meetings use `fileName`; non-meeting rows use non-empty `derivedTitle`, then `fileName`.
+- `Sources/Sotto/Views/Transcription/TranscriptResultView.swift` has an inline title editor only when `sourceType == .meeting`. The displayed title is effectively the current transcription's `fileName`.
+- `Sources/SottoCore/Models/Transcription.swift` stores `fileName`, `filePath`, `derivedTitle`, and `derivedSnippet`. There is no custom or override title field.
+- `Sources/SottoCore/Database/TranscriptionRepository.swift` exposes `updateFileName(id:fileName:)`. Its implementation changes both `fileName` and `derivedTitle`, with comments saying this is meeting-only behavior.
 - Library search currently checks `fileName`, raw transcript, clean transcript, and channel name. It does not search `derivedTitle` or any user-title concept.
 - Library `titleAscending` sort currently orders by `fileName COLLATE NOCASE`.
 - `TranscriptionLibraryViewModel` owns Library loading, filtering, deletion, favorites, and bulk selection. It has no rename method.
@@ -102,7 +102,7 @@ Rationale:
 
 - `fileName` is source identity for Local rows and is already used by CLI/export code as an input-file-oriented name.
 - `derivedTitle` is generated display copy from transcript content and can be refreshed by transcription or backfill logic.
-- A user rename must be durable across derived-field regeneration and must not make MacParakeet forget the imported file's original identity.
+- A user rename must be durable across derived-field regeneration and must not make Sotto forget the imported file's original identity.
 
 Implementation note: persist trimmed non-empty strings and store `nil` for absent override. Do not store empty strings as meaningful values.
 
@@ -189,12 +189,12 @@ Rename the meeting-specific helper names only as much as needed for clarity. The
 
 Primary files:
 
-- `Sources/MacParakeetCore/Models/Transcription.swift`
-- `Sources/MacParakeetCore/Database/DatabaseManager.swift`
-- `Sources/MacParakeetCore/Database/TranscriptionRepository.swift`
-- `Tests/MacParakeetTests/Database/DatabaseManagerTests.swift`
-- `Tests/MacParakeetTests/Database/TranscriptionRepositoryTests.swift`
-- `Tests/MacParakeetTests/ViewModels/ViewModelMocks.swift`
+- `Sources/SottoCore/Models/Transcription.swift`
+- `Sources/SottoCore/Database/DatabaseManager.swift`
+- `Sources/SottoCore/Database/TranscriptionRepository.swift`
+- `Tests/SottoTests/Database/DatabaseManagerTests.swift`
+- `Tests/SottoTests/Database/TranscriptionRepositoryTests.swift`
+- `Tests/SottoTests/ViewModels/ViewModelMocks.swift`
 - `spec/01-data-model.md`
 
 Work:
@@ -219,14 +219,14 @@ Test scenarios:
 
 Primary files:
 
-- `Sources/MacParakeetCore/Models/Transcription.swift`
-- `Sources/MacParakeetCore/Database/TranscriptionRepository.swift`
-- `Sources/MacParakeet/Views/Transcription/TranscriptionThumbnailCard.swift`
-- `Sources/MacParakeet/Views/MeetingRecording/MeetingRowCard.swift`
-- `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift`
-- `Sources/MacParakeet/Views/Transcription/TranscriptResultActions.swift`
-- `Tests/MacParakeetTests/Database/TranscriptionRepositoryTests.swift`
-- `Tests/MacParakeetTests/ViewModels/TranscriptionLibraryViewModelTests.swift`
+- `Sources/SottoCore/Models/Transcription.swift`
+- `Sources/SottoCore/Database/TranscriptionRepository.swift`
+- `Sources/Sotto/Views/Transcription/TranscriptionThumbnailCard.swift`
+- `Sources/Sotto/Views/MeetingRecording/MeetingRowCard.swift`
+- `Sources/Sotto/Views/Transcription/TranscriptResultView.swift`
+- `Sources/Sotto/Views/Transcription/TranscriptResultActions.swift`
+- `Tests/SottoTests/Database/TranscriptionRepositoryTests.swift`
+- `Tests/SottoTests/ViewModels/TranscriptionLibraryViewModelTests.swift`
 
 Work:
 
@@ -251,9 +251,9 @@ Test scenarios:
 
 Primary files:
 
-- `Sources/MacParakeet/Views/Transcription/TranscriptionLibraryView.swift`
-- `Sources/MacParakeetViewModels/TranscriptionLibraryViewModel.swift`
-- `Tests/MacParakeetTests/ViewModels/TranscriptionLibraryViewModelTests.swift`
+- `Sources/Sotto/Views/Transcription/TranscriptionLibraryView.swift`
+- `Sources/SottoViewModels/TranscriptionLibraryViewModel.swift`
+- `Tests/SottoTests/ViewModels/TranscriptionLibraryViewModelTests.swift`
 
 Work:
 
@@ -277,9 +277,9 @@ Test scenarios:
 
 Primary files:
 
-- `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift`
-- `Sources/MacParakeetViewModels/TranscriptionViewModel.swift`
-- `Tests/MacParakeetTests/ViewModels/TranscriptionViewModelTests.swift`
+- `Sources/Sotto/Views/Transcription/TranscriptResultView.swift`
+- `Sources/SottoViewModels/TranscriptionViewModel.swift`
+- `Tests/SottoTests/ViewModels/TranscriptionViewModelTests.swift`
 
 Work:
 

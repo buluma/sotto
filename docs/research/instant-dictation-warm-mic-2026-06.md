@@ -9,7 +9,7 @@ gap is pre-start microphone capture: keep the microphone stream running, hold a
 tiny rolling buffer in memory, and prepend the newest samples when recording
 starts. That captures speech that begins at the hotkey press.
 
-MacParakeet should copy that behavior, but not the exact topology. ADR-015
+Sotto should copy that behavior, but not the exact topology. ADR-015
 requires one process-wide `SharedMicrophoneStream` because VPIO is
 process-scoped on macOS. A second always-on dictation engine would recreate the
 class of bugs ADR-015 fixed. The warm lease therefore belongs inside
@@ -71,7 +71,7 @@ separate capture-health handling in PR #441.
 | [OpenWhisper](https://github.com/Knuckles92/OpenWhisper) | `119ad1ec9b91dfa4a329f805170dacfdf54ecd11` | `services/recorder.py` starts a `sounddevice.InputStream` on recording start and includes stop-side post-roll, but no idle monitor/pre-roll. Useful contrast: post-roll captures trailing audio, not first syllables at hotkey press. |
 | [OpenWhispr](https://github.com/OpenWhispr/openwhispr) | `38e832d23dbd1da472a331a9262106a8e9ba9b01` | `src/helpers/audioManager.js` preloads its AudioWorklet/provider state and briefly acquires/releases the mic to warm the OS audio driver, but it does not keep an idle stream or rolling pre-roll. Useful contrast: driver warmup improves later `getUserMedia` latency, but cannot prepend speech that began before recording. |
 
-## MacParakeet Shape
+## Sotto Shape
 
 - Default off, exposed as a user setting with explicit mic-indicator copy.
 - Dictation only. Meeting recording behavior stays unchanged.

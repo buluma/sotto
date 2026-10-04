@@ -7,7 +7,7 @@
 
 ## Problem
 
-Issue #365 reports that the prompt-window model selector shows MacParakeet's
+Issue #365 reports that the prompt-window model selector shows Sotto's
 hardcoded Ollama recommendations instead of the user's installed Ollama models.
 The same design flaw existed beyond Ollama: Settings had partial live discovery,
 but transcript chat and prompt results rebuilt their model menus from static
@@ -80,7 +80,7 @@ small provider-capability fix or become a broader model-registry/cache layer.
   Reference:
   https://github.com/cline/cline/blob/main/apps/vscode/webview-ui/src/components/settings/OpenRouterModelPicker.tsx
 
-Takeaway for MacParakeet: adopt a provider descriptor for stable provider facts,
+Takeaway for Sotto: adopt a provider descriptor for stable provider facts,
 native provider listing where needed, and current/custom model preservation. Do
 not add a model metadata registry, search index, persistent cache, or polling
 loop for this issue; those are useful in heavier web/IDE apps but unnecessary

@@ -4,7 +4,7 @@
 > from D1 or `/api/stats`. Prevents false “76% never activate” / “7d activation
 > doubled” conclusions.
 >
-> Verified: D1 `macparakeet-telemetry`, 2026-06-03.
+> Verified: D1 `sotto-telemetry`, 2026-06-03.
 
 ## TL;DR for agents
 
@@ -27,7 +27,7 @@
 | Emission | Once per install on **first successful** dictation (`AppEnvironment` → `markFirstDictationCompleted`) |
 | Does **not** count | Cancel, empty, or failed attempts |
 
-Code: `Sources/MacParakeet/App/AppEnvironment.swift` (`markFirstDictationCompleted`), `Sources/MacParakeetCore/AppRuntimePreferences.swift` (`hasCompletedFirstDictation`).
+Code: `Sources/Sotto/App/AppEnvironment.swift` (`markFirstDictationCompleted`), `Sources/SottoCore/AppRuntimePreferences.swift` (`hasCompletedFirstDictation`).
 
 ---
 

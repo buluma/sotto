@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Analyze MacParakeet voiceprint phase-0 extraction JSON.
+"""Analyze Sotto voiceprint phase-0 extraction JSON.
 
 The script intentionally reads only harness JSON: session IDs, track names,
 durations, speaker IDs, speech totals, and embeddings. It never reads audio or

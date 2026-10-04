@@ -5,7 +5,7 @@ fresh-eye / code-meaning pass the same evening.
 Status: **read-only**. Companion to
 [2026-09-18-sparkle-dau-measurement.md](./2026-09-18-sparkle-dau-measurement.md)
 and [2026-09-18-sparkle-dau-daily.csv](./2026-09-18-sparkle-dau-daily.csv).
-Sources: live D1 `macparakeet-telemetry`
+Sources: live D1 `sotto-telemetry`
 (`7372263e-6a0b-4c70-8188-8f1d6d16bf31`) and Cloudflare GraphQL
 `httpRequestsAdaptiveGroups` for zone `macparakeet.com`
 (`4183d6a922545fb96269e3c24d1611a2`). No production writes.
@@ -106,7 +106,7 @@ allowlisted GUI process IDs ever**, not of current users and not of
 the 107k session-day sum. It is a **flow**; opted-out devices vanish
 from GUI. Telemetry **collection defaults to enabled**
 (`AppPreferences.telemetryEnabled` defaults `true`). Debug / `0.0.0` /
-`dev-*` builds are transport-ineligible unless `MACPARAKEET_TELEMETRY=1`.
+`dev-*` builds are transport-ineligible unless `SOTTO_TELEMETRY=1`.
 
 Opt-out event countries (lifetime) follow usage: US 555, DE 266, GB 116,
 FR 79, NL 71, AU 66, IN 60, CA 60. Not a Germany-only privacy revolt.
@@ -358,7 +358,7 @@ rows). The GB 0.8.4 anomaly is **two sessions with >500 events**
 (16,173 of 18,380 0.8.4 lifecycle rows, max 12,502 **start/success**).
 That is a start loop, not a fleet of slow checkpoints.
 
-Raw GUI includes some `app_ver=0.0.0` (debug / `MACPARAKEET_TELEMETRY=1`).
+Raw GUI includes some `app_ver=0.0.0` (debug / `SOTTO_TELEMETRY=1`).
 Not one machine: Sep has US, BE, ES, CO, IN, … Rollups and `/api/stats`
 drop `0.0.0`. Prefer that filter on raw cuts.
 
@@ -465,7 +465,7 @@ Sparkle as churn.
   (excluded from GUI rollups). Failed INSERT is silent.
 - Consent: default **on**. Opt-out flushes `telemetry_opted_out` only.
   Debug / `0.0.0` / `dev-*` / `swiftpm-*` are transport-ineligible
-  unless `MACPARAKEET_TELEMETRY=1`.
+  unless `SOTTO_TELEMETRY=1`.
 - Breadcrumbs (`dictation_started`) vs canonical operations
   (`dictation_operation` outcome). `dictation_failed` is not the
   attempt denominator; use started or operation rows.

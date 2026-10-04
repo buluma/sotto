@@ -4,7 +4,7 @@
   "test_files": 467,
   "largest": [
     {
-      "path": "Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift",
+      "path": "Sources/Sotto/Views/Transcription/TranscriptResultView.swift",
       "lines": 6814,
       "main_actor": true,
       "unchecked_sendable": 0,
@@ -12,7 +12,7 @@
       "task_detached": 3
     },
     {
-      "path": "Sources/MacParakeet/Views/Settings/SettingsView.swift",
+      "path": "Sources/Sotto/Views/Settings/SettingsView.swift",
       "lines": 4313,
       "main_actor": true,
       "unchecked_sendable": 0,
@@ -20,7 +20,7 @@
       "task_detached": 0
     },
     {
-      "path": "Sources/MacParakeetViewModels/TranscriptionViewModel.swift",
+      "path": "Sources/SottoViewModels/TranscriptionViewModel.swift",
       "lines": 3290,
       "main_actor": true,
       "unchecked_sendable": 0,
@@ -28,7 +28,7 @@
       "task_detached": 8
     },
     {
-      "path": "Sources/MacParakeetCore/Database/DatabaseManager.swift",
+      "path": "Sources/SottoCore/Database/DatabaseManager.swift",
       "lines": 2745,
       "main_actor": false,
       "unchecked_sendable": 0,
@@ -36,7 +36,7 @@
       "task_detached": 0
     },
     {
-      "path": "Sources/MacParakeetCore/STT/STTRuntime.swift",
+      "path": "Sources/SottoCore/STT/STTRuntime.swift",
       "lines": 2700,
       "main_actor": false,
       "unchecked_sendable": 1,
@@ -44,7 +44,7 @@
       "task_detached": 1
     },
     {
-      "path": "Sources/MacParakeetCore/Services/MeetingRecording/MeetingRecordingService.swift",
+      "path": "Sources/SottoCore/Services/MeetingRecording/MeetingRecordingService.swift",
       "lines": 2560,
       "main_actor": false,
       "unchecked_sendable": 1,
@@ -52,7 +52,7 @@
       "task_detached": 0
     },
     {
-      "path": "Sources/MacParakeetCore/Services/TranscriptionService.swift",
+      "path": "Sources/SottoCore/Services/TranscriptionService.swift",
       "lines": 2437,
       "main_actor": false,
       "unchecked_sendable": 0,
@@ -60,7 +60,7 @@
       "task_detached": 5
     },
     {
-      "path": "Sources/MacParakeetCore/Audio/MicrophoneEnginePlatform.swift",
+      "path": "Sources/SottoCore/Audio/MicrophoneEnginePlatform.swift",
       "lines": 2412,
       "main_actor": false,
       "unchecked_sendable": 2,
@@ -68,7 +68,7 @@
       "task_detached": 0
     },
     {
-      "path": "Sources/MacParakeetViewModels/SettingsViewModel.swift",
+      "path": "Sources/SottoViewModels/SettingsViewModel.swift",
       "lines": 2252,
       "main_actor": true,
       "unchecked_sendable": 1,
@@ -76,7 +76,7 @@
       "task_detached": 3
     },
     {
-      "path": "Sources/MacParakeetCore/Services/Dictation/DictationService.swift",
+      "path": "Sources/SottoCore/Services/Dictation/DictationService.swift",
       "lines": 2240,
       "main_actor": false,
       "unchecked_sendable": 0,
@@ -84,7 +84,7 @@
       "task_detached": 0
     },
     {
-      "path": "Sources/MacParakeet/Views/Settings/LLMSettingsView.swift",
+      "path": "Sources/Sotto/Views/Settings/LLMSettingsView.swift",
       "lines": 2229,
       "main_actor": true,
       "unchecked_sendable": 0,
@@ -92,7 +92,7 @@
       "task_detached": 2
     },
     {
-      "path": "Sources/MacParakeetCore/Services/Telemetry/TelemetryEvent.swift",
+      "path": "Sources/SottoCore/Services/Telemetry/TelemetryEvent.swift",
       "lines": 2086,
       "main_actor": false,
       "unchecked_sendable": 0,
@@ -100,7 +100,7 @@
       "task_detached": 0
     },
     {
-      "path": "Sources/MacParakeet/Views/Transcription/PromptLibraryView.swift",
+      "path": "Sources/Sotto/Views/Transcription/PromptLibraryView.swift",
       "lines": 2037,
       "main_actor": false,
       "unchecked_sendable": 0,
@@ -116,7 +116,7 @@
       "task_detached": 0
     },
     {
-      "path": "Sources/MacParakeet/Views/Meetings/MeetingsView.swift",
+      "path": "Sources/Sotto/Views/Meetings/MeetingsView.swift",
       "lines": 1931,
       "main_actor": true,
       "unchecked_sendable": 0,
@@ -124,7 +124,7 @@
       "task_detached": 0
     },
     {
-      "path": "Sources/MacParakeet/App/MeetingRecordingFlowCoordinator.swift",
+      "path": "Sources/Sotto/App/MeetingRecordingFlowCoordinator.swift",
       "lines": 1920,
       "main_actor": true,
       "unchecked_sendable": 0,
@@ -132,7 +132,7 @@
       "task_detached": 2
     },
     {
-      "path": "Sources/MacParakeetCore/Services/LLM/LLMService.swift",
+      "path": "Sources/SottoCore/Services/LLM/LLMService.swift",
       "lines": 1895,
       "main_actor": false,
       "unchecked_sendable": 0,
@@ -148,7 +148,7 @@
       "task_detached": 0
     },
     {
-      "path": "Sources/MacParakeetViewModels/LLMSettingsViewModel.swift",
+      "path": "Sources/SottoViewModels/LLMSettingsViewModel.swift",
       "lines": 1726,
       "main_actor": true,
       "unchecked_sendable": 0,
@@ -156,7 +156,7 @@
       "task_detached": 0
     },
     {
-      "path": "Sources/MacParakeetCore/Audio/MeetingAudioCaptureService.swift",
+      "path": "Sources/SottoCore/Audio/MeetingAudioCaptureService.swift",
       "lines": 1719,
       "main_actor": false,
       "unchecked_sendable": 6,
@@ -164,7 +164,7 @@
       "task_detached": 0
     },
     {
-      "path": "Sources/MacParakeetCore/Audio/AudioRecorder.swift",
+      "path": "Sources/SottoCore/Audio/AudioRecorder.swift",
       "lines": 1700,
       "main_actor": false,
       "unchecked_sendable": 3,
@@ -172,7 +172,7 @@
       "task_detached": 0
     },
     {
-      "path": "Sources/MacParakeetViewModels/EngineSettingsViewModel.swift",
+      "path": "Sources/SottoViewModels/EngineSettingsViewModel.swift",
       "lines": 1692,
       "main_actor": true,
       "unchecked_sendable": 0,
@@ -180,7 +180,7 @@
       "task_detached": 6
     },
     {
-      "path": "Sources/MacParakeet/App/DictationFlowCoordinator.swift",
+      "path": "Sources/Sotto/App/DictationFlowCoordinator.swift",
       "lines": 1684,
       "main_actor": true,
       "unchecked_sendable": 0,
@@ -196,7 +196,7 @@
       "task_detached": 0
     },
     {
-      "path": "Sources/MacParakeetViewModels/OnboardingViewModel.swift",
+      "path": "Sources/SottoViewModels/OnboardingViewModel.swift",
       "lines": 1452,
       "main_actor": true,
       "unchecked_sendable": 0,
@@ -204,7 +204,7 @@
       "task_detached": 0
     },
     {
-      "path": "Sources/MacParakeet/Hotkey/HotkeyManager.swift",
+      "path": "Sources/Sotto/Hotkey/HotkeyManager.swift",
       "lines": 1444,
       "main_actor": false,
       "unchecked_sendable": 1,
@@ -212,7 +212,7 @@
       "task_detached": 0
     },
     {
-      "path": "Sources/MacParakeet/Views/MeetingRecording/MeetingClassificationControls.swift",
+      "path": "Sources/Sotto/Views/MeetingRecording/MeetingClassificationControls.swift",
       "lines": 1387,
       "main_actor": true,
       "unchecked_sendable": 0,
@@ -220,7 +220,7 @@
       "task_detached": 0
     },
     {
-      "path": "Sources/MacParakeet/AppDelegate.swift",
+      "path": "Sources/Sotto/AppDelegate.swift",
       "lines": 1337,
       "main_actor": true,
       "unchecked_sendable": 0,
@@ -228,7 +228,7 @@
       "task_detached": 3
     },
     {
-      "path": "Sources/MacParakeet/Views/Transcription/TranscriptionLibraryView.swift",
+      "path": "Sources/Sotto/Views/Transcription/TranscriptionLibraryView.swift",
       "lines": 1304,
       "main_actor": true,
       "unchecked_sendable": 0,
@@ -244,7 +244,7 @@
       "task_detached": 0
     },
     {
-      "path": "Sources/MacParakeetViewModels/PromptResultsViewModel.swift",
+      "path": "Sources/SottoViewModels/PromptResultsViewModel.swift",
       "lines": 1235,
       "main_actor": true,
       "unchecked_sendable": 0,
@@ -260,7 +260,7 @@
       "task_detached": 0
     },
     {
-      "path": "Sources/MacParakeetViewModels/PromptsViewModel.swift",
+      "path": "Sources/SottoViewModels/PromptsViewModel.swift",
       "lines": 1201,
       "main_actor": true,
       "unchecked_sendable": 0,
@@ -268,7 +268,7 @@
       "task_detached": 1
     },
     {
-      "path": "Sources/MacParakeetCore/Services/LLM/LocalCLIExecutor.swift",
+      "path": "Sources/SottoCore/Services/LLM/LocalCLIExecutor.swift",
       "lines": 1191,
       "main_actor": false,
       "unchecked_sendable": 5,
@@ -285,10 +285,10 @@
     }
   ],
   "modules": {
-    "MacParakeetViewModels": 51,
+    "SottoViewModels": 51,
     "CLI": 42,
-    "MacParakeet": 172,
-    "MacParakeetCore": 377,
-    "MacParakeetLocalLLM": 1
+    "Sotto": 172,
+    "SottoCore": 377,
+    "SottoLocalLLM": 1
   }
 }

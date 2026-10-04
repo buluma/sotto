@@ -91,10 +91,10 @@
   "baselineHead": "f43f4bed2ba7d4afdb005369759afc3d6cc44d34",
   "buildTreeNote": "Freshly built audit working tree with unrelated audit changes; diarization/ASR implementation unchanged from baseline. Test executable hash was not captured before the coordinating build resumed.",
   "productionSourceSHA256": {
-    "Sources/MacParakeetCore/Services/Diarization/SpeakerMerger.swift": "8e7d0adf4be502a78adf6cd23d6ddd026009ddec42ca6fa857a3e7cc567340f1",
-    "Sources/MacParakeetCore/Services/Diarization/NemotronDiarizationService.swift": "5156940232370f582a524c6ae1cd1cb41c50497c394417acf0d1b260ea4f2ee6",
-    "Sources/MacParakeetCore/Services/Diarization/DiarizationService.swift": "17925bb5e5036044bea49352bf4bc93ac135cffff15ca1d03b061acfe819e956",
-    "Sources/MacParakeetCore/Services/TranscriptionService.swift": "15fb2edfedac3ae2a8096e3d6c32c4448c3e8f0f04988fcc78fe2d9d46ec3ce4",
-    "Sources/MacParakeetCore/Services/MeetingRecording/MeetingTranscriptFinalizer.swift": "6ec901c9bd041300a615e12c85b4252469f5c0858920b529c37539347af48c56"
+    "Sources/SottoCore/Services/Diarization/SpeakerMerger.swift": "8e7d0adf4be502a78adf6cd23d6ddd026009ddec42ca6fa857a3e7cc567340f1",
+    "Sources/SottoCore/Services/Diarization/NemotronDiarizationService.swift": "5156940232370f582a524c6ae1cd1cb41c50497c394417acf0d1b260ea4f2ee6",
+    "Sources/SottoCore/Services/Diarization/DiarizationService.swift": "17925bb5e5036044bea49352bf4bc93ac135cffff15ca1d03b061acfe819e956",
+    "Sources/SottoCore/Services/TranscriptionService.swift": "15fb2edfedac3ae2a8096e3d6c32c4448c3e8f0f04988fcc78fe2d9d46ec3ce4",
+    "Sources/SottoCore/Services/MeetingRecording/MeetingTranscriptFinalizer.swift": "6ec901c9bd041300a615e12c85b4252469f5c0858920b529c37539347af48c56"
   }
 }

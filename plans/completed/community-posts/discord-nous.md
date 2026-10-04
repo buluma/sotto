@@ -27,13 +27,13 @@ provenance (it's NVIDIA's published number for the model).
 ````markdown
 hey nous community 👋
 
-macparakeet-cli is now at 2.3.1 — a swift-native CLI for NVIDIA's Parakeet TDT 0.6B v3 running on the Apple Neural Engine via FluidAudio. ~155x realtime, ~2.5% WER, ~66 MB per inference slot. GPL-3.0.
+sotto-cli is now at 2.3.1 — a swift-native CLI for NVIDIA's Parakeet TDT 0.6B v3 running on the Apple Neural Engine via FluidAudio. ~155x realtime, ~2.5% WER, ~66 MB per inference slot. GPL-3.0.
 
 posting because: voice / STT is the documented gap in the Hermes-on-Mac-mini stack, and i think this is the right shape to fill it. concretely, what a Hermes skill author gets:
 
 • local STT (no cloud, ANE-accelerated)
 • file + youtube transcription
-• persistent SQLite memory layer at ~/Library/Application Support/MacParakeet/macparakeet.db (skill can recall prior runs across sessions)
+• persistent SQLite memory layer at ~/Library/Application Support/Sotto/sotto.db (skill can recall prior runs across sessions)
 • prompt library with BYO LLM provider
 • stable JSON on every read-only command (semver, written compatibility policy)
 • exit codes / stderr / lookup conventions documented for skill use
@@ -41,8 +41,8 @@ posting because: voice / STT is the documented gap in the Hermes-on-Mac-mini sta
 install on macOS 14.2+ Apple Silicon:
 
 ```bash
-brew install moona3k/tap/macparakeet-cli
-macparakeet-cli health --json
+brew install moona3k/tap/sotto-cli
+sotto-cli health --json
 ```
 
 hermes-flavored scaffold (illustrative skill manifest sketch + capability table): https://github.com/moona3k/macparakeet/tree/main/integrations/hermes
@@ -64,7 +64,7 @@ i'm the maintainer (@moona3k on github), happy to answer Qs about wiring it into
   is similar. The performance edge here is throughput on the ANE,
   not WER.
 - **"Why not parakeet-mlx?"** — parakeet-mlx is great for the
-  Python ecosystem; macparakeet-cli is Swift-native + has the
+  Python ecosystem; sotto-cli is Swift-native + has the
   persistence/prompts layer for skill use.
 - **"Does it support diarization?"** — Yes, via FluidAudio's offline
   pipeline. Available on file transcription.

@@ -27,12 +27,12 @@ The three reviewed surfaces only:
 - `Views/MainWindowView.swift` (sidebar selection tint)
 
 Shared primitives added in `Views/Vocabulary/VocabularyComponents.swift` and a
-`parakeetSwitch()` modifier in `Views/Components/ParakeetActionStyle.swift`.
+`sottoSwitch()` modifier in `Views/Components/SottoActionStyle.swift`.
 
 ## Changes
 
 ### Coherence (P0)
-- **One toggle treatment.** `parakeetSwitch()` (coral) everywhere on these
+- **One toggle treatment.** `sottoSwitch()` (coral) everywhere on these
   surfaces — kills the Voice-Return-coral vs list-toggle-blue split.
 - **One coral CTA per sheet.** `Add` stays coral; `Done` moves to a neutral
   header-bar button.
@@ -61,10 +61,10 @@ Shared primitives added in `Views/Vocabulary/VocabularyComponents.swift` and a
 ## Out of scope / follow-ups
 - Settings tab shares the icon-tile card + blue `SettingsToggleRow` patterns.
   Not touched here to keep blast radius to reviewed screens; a future pass could
-  adopt `parakeetSwitch()` app-wide for full toggle consistency.
+  adopt `sottoSwitch()` app-wide for full toggle consistency.
 
 ## Verification
-- `swift build --target MacParakeet` green (85s).
+- `swift build --target Sotto` green (85s).
 - `swift test` green — full suite exit 0 (no ViewModel/logic changes; views are
   not unit-tested).
 - Manual (pending): launch app, eyeball Vocabulary tab + both sheets in

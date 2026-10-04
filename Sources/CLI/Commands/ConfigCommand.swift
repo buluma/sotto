@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 struct CLIConfigKeySpec: Encodable, Equatable {
     let key: String
@@ -9,26 +9,22 @@ struct CLIConfigKeySpec: Encodable, Equatable {
     let summary: String
 }
 
-/// `macparakeet-cli config` — read or write app preferences from the CLI.
+/// `sotto-cli config` — read or write app preferences from the CLI.
 ///
-/// Stores values in the same UserDefaults suite the GUI reads
-/// (`com.macparakeet.MacParakeet`). This lets users who only install the CLI
-/// (no GUI) persist preferences like opting out of telemetry — and a later GUI
-/// install picks the same values up automatically. Without this, CLI-only
-/// users would have no way to opt out of telemetry or set app-default
-/// transcription state for agent-driven smoke tests.
+/// Stores values in the shared Sotto preferences suite (`com.sotto.Sotto`).
+/// The legacy telemetry key is inert: Sotto has no telemetry transport.
 struct ConfigCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "config",
         abstract: "Read or write CLI/app configuration values.",
         discussion: """
-        Configuration is stored in the shared MacParakeet UserDefaults suite \
-        (com.macparakeet.MacParakeet). The GUI and CLI read the same suite, so \
+        Configuration is stored in the shared Sotto UserDefaults suite \
+        (com.sotto.Sotto). The GUI and CLI read the same suite, so \
         values set here apply to later app-default reads. A running GUI may \
         cache some settings until relaunch or an in-app change.
 
         Supported keys:
-          telemetry                 on|off                         default: on
+          telemetry                 on|off                         default: off (inert)
           processing-mode           raw|clean                       default: raw
           spoken-punctuation        on|off                          default: on
                                     (Clean dictation only; transcripts never convert)
@@ -75,14 +71,8 @@ struct ConfigCommand: ParsableCommand {
           meeting-hook-path         absolute executable path|none    default: none
           meeting-hook-timeout      seconds (1-300)                 default: 20
 
-        Full event catalog:
-          https://github.com/moona3k/macparakeet/blob/main/docs/telemetry.md
-
-        Per-process overrides (env vars, do not require `config set`):
-          MACPARAKEET_TELEMETRY=0   Force-off for one invocation
-          MACPARAKEET_TELEMETRY=1   Force-on for one invocation
-          DO_NOT_TRACK=1            Force-off (industry-standard signal)
-          CI=true                   Auto-disabled in CI environments
+        Remote telemetry is removed from Sotto. The legacy telemetry key is
+        retained for script compatibility and has no effect on network behavior.
         """,
         subcommands: [GetCommand.self, SetCommand.self, ListCommand.self]
     )
@@ -93,7 +83,7 @@ struct ConfigCommand: ParsableCommand {
             key: "telemetry",
             valueSyntax: "on|off",
             allowedValues: ["on", "off"],
-            summary: "Enable or disable telemetry."
+            summary: "Legacy preference; remote telemetry is removed."
         ),
         CLIConfigKeySpec(
             key: "processing-mode",
@@ -368,7 +358,7 @@ struct ConfigCommand: ParsableCommand {
     // `Sources/CLI/CHANGELOG.md` "Exit codes" / "--json failure envelope".
 
     static func read(key: String, defaults: UserDefaults? = nil) throws -> String {
-        let store = defaults ?? macParakeetAppDefaults()
+        let store = defaults ?? sottoAppDefaults()
         switch try canonicalKey(key) {
         case "telemetry":
             let on = AppPreferences.isTelemetryEnabled(defaults: store)
@@ -462,7 +452,7 @@ struct ConfigCommand: ParsableCommand {
         defaults: UserDefaults? = nil,
         physicalMemoryBytes: UInt64 = ProcessInfo.processInfo.physicalMemory
     ) throws -> String {
-        let store = defaults ?? macParakeetAppDefaults()
+        let store = defaults ?? sottoAppDefaults()
         switch try canonicalKey(key) {
         case "telemetry":
             let parsed = try parseBool(value, key: key)

@@ -1,6 +1,6 @@
 # Voice Control: observable, testable, lean, and better-sighted
 
-**Status:** IMPLEMENTED; measurement follow-ups open. **Date:** 2026-09-20, updated 2026-09-21. **Owner:** MacParakeet core.
+**Status:** IMPLEMENTED; measurement follow-ups open. **Date:** 2026-09-20, updated 2026-09-21. **Owner:** Sotto core.
 **Background:** [source review of a comparable System One computer-use loop](../../docs/research/2026-09-20-typesafe-computer-use/README.md) and the [developer walkthrough](../../docs/research/2026-09-20-typesafe-computer-use/walkthrough.html) of how Jev, the action space and the host loop fit together.
 **Governing decisions:** [ADR-033](../../spec/adr/033-explicit-voice-control.md), [contract](../../spec/contracts/voice-control.md). Owner decisions 2026-09-20: all seven walkthrough recommendations accepted, including on-device OCR as a second source of targets and state.
 

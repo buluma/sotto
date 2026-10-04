@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "MacParakeetDiarizationBaseline",
+    name: "SottoDiarizationBaseline",
     platforms: [.macOS(.v14)],
     products: [.executable(name: "diarization-baseline", targets: ["DiarizationBaseline"])],
     dependencies: [

@@ -137,12 +137,12 @@ main local engine.
 ## DONE (all uncommitted)
 
 ### Phase 1 — Core
-- `Sources/MacParakeetCore/SpeechEnginePreference.swift`: `.english1120 =
+- `Sources/SottoCore/SpeechEnginePreference.swift`: `.english1120 =
   "english-1120ms"` case (displayName "English Beta", modelName "Nemotron
   Speech Streaming EN 0.6B", ~600 MB, chunk 1120, `isEnglishOnly`,
   `alternative`); `nemotronModelVariantKey = "nemotronModelVariant"` +
   validated `nemotronModelVariant(defaults:)` / `saveNemotronModelVariant`.
-- NEW `Sources/MacParakeetCore/STT/NemotronEnglishEngine.swift`: actor,
+- NEW `Sources/SottoCore/STT/NemotronEnglishEngine.swift`: actor,
   `STTTranscribing`; two-lane (interactive/background) with per-lane
   `engineBusy` guard; `prepare()` idempotent (loads 2 managers,
   `requestedChunkSize: .ms1120`); transcribe = reset → detached
@@ -152,7 +152,7 @@ main local engine.
   `defaultCacheRoot`/`isModelCached(cacheRoot:)`/`deleteModel(cacheRoot:)`
   (testable seams)/`downloadModel(onProgress:)` via `DownloadUtils.downloadRepo`;
   copied progress-throttle + error-mapping helpers (per-engine-copy convention).
-- `Sources/MacParakeetCore/STT/STTRuntime.swift`: `nemotronModelVariant` now
+- `Sources/SottoCore/STT/STTRuntime.swift`: `nemotronModelVariant` now
   `var`; `nemotronEnglishEngine` slot + `ensureNemotronEnglishEngine()`;
   variant branch in `transcribeWithNemotron` (EN ignores language), `warmUp`,
   `performSpeechEngineSwitch` (staged `preparedNemotronEnglish`), `isReady`;
@@ -177,7 +177,7 @@ main local engine.
   multilingual-1120ms, english-1120ms.
 - Bootstrap: `AppEnvironment.swift` + CLI `makeConfiguredSTTClient` now pass
   `nemotronModelVariant: SpeechEnginePreference.nemotronModelVariant(...)`.
-- `Sources/MacParakeetCore/STT/README.md` engine inventory updated.
+- `Sources/SottoCore/STT/README.md` engine inventory updated.
 
 ### Phase 2 — Surface
 - `SettingsViewModel.swift`: `nemotronModelVariant` published prop with didSet →
@@ -234,7 +234,7 @@ main local engine.
 - CLI `SpecCommand.swift`: `--nemotron-model` option + config key list +
   `--language` summary updated.
 - `Sources/CLI/CHANGELOG.md`: new `## [2.9.0] -- 2026-06-11` section (absorbed
-  the `[Unreleased]` timeout item into its Changed); `MacParakeetCLI.swift`
+  the `[Unreleased]` timeout item into its Changed); `SottoCLI.swift`
   `cliVersion = "2.9.0"`.
 
 ### Phase 2 step 10 — docs (PARTIALLY DONE)
@@ -271,17 +271,17 @@ main local engine.
   batch-at-stop, streaming partials not yet surfaced)*".
 
 ### 2. Tests (task #5) — mirror existing patterns
-- `Tests/MacParakeetTests/STT/SpeechEnginePreferenceTests.swift`:
+- `Tests/SottoTests/STT/SpeechEnginePreferenceTests.swift`:
   default-to-multilingual when unset; round-trip `.english1120`; unknown raw
   value → default; frozen raw value "english-1120ms" + chunk 1120 +
   isEnglishOnly.
-- `Tests/MacParakeetTests/STT/ModelDeletionTests.swift` (temp-cacheRoot seams,
+- `Tests/SottoTests/STT/ModelDeletionTests.swift` (temp-cacheRoot seams,
   mirror existing lines ~50–134): EN delete removes tier dir + removes empty
   `nemotron-streaming` parent; no-op when absent; `isModelCached(cacheRoot:)`
   requires BOTH metadata.json AND encoder/encoder_int8.mlmodelc;
   download/delete telemetry carries engineVariant "english-1120ms" (injected
   `downloader` closure pattern).
-- `Tests/MacParakeetTests/STT/STTSchedulerTests.swift`: quartet
+- `Tests/SottoTests/STT/STTSchedulerTests.swift`: quartet
   `testSetNemotronModelVariantForwardsWhenIdle` / `FailsWhileJobIsRunning` /
   `FailsWhileSessionLeaseIsActive` / `FailsWhileSessionBeginIsInFlight`
   (verbatim parallels of parakeet tests at ~lines 246–326). Optional runtime
@@ -299,12 +299,12 @@ main local engine.
   resolveNemotronModelVariant app-default→stored / explicit override.
 - `Tests/CLITests/SpecCommandTests.swift`: update embedded-spec assertions if
   they enumerate options/keys (check; may pass already).
-- `Tests/MacParakeetTests/ViewModels/SettingsViewModelTests.swift`: variant
+- `Tests/SottoTests/ViewModels/SettingsViewModelTests.swift`: variant
   change persists / reverts-on-unavailable / reverts-on-failure (mirror the
   parakeet variant tests in that file); downloaded variants tracked per-build;
   download uses selected variant; deleteNemotronVariant refuses selected-while-
   active / allows non-selected.
-- `Tests/MacParakeetTests/TelemetryServiceTests.swift`: first-party variants
+- `Tests/SottoTests/TelemetryServiceTests.swift`: first-party variants
   pass allowlist; arbitrary string still → "custom". (Check existing
   assertions expecting "custom" for parakeet/nemotron ids — they may need
   updating to the new literal values.)
@@ -312,8 +312,8 @@ main local engine.
 ### 3. Verification (task #6)
 1. `swift test` full suite green.
 2. CLI smoke (user approved the ~600 MB download):
-   `swift run macparakeet-cli models download nemotron-english-1120ms`, then
-   `swift run macparakeet-cli transcribe <sample.wav> --engine nemotron
+   `swift run sotto-cli models download nemotron-english-1120ms`, then
+   `swift run sotto-cli transcribe <sample.wav> --engine nemotron
    --nemotron-model english-1120ms` (a sample can be made with `say -o` +
    afconvert, or use a dictation WAV from the app's data). Verify transcript,
    cache at `~/Library/Application Support/FluidAudio/Models/nemotron-streaming/1120ms`,
@@ -340,7 +340,7 @@ main local engine.
   posture, out-of-scope (no live partials, no 560/2240 tiers, no default
   change), REQ-STT-004, punctuation-gate findings.
 - After gate passes: switch the user's machine —
-  `swift run macparakeet-cli models select nemotron-english-1120ms`
+  `swift run sotto-cli models select nemotron-english-1120ms`
   (model must be downloaded first; select sets engine+variant).
 - Archive this plan to `plans/completed/` when done.
 

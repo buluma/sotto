@@ -127,10 +127,10 @@ section: "Play a sound and notify when transcription finishes."
 `shouldChime(settingEnabled:batchActive:isLastInBatch:)`, unit-tested without
 AppKit/UN.
 
-Files: `MacParakeetViewModels/TranscriptionViewModel.swift`,
-`MacParakeet/Views/Components/SoundManager.swift` (callsite only),
-`MacParakeetCore/Calendar/CalendarNotificationAuthorization.swift` (reuse),
-`MacParakeetViewModels/SettingsViewModel.swift`, Settings view, a new small
+Files: `SottoViewModels/TranscriptionViewModel.swift`,
+`Sotto/Views/Components/SoundManager.swift` (callsite only),
+`SottoCore/Calendar/CalendarNotificationAuthorization.swift` (reuse),
+`SottoViewModels/SettingsViewModel.swift`, Settings view, a new small
 `TranscriptionCompletionNotifier`.
 
 ## Phase B — Ambient GUI batch (local files only)
@@ -203,10 +203,10 @@ Not required: batch is a strict superset of existing behavior and the
 single-file path is unchanged. (Optional `AppFeatures.batchTranscriptionEnabled`
 kill-switch only if the owner wants one — note as a decision, default no flag.)
 
-Files: `MacParakeetViewModels/TranscriptionViewModel.swift`,
-`MacParakeet/Views/Transcription/TranscribeView.swift`,
-`MacParakeet/App/MenuBarCoordinator.swift`,
-`MacParakeet/Views/MainWindowView.swift`, a new `AudioFileEnumerator` helper in
+Files: `SottoViewModels/TranscriptionViewModel.swift`,
+`Sotto/Views/Transcription/TranscribeView.swift`,
+`Sotto/App/MenuBarCoordinator.swift`,
+`Sotto/Views/MainWindowView.swift`, a new `AudioFileEnumerator` helper in
 Core.
 
 ## Phase C — CLI batch
@@ -282,7 +282,7 @@ Files: `Sources/CLI/Commands/TranscribeCommand.swift`,
   loops/hidden).
 - **Telemetry is a two-repo change** — any new `TelemetryEventName` (e.g.
   `batch_transcription_completed`) must also be added to `ALLOWED_EVENTS` in
-  `macparakeet-website/functions/api/telemetry.ts`, or the Worker drops the whole
+  `sotto-website/functions/api/telemetry.ts`, or the Worker drops the whole
   batch. (Telemetry for batch is optional; if added, do both repos.)
 - **Notification permission denial** — degrade gracefully: the in-app chime +
   menu-bar/bottom-bar still signal completion even if banners are denied.

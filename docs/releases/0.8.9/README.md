@@ -1,4 +1,4 @@
-# MacParakeet 0.8.9
+# Sotto 0.8.9
 
 Published on September 27, 2026: [GitHub release](https://github.com/moona3k/macparakeet/releases/tag/v0.8.9).
 
@@ -8,7 +8,7 @@ Published on September 27, 2026: [GitHub release](https://github.com/moona3k/mac
 
 The signed app is built from `a89a152c84a955a6c377e918a6d0f64e637d22a2`, build `20260927172238`, and bundles CLI 5.0.0. Later documentation commits do not change the signed binaries. [PR #1190](https://github.com/moona3k/macparakeet/pull/1190) supplies the AI Setup and provider-routing fixes.
 
-The shipped DMG is **179,954,239 bytes**, with SHA-256 `c856ff497d625a62ce8b0081ca0e0d294c3ddc75a9e8833216bc09875f108f81`. The public GitHub `MacParakeet.dmg` asset and the [versioned Sparkle enclosure](https://downloads.macparakeet.com/MacParakeet.dmg?v=20260927172238) were downloaded after publication and matched the signed local file exactly. The live appcast version, build, size, URL, and signature match this artifact.
+The shipped DMG is **179,954,239 bytes**, with SHA-256 `c856ff497d625a62ce8b0081ca0e0d294c3ddc75a9e8833216bc09875f108f81`. The public GitHub `Sotto.dmg` asset and the [versioned Sparkle enclosure](https://downloads.macparakeet.com/MacParakeet.dmg?v=20260927172238) were downloaded after publication and matched the signed local file exactly. The live appcast version, build, size, URL, and signature match this artifact.
 
 Verification completed:
 

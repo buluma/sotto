@@ -91,30 +91,30 @@ finishes on its own and lands in the Library when ready.
 
 ## Verified current state (file:line)
 
-- State machine: `Sources/MacParakeetCore/MeetingRecordingFlow/MeetingRecordingFlowStateMachine.swift`
+- State machine: `Sources/SottoCore/MeetingRecordingFlow/MeetingRecordingFlowStateMachine.swift`
   — states `idle → checkingPermissions → starting → recording → stopping →
   transcribing → finishing → idle`; `.recording + .stopRequested → .transcribing`
   (~130). The recorder is pinned in `.transcribing` for the whole finalize.
-- The block: `Sources/MacParakeet/App/MeetingRecordingFlowCoordinator.swift`
+- The block: `Sources/Sotto/App/MeetingRecordingFlowCoordinator.swift`
   — `startRecording` `guard stateMachine.state == .idle else { return nil }` (~191);
   `toggleRecording` treats `.transcribing`/`.finishing` as a silent no-op (~199-208).
   Single long-lived `pillViewModel` (~64) + single `stateMachine` (~59) per app.
-- Single-session service: `Sources/MacParakeetCore/Services/MeetingRecording/MeetingRecordingService.swift`
+- Single-session service: `Sources/SottoCore/Services/MeetingRecording/MeetingRecordingService.swift`
   — `Session` represents one active recording (~120); the service holds a single
   `currentSession?`, not a session map.
-- UI gate: `Sources/MacParakeet/Views/Transcription/MeetingRecordingTile.swift`
+- UI gate: `Sources/Sotto/Views/Transcription/MeetingRecordingTile.swift`
   — start button only in `.idle`; `.completing/.transcribing` show a spinner,
   no start affordance (~122-134).
-- Pill VM: `Sources/MacParakeetViewModels/MeetingRecordingPillViewModel.swift`
+- Pill VM: `Sources/SottoViewModels/MeetingRecordingPillViewModel.swift`
   — single `PillState` enum (not an array of sessions).
-- Scheduler (not the blocker): `Sources/MacParakeetCore/STT/STTScheduler.swift`
+- Scheduler (not the blocker): `Sources/SottoCore/STT/STTScheduler.swift`
   — `SchedulerSlot { interactive, background }` (~790-801); `.meetingFinalize`
   (p0) and `.meetingLiveChunk` (p1) share `background`. Sequential/queued finalize
   is exactly what it's built for.
-- Capture (not the blocker): `Sources/MacParakeetCore/Audio/SharedMicrophoneStream.swift`
+- Capture (not the blocker): `Sources/SottoCore/Audio/SharedMicrophoneStream.swift`
   — multi-subscriber engine (~187 subscribe; ~54-92 arbitration). Finalize reads a
   saved file, not the live mic.
-- Crash resilience: `Sources/MacParakeetCore/Services/MeetingRecording/MeetingRecordingLockFileStore.swift`
+- Crash resilience: `Sources/SottoCore/Services/MeetingRecording/MeetingRecordingLockFileStore.swift`
   — `MeetingRecordingLockFile { sessionId, state(.recording/.awaitingTranscription),
   pid }`; `discoverActiveSessions` already returns **multiple** live sessions by PID
   (~232). The model supports N sessions; the recovery *flow* must consume that.

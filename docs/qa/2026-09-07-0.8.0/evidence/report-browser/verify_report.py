@@ -13,7 +13,7 @@ from urllib.parse import unquote, urlparse
 from playwright.sync_api import sync_playwright
 
 REPORT = Path(__file__).resolve().parents[2]
-BASE = Path(tempfile.mkdtemp(prefix='macparakeet-report-browser-'))
+BASE = Path(tempfile.mkdtemp(prefix='sotto-report-browser-'))
 RUN = BASE / (sys.argv[1] if len(sys.argv) > 1 else 'run-01')
 RUN.mkdir(parents=True, exist_ok=False)
 DATA = json.loads((REPORT / 'evidence.json').read_text())
@@ -196,7 +196,7 @@ try:
             if p.name!='index.html': (snapshot_dir/p.name).symlink_to(p, target_is_directory=p.is_dir())
         snapshot=snapshot_dir/'index.html'
         download.save_as(str(snapshot))
-        check('snapshot filename', download.suggested_filename, f'macparakeet-{DATA["release"]["target"]}-qa.html')
+        check('snapshot filename', download.suggested_filename, f'sotto-{DATA["release"]["target"]}-qa.html')
         saved=browser.new_page()
         saved.on('pageerror', lambda e: RESULT['page_errors'].append('saved snapshot: '+str(e)))
         saved.goto(snapshot.as_uri(),wait_until='load')

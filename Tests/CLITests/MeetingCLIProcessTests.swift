@@ -1,20 +1,20 @@
 import Darwin
 import Foundation
 import XCTest
-@testable import MacParakeetCore
+@testable import SottoCore
 
 /// Exercises the shipping command entry point and persistence across fresh processes.
 /// The audio is a path fixture only: this test never invokes STT or audio playback.
 final class MeetingCLIProcessTests: XCTestCase {
     func testMeetingNotesAndExportSurviveSeparateCLIProcesses() throws {
         let executable =
-            ProcessInfo.processInfo.environment["MACPARAKEET_CLI_TEST_EXECUTABLE"]
+            ProcessInfo.processInfo.environment["SOTTO_CLI_TEST_EXECUTABLE"]
             .map { URL(fileURLWithPath: $0) }
             ?? Bundle(for: Self.self).bundleURL.deletingLastPathComponent()
-            .appendingPathComponent("macparakeet-cli")
+            .appendingPathComponent("sotto-cli")
         XCTAssertTrue(
             FileManager.default.isExecutableFile(atPath: executable.path),
-            "Build macparakeet-cli first or set MACPARAKEET_CLI_TEST_EXECUTABLE to its absolute path."
+            "Build sotto-cli first or set SOTTO_CLI_TEST_EXECUTABLE to its absolute path."
         )
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent("meeting-cli-process-\(UUID().uuidString)", isDirectory: true)
@@ -47,9 +47,9 @@ final class MeetingCLIProcessTests: XCTestCase {
             process.arguments = ["meetings"] + arguments + ["--database", database.path]
             process.currentDirectoryURL = root
             process.environment = ProcessInfo.processInfo.environment.merging([
-                "MACPARAKEET_TELEMETRY": "0",
-                "MACPARAKEET_DEBUG_APP_STATE_DIR": root.appendingPathComponent("state").path,
-                "MACPARAKEET_DEBUG_SQL": "0",
+                "SOTTO_TELEMETRY": "0",
+                "SOTTO_DEBUG_APP_STATE_DIR": root.appendingPathComponent("state").path,
+                "SOTTO_DEBUG_SQL": "0",
             ]) { _, isolated in isolated }
             process.standardInput = FileHandle.nullDevice
             // File-backed output cannot fill a pipe while the parent waits for termination.
@@ -106,7 +106,7 @@ final class MeetingCLIProcessTests: XCTestCase {
         let notesFile = try String(contentsOf: folder.appendingPathComponent("notes.md"), encoding: .utf8)
         XCTAssertTrue(notesFile.contains(notes))
         let manifest = try json(String(contentsOf: folder.appendingPathComponent("manifest.json"), encoding: .utf8))
-        XCTAssertEqual(manifest["schema"] as? String, "com.macparakeet.meeting-session")
+        XCTAssertEqual(manifest["schema"] as? String, "com.sotto.meeting-session")
         XCTAssertEqual(manifest["schemaVersion"] as? Int, 1)
         XCTAssertEqual((manifest["meeting"] as? [String: Any])?["id"] as? String, id)
         let files = try XCTUnwrap(manifest["files"] as? [String: Any])

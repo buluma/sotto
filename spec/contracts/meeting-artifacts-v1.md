@@ -41,7 +41,7 @@ starts no artifact refresh.
 - `MeetingArtifactStore`: materializes `manifest.json`, `meeting.md`,
   `transcript.json`, `notes.md`, `prompt-results.json`, and
   `prompt-results/*.md`.
-- `macparakeet-cli meetings artifact`: refreshes and returns the artifact
+- `sotto-cli meetings artifact`: refreshes and returns the artifact
   snapshot.
 - Meeting notes and prompt-result write paths: refresh artifact views after
   user notes or agent-authored results change. The saved-meeting editor saves
@@ -55,9 +55,9 @@ starts no artifact refresh.
   Folder Path" actions.
 - Audio-specific "Show Audio in Finder" / "Save Audio As..." actions while
   retained meeting audio is still available.
-- `macparakeet-cli meetings artifact` and `--envelope` output.
-- Meeting automation hooks through `MACPARAKEET_ARTIFACT_DIR` and
-  `MACPARAKEET_ARTIFACT_MANIFEST`.
+- `sotto-cli meetings artifact` and `--envelope` output.
+- Meeting automation hooks through `SOTTO_ARTIFACT_DIR` and
+  `SOTTO_ARTIFACT_MANIFEST`.
 - Support diagnostics and future local agent workflows.
 
 ## Stable Folder Entries
@@ -182,7 +182,7 @@ raw-audio filenames.
 
 `MeetingArtifactSnapshot` and CLI artifact output keep these fields stable:
 
-- `schema`: `com.macparakeet.meeting-session`
+- `schema`: `com.sotto.meeting-session`
 - `schemaVersion`: `1`
 - `generatedAt`
 - `meetingID`
@@ -310,7 +310,7 @@ unknown, not healthy.
 `promptResultsPath`, and `promptResultsDirectoryPath`.
 
 `meeting.md` frontmatter keeps the local Markdown schema
-`com.macparakeet.meeting-markdown` with `schemaVersion: 1`, meeting identity,
+`com.sotto.meeting-markdown` with `schemaVersion: 1`, meeting identity,
 timestamps, duration/status/source/engine metadata, artifact/audio paths when
 available, `speakerLabelsIncluded`, `speakerCorrectionsApplied`,
 `speakerCorrectionRevision`, and `promptResultCount`. The body section

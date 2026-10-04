@@ -8,7 +8,7 @@
 
 ## 1. Decision
 
-Keep the stable product on the ADR-011 model: MacParakeet does not bundle a local LLM runtime or model in the app. Users can bring a local AI app, an API key, or a command-line AI tool.
+Keep the stable product on the ADR-011 model: Sotto does not bundle a local LLM runtime or model in the app. Users can bring a local AI app, an API key, or a command-line AI tool.
 
 The product work is to make that setup feel first-class and low-friction:
 
@@ -32,7 +32,7 @@ Useful lessons:
 4. Keep a health check close to setup.
 5. Avoid making the main product onboarding depend on AI setup.
 
-MacParakeet should take the convenience lessons, but not copy the docs-heavy setup. The app should do more of the guiding directly in Settings.
+Sotto should take the convenience lessons, but not copy the docs-heavy setup. The app should do more of the guiding directly in Settings.
 
 References:
 
@@ -82,7 +82,7 @@ When no AI configuration exists, show a compact empty state in the relevant feat
 
 Title: `Turn on AI for summaries and chat`
 
-Body: `MacParakeet can use a local AI app, your API key, or a command-line AI tool. Transcription still works without this.`
+Body: `Sotto can use a local AI app, your API key, or a command-line AI tool. Transcription still works without this.`
 
 Primary action: `Set up AI`
 
@@ -105,7 +105,7 @@ This state should be based on real user activity, not speculative background pro
 
 ## 5. Settings > AI Information Architecture
 
-The AI settings surface should answer one question first: "Can MacParakeet use AI for summaries and chat right now?"
+The AI settings surface should answer one question first: "Can Sotto use AI for summaries and chat right now?"
 
 ### Top Status
 
@@ -116,8 +116,8 @@ Possible states:
 | State | Copy |
 |---|---|
 | Ready | `Ready: using <AI option name>.` |
-| Set up needed | `Choose how MacParakeet should run AI features.` |
-| Can't connect | `MacParakeet could not reach <AI option name> the last time it tried.` |
+| Set up needed | `Choose how Sotto should run AI features.` |
+| Can't connect | `Sotto could not reach <AI option name> the last time it tried.` |
 
 Primary actions:
 
@@ -146,10 +146,10 @@ Detection:
 Primary happy path:
 
 1. User starts LM Studio's local server.
-2. MacParakeet detects models.
+2. Sotto detects models.
 3. User clicks `Use LM Studio`.
-4. MacParakeet saves `LLMProviderID.lmstudio`, the default base URL, and the selected model.
-5. MacParakeet runs a connection test.
+4. Sotto saves `LLMProviderID.lmstudio`, the default base URL, and the selected model.
+5. Sotto runs a connection test.
 
 Setup guidance:
 
@@ -173,10 +173,10 @@ Detection:
 Primary happy path:
 
 1. User starts Ollama and pulls a model.
-2. MacParakeet detects models.
+2. Sotto detects models.
 3. User clicks `Use Ollama`.
-4. MacParakeet saves `LLMProviderID.ollama`, the default base URL, and the selected model.
-5. MacParakeet runs a connection test.
+4. Sotto saves `LLMProviderID.ollama`, the default base URL, and the selected model.
+5. Sotto runs a connection test.
 
 Setup commands:
 
@@ -208,7 +208,7 @@ Providers:
 
 Card title: `Use a command-line AI tool`
 
-Body: `Run a local command when MacParakeet needs AI. The command may contact its own service.`
+Body: `Run a local command when Sotto needs AI. The command may contact its own service.`
 
 This maps to `LLMProviderID.localCLI` and existing Local CLI configuration.
 
@@ -229,7 +229,7 @@ Advanced fields stay available, but collapsed by default:
 
 ## 6. Readiness State Model
 
-Add a small readiness model in `MacParakeetViewModels` so feature surfaces can stay simple.
+Add a small readiness model in `SottoViewModels` so feature surfaces can stay simple.
 
 Suggested shape:
 
@@ -268,9 +268,9 @@ This branch starts with the low-risk UX foundation:
 
 Files likely touched:
 
-1. `Sources/MacParakeetViewModels/LLMSettingsViewModel.swift`
-2. `Sources/MacParakeetCore/Services/LLMConfigStore.swift`
-3. `Sources/MacParakeetCore/Services/LLMService.swift`
+1. `Sources/SottoViewModels/LLMSettingsViewModel.swift`
+2. `Sources/SottoCore/Services/LLMConfigStore.swift`
+3. `Sources/SottoCore/Services/LLMService.swift`
 
 Work:
 
@@ -283,8 +283,8 @@ Work:
 
 Files likely touched:
 
-1. `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift`
-2. `Sources/MacParakeet/Views/MeetingRecording/LiveAskPaneView.swift`
+1. `Sources/Sotto/Views/Transcription/TranscriptResultView.swift`
+2. `Sources/Sotto/Views/MeetingRecording/LiveAskPaneView.swift`
 3. Any summary/prompt-action no-provider state.
 
 Work:
@@ -298,8 +298,8 @@ Work:
 
 Files likely touched:
 
-1. `Sources/MacParakeet/Views/Settings/LLMSettingsView.swift`
-2. `Sources/MacParakeetViewModels/LLMSettingsViewModel.swift`
+1. `Sources/Sotto/Views/Settings/LLMSettingsView.swift`
+2. `Sources/SottoViewModels/LLMSettingsViewModel.swift`
 3. Settings IA files if the active Settings overhaul lands first.
 
 Work:
@@ -315,7 +315,7 @@ Work:
 
 Files likely touched:
 
-1. New `LLMLocalProviderDetector` in `MacParakeetCore` or `MacParakeetViewModels`.
+1. New `LLMLocalProviderDetector` in `SottoCore` or `SottoViewModels`.
 2. `LLMSettingsViewModel`.
 3. Unit tests.
 

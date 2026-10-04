@@ -59,7 +59,7 @@ Sources: [Open WebUI status disclosure](https://github.com/open-webui/open-webui
 
 ## Recommended visual direction
 
-A native transcript layout with generous reading width, restrained secondary typography, one small phase indicator, and a thin connected activity list inside a disclosure. Let the answer and citation chips dominate; keep Stop easy to find. Reuse MacParakeet's existing palette, spacing, button treatment, Markdown component, and evidence navigation. Translate interaction contracts, not web styling or dependencies.
+A native transcript layout with generous reading width, restrained secondary typography, one small phase indicator, and a thin connected activity list inside a disclosure. Let the answer and citation chips dominate; keep Stop easy to find. Reuse Sotto's existing palette, spacing, button treatment, Markdown component, and evidence navigation. Translate interaction contracts, not web styling or dependencies.
 
 Minimum checks: streaming while at bottom; scroll up while streaming; Latest resumes; expand/collapse mid-run; stop before first token; stop after partial answer; empty search result; tool failure; completed reopening if persisted; thread switch during streaming; VoiceOver labels; Reduce Motion. Test state transitions and user scroll ownership rather than screenshot-only polish.
 

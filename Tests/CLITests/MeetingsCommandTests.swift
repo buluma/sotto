@@ -2,7 +2,7 @@ import ArgumentParser
 import AVFoundation
 import XCTest
 @testable import CLI
-@testable import MacParakeetCore
+@testable import SottoCore
 
 final class MeetingsCommandTests: XCTestCase {
     func testResultEditAndTextRevisionRequireExplicitInputs() throws {
@@ -1104,7 +1104,7 @@ final class MeetingsCommandTests: XCTestCase {
     func testMeetingsCommandIsRegisteredAtTopLevel() {
         XCTAssertTrue(
             CLI.configuration.subcommands.contains { $0 == MeetingsCommand.self },
-            "meetings must be available from macparakeet-cli"
+            "meetings must be available from sotto-cli"
         )
     }
 
@@ -1228,7 +1228,7 @@ final class MeetingsCommandTests: XCTestCase {
     func testResultsAddStoresPromptResultForMeeting() async throws {
         let dbURL = temporaryDatabaseURL()
         let folderURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-result-artifact-\(UUID().uuidString)")
+            .appendingPathComponent("sotto-cli-result-artifact-\(UUID().uuidString)")
         defer {
             try? FileManager.default.removeItem(at: dbURL)
             try? FileManager.default.removeItem(at: folderURL)
@@ -1542,7 +1542,7 @@ final class MeetingsCommandTests: XCTestCase {
     func testArtifactSubcommandMaterializesMeetingFolder() async throws {
         let dbURL = temporaryDatabaseURL()
         let folderURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-meeting-artifact-\(UUID().uuidString)")
+            .appendingPathComponent("sotto-cli-meeting-artifact-\(UUID().uuidString)")
         defer {
             try? FileManager.default.removeItem(at: dbURL)
             try? FileManager.default.removeItem(at: folderURL)
@@ -1712,7 +1712,7 @@ final class MeetingsCommandTests: XCTestCase {
     func testMarkdownExportMatchesMaterializedMeetingMarkdown() async throws {
         let dbURL = temporaryDatabaseURL()
         let folderURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-meeting-markdown-\(UUID().uuidString)")
+            .appendingPathComponent("sotto-cli-meeting-markdown-\(UUID().uuidString)")
         defer {
             try? FileManager.default.removeItem(at: dbURL)
             try? FileManager.default.removeItem(at: folderURL)
@@ -1801,7 +1801,7 @@ final class MeetingsCommandTests: XCTestCase {
     func testPromptResultAddRefreshesMaterializedMarkdownAndExportParity() async throws {
         let dbURL = temporaryDatabaseURL()
         let folderURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-meeting-result-refresh-\(UUID().uuidString)")
+            .appendingPathComponent("sotto-cli-meeting-result-refresh-\(UUID().uuidString)")
         defer {
             try? FileManager.default.removeItem(at: dbURL)
             try? FileManager.default.removeItem(at: folderURL)
@@ -1855,7 +1855,7 @@ final class MeetingsCommandTests: XCTestCase {
     func testMarkdownExportReflectsSpeakerRenameAndEditedTranscriptFallback() async throws {
         let dbURL = temporaryDatabaseURL()
         let folderURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-meeting-speakers-\(UUID().uuidString)")
+            .appendingPathComponent("sotto-cli-meeting-speakers-\(UUID().uuidString)")
         defer {
             try? FileManager.default.removeItem(at: dbURL)
             try? FileManager.default.removeItem(at: folderURL)
@@ -1906,7 +1906,7 @@ final class MeetingsCommandTests: XCTestCase {
     func testArtifactSubcommandSupportsSuccessEnvelope() async throws {
         let dbURL = temporaryDatabaseURL()
         let folderURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-meeting-envelope-\(UUID().uuidString)")
+            .appendingPathComponent("sotto-cli-meeting-envelope-\(UUID().uuidString)")
         defer {
             try? FileManager.default.removeItem(at: dbURL)
             try? FileManager.default.removeItem(at: folderURL)
@@ -1963,7 +1963,7 @@ final class MeetingsCommandTests: XCTestCase {
     func testMeetingJSONSurfacesArtifactFolderAfterAudioIsGone() async throws {
         let dbURL = temporaryDatabaseURL()
         let folderURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-meeting-no-audio-\(UUID().uuidString)")
+            .appendingPathComponent("sotto-cli-meeting-no-audio-\(UUID().uuidString)")
         defer {
             try? FileManager.default.removeItem(at: dbURL)
             try? FileManager.default.removeItem(at: folderURL)
@@ -2108,7 +2108,7 @@ final class MeetingsCommandTests: XCTestCase {
 
     private func temporaryDatabaseURL() -> URL {
         FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-meetings-\(UUID().uuidString).db")
+            .appendingPathComponent("sotto-cli-meetings-\(UUID().uuidString).db")
     }
 
     private func markdownExport(for meetingID: UUID, database dbURL: URL) async throws -> String {

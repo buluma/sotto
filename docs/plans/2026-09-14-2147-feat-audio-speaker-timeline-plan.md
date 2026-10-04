@@ -83,14 +83,14 @@ These are source observations, not runtime measurements.
 
 | Finding | Source and consequence |
 |---|---|
-| File path skips analysis, not just merging | `Sources/MacParakeetCore/Services/TranscriptionService.swift`, `transcribeAudio`; replace the guard and the existing `testTranscribeFileSkipsDiarizationWhenSTTProvidesNoWordTimings` expectation. |
+| File path skips analysis, not just merging | `Sources/SottoCore/Services/TranscriptionService.swift`, `transcribeAudio`; replace the guard and the existing `testTranscribeFileSkipsDiarizationWhenSTTProvidesNoWordTimings` expectation. |
 | Existing interval field has mixed meanings | File completion stores audio segments; `MeetingTranscriptFinalizer` and `SpeakerAttributionResolver` derive segments from words. Preserve this compatibility field. |
 | Raw meeting turns are already shifted | `diarizeMeetingSystemIfNeeded` prefixes system IDs and adds the stored system offset; the new materializer must not add that offset again. |
 | Empty analysis is distinguishable in the producer | `DiarizationService` returns empty arrays for no speech; retain this outcome before the meeting helper's empty-result guard discards it. |
 | Text correction identity is unsuitable for audio edits | `SpeakerAttributionResolver.FingerprintPayload` hashes words and durable text segments, not raw turns; no-word replacements can share a fingerprint. Do not add timeline edits to that journal. |
-| Text speaker UI is word-gated | `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift` nests speaker overview under timed mode/nonempty words; add an independent presentation path. |
+| Text speaker UI is word-gated | `Sources/Sotto/Views/Transcription/TranscriptResultView.swift` nests speaker overview under timed mode/nonempty words; add an independent presentation path. |
 | JSON coverage is uneven | `Sources/CLI/Commands/MeetingsCommand.swift` has explicit DTOs; `MeetingTranscriptRecord` omits even legacy diarization segments. Adding a model property alone is insufficient. |
-| Split children already reprocess their own media | `Sources/MacParakeetCore/Services/MeetingSplit/MeetingSplitService.swift`; use that path to produce new child analyses. |
+| Split children already reprocess their own media | `Sources/SottoCore/Services/MeetingSplit/MeetingSplitService.swift`; use that path to produce new child analyses. |
 
 The issue's “after each pause” dictation premise differs from the current Cohere stop-time behavior in `spec/06-stt-engine.md`.
 Its referenced Obsidian plugin emits one utterance-wide Cohere segment, then chooses a speaker by overlap; it does not split an untimed paragraph into reliable dialogue.
@@ -154,7 +154,7 @@ Measure long-list responsiveness and resource cost on real audio before release;
 
 **Goal:** Establish the additive payload and its compatibility rules. **Requirements:** R2, R3, R5, R6. **Dependencies:** none.
 
-**Files:** new `Sources/MacParakeetCore/Models/AudioSpeakerTimeline.swift`; `Sources/MacParakeetCore/Models/Transcription.swift`; `Sources/MacParakeetCore/Database/DatabaseManager.swift`; `Sources/MacParakeetCore/Database/TranscriptionRepository.swift`; new `Tests/MacParakeetTests/Models/AudioSpeakerTimelineTests.swift`; existing `Tests/MacParakeetTests/Models/TranscriptionModelTests.swift`, `Tests/MacParakeetTests/Database/DatabaseManagerTests.swift`, and `Tests/MacParakeetTests/Database/TranscriptionRepositoryTests.swift`.
+**Files:** new `Sources/SottoCore/Models/AudioSpeakerTimeline.swift`; `Sources/SottoCore/Models/Transcription.swift`; `Sources/SottoCore/Database/DatabaseManager.swift`; `Sources/SottoCore/Database/TranscriptionRepository.swift`; new `Tests/SottoTests/Models/AudioSpeakerTimelineTests.swift`; existing `Tests/SottoTests/Models/TranscriptionModelTests.swift`, `Tests/SottoTests/Database/DatabaseManagerTests.swift`, and `Tests/SottoTests/Database/TranscriptionRepositoryTests.swift`.
 
 **Approach:** Implement KTD1, KTD2, KTD5 using the existing nullable-JSON migration and repository conventions. Read the Database subsystem README first. Allocate the migration number from the implementation branch, not this baseline.
 
@@ -172,7 +172,7 @@ Measure long-list responsiveness and resource cost on real audio before release;
 
 **Goal:** Retain audio analysis regardless of word availability. **Requirements:** R1–R3, R6. **Dependencies:** U1.
 
-**Files:** `Sources/MacParakeetCore/Services/TranscriptionService.swift`; `Sources/MacParakeetCore/Services/Diarization/DiarizationService.swift`; `Sources/MacParakeetCore/Services/MeetingRecording/MeetingTranscriptFinalizer.swift`; `Tests/MacParakeetTests/Services/TranscriptionServiceTests.swift`; `Tests/MacParakeetTests/Services/Diarization/DiarizationServiceTests.swift`.
+**Files:** `Sources/SottoCore/Services/TranscriptionService.swift`; `Sources/SottoCore/Services/Diarization/DiarizationService.swift`; `Sources/SottoCore/Services/MeetingRecording/MeetingTranscriptFinalizer.swift`; `Tests/SottoTests/Services/TranscriptionServiceTests.swift`; `Tests/SottoTests/Services/Diarization/DiarizationServiceTests.swift`.
 
 **Approach:** Implement KTD2–KTD3. Characterize existing timed file/meeting behavior first, then change only the word guard for audio analysis and carry raw meeting evidence through finalization. Preserve no-speech results before they become nil. Audit telemetry wording without redefining word-attribution counters.
 
@@ -192,9 +192,9 @@ Measure long-list responsiveness and resource cost on real audio before release;
 
 **Goal:** Make saved evidence available consistently without altering text semantics. **Requirements:** R2, R3, R5. **Dependencies:** U2.
 
-**Files:** `Sources/MacParakeetCore/Services/Diarization/SpeakerAttributionReadService.swift`; `Sources/MacParakeetCore/Services/MeetingRecording/MeetingArtifactStore.swift`; `Sources/CLI/Commands/MeetingsCommand.swift`; `Sources/CLI/Commands/SpecCommand.swift`; `Sources/CLI/CHANGELOG.md`; `spec/contracts/cli-json-v1.md`; `spec/contracts/meeting-artifacts-v1.md`; `integrations/README.md`.
+**Files:** `Sources/SottoCore/Services/Diarization/SpeakerAttributionReadService.swift`; `Sources/SottoCore/Services/MeetingRecording/MeetingArtifactStore.swift`; `Sources/CLI/Commands/MeetingsCommand.swift`; `Sources/CLI/Commands/SpecCommand.swift`; `Sources/CLI/CHANGELOG.md`; `spec/contracts/cli-json-v1.md`; `spec/contracts/meeting-artifacts-v1.md`; `integrations/README.md`.
 
-**Test files:** `Tests/MacParakeetTests/Services/Diarization/SpeakerAttributionResolverTests.swift`; `Tests/MacParakeetTests/Services/Diarization/SpeakerAttributionReadServiceTests.swift`; `Tests/MacParakeetTests/Services/MeetingRecording/MeetingArtifactStoreTests.swift`; `Tests/MacParakeetTests/Services/MeetingSplit/MeetingSplitServiceTests.swift`; `Tests/CLITests/TranscribeCommandTests.swift`; `Tests/CLITests/ExportCommandTests.swift`; `Tests/CLITests/MeetingsCommandTests.swift`.
+**Test files:** `Tests/SottoTests/Services/Diarization/SpeakerAttributionResolverTests.swift`; `Tests/SottoTests/Services/Diarization/SpeakerAttributionReadServiceTests.swift`; `Tests/SottoTests/Services/MeetingRecording/MeetingArtifactStoreTests.swift`; `Tests/SottoTests/Services/MeetingSplit/MeetingSplitServiceTests.swift`; `Tests/CLITests/TranscribeCommandTests.swift`; `Tests/CLITests/ExportCommandTests.swift`; `Tests/CLITests/MeetingsCommandTests.swift`.
 
 **Approach:** Implement KTD1 and KTD3 across explicit DTOs; retain the original payload through effective attribution. Existing split fresh-processing paths should need no new inheritance mechanism. Update boundary documents and CLI discovery together when the fields become real.
 
@@ -212,9 +212,9 @@ Measure long-list responsiveness and resource cost on real audio before release;
 
 **Goal:** Make audio turns useful alongside untimed text. **Requirements:** R2, R4. **Dependencies:** U3.
 
-**Files:** new `Sources/MacParakeetViewModels/AudioSpeakerTimelinePresentation.swift`; new `Sources/MacParakeet/Views/Transcription/AudioSpeakerTimelineView.swift`; `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift`; `Sources/MacParakeetViewModels/MediaPlayerViewModel.swift` if required for existing seek integration; new `Tests/MacParakeetTests/ViewModels/AudioSpeakerTimelinePresentationTests.swift`.
+**Files:** new `Sources/SottoViewModels/AudioSpeakerTimelinePresentation.swift`; new `Sources/Sotto/Views/Transcription/AudioSpeakerTimelineView.swift`; `Sources/Sotto/Views/Transcription/TranscriptResultView.swift`; `Sources/SottoViewModels/MediaPlayerViewModel.swift` if required for existing seek integration; new `Tests/SottoTests/ViewModels/AudioSpeakerTimelinePresentationTests.swift`.
 
-**Approach:** Implement KTD4 and the App experience contract. Use `.parakeetAction(...)`, existing audio availability checks, and existing seek semantics. Snapshot presentation by transcription identity and analysis ID so late work cannot replace a newly selected recording.
+**Approach:** Implement KTD4 and the App experience contract. Use `.sottoAction(...)`, existing audio availability checks, and existing seek semantics. Snapshot presentation by transcription identity and analysis ID so late work cannot replace a newly selected recording.
 
 **Test scenarios:**
 

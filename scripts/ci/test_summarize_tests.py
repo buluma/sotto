@@ -27,7 +27,7 @@ class SummaryCLITests(unittest.TestCase):
     def test_xctest_shape_and_safe_case_names(self):
         result = self.run_summary(
             """<?xml version="1.0" encoding="UTF-8"?>
-<testsuites><testsuite name="MacParakeetTests" errors="0" tests="3" failures="1" time="12.4">
+<testsuites><testsuite name="SottoTests" errors="0" tests="3" failures="1" time="12.4">
   <testcase classname="AudioTests" name="testSlow|&lt;script&gt;" time="8.25" />
   <testcase classname="AudioTests" name="testFast" time="0.10" />
   <testcase classname="AudioTests" name="testFailure" time="4.05"><failure message="failed" /></testcase>

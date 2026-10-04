@@ -40,7 +40,7 @@
     "syncEmbeddedSnapshot": "Replace the content of index.html script#evidence-data with JSON.stringify(this entire file), escaping < as \\u003c. Loading this file through the page also offers Download HTML snapshot."
   },
   "release": {
-    "name": "MacParakeet",
+    "name": "Sotto",
     "target": "0.8.0",
     "state": "candidate_validated",
     "headline": "Candidate validated; final QA scope recorded",
@@ -68,7 +68,7 @@
       "status": "passed",
       "phase": "Candidate",
       "candidate": "8548c099af5ee2ab0ed4dd9efe757d85c498cca0",
-      "build": "DEBUG macparakeet-cli from the owning QA checkout; exact command in execution log",
+      "build": "DEBUG sotto-cli from the owning QA checkout; exact command in execution log",
       "observed": "CLI exited 0. JSON reports completed, parakeet/v3, 28 word timestamps, and a nonempty reference-aligned English transcript. Reported media duration: 10.496 s.",
       "expected": "A real public fixture produces text and timings through the candidate CLI.",
       "limitations": "One 10.435 s LibriSpeech fixture; this is an inference smoke, not a corpus accuracy benchmark.",
@@ -82,7 +82,7 @@
           "path": "evidence/asr-runner.log"
         }
       ],
-      "command": "macparakeet-cli transcribe 1089-134686-0000.flac --engine parakeet --parakeet-model v3 --mode raw --speaker-detection off --no-history --database <QA>/history.sqlite --format json",
+      "command": "sotto-cli transcribe 1089-134686-0000.flac --engine parakeet --parakeet-model v3 --mode raw --speaker-detection off --no-history --database <QA>/history.sqlite --format json",
       "durationSeconds": 15.3
     },
     {
@@ -92,7 +92,7 @@
       "status": "passed",
       "phase": "Candidate",
       "candidate": "8548c099af5ee2ab0ed4dd9efe757d85c498cca0",
-      "build": "DEBUG macparakeet-cli from the owning QA checkout; exact command in execution log",
+      "build": "DEBUG sotto-cli from the owning QA checkout; exact command in execution log",
       "observed": "CLI exited 0. JSON reports completed, parakeet/v2, 28 word timestamps, and a nonempty English transcript. Reported media duration: 10.496 s.",
       "expected": "The English-only build loads and returns a completed transcript with timings.",
       "limitations": "Same public fixture as v3; no full WER comparison or live dictation proof.",
@@ -106,7 +106,7 @@
           "path": "evidence/asr-runner.log"
         }
       ],
-      "command": "macparakeet-cli transcribe 1089-134686-0000.flac --engine parakeet --parakeet-model v2 --mode raw --speaker-detection off --no-history --database <QA>/history.sqlite --format json",
+      "command": "sotto-cli transcribe 1089-134686-0000.flac --engine parakeet --parakeet-model v2 --mode raw --speaker-detection off --no-history --database <QA>/history.sqlite --format json",
       "durationSeconds": 15.36
     },
     {
@@ -184,7 +184,7 @@
       "status": "passed",
       "phase": "Candidate",
       "candidate": "8548c099af5ee2ab0ed4dd9efe757d85c498cca0",
-      "build": "Copied Xcode Release dev product; bundle com.macparakeet.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
+      "build": "Copied Xcode Release dev product; bundle com.sotto.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
       "observed": "Native key events and Add saved QAWidget; SQLite independently confirmed it. The CLI imported 1,024 additional rules and one snippet. Restarted GUI shows 1,025 rules, 102 disabled, and selection mode with separate Select labels.",
       "expected": "Native layout and controls render; entry, selection, and keyboard behavior work with verified app focus.",
       "limitations": "The large fixture was imported by CLI; actual native file-picker import is not established. Later GUI deletion checks are recorded separately.",
@@ -216,7 +216,7 @@
       "status": "passed",
       "phase": "Candidate",
       "candidate": "8548c099af5ee2ab0ed4dd9efe757d85c498cca0",
-      "build": "Copied Xcode Release dev product; bundle com.macparakeet.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
+      "build": "Copied Xcode Release dev product; bundle com.sotto.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
       "observed": "Actual GUI count sequence: 1025 → 1023 → 926 → 0. Cancelling the two-word and 97-filtered-word confirmations preserved data; confirmations removed only selected rules. All 926 remaining words, including disabled rules, were deleted while one separate snippet remained. Closing/reopening the manager stayed empty.",
       "expected": "Selection and confirmation affect only the intended word rules; cancellation and unrelated snippets remain intact.",
       "limitations": "Baseline GUI before QA fixes. Manager reopening was observed; a fresh process restart after final deletion and GUI import of the large fixture were not.",
@@ -284,7 +284,7 @@
       "status": "passed",
       "phase": "Candidate",
       "candidate": "8548c099af5ee2ab0ed4dd9efe757d85c498cca0 (GUI); base plus c506d7ef (copied CLI)",
-      "build": "Copied Xcode Release dev product; bundle com.macparakeet.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle. File-audio CLI SHA-256 f8a62b79ece6045909d15ece2fd086eed7e10ca04ebc870d9fc50ed76774f095.",
+      "build": "Copied Xcode Release dev product; bundle com.sotto.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle. File-audio CLI SHA-256 f8a62b79ece6045909d15ece2fd086eed7e10ca04ebc870d9fc50ed76774f095.",
       "observed": "GUI displayed English/default and Japanese tracks; Cancel left zero records, then English completed one row with ordinal 0 and duration 9600 ms. Separate CLI track 1/2 runs returned their distinct English/Japanese references and persisted ordinals 0/1; tracks 0/3 were rejected without records.",
       "expected": "Track 1 and track 2 yield their different known references; invalid tracks fail visibly.",
       "limitations": "GUI Japanese completion and media playback/seek are not established. CLI/GUI results use different exercised engine paths and media durations; no accuracy benchmark.",
@@ -312,7 +312,7 @@
       "status": "unverified",
       "phase": "Candidate",
       "candidate": "8548c099af5ee2ab0ed4dd9efe757d85c498cca0",
-      "build": "Copied Xcode Release dev product; bundle com.macparakeet.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
+      "build": "Copied Xcode Release dev product; bundle com.sotto.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
       "observed": "Two microphone-only meetings completed, retained audio, and removed finalization locks. A 13.5-second public-speaker replay produced 116 transcript characters. Pause, mute, system-only and dual-source combinations remain unverified.",
       "expected": "Healthy audio is retained, pauses and mute are respected, and the next meeting cannot be overwritten by an older completion.",
       "limitations": "A successful microphone-only path does not establish system capture, route recovery, pause/mute semantics, or every back-to-back completion race.",
@@ -332,7 +332,7 @@
       "status": "unverified",
       "phase": "Candidate",
       "candidate": "8548c099af5ee2ab0ed4dd9efe757d85c498cca0",
-      "build": "Copied Xcode Release dev product; bundle com.macparakeet.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
+      "build": "Copied Xcode Release dev product; bundle com.sotto.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
       "observed": "The microphone Test Input detected input and stopped automatically. Microphone-only meeting replay produced recognized public speech. Bluetooth, USB/device changes, cold/repeated readiness and TCC/system-audio combinations remain pending. The unique QA app still needs macOS Accessibility authorization; system-audio permission is not yet granted.",
       "expected": "Cold and repeated starts receive usable buffers; route loss converges on bounded recovery or an actionable warning.",
       "limitations": "Current built-in microphone observations do not certify Bluetooth, USB, device loss/reconnect, or other macOS versions.",
@@ -372,7 +372,7 @@
       "status": "passed",
       "phase": "Rebuilt GUI",
       "candidate": "3827999ddb84c8a8e0edcb3ac190e66813fc95fe (rendering and Copy); 250bbe2994a4b60b4ef81ac257f0ee6bb70874d3 (summary/table Copy repeated)",
-      "build": "Isolated Xcode Release app copy; bundle com.macparakeet.qa.release080",
+      "build": "Isolated Xcode Release app copy; bundle com.sotto.qa.release080",
       "observed": "At 3827999d, headings, table, JSON, lists, links and end marker rendered; complete summary Copy equaled saved Markdown and table Copy preserved every fixture row. Summary and table Copy both repeated successfully on 250bbe29.",
       "expected": "Saved rich results remain readable and full/table copying preserves content.",
       "limitations": "Saved fixtures do not prove live streaming. Code-block Copy remains unverified; no original clipboard content is published.",
@@ -568,7 +568,7 @@
       "phase": "Before fix",
       "candidate": "df98cfbd41a150f8ee510dd1333bfa6db176e342 plus new regression test",
       "build": "Root-owned focused DEBUG Swift test run in the QA worktree.",
-      "observed": "One regression failed with three failures: no restored recording.lock, no rediscovery, and retry threw missingLock. Log: /tmp/macparakeet-080-qa/evidence/recovery-partial-delete-red.log.",
+      "observed": "One regression failed with three failures: no restored recording.lock, no rediscovery, and retry threw missingLock. Log: /tmp/sotto-080-qa/evidence/recovery-partial-delete-red.log.",
       "expected": "A partial deletion failure leaves remaining audio discoverable and retryable.",
       "limitations": "Historical deterministic failure on disposable audio; subsequently fixed.",
       "evidence": [
@@ -592,7 +592,7 @@
       "phase": "After fix",
       "candidate": "df98cfbd41a150f8ee510dd1333bfa6db176e342 plus working partial-deletion repair later included in 96b2025253ad",
       "build": "Root-owned focused DEBUG Swift test run in the QA worktree.",
-      "observed": "All 87 recovery/lock/settlement tests passed after missing-lock restoration, including preserving a replacement owner. Log: /tmp/macparakeet-080-qa/evidence/recovery-partial-delete-green.log.",
+      "observed": "All 87 recovery/lock/settlement tests passed after missing-lock restoration, including preserving a replacement owner. Log: /tmp/sotto-080-qa/evidence/recovery-partial-delete-green.log.",
       "expected": "Missing marker is restored without replacing a present lock; retry remains safe.",
       "limitations": "This intermediate green gate preceded the mutex-release regression below.",
       "evidence": [
@@ -616,7 +616,7 @@
       "phase": "Before fix",
       "candidate": "df98cfbd41a150f8ee510dd1333bfa6db176e342 plus working partial-deletion repair",
       "build": "Root-owned focused DEBUG Swift test run in the QA worktree.",
-      "observed": "One regression failed with two failures: rediscovery was empty and retry saw an abandoned same-process live lease. Log: /tmp/macparakeet-080-qa/evidence/recovery-mutex-release-red.log.",
+      "observed": "One regression failed with two failures: rediscovery was empty and retry saw an abandoned same-process live lease. Log: /tmp/sotto-080-qa/evidence/recovery-mutex-release-red.log.",
       "expected": "Lease release must still run if missing-marker repair cannot acquire its mutex.",
       "limitations": "Historical deterministic failure before independent cleanup paths.",
       "evidence": [
@@ -640,7 +640,7 @@
       "phase": "After fix",
       "candidate": "96b2025253ad71d01566713560ea7d101a13c53d",
       "build": "Root-owned focused DEBUG Swift test run in the QA worktree.",
-      "observed": "All 88 recovery/lock/settlement tests passed after ownership release was made independent of missing-lock restoration. Original discard errors remain surfaced. Log: /tmp/macparakeet-080-qa/evidence/recovery-mutex-release-green.log.",
+      "observed": "All 88 recovery/lock/settlement tests passed after ownership release was made independent of missing-lock restoration. Original discard errors remain surfaced. Log: /tmp/sotto-080-qa/evidence/recovery-mutex-release-green.log.",
       "expected": "Both cleanup attempts execute independently and failed work remains eligible for retry.",
       "limitations": "Focused unit/fixture evidence; not a real crash/recovery GUI pass.",
       "evidence": [
@@ -703,7 +703,7 @@
       "status": "passed",
       "phase": "Candidate",
       "candidate": "8548c099af5ee2ab0ed4dd9efe757d85c498cca0",
-      "build": "Copied Xcode Release dev product; bundle com.macparakeet.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
+      "build": "Copied Xcode Release dev product; bundle com.sotto.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
       "observed": "Actual GUI export succeeded after creating the missing owned Downloads directory. BBC validation exited 0 with 19 passes, 3 informational results and one optional copyright warning, including XSD validation.",
       "expected": "A GUI-created DAPT document is written and validates.",
       "limitations": "Initial missing-directory failure was fixture setup. A 4x4 screenshot was excluded; file validation supports success.",
@@ -727,7 +727,7 @@
       "status": "passed",
       "phase": "Candidate",
       "candidate": "8548c099af5ee2ab0ed4dd9efe757d85c498cca0",
-      "build": "Copied Xcode Release dev product; bundle com.macparakeet.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
+      "build": "Copied Xcode Release dev product; bundle com.sotto.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
       "observed": "After correcting input focus, Save persisted the intended clean text, isTranscriptEdited=1 and ordinal 0 while preserving raw speech; the Edited badge rendered.",
       "expected": "Real editing updates the saved detail without losing original transcript or track selection.",
       "limitations": "The earlier ineffective key event was not a pass. Library derivedSnippet can remain old; that source behavior predates v0.7.3.",
@@ -751,7 +751,7 @@
       "status": "passed",
       "phase": "Candidate",
       "candidate": "8548c099af5ee2ab0ed4dd9efe757d85c498cca0",
-      "build": "Copied Xcode Release dev product; bundle com.macparakeet.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
+      "build": "Copied Xcode Release dev product; bundle com.sotto.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
       "observed": "The actual grid/list controls displayed both layouts with the completed fixture record.",
       "expected": "Both selected Library layouts render the saved record.",
       "limitations": "Single-record layout check; large-library behavior and updated list preview are not certified.",
@@ -779,8 +779,8 @@
       "status": "passed",
       "phase": "Candidate",
       "candidate": "8548c099af5ee2ab0ed4dd9efe757d85c498cca0",
-      "build": "Copied Xcode Release dev product; bundle com.macparakeet.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
-      "observed": "Two meetings completed with healthy microphone coverage, both audio folders retained, and no finalization locks. First: 48.9 s at output volume 13, empty transcript. Second: 13.5 s with temporary speaker volume 50, 116 characters including communication/styles/years; output volume restored to 13. Raw receipt: /tmp/macparakeet-080-qa/evidence/mic-meetings-results.json.",
+      "build": "Copied Xcode Release dev product; bundle com.sotto.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
+      "observed": "Two meetings completed with healthy microphone coverage, both audio folders retained, and no finalization locks. First: 48.9 s at output volume 13, empty transcript. Second: 13.5 s with temporary speaker volume 50, 116 characters including communication/styles/years; output volume restored to 13. Raw receipt: /tmp/sotto-080-qa/evidence/mic-meetings-results.json.",
       "expected": "A real microphone capture retains audio, finalizes, and recognizes an audible public sample.",
       "limitations": "Only the second run demonstrates speech recognition. The first mean level was −51.3 dB, peak −31.7 dB, consistent with inadequate playback delivery. No system capture, pause/mute, Bluetooth or final-bundle proof.",
       "evidence": [
@@ -803,8 +803,8 @@
       "status": "passed",
       "phase": "Candidate",
       "candidate": "8548c099af5ee2ab0ed4dd9efe757d85c498cca0",
-      "build": "Copied Xcode Release dev product; bundle com.macparakeet.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
-      "observed": "The GUI microphone Test Input detected incoming input and automatically stopped. Local captures: /tmp/macparakeet-080-qa/evidence/microphone-input-start.png and microphone-input-playing.png.",
+      "build": "Copied Xcode Release dev product; bundle com.sotto.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
+      "observed": "The GUI microphone Test Input detected incoming input and automatically stopped. Local captures: /tmp/sotto-080-qa/evidence/microphone-input-start.png and microphone-input-playing.png.",
       "expected": "The input test shows usable input and ends without leaving an active capture.",
       "limitations": "A single input test does not prove route changes, device loss or TCC/system-audio behavior.",
       "evidence": [
@@ -823,8 +823,8 @@
       "status": "passed",
       "phase": "Candidate",
       "candidate": "8548c099af5ee2ab0ed4dd9efe757d85c498cca0",
-      "build": "Copied Xcode Release dev product; bundle com.macparakeet.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
-      "observed": "Both quiet-completion options were visibly off during microphone-only meeting QA. Local capture: /tmp/macparakeet-080-qa/evidence/meeting-mic-only-quiet-settings.png.",
+      "build": "Copied Xcode Release dev product; bundle com.sotto.qa.release080, PID 98237, displayed 0.8.0; baseline source, not final release bundle.",
+      "observed": "Both quiet-completion options were visibly off during microphone-only meeting QA. Local capture: /tmp/sotto-080-qa/evidence/meeting-mic-only-quiet-settings.png.",
       "expected": "The UI exposes and retains the chosen open-app and notification options.",
       "limitations": "The app was already frontmost, so lack of focus stealing was not verified.",
       "evidence": [
@@ -869,7 +869,7 @@
           "path": "cohere-extended.md"
         }
       ],
-      "command": "macparakeet-cli-runtime transcribe <public-FLEURS-ja-fixture> --engine cohere --language ja --mode raw --speaker-detection off --no-history --database <owned-case>/history.sqlite --format json",
+      "command": "sotto-cli-runtime transcribe <public-FLEURS-ja-fixture> --engine cohere --language ja --mode raw --speaker-detection off --no-history --database <owned-case>/history.sqlite --format json",
       "durationSeconds": 49.271
     },
     {
@@ -905,7 +905,7 @@
           "path": "cohere-extended.md"
         }
       ],
-      "command": "macparakeet-cli-runtime transcribe <public-FLEURS-ko-fixture> --engine cohere --language ko --mode raw --speaker-detection off --no-history --database <owned-case>/history.sqlite --format json",
+      "command": "sotto-cli-runtime transcribe <public-FLEURS-ko-fixture> --engine cohere --language ko --mode raw --speaker-detection off --no-history --database <owned-case>/history.sqlite --format json",
       "durationSeconds": 7.896
     },
     {
@@ -941,7 +941,7 @@
           "path": "cohere-extended.md"
         }
       ],
-      "command": "macparakeet-cli-runtime transcribe <public-FLEURS-zh-fixture> --engine cohere --language zh --mode raw --speaker-detection off --no-history --database <owned-case>/history.sqlite --format json",
+      "command": "sotto-cli-runtime transcribe <public-FLEURS-zh-fixture> --engine cohere --language zh --mode raw --speaker-detection off --no-history --database <owned-case>/history.sqlite --format json",
       "durationSeconds": 6.642
     },
     {

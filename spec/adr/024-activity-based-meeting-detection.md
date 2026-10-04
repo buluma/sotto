@@ -16,7 +16,7 @@
 
 ## Context
 
-ADR-017 gave MacParakeet one way to notice a meeting before the user remembers
+ADR-017 gave Sotto one way to notice a meeting before the user remembers
 to press record: the **calendar**. At T-5min of a calendar event with a
 conferencing link, we remind; in opt-in `.autoStart` mode we surface a
 countdown and start recording. That solved the most common "I forgot to hit
@@ -43,7 +43,7 @@ that fuses these on-device signals to recognize a live meeting and offer to
 record it — without the calendar, without the cloud, without ever reading
 content.
 
-The same signal layer answers a second question MacParakeet needs:
+The same signal layer answers a second question Sotto needs:
 ADR-023 (activity-based auto-stop) wants to know when a meeting is *still
 happening*. "Mic + camera/app went quiet for N seconds" is the stop signal;
 "mic + camera/app just came up" is the start signal. Building the collectors
@@ -141,7 +141,7 @@ window or carries a meeting link.
 
 ### 5. Self-attribution exclusion
 
-MacParakeet itself uses the mic (dictation, meeting recording). Its own audio
+Sotto itself uses the mic (dictation, meeting recording). Its own audio
 process must be **subtracted from every signal** before fusion, or an active
 recording would re-trigger detection on itself in a loop. Filter the process
 list by our own PID/bundle ID first; everything downstream sees the world
@@ -192,7 +192,7 @@ separate, deeper opt-in (§7) gated behind its own setting.
 
 A new settings control governs the feature, mirroring the ADR-017
 `calendarAutoStartMode` pattern exactly (same `UserDefaults` namespace shape,
-same `.macParakeet…DidChange` notification, same `Telemetry.send(.settingChanged(...))`
+same `.sotto…DidChange` notification, same `Telemetry.send(.settingChanged(...))`
 on mutation):
 
 ```swift
@@ -216,7 +216,7 @@ settings control is hidden, and the coordinator never starts.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                          MacParakeetCore (new)                         │
+│                          SottoCore (new)                         │
 │                                                                        │
 │  AudioProcessActivityCollector   (public CoreAudio property listeners) │
 │     └── emits ProcessAudioSnapshot: [{pid, bundleID, input, output}]   │
@@ -237,7 +237,7 @@ settings control is hidden, and the coordinator never starts.
                  │  ActivitySignalSnapshot (shared layer)   │
                  ▼                                          ▼
 ┌──────────────────────────────────┐      ┌─────────────────────────────────┐
-│  MacParakeet (app layer, new)    │      │  ADR-023 auto-stop consumer       │
+│  Sotto (app layer, new)    │      │  ADR-023 auto-stop consumer       │
 │                                  │      │  "is a meeting still happening?"  │
 │  MeetingActivityDetectionCoord-  │      │  (sustained signal-cleared →      │
 │  inator  (@MainActor)            │      │   stop prompt)                    │
@@ -258,9 +258,9 @@ settings control is hidden, and the coordinator never starts.
 **Ownership:** `MeetingActivityDetectionCoordinator` is a `@MainActor` class
 owned by `AppDelegate`, wired in `AppEnvironmentConfigurer` exactly the way
 `MeetingAutoStartCoordinator` is — same `NSWorkspace.shared.notificationCenter`
-observer style, same settings observer via `.macParakeet…DidChange`, same
+observer style, same settings observer via `.sotto…DidChange`, same
 `RunLoop.common` debounce timer, same reentrancy/coalescing guard, same
-`testHook_` test seam. The collectors live in `MacParakeetCore` so they (and the
+`testHook_` test seam. The collectors live in `SottoCore` so they (and the
 pure detector) are testable without the app target.
 
 **Shared signal layer:** `ActivitySignalSnapshot` is the contract. This ADR
@@ -275,7 +275,7 @@ fans the snapshot out to both.
 Device-attribution metadata (who holds the mic, is the camera on, who's
 frontmost) is everything we need to recognize a meeting and nothing we'd be
 uncomfortable explaining. It keeps the local-first / no-content brand intact
-(ADR-002): MacParakeet's promise is that your audio and screen never leave the
+(ADR-002): Sotto's promise is that your audio and screen never leave the
 device, and this feature never even *reads* them. Anything richer (screen OCR,
 log-stream scraping) trades that clarity for marginal precision.
 
@@ -347,7 +347,7 @@ maintain, consistent UX, and visual continuity (the repo's lesson —
 
 ## Implementation Direction
 
-### Core types (MacParakeetCore)
+### Core types (SottoCore)
 
 - `AudioProcessActivityCollector` — wraps `kAudioHardwarePropertyProcessObjectList`
   + per-process `IsRunningInput/Output` / `PID` / `BundleID`; installs property
@@ -363,15 +363,15 @@ maintain, consistent UX, and visual continuity (the repo's lesson —
 - `MeetingActivityDetectionMode` / `MeetingActivityDetector.Config` — `Codable`,
   `Sendable`.
 
-### Settings (MacParakeetViewModels)
+### Settings (SottoViewModels)
 
 - Extend `SettingsViewModel` with `meetingActivityDetectionMode` (and any
   cooldown/dwell tunables we expose — likely none in v1). Persist under a
   `MeetingActivityDetection.*` `UserDefaults` namespace.
-- `didSet` posts a new `AppNotification.macParakeetMeetingActivitySettingsDidChange`
+- `didSet` posts a new `AppNotification.sottoMeetingActivitySettingsDidChange`
   and fires `Telemetry.send(.settingChanged(setting: .meetingActivityDetectionMode))`.
 
-### App layer (MacParakeet)
+### App layer (Sotto)
 
 - `MeetingActivityDetectionCoordinator` — `@MainActor`; owns the collectors,
   debounced refresh, settings + workspace observers, prompt/countdown surface;
@@ -410,7 +410,7 @@ Privacy-safe, coarse, no raw app names beyond the allowlist enum:
 - `.settingChanged(setting: .meetingActivityDetectionMode)`.
 
 > **Two-repo change.** Each new `TelemetryEventName` case here must *also* be
-> added to `ALLOWED_EVENTS` in `macparakeet-website/functions/api/telemetry.ts`.
+> added to `ALLOWED_EVENTS` in `sotto-website/functions/api/telemetry.ts`.
 > The Worker rejects the **entire batch** if any event name is unknown — silently
 > dropping co-batched valid events. Deploy the website allowlist change *before*
 > shipping a build that emits these.
@@ -442,7 +442,7 @@ Privacy-safe, coarse, no raw app names beyond the allowlist enum:
 - **Never auto-record without opt-in:** `.off` is the default; recording only
   ever starts on explicit user confirmation, except in the separately-opted-in
   `.autoStart` mode, which still shows a cancellable countdown.
-- **Self-exclusion:** MacParakeet's own capture is subtracted from all signals
+- **Self-exclusion:** Sotto's own capture is subtracted from all signals
   before fusion — an active recording can never re-trigger detection on itself.
 
 ## Phased Rollout

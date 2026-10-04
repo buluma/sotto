@@ -22,11 +22,11 @@
 
 ## Context
 
-MacParakeet's LLM summary feature (spec/11 §1) uses a single hardcoded system prompt and stores one summary per transcript (`transcriptions.summary` column). Users have requested control over how summaries are generated — different transcript types (meetings, lectures, podcasts) need different summarization approaches ([GitHub issue #51](https://github.com/moona3k/macparakeet/issues/51)).
+Sotto's LLM summary feature (spec/11 §1) uses a single hardcoded system prompt and stores one summary per transcript (`transcriptions.summary` column). Users have requested control over how summaries are generated — different transcript types (meetings, lectures, podcasts) need different summarization approaches ([GitHub issue #51](https://github.com/moona3k/macparakeet/issues/51)).
 
 The feature request also revealed a broader need: users want to run multiple different prompts against the same transcript and keep all the results. A meeting transcript might need both "Meeting Notes" and "Action Items" summaries simultaneously.
 
-Additionally, this feature is the first building block for a future processing layer — configurable workflows that chain LLM prompts, CLI commands, exports, and webhooks (inspired by [VoiceInk PR #600](https://github.com/Beingpax/VoiceInk/pull/600) by @mitsuhiko and MacParakeet's own Local CLI transport in PR #47).
+Additionally, this feature is the first building block for a future processing layer — configurable workflows that chain LLM prompts, CLI commands, exports, and webhooks (inspired by [VoiceInk PR #600](https://github.com/Beingpax/VoiceInk/pull/600) by @mitsuhiko and Sotto's own Local CLI transport in PR #47).
 
 ## Decision
 
@@ -56,7 +56,7 @@ provenance only. Delete is soft delete so history and generated-result
 snapshots remain recoverable, and so launch reconciliation cannot resurrect a
 deleted built-in. A canonical built-in update is applied automatically only
 when persisted provenance proves that the prompt has never been customized or
-deleted. Otherwise MacParakeet may present the bundled definition as a
+deleted. Otherwise Sotto may present the bundled definition as a
 comparison candidate, but it does not insert or activate that candidate without
 an explicit user action.
 
@@ -95,7 +95,7 @@ meeting types.
 
 ### 1. Prompt Library stored in SQLite
 
-Reusable prompt templates are stored in the `prompts` table (not UserDefaults). Each prompt has a name, content, category, visibility flag, and auto-run flag; ADR-022 adds nullable `keyboardShortcut` and `runningLabel` columns for Transform prompts. Built-in/community prompts are currently seeded from Swift constants in `Prompt.builtInPrompts()`. The JSON file at `Sources/MacParakeetCore/Resources/community-prompts.json` is kept as a contribution/reference artifact, not the active runtime seed source. Built-in and custom result/Transform prompts share full editing, versioning, and recoverable soft-deletion rights.
+Reusable prompt templates are stored in the `prompts` table (not UserDefaults). Each prompt has a name, content, category, visibility flag, and auto-run flag; ADR-022 adds nullable `keyboardShortcut` and `runningLabel` columns for Transform prompts. Built-in/community prompts are currently seeded from Swift constants in `Prompt.builtInPrompts()`. The JSON file at `Sources/SottoCore/Resources/community-prompts.json` is kept as a contribution/reference artifact, not the active runtime seed source. Built-in and custom result/Transform prompts share full editing, versioning, and recoverable soft-deletion rights.
 
 The table is named `prompts` (not `summary_presets`) because the model is general-purpose — the same table serves summaries and Transforms today, and can serve workflow steps later. A `category` enum field (`.result`, `.transform`; result stores `"summary"`) scopes prompts to their use case.
 
@@ -139,7 +139,7 @@ effort is retained only while thinking is explicitly enabled. This is a typed do
 not an arbitrary request-body editor. Built-in prompts and Transform prompts
 keep these settings unset in the initial contract.
 
-The blank state means inherit MacParakeet's current prompt-result and adapter
+The blank state means inherit Sotto's current prompt-result and adapter
 defaults, including the existing `temperature = 0.7` operation baseline and
 native Ollama thinking-off behavior. It does not force raw upstream-provider
 defaults. When generation is queued, prompt text, per-run context, and requested
@@ -164,7 +164,7 @@ and speech recognition retain their existing behavior.
 
 ### Why SQLite for prompts (not UserDefaults)?
 
-All other user-managed data in MacParakeet (dictations, transcriptions, custom words, text snippets, chat conversations) lives in SQLite via GRDB. Prompts follow the same pattern for consistency, testability (in-memory SQLite), and query capability. The established repository protocol pattern (e.g., `CustomWordRepository`) maps directly.
+All other user-managed data in Sotto (dictations, transcriptions, custom words, text snippets, chat conversations) lives in SQLite via GRDB. Prompts follow the same pattern for consistency, testability (in-memory SQLite), and query capability. The established repository protocol pattern (e.g., `CustomWordRepository`) maps directly.
 
 ### Why multi-summary (not overwrite)?
 

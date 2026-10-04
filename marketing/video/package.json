@@ -1,8 +1,8 @@
 {
-  "name": "macparakeet-video",
+  "name": "sotto-video",
   "version": "0.1.0",
   "private": true,
-  "description": "MacParakeet marketing video pipeline. Programmatic rendering via Remotion + local TTS (Kokoro-82M, optional Higgs Audio V2).",
+  "description": "Sotto marketing video pipeline. Programmatic rendering via Remotion + local TTS (Kokoro-82M, optional Higgs Audio V2).",
   "type": "module",
   "scripts": {
     "preview": "remotion studio src/index.ts",

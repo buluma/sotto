@@ -1,4 +1,4 @@
-# Demo Agents — Landscape & The MacParakeet Recipe
+# Demo Agents — Landscape & The Sotto Recipe
 
 > Status: **DATED RESEARCH SNAPSHOT** — last updated 2026-05-03. Product names,
 > availability, prices, rankings, and model capabilities below are not current
@@ -11,7 +11,7 @@ blog posts, App Store-style screen recordings — and we'd like to scale that
 without scheduling Daniel to record every clip by hand. This doc maps the
 content-creation agent landscape, names the gap between "synthetic video
 hype" and "scripted demo loop you can ship today," and gives a concrete
-recipe MacParakeet can adopt now.
+recipe Sotto can adopt now.
 
 ## Landscape at a glance
 
@@ -49,7 +49,7 @@ track Veo 4 / Gen-5 / Q3-Q4 2026 releases.
 | Capture (CLI) | `screencapture -V <sec>` (built-in) or **SwiftCapture** (OSS, ScreenCaptureKit wrapper) | Region/window/full-screen, no install for `screencapture`. SwiftCapture adds multi-screen + per-app window. |
 | Capture (CLI alt) | `ffmpeg -f avfoundation -i "<idx>:<idx>"` | Full-display only; pair with crop filter for window |
 | Input synthesis | **`cliclick`** (`brew install cliclick`) | `c:x,y`, `kp:`, `t:"text"`, `kd/ku:` modifiers. Needs Accessibility perm |
-| Audio routing → mic | **BlackHole 2ch** (OSS, free) | Set as MacParakeet mic input; `afplay -d BlackHole2ch` pipes pre-recorded utterance into the dictation pipeline |
+| Audio routing → mic | **BlackHole 2ch** (OSS, free) | Set as Sotto mic input; `afplay -d BlackHole2ch` pipes pre-recorded utterance into the dictation pipeline |
 | Audio routing (paid) | **Loopback 2.4.9** ($99, Apr 9 2026) | Wire-based routing, virtual devices, AppleScript-automatable |
 | TTS (free, prototype) | **`say -v Zoe -o out.aiff "..."`** | Built-in, instant, fine for prototyping |
 | TTS (cloud, branded) | **ElevenLabs** | Best expressiveness, pro voice cloning. ~$0.30/1k chars at scale |
@@ -58,7 +58,7 @@ track Veo 4 / Gen-5 / Q3-Q4 2026 releases.
 ### Does the "demo agent" exist yet? Almost — and there's an opening.
 
 The pieces are converging but no single product takes "describe a flow →
-finished MacParakeet demo video":
+finished Sotto demo video":
 
 - **`splitbrain/ndemo`** (Claude Code skill) — narrated demo videos of *web*
   apps. Closest spiritual match. Browser-only.
@@ -71,13 +71,13 @@ finished MacParakeet demo video":
   real Mac in research preview but too non-deterministic for repeatable
   shipping demos.
 
-**The opportunity:** a `macparakeet/scripts/demo/` skill (or standalone
+**The opportunity:** a `sotto/scripts/demo/` skill (or standalone
 Claude skill) that wraps the recipe below, parameterized by `(flow_name,
 narration_script, dictation_text, output_aspects)`. We'd be one of the first
 OSS native-macOS demo agents. Reuse the `granola-export` skill style — single
 self-contained dir.
 
-## The MacParakeet recipe — use this today
+## The Sotto recipe — use this today
 
 Build `scripts/demo/record_demo.sh` that produces a deterministic 60-second
 demo every run. No editor, no mouse. Everything scripted.
@@ -87,9 +87,9 @@ demo every run. No editor, no mouse. Everything scripted.
 ```bash
 brew install cliclick ffmpeg
 # Install BlackHole 2ch from existential.audio
-# In Audio MIDI Setup: create Aggregate Device "MacParakeet-Demo"
+# In Audio MIDI Setup: create Aggregate Device "Sotto-Demo"
 #   = BlackHole 2ch (+ optionally your speakers, for monitoring)
-# In MacParakeet Settings: input device → "MacParakeet-Demo"
+# In Sotto Settings: input device → "Sotto-Demo"
 # Bind dictation hotkey to F18 (single-key, scriptable, ADR-009)
 # Grant Terminal: Accessibility + Screen Recording in System Settings
 ```
@@ -99,7 +99,7 @@ brew install cliclick ffmpeg
 ```bash
 #!/bin/bash
 set -e
-SCRIPT="MacParakeet turns your voice into text, instantly. Watch."
+SCRIPT="Sotto turns your voice into text, instantly. Watch."
 DEMO="Hello world, this is a fast local dictation demo on macOS."
 
 # 1. Synthesize narration to AIFF (Apple `say`) or call ElevenLabs/Cartesia
@@ -107,12 +107,12 @@ say -v Zoe -o /tmp/narration.aiff "$SCRIPT"
 say -v Zoe -o /tmp/dictation.aiff "$DEMO"
 
 # 2. Launch + focus the app
-open -a MacParakeet
+open -a Sotto
 sleep 1
-osascript -e 'tell app "MacParakeet" to activate'
+osascript -e 'tell app "Sotto" to activate'
 
 # 3. Start window-scoped screen recording in the background
-swiftcapture --window "MacParakeet" --fps 60 --output /tmp/demo.mov &
+swiftcapture --window "Sotto" --fps 60 --output /tmp/demo.mov &
 REC_PID=$!
 sleep 0.5
 
@@ -123,7 +123,7 @@ afplay /tmp/narration.aiff
 cliclick kp:f18
 sleep 0.2
 
-# 6. Pipe dictation audio into MacParakeet via BlackHole
+# 6. Pipe dictation audio into Sotto via BlackHole
 #    afplay -d <device> routes to that output device only
 afplay -d BlackHole2ch /tmp/dictation.aiff
 
@@ -155,13 +155,13 @@ ffmpeg -y -i /tmp/demo.mov -i /tmp/narration.aiff \
   unbound by macOS and matches ADR-009 single-key support; no
   accidental modifier collisions like the Fn-chord case.
 - `afplay -d BlackHole2ch` is the magic step: it sends a pre-recorded
-  utterance to the BlackHole virtual output, which MacParakeet sees as a
+  utterance to the BlackHole virtual output, which Sotto sees as a
   mic input. Same Parakeet pipeline, fully scripted, byte-identical every run.
 - Two `ffmpeg` outputs from one recording = X (1:1) + Shorts/Reels (9:16)
   without re-recording.
 
 **Hotkey behavior caveat:** the recipe assumes F18 toggles dictation
-on/off (press → start, press → stop). If MacParakeet's hotkey is
+on/off (press → start, press → stop). If Sotto's hotkey is
 press-and-hold, swap `cliclick kp:f18` for `cliclick kd:f18 ... ku:f18`
 around step 6.
 
@@ -219,7 +219,7 @@ videos:
    a screenshot + flow description and emits faithful-pixel UI demos,
    hand-recording dies. Track Q3-Q4 2026 releases.
 2. **Remotion + Claude Code as the dominant programmatic-video stack.**
-   126k+ installs, growing weekly. Worth seeding a `macparakeet-demo`
+   126k+ installs, growing weekly. Worth seeding a `sotto-demo`
    Remotion template even before we adopt it — community contributions
    multiply.
 3. **Cartesia Sonic 2.x voice cloning at $5/mo.** Sub-$10/mo unlimited-clone
@@ -231,7 +231,7 @@ videos:
 5. **A native-macOS-aware demo skill.** The market gap is real — every
    browser-demo tool exists, no native-Mac one does. First-mover OSS
    Claude skill that drives any macOS app via cliclick + ScreenCaptureKit
-   + BlackHole + TTS would be widely forked. Could double as MacParakeet's
+   + BlackHole + TTS would be widely forked. Could double as Sotto's
    internal demo tooling and external dev-evangelism content.
 
 ## References

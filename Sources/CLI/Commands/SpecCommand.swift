@@ -39,9 +39,9 @@ private struct CLISpec: Encodable {
 
     static var current: CLISpec {
         CLISpec(
-            schema: "macparakeet.cli.spec",
+            schema: "sotto.cli.spec",
             schemaVersion: 1,
-            commandName: "macparakeet-cli",
+            commandName: "sotto-cli",
             cliVersion: CLI.cliVersion,
             conventions: CLISpecConventions(
                 jsonDateFormat: "iso8601",
@@ -146,7 +146,7 @@ private extension CLISpecCommand {
     static let databaseOption = CLISpecParameter.option(
         "--database",
         valueName: "PATH",
-        summary: "Use a specific MacParakeet SQLite database instead of the app default."
+        summary: "Use a specific Sotto SQLite database instead of the app default."
     )
 
     static let askAvailabilitySummary =
@@ -1324,7 +1324,7 @@ private extension CLISpecCommand {
         ),
         CLISpecCommand(
             ["calendar", "upcoming"],
-            summary: "List upcoming calendar events visible to MacParakeet.",
+            summary: "List upcoming calendar events visible to Sotto.",
             options: [
                 CLISpecParameter.option("--days", valueName: "N", summary: "Number of days to look ahead."),
                 CLISpecParameter.option(
@@ -1334,7 +1334,7 @@ private extension CLISpecCommand {
         ),
         CLISpecCommand(
             ["feedback"],
-            summary: "Submit user feedback to MacParakeet support.",
+            summary: "Submit user feedback to Sotto support.",
             readOnly: false,
             jsonMode: "none",
             arguments: [.argument("message", summary: "Feedback message.")],

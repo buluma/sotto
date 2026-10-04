@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 enum FeedbackCategoryArg: String, ExpressibleByArgument, CaseIterable {
     case bug
@@ -20,7 +20,7 @@ struct FeedbackCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "feedback",
         abstract: "Submit feedback from the CLI.",
-        discussion: "Categories: bug, feature, other. Quote multi-word messages: macparakeet-cli feedback \"Found a bug with...\""
+        discussion: "Categories: bug, feature, other. Quote multi-word messages: sotto-cli feedback \"Found a bug with...\""
     )
 
     @Option(name: .shortAndLong, help: "Category: bug, feature, other.")

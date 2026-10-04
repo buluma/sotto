@@ -1,12 +1,12 @@
-# MacParakeet UI Inspiration
+# Sotto UI Inspiration
 
 > Status: **DESIGN REFERENCE** — May 2026 research and proposed polish
 > directions, not a current implementation inventory or release backlog.
 > Last researched: 2026-05-15
-> Purpose: Convert strong open-source app references into practical MacParakeet
+> Purpose: Convert strong open-source app references into practical Sotto
 > UI direction, especially for Transcribe, Library, and transcript review.
 
-MacParakeet should stay native, quiet, and fast. The useful inspiration is not
+Sotto should stay native, quiet, and fast. The useful inspiration is not
 "make it look like another app." It is: study how excellent apps make common
 workflows obvious, reduce chrome, handle dense information, and keep advanced
 power close without making the first screen heavy.
@@ -35,11 +35,11 @@ For the deeper repo-by-repo evidence behind these recommendations, see
 - Repo: https://github.com/p0deje/Maccy
 - Why it matters: extreme utility discipline. It is keyboard-first, instant,
   searchable, and visually lightweight.
-- MacParakeet application: search, command actions, copy flows, quick open,
+- Sotto application: search, command actions, copy flows, quick open,
   Library keyboard navigation, and Dictation History polish.
 
 Maccy is the reference for "a useful thing should take one thought." In
-MacParakeet, the equivalent is: search a transcript, copy text, replay audio,
+Sotto, the equivalent is: search a transcript, copy text, replay audio,
 open the source file, favorite, delete, export, and start a new transcription
 without a hunt.
 
@@ -49,10 +49,10 @@ without a hunt.
 - Repo: https://github.com/Ranchero-Software/NetNewsWire
 - Why it matters: calm sidebar/list/detail information architecture that holds
   up with a large personal library.
-- MacParakeet application: Library browsing, source grouping, search results,
+- Sotto application: Library browsing, source grouping, search results,
   date sections, unread/new-style state equivalents, and split-view discipline.
 
-NetNewsWire is the best model for MacParakeet's Library because both products
+NetNewsWire is the best model for Sotto's Library because both products
 manage a growing personal archive. The lesson is not the RSS UI itself. The
 lesson is the hierarchy: source list, compact row metadata, readable detail,
 and very little decoration.
@@ -62,11 +62,11 @@ and very little decoration.
 - Repo: https://github.com/iina/iina
 - Why it matters: native-feeling media controls, playback state, scrubbers,
   video surface behavior, and unobtrusive overlays.
-- MacParakeet application: audio/video transcript review, scrubber polish,
+- Sotto application: audio/video transcript review, scrubber polish,
   subtitle-style timed text, media panel behavior, and playback affordances.
 
 IINA is the strongest reference for transcript review when the transcript is
-also a media object. MacParakeet should make it obvious where playback is,
+also a media object. Sotto should make it obvious where playback is,
 where the current word/segment is, and how text and audio/video relate.
 
 ### CotEditor
@@ -74,7 +74,7 @@ where the current word/segment is, and how text and audio/video relate.
 - Site: https://coteditor.com/
 - Repo: https://github.com/coteditor/CotEditor
 - Why it matters: mature macOS-native text editing and document behavior.
-- MacParakeet application: transcript reading, transcript editing, Live Notes,
+- Sotto application: transcript reading, transcript editing, Live Notes,
   post-meeting notes, selection, find, typography controls, and text layout.
 
 CotEditor is the reminder that transcripts are documents, not just output
@@ -86,10 +86,10 @@ and editing affordances should feel like macOS.
 - Repo: https://github.com/jordanbaird/Ice
 - Why it matters: polished menu-bar utility behavior with restrained native
   settings and small persistent controls.
-- MacParakeet application: menu bar status, idle pill, recording pill, countdown
+- Sotto application: menu bar status, idle pill, recording pill, countdown
   toasts, and system-level preferences.
 
-Ice is useful because MacParakeet is partly a normal app and partly a system
+Ice is useful because Sotto is partly a normal app and partly a system
 utility. The small surfaces need to feel trustworthy, not decorative.
 
 ### Loop
@@ -97,10 +97,10 @@ utility. The small surfaces need to feel trustworthy, not decorative.
 - Repo: https://github.com/MrKai77/Loop
 - Why it matters: a distinctive floating interaction can make a utility feel
   crafted without turning the whole app into a themed dashboard.
-- MacParakeet application: recording pill, meeting tile, completion state,
+- Sotto application: recording pill, meeting tile, completion state,
   subtle motion, and spatial overlays.
 
-Loop is a good craft reference for MacParakeet's expressive surfaces. Use that
+Loop is a good craft reference for Sotto's expressive surfaces. Use that
 energy sparingly: the main window should stay calm; the floating recording
 surfaces can carry the magic.
 
@@ -109,11 +109,11 @@ surfaces can carry the magic.
 - Repo: https://github.com/CodeEditApp/CodeEdit
 - Why it matters: native Swift app structure, larger SwiftUI/AppKit composition,
   settings, windowing, and modular packages.
-- MacParakeet application: app shell organization, package boundaries, settings
+- Sotto application: app shell organization, package boundaries, settings
   surfaces, and editor-like panes.
 
 CodeEdit is more useful as an architecture reference than as a direct visual
-target. It is worth studying when MacParakeet needs a more sophisticated text
+target. It is worth studying when Sotto needs a more sophisticated text
 or split-pane surface.
 
 ### Zed and Ghostty
@@ -122,7 +122,7 @@ or split-pane surface.
 - Ghostty repo: https://github.com/ghostty-org/ghostty
 - Why they matter: fast local tools with strong separation between core engine
   and native shell.
-- MacParakeet application: preserve the current Core/ViewModels/App split,
+- Sotto application: preserve the current Core/ViewModels/App split,
   keep latency visible, and avoid turning UI polish into core coupling.
 
 These are not SwiftUI design references. They are references for seriousness:
@@ -228,12 +228,12 @@ References:
 
 ## Architecture Notes
 
-MacParakeet already has the right broad shape:
+Sotto already has the right broad shape:
 
-- `MacParakeetCore` owns durable logic and should not gain UI ownership.
-- `MacParakeetViewModels` keeps app state testable outside the GUI.
-- `Sources/MacParakeet/Views` owns SwiftUI/AppKit composition.
-- `DesignSystem` and `parakeetAction(_:)` should carry shared styling intent.
+- `SottoCore` owns durable logic and should not gain UI ownership.
+- `SottoViewModels` keeps app state testable outside the GUI.
+- `Sources/Sotto/Views` owns SwiftUI/AppKit composition.
+- `DesignSystem` and `sottoAction(_:)` should carry shared styling intent.
 
 Future UI work should keep that shape. For example:
 

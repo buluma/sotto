@@ -1,6 +1,6 @@
 # FluidAudio v0.15.4 speaker profiles / recognition report
 
-Source: FluidAudio tag `v0.15.4` (`b9d4372`). Paths below are relative to `/private/tmp/claude-502/-Users-dmoon-code-macparakeet/8bbfded2-f315-45ed-b4c9-8dced5e0ca31/scratchpad/FluidAudio`.
+Source: FluidAudio tag `v0.15.4` (`b9d4372`). Paths below are relative to `/private/tmp/claude-502/-Users-dmoon-code-sotto/8bbfded2-f315-45ed-b4c9-8dced5e0ca31/scratchpad/FluidAudio`.
 
 **Bottom line:** FluidAudio v0.15.4 does not provide a turnkey persistent "voiceprint profiles" feature for the consuming `OfflineDiarizerManager(config:).process(url:) -> DiarizationResult` path. It provides 256-d speaker embeddings, serializable `Speaker` profile structs, an in-memory `SpeakerManager` for the legacy WeSpeaker/Pyannote streaming path, and instance-local enrollment for Sortformer/LS-EEND. For offline meeting transcription, app code must persist profiles, run diarization, then post-hoc match `DiarizationResult.speakerDatabase`, `chunkEmbeddings`, or `segments[].embedding` to saved profiles and rewrite display labels.
 

@@ -1,5 +1,5 @@
 import XCTest
-import MacParakeetCore
+import SottoCore
 @testable import CLI
 
 final class CardsCommandTests: XCTestCase {
@@ -164,7 +164,7 @@ final class CardsCommandTests: XCTestCase {
 
     private func makeFixture() throws -> Fixture {
         let path = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cards-\(UUID().uuidString).db").path
+            .appendingPathComponent("sotto-cards-\(UUID().uuidString).db").path
         let manager = try DatabaseManager(path: path)
         let transcriptions = TranscriptionRepository(dbQueue: manager.dbQueue)
         let cards = CardRepository(dbQueue: manager.dbQueue)

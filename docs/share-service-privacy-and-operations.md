@@ -6,7 +6,7 @@
 
 ## Plain-language privacy model
 
-MacParakeet sharing is an explicit disclosure, not a backup or sync system.
+Sotto sharing is an explicit disclosure, not a backup or sync system.
 The publisher chooses and previews a text snapshot, the Mac encrypts it, and the hosted service stores the encrypted result until the link expires or is stopped.
 Audio never enters the share path.
 
@@ -31,7 +31,7 @@ Stopping a link blocks future service access but cannot retrieve copies a recipi
 
 The server never receives the rest of the Library, a fragment key, a complete recipient URL, local paths, hidden record identifiers, model details, prompts, or unselected metadata.
 
-## Claims MacParakeet may make
+## Claims Sotto may make
 
 Accurate claims include:
 
@@ -41,7 +41,7 @@ Accurate claims include:
 - The service does not collect recipient viewing analytics or use recipient accounts.
 - Every share expires and can be stopped permanently.
 
-MacParakeet must not claim that a share is private from everyone, impossible to copy, anonymous at the network layer, or absolutely zero knowledge.
+Sotto must not claim that a share is private from everyone, impossible to copy, anonymous at the network layer, or absolutely zero knowledge.
 The recipient browser sees plaintext, anyone with the complete URL can read it, and the first-party viewer JavaScript receives the fragment key.
 A malicious or compromised viewer deployment, DNS account, or recipient device could therefore expose plaintext at read time.
 

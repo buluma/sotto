@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 typealias MeetingImportRunning =
     @Sendable (
@@ -14,7 +14,7 @@ extension MeetingsCommand {
             commandName: "import",
             abstract: "Import one existing audio or video recording as a managed meeting.",
             discussion: """
-                MacParakeet creates its own managed audio copy and never changes the source file. \
+                Sotto creates its own managed audio copy and never changes the source file. \
                 The imported meeting receives normal transcription, speaker processing, search, \
                 playback, and enabled meeting notes. A transcript-saved partial result exits zero; \
                 a retryable transcription result prints its saved meeting first, then exits one. \

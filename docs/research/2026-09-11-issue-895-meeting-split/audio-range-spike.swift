@@ -1,5 +1,5 @@
 // Research-only experiment. Creates synthetic tones in the supplied scratch directory.
-// Does not import MacParakeet, open user recordings, or change the app database.
+// Does not import Sotto, open user recordings, or change the app database.
 import Foundation
 import AVFoundation
 import CryptoKit

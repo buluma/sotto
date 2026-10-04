@@ -4,19 +4,19 @@
 > Date: 2026-02-13
 > Current LLM scope (2026-09-07): removal of the original Qwen3-8B baseline remains historical fact. ADR-011 now governs a separate developer-gated Local MLX implementation; external providers/local CLI remain the public/default path.
 > Note: Core decision (FluidAudio CoreML for STT) is implemented and active. GPU/LLM references (Qwen3-8B, "GPU contention") are historical — the old on-device mlx-swift-lm path was removed 2026-02-23.
-> Benchmark note (2026-07-16): the `155x` / `~66 MB` figures below record the migration-era comparison. Current MacParakeet M4 Pro results are ~81–93x steady realtime and 115–131 MB peak RSS by Parakeet build; use [`benchmarks/asr/`](../../benchmarks/asr/) and `spec/06-stt-engine.md` for current comparisons.
-> Amendment (2026-05-30): The migration remains the active runtime decision. MacParakeet exposed FluidAudio's Parakeet v3 multilingual build by default and v2 English-only as an opt-in build; this did not change the Python-elimination decision.
+> Benchmark note (2026-07-16): the `155x` / `~66 MB` figures below record the migration-era comparison. Current Sotto M4 Pro results are ~81–93x steady realtime and 115–131 MB peak RSS by Parakeet build; use [`benchmarks/asr/`](../../benchmarks/asr/) and `spec/06-stt-engine.md` for current comparisons.
+> Amendment (2026-05-30): The migration remains the active runtime decision. Sotto exposed FluidAudio's Parakeet v3 multilingual build by default and v2 English-only as an opt-in build; this did not change the Python-elimination decision.
 > Amendment (2026-06-18): Parakeet Unified is also exposed as an opt-in English build through FluidAudio CoreML, with a dedicated runtime path. This preserves the Python-elimination decision.
 
 ## Context
 
-MacParakeet v0.1 runs Parakeet TDT 0.6B-v3 via `parakeet-mlx`, a Python daemon communicating over JSON-RPC stdin/stdout. The Python environment is managed by `uv` (isolated venv, ~500 MB dependencies). This was the fastest path to ship Parakeet on Apple Silicon — ADR-001 chose the model, and parakeet-mlx was the only viable runtime at the time.
+Sotto v0.1 runs Parakeet TDT 0.6B-v3 via `parakeet-mlx`, a Python daemon communicating over JSON-RPC stdin/stdout. The Python environment is managed by `uv` (isolated venv, ~500 MB dependencies). This was the fastest path to ship Parakeet on Apple Silicon — ADR-001 chose the model, and parakeet-mlx was the only viable runtime at the time.
 
 Three problems have emerged as we prepare to add Qwen3-8B (LLM) in v0.2:
 
 ### 1. Wasted Silicon
 
-Every Apple Silicon Mac has three compute units — CPU, GPU, and ANE (Neural Engine). Today MacParakeet uses two:
+Every Apple Silicon Mac has three compute units — CPU, GPU, and ANE (Neural Engine). Today Sotto uses two:
 
 ```
 CPU: [App logic, UI, hotkeys, clipboard]
@@ -134,7 +134,7 @@ v0.2 adds Qwen3-8B to the GPU — the exact moment GPU contention becomes real. 
 
 ### Negative
 
-- **Model distribution shape changed after implementation**: the full CoreML repos are larger than the old MLX weights, but MacParakeet now fetches only the components it loads, roughly ~465 MB per Parakeet build. v2 and v3 cache independently.
+- **Model distribution shape changed after implementation**: the full CoreML repos are larger than the old MLX weights, but Sotto now fetches only the components it loads, roughly ~465 MB per Parakeet build. v2 and v3 cache independently.
 - **Slower raw throughput**: ~155x realtime vs ~300x. Imperceptible for dictation (0.4s vs 0.2s for 1 minute of audio). Noticeable only for very long file transcription (23s vs 12s for 1 hour).
 - **No crash isolation**: CoreML runs in-process. A CoreML crash takes down the app (vs the Python daemon crashing independently). Mitigated by CoreML's maturity and proper error handling.
 - **Third-party dependency**: FluidAudio is maintained by a small independent team (FluidInference). Mitigated by Apache 2.0 license (forkable), CoreML models hosted independently on HuggingFace, and 20+ production apps providing ecosystem validation.

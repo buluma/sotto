@@ -2,7 +2,7 @@
 """Qualify packaged Ask CLI against isolated synthetic recordings (stdlib only).
 
 Example:
-  python3 scripts/dev/ask_workspace_qualification.py --cli /path/to/macparakeet-cli \
+  python3 scripts/dev/ask_workspace_qualification.py --cli /path/to/sotto-cli \
     --output-dir /tmp/ask-qualification-new
 
 The default mode explicitly opts in with --enable-ask-workspace and requires a
@@ -199,7 +199,7 @@ class Qualification:
         self.db = self.output / "synthetic.sqlite"
         # Avoid accidentally inheriting provider credentials, proxy routing or model configuration.
         self.env = {key: os.environ[key] for key in ("PATH", "HOME", "TMPDIR", "LANG") if key in os.environ}
-        self.env.update(ASK_QUALIFICATION_FIXTURE_KEY="synthetic-not-secret", MACPARAKEET_TELEMETRY="0", MACPARAKEET_DEBUG_APP_STATE_DIR=str(self.output / "app-state"))
+        self.env.update(ASK_QUALIFICATION_FIXTURE_KEY="synthetic-not-secret", SOTTO_TELEMETRY="0", SOTTO_DEBUG_APP_STATE_DIR=str(self.output / "app-state"))
         self.secrets = []
         if args.api_key_env:
             secret = os.environ.get(args.api_key_env)

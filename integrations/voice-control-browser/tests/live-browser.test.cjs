@@ -8,13 +8,13 @@ const {spawn,execFileSync} = require('node:child_process');
 const assert = require('node:assert/strict');
 const root = path.resolve(__dirname,'../../..');
 (async () => {
-  if (process.env.MACPARAKEET_BROWSER_FIXTURE_QUALIFICATION !== '1' || !process.env.JEV_API_KEY) throw Error('Explicit fixture opt-in and Jev key required');
+  if (process.env.SOTTO_BROWSER_FIXTURE_QUALIFICATION !== '1' || !process.env.JEV_API_KEY) throw Error('Explicit fixture opt-in and Jev key required');
   const harness = process.env.BROWSER_QUALIFICATION_BINARY;
-  const host = process.env.BROWSER_HOST_BINARY || path.join(root,'.build/debug/macparakeet-browser-host');
+  const host = process.env.BROWSER_HOST_BINARY || path.join(root,'.build/debug/sotto-browser-host');
   if (!harness || !fs.existsSync(harness) || !fs.existsSync(host)) throw Error('Build qualification harness and native host first');
-  const pairing = path.join(os.homedir(),'Library/Application Support/MacParakeet/VoiceControlBrowser/pairing.json');
+  const pairing = path.join(os.homedir(),'Library/Application Support/Sotto/VoiceControlBrowser/pairing.json');
   if (fs.existsSync(pairing)) throw Error('Existing user pairing must be preserved; this fresh-pair fixture cannot run');
-  const temporary = fs.mkdtempSync(path.join(os.tmpdir(),'macparakeet-browser-proof-'));
+  const temporary = fs.mkdtempSync(path.join(os.tmpdir(),'sotto-browser-proof-'));
   const profile = path.join(temporary,'profile');
   const html = fs.readFileSync(path.join(__dirname,'flight-fixture.html'));
   const server = http.createServer((_request,response) => {response.setHeader('Content-Type','text/html');response.end(html);});

@@ -9,7 +9,7 @@
 > When done, update the status row for this plan in `plans/README.md`.
 >
 > **Drift check (run first)**:
-> `git diff --stat 16e3f865f..HEAD -- Sources/MacParakeetCore/Services/Dictation/DictationService.swift Sources/MacParakeetCore/Services/TranscriptionService.swift`
+> `git diff --stat 16e3f865f..HEAD -- Sources/SottoCore/Services/Dictation/DictationService.swift Sources/SottoCore/Services/TranscriptionService.swift`
 > If either changed since this plan was written, compare the "Current state"
 > excerpts against the live code; on a mismatch, treat it as a STOP condition.
 
@@ -40,22 +40,22 @@ only be reached through the full service), and removes a recurring maintenance t
 
 Two near-identical implementations:
 
-**DictationService** (`Sources/MacParakeetCore/Services/Dictation/DictationService.swift`):
+**DictationService** (`Sources/SottoCore/Services/Dictation/DictationService.swift`):
 - `private struct FormatterOutcome: Sendable` (line 47): `text: String?`,
   `run: LLMRun?`, `resolution: AIFormatterPromptResolution?`; `static let skipped =
   FormatterOutcome(text: nil, run: nil, resolution: nil)`.
 - `private func formatTranscriptIfNeeded(_:runSource:formatterContext:)` (lines 1277–1359):
-  guards `shouldUseAIFormatter(), let llmService`; posts `.macParakeetAIFormatterDidStart`
-  (userInfo source="dictation"), `defer` posts `.macParakeetAIFormatterDidFinish`;
+  guards `shouldUseAIFormatter(), let llmService`; posts `.sottoAIFormatterDidStart`
+  (userInfo source="dictation"), `defer` posts `.sottoAIFormatterDidFinish`;
   resolves prompt via `await aiFormatterPromptResolver.resolvePrompt(for: formatterContext)`;
   computes `defaultPromptUsed` via `AIFormatter.normalizedPromptTemplate(_) == AIFormatter.defaultPromptTemplate`;
   calls `llmService.formatTranscriptDetailed(transcript:promptTemplate:source: .dictation, defaultPromptUsed:)`;
   builds `LLMRun(formatterResult:source:feature: .formatterDictation)`; on error rethrows
-  `CancellationError`, else logs `dictation_ai_formatter_failed`, posts `.macParakeetAIFormatterWarning`
+  `CancellationError`, else logs `dictation_ai_formatter_failed`, posts `.sottoAIFormatterWarning`
   (source="dictation"), returns a failed `LLMRun.failedFormatterRun(...)`.
   **No input-length cap.** Carries `resolution` through on success.
 
-**TranscriptionService** (`Sources/MacParakeetCore/Services/TranscriptionService.swift`):
+**TranscriptionService** (`Sources/SottoCore/Services/TranscriptionService.swift`):
 - `private struct FormatterOutcome: Sendable` (line 50): `text: String?`, `run: LLMRun?`;
   `static let skipped = FormatterOutcome(text: nil, run: nil)`.
 - `private func formatTranscriptIfNeeded(_:runSource:)` (lines 1638–1700):
@@ -63,19 +63,19 @@ Two near-identical implementations:
   (logs `transcription_ai_formatter_skipped`); prompt via `aiFormatterPromptTemplate()`
   (no resolver, no profiles); same `defaultPromptUsed`; calls `formatTranscriptDetailed(… source: .transcription …)`;
   builds `LLMRun(… feature: .formatterTranscription)`; on error rethrows `CancellationError`,
-  else logs `transcription_ai_formatter_failed`, posts `.macParakeetAIFormatterWarning`
+  else logs `transcription_ai_formatter_failed`, posts `.sottoAIFormatterWarning`
   (source="transcription"), returns a failed run. **No DidStart/DidFinish notifications.
   No resolution.**
 
-Shared dependency types (all in `MacParakeetCore`):
+Shared dependency types (all in `SottoCore`):
 - `llmService: LLMServiceProtocol?` (Dictation :113, Transcription :221).
 - `shouldUseAIFormatter: @Sendable () -> Bool` (Dictation :115, Transcription :223).
 - `formatTranscriptDetailed(transcript:promptTemplate:source: TelemetryFormatterSource, defaultPromptUsed:) -> LLMFormatterResult` on `LLMServiceProtocol` (`Services/LLM/LLMService.swift:30`).
 - `AIFormatter.maxTranscriptionInputChars` (= 20_000), `.defaultPromptTemplate`, `.normalizedPromptTemplate(_:)` (`TextProcessing/AIFormatter.swift`).
 - `LLMRun`, `LLMRun.failedFormatterRun(...)`, `LLMRunFeature.{formatterDictation,formatterTranscription}` (`Models/LLMRun.swift`).
 - `AIFormatterPromptResolution` (`Models/AIFormatterProfileMatcher.swift`).
-- Notification names: `.macParakeetAIFormatterDidStart`, `.macParakeetAIFormatterDidFinish`,
-  `.macParakeetAIFormatterWarning` (`AppNotifications.swift`).
+- Notification names: `.sottoAIFormatterDidStart`, `.sottoAIFormatterDidFinish`,
+  `.sottoAIFormatterWarning` (`AppNotifications.swift`).
 - `Self.errorType(for:)` in each service wraps `TelemetryErrorClassifier.classify(error)`.
 
 The only behavioral differences between the two methods: (1) input cap
@@ -86,9 +86,9 @@ Everything else — the guard, `defaultPromptUsed`, the call, success trim, the
 `CancellationError` rethrow, the warning log + notification, the failed-run build —
 is identical.
 
-Existing mock + tests: `Tests/MacParakeetTests/ViewModels/ViewModelMocks.swift`
-has an `LLMServiceProtocol` mock; `Tests/MacParakeetTests/Services/LLM/LLMServiceTests.swift`
-and `Tests/MacParakeetTests/Services/TranscriptionServiceTests.swift` are the
+Existing mock + tests: `Tests/SottoTests/ViewModels/ViewModelMocks.swift`
+has an `LLMServiceProtocol` mock; `Tests/SottoTests/Services/LLM/LLMServiceTests.swift`
+and `Tests/SottoTests/Services/TranscriptionServiceTests.swift` are the
 regression nets and the structural pattern for the new test.
 
 ## Commands you will need
@@ -104,10 +104,10 @@ regression nets and the structural pattern for the new test.
 ## Scope
 
 **In scope** (create/modify):
-- `Sources/MacParakeetCore/TextProcessing/TranscriptFormatter.swift` (create — holds the unified `FormatterOutcome` + `TranscriptFormatter`)
-- `Sources/MacParakeetCore/Services/Dictation/DictationService.swift` (remove the dup; delegate)
-- `Sources/MacParakeetCore/Services/TranscriptionService.swift` (remove the dup; delegate)
-- `Tests/MacParakeetTests/TextProcessing/TranscriptFormatterTests.swift` (create)
+- `Sources/SottoCore/TextProcessing/TranscriptFormatter.swift` (create — holds the unified `FormatterOutcome` + `TranscriptFormatter`)
+- `Sources/SottoCore/Services/Dictation/DictationService.swift` (remove the dup; delegate)
+- `Sources/SottoCore/Services/TranscriptionService.swift` (remove the dup; delegate)
+- `Tests/SottoTests/TextProcessing/TranscriptFormatterTests.swift` (create)
 - `plans/README.md` (status row)
 
 **Out of scope** (do NOT touch):
@@ -130,7 +130,7 @@ regression nets and the structural pattern for the new test.
 
 ### Step 1: Create the unified FormatterOutcome + TranscriptFormatter
 
-Create `Sources/MacParakeetCore/TextProcessing/TranscriptFormatter.swift`:
+Create `Sources/SottoCore/TextProcessing/TranscriptFormatter.swift`:
 
 1. One internal `struct FormatterOutcome: Sendable` with `text: String?`,
    `run: LLMRun?`, `resolution: AIFormatterPromptResolution?` (superset — the
@@ -157,12 +157,12 @@ Create `Sources/MacParakeetCore/TextProcessing/TranscriptFormatter.swift`:
    The body is the merged logic: guard `shouldUseAIFormatter(), let llmService`
    (else `.skipped`); if `maxInputChars` is non-nil and `text.count` exceeds it,
    log the `…_skipped reason=input_too_long` line and return `.skipped`; if
-   `lifecycleNotificationSource` is non-nil, post `.macParakeetAIFormatterDidStart`
-   and `defer` `.macParakeetAIFormatterDidFinish` (userInfo `["source": that]`);
+   `lifecycleNotificationSource` is non-nil, post `.sottoAIFormatterDidStart`
+   and `defer` `.sottoAIFormatterDidFinish` (userInfo `["source": that]`);
    `let (promptTemplate, resolution) = await resolvePrompt()`; compute
    `defaultPromptUsed`; `do { call formatTranscriptDetailed(…); trim; build LLMRun(…
    feature:); return FormatterOutcome(text:, run:, resolution:) } catch { rethrow
-   CancellationError; else log `…_failed`, post `.macParakeetAIFormatterWarning`
+   CancellationError; else log `…_failed`, post `.sottoAIFormatterWarning`
    (userInfo source+message), return FormatterOutcome(text: nil, run:
    failedFormatterRun(…), resolution: nil) }`.
 
@@ -228,7 +228,7 @@ In `TranscriptionService`:
 
 ### Step 4: Add focused TranscriptFormatter tests
 
-Create `Tests/MacParakeetTests/TextProcessing/TranscriptFormatterTests.swift`,
+Create `Tests/SottoTests/TextProcessing/TranscriptFormatterTests.swift`,
 using the `LLMServiceProtocol` mock from `ViewModelMocks.swift` (or a local minimal
 mock if that one isn't reusable). Cover:
 - `skipped` when `shouldUseAIFormatter` returns false (no llmService call).
@@ -237,7 +237,7 @@ mock if that one isn't reusable). Cover:
 - success: returns trimmed text + a non-nil `run`; `resolution` carried when the
   prompt provider returns one.
 - failure: a mock that throws a non-cancellation error returns `text == nil`, a
-  failed `run`, and posts `.macParakeetAIFormatterWarning` (observe via a
+  failed `run`, and posts `.sottoAIFormatterWarning` (observe via a
   NotificationCenter expectation).
 - `CancellationError` from the mock is rethrown (not swallowed).
 - lifecycle: when `lifecycleNotificationSource` is non-nil, DidStart/DidFinish are
@@ -249,16 +249,16 @@ mock if that one isn't reusable). Cover:
 
 **Verify**:
 - `swift test` → all pass.
-- `grep -rn "struct FormatterOutcome" Sources/MacParakeetCore` → exactly **one**
+- `grep -rn "struct FormatterOutcome" Sources/SottoCore` → exactly **one**
   match (in `TranscriptFormatter.swift`).
-- `grep -rn "private func formatTranscriptIfNeeded" Sources/MacParakeetCore` → **zero** matches.
+- `grep -rn "private func formatTranscriptIfNeeded" Sources/SottoCore` → **zero** matches.
 
 ## Test plan
 
 - **Regression nets (must pass unchanged):** `TranscriptionServiceTests`, the
   Dictation tests, and `LLMServiceTests`. The formatter contract is preserved, so
   these pass without edits.
-- **New:** `Tests/MacParakeetTests/TextProcessing/TranscriptFormatterTests.swift`
+- **New:** `Tests/SottoTests/TextProcessing/TranscriptFormatterTests.swift`
   (cases listed in Step 4), modeled on `LLMServiceTests.swift`'s mock usage. This is
   the first time the formatter path is testable without standing up a full service.
 - Verification: `swift test` → all pass; the three filters in Steps 2–4 each green.
@@ -267,14 +267,14 @@ mock if that one isn't reusable). Cover:
 
 Machine-checkable. ALL must hold:
 
-- [ ] `Sources/MacParakeetCore/TextProcessing/TranscriptFormatter.swift` exists with one `FormatterOutcome` and one `TranscriptFormatter`.
-- [ ] `grep -rn "struct FormatterOutcome" Sources/MacParakeetCore` → exactly 1 match.
-- [ ] `grep -rn "private func formatTranscriptIfNeeded" Sources/MacParakeetCore` → 0 matches.
+- [ ] `Sources/SottoCore/TextProcessing/TranscriptFormatter.swift` exists with one `FormatterOutcome` and one `TranscriptFormatter`.
+- [ ] `grep -rn "struct FormatterOutcome" Sources/SottoCore` → exactly 1 match.
+- [ ] `grep -rn "private func formatTranscriptIfNeeded" Sources/SottoCore` → 0 matches.
 - [ ] `swift build` exits 0.
 - [ ] `swift test --filter TranscriptFormatterTests` passes (≥ 6 tests).
 - [ ] `swift test --filter TranscriptionServiceTests` and `--filter Dictation` pass **without assertion edits**.
 - [ ] `swift test` exits 0 (full suite).
-- [ ] Telemetry log keys unchanged: `grep -rn "ai_formatter_failed\|ai_formatter_skipped" Sources/MacParakeetCore` still shows `dictation_ai_formatter_failed`, `transcription_ai_formatter_failed`, `transcription_ai_formatter_skipped`.
+- [ ] Telemetry log keys unchanged: `grep -rn "ai_formatter_failed\|ai_formatter_skipped" Sources/SottoCore` still shows `dictation_ai_formatter_failed`, `transcription_ai_formatter_failed`, `transcription_ai_formatter_skipped`.
 - [ ] `plans/README.md` status row updated.
 
 ## STOP conditions

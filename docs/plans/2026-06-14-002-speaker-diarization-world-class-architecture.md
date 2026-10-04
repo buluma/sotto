@@ -18,7 +18,7 @@ authors: Codex/GPT, Daniel Moon
 
 ## Executive Thesis
 
-MacParakeet is not missing a diarization module. It already has a strong
+Sotto is not missing a diarization module. It already has a strong
 anonymous, local, final-pass diarization foundation:
 
 - `DiarizationService` wraps FluidAudio offline diarization behind a small
@@ -95,7 +95,7 @@ every word. That is the right shape for per-transcript display labels.
 
 Meeting artifacts include transcript JSON with speaker fields, and CLI
 commands expose speaker detection/model readiness. This matters because
-MacParakeet is already agent-facing, not just a GUI app.
+Sotto is already agent-facing, not just a GUI app.
 
 ### Architectural Friction
 
@@ -177,8 +177,8 @@ architecture names, not committed Swift protocols.
 profile lifecycle.
 
 **Files likely involved:** `spec/01-data-model.md`, `DatabaseManager`, new
-models/repositories under `Sources/MacParakeetCore/Database/` and
-`Sources/MacParakeetCore/Models/`.
+models/repositories under `Sources/SottoCore/Database/` and
+`Sources/SottoCore/Models/`.
 
 **Data it should own:**
 
@@ -443,7 +443,7 @@ Scope: world-class editing workflow.
 6. Replay corrections after retranscription when the source audio is still
    present.
 
-This is the phase that moves MacParakeet from "has diarization" to "users can
+This is the phase that moves Sotto from "has diarization" to "users can
 trust and repair diarization."
 
 ### Phase 4: Unified Rendering
@@ -571,5 +571,5 @@ Phase 0 contract cleanup
   -> Phase 6 tentative live preview
 ```
 
-This keeps MacParakeet aligned with the frontier without losing its core
+This keeps Sotto aligned with the frontier without losing its core
 advantage: native, local-first, durable, user-correctable meeting memory.

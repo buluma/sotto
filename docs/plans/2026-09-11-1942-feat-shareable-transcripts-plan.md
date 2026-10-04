@@ -20,7 +20,7 @@ execution: code
 
 ## Goal Capsule
 
-- **Objective:** A MacParakeet user can publish selected transcript-derived text as a private, expiring web page that is easy to send and remains under the publisher's control.
+- **Objective:** A Sotto user can publish selected transcript-derived text as a private, expiring web page that is easy to send and remains under the publisher's control.
 - **Means:** Add an explicit encrypted-snapshot sharing surface at `share.macparakeet.com` with anonymous owner management and accountless recipient access (KTD1-KTD7).
 - **Product authority:** This plan governs the Mac app sharing flow, recipient viewer, anonymous owner lifecycle, and hosted share service required for read-only v1.
 - **Execution profile:** Land coordinated app-repository and website-repository changes behind a default-off app flag; deploy and verify the service before enabling the app surface.
@@ -33,13 +33,13 @@ execution: code
 
 ### Summary
 
-MacParakeet will publish an explicitly reviewed, text-only snapshot as an encrypted, expiring page at `share.macparakeet.com`.
+Sotto will publish an explicitly reviewed, text-only snapshot as an encrypted, expiring page at `share.macparakeet.com`.
 Anyone with the complete link can read the snapshot, while its anonymous owner can update it deliberately or stop sharing permanently.
 
 ### Problem Frame
 
-MacParakeet can already copy and export transcripts, notes, and summaries, but those actions make the recipient responsible for presentation and make later revocation impossible.
-Users need a low-friction way to share only the useful text while preserving MacParakeet's local-first privacy position and avoiding a mandatory account system.
+Sotto can already copy and export transcripts, notes, and summaries, but those actions make the recipient responsible for presentation and make later revocation impossible.
+Users need a low-friction way to share only the useful text while preserving Sotto's local-first privacy position and avoiding a mandatory account system.
 
 ### Key Decisions
 
@@ -54,7 +54,7 @@ Users need a low-friction way to share only the useful text while preserving Mac
 
 ### Actors
 
-- A1. **Publisher:** A MacParakeet user who selects text, creates a link, manages its lifetime, and may revoke it.
+- A1. **Publisher:** A Sotto user who selects text, creates a link, manages its lifetime, and may revoke it.
 - A2. **Recipient:** Anyone possessing the complete link who opens the read-only page without an account.
 - A3. **Share service operator:** The party that serves the viewer, stores encrypted payloads and operational metadata, and enforces lifecycle and abuse controls without routine plaintext access.
 
@@ -62,14 +62,14 @@ Users need a low-friction way to share only the useful text while preserving Mac
 
 **Content selection and publication**
 
-- R1. The publisher must review the exact text and metadata included before MacParakeet uploads a share.
+- R1. The publisher must review the exact text and metadata included before Sotto uploads a share.
 - R2. Meeting-like items initially select summaries and notes while leaving a full transcript off; transcript-only items initially select their transcript.
 - R3. A selected transcript offers availability-aware timestamp and speaker-label options plus privacy-filtered metadata, consistent with the existing export vocabulary.
 - R4. A v1 share may contain text and safe presentation metadata only; source audio, local paths, machine identifiers, model details, and hidden application metadata are ineligible.
 
 **Confidentiality and recipient access**
 
-- R5. MacParakeet must encrypt every share payload before any content leaves the Mac.
+- R5. Sotto must encrypt every share payload before any content leaves the Mac.
 - R6. The hosted storage and management service must not receive the plaintext payload or its decryption key during normal operation.
 - R7. A recipient must be able to open a share with the complete URL alone, without a password or account.
 - R8. The product must explain that the URL is a bearer capability and that forwarding it forwards access.
@@ -84,7 +84,7 @@ Users need a low-friction way to share only the useful text while preserving Mac
 
 **Anonymous ownership and recovery**
 
-- R14. MacParakeet must generate a random owner credential rather than deriving identity from hardware, network address, or user content.
+- R14. Sotto must generate a random owner credential rather than deriving identity from hardware, network address, or user content.
 - R15. Normal credential storage must not intentionally require biometric, application-password, or onboarding permission access; ordinary signed-app use follows the existing non-synchronizing, device-only Keychain pattern.
 - R16. An optional recovery code may restore management access, but it must not decrypt shared content or reconstruct a lost complete recipient URL. A device may add recovery only when none exists; replacing or removing it requires proof of the current code.
 - R29. First-share and recovery UI must explain that management is device-bound unless the recovery code is saved. Recovery invalidates prior credentials; a superseded installation stops retrying and marks its records as no longer manageable from that device. Losing a configured code leaves device management intact but provides no in-place recovery reset.
@@ -116,7 +116,7 @@ Users need a low-friction way to share only the useful text while preserving Mac
 
 - F1. Publish a snapshot
   - **Trigger:** A1 chooses Share from an item containing eligible text.
-  - **Steps:** MacParakeet applies safe defaults, A1 reviews the preview and expiration, the app encrypts locally, and the service confirms publication before the app exposes the complete URL.
+  - **Steps:** Sotto applies safe defaults, A1 reviews the preview and expiration, the app encrypts locally, and the service confirms publication before the app exposes the complete URL.
   - **Outcome:** A1 receives a copyable and system-shareable URL plus an active management record.
   - **Covered by:** R1-R11, R14-R15, R23, R25-R27.
 
@@ -128,13 +128,13 @@ Users need a low-friction way to share only the useful text while preserving Mac
 
 - F3. Update an active snapshot
   - **Trigger:** A1 chooses Update shared page for a locally changed source.
-  - **Steps:** MacParakeet shows the new explicit preview, encrypts a replacement revision, and waits for confirmed publication.
+  - **Steps:** Sotto shows the new explicit preview, encrypts a replacement revision, and waits for confirmed publication.
   - **Outcome:** The same complete URL reveals the new snapshot and updated time; a failed update leaves the last confirmed revision available.
   - **Covered by:** R1-R6, R9-R13, R23.
 
 - F4. Stop or delete
   - **Trigger:** A1 stops a share directly or deletes a local source that has active shares.
-  - **Steps:** MacParakeet requests permanent revocation, preserves only required pending-management state when offline, and records confirmation when the service blocks access.
+  - **Steps:** Sotto requests permanent revocation, preserves only required pending-management state when offline, and records confirmation when the service blocks access.
   - **Outcome:** Future visits cannot retrieve the payload, and the encrypted remote object enters bounded deletion.
   - **Covered by:** R17-R19, R24, R27-R28.
 
@@ -146,7 +146,7 @@ Users need a low-friction way to share only the useful text while preserving Mac
 
 - F6. Change expiration
   - **Trigger:** A1 chooses a new expiration for an active share.
-  - **Steps:** MacParakeet validates the future instant against the original 90-day ceiling and waits for the service to confirm the change.
+  - **Steps:** Sotto validates the future instant against the original 90-day ceiling and waits for the service to confirm the change.
   - **Outcome:** The viewer and Shared pages surface show the confirmed expiration; failure leaves the prior value in force.
   - **Covered by:** R9-R11, R23, R28.
 
@@ -165,7 +165,7 @@ Users need a low-friction way to share only the useful text while preserving Mac
 ### Success Criteria
 
 - A publisher can complete create, copy, explicit update, expiry change, and permanent stop flows without creating an account or granting a new macOS permission.
-- A recipient can use every supported viewing action without sending decrypted text back to MacParakeet.
+- A recipient can use every supported viewing action without sending decrypted text back to Sotto.
 - Database-only and object-storage-only disclosure tests recover no transcript plaintext, notes, summaries, fragment keys, owner secrets, or recovery secrets.
 - Revocation tests prove that no ciphertext is served after the service acknowledges permanent stop.
 - A future coding agent can implement the app, viewer, and service without inventing product behavior or weakening the documented privacy boundary.
@@ -189,7 +189,7 @@ Users need a low-friction way to share only the useful text while preserving Mac
 - `share.macparakeet.com` can be configured as the public origin for the recipient viewer and service.
 - The Mac app can reuse the existing export vocabulary for timestamps, speaker labels, and metadata availability.
 - The existing Keychain wrapper establishes a prompt-free credential-storage pattern, though share credentials need their own service namespace and focused lifecycle tests.
-- The hosted implementation may use current MacParakeet Cloudflare infrastructure, but deployment topology and vendor limits remain implementation choices unless fixed by an ADR.
+- The hosted implementation may use current Sotto Cloudflare infrastructure, but deployment topology and vendor limits remain implementation choices unless fixed by an ADR.
 
 ### Sources and Research
 
@@ -197,8 +197,8 @@ Users need a low-friction way to share only the useful text while preserving Mac
 - `spec/adr/002-local-only.md`
 - `spec/adr/027-product-north-star.md`
 - `spec/contracts/README.md`
-- `Sources/MacParakeetCore/Licensing/KeychainKeyValueStore.swift`
-- `Sources/MacParakeetCore/Services/ExportService.swift`
+- `Sources/SottoCore/Licensing/KeychainKeyValueStore.swift`
+- `Sources/SottoCore/Services/ExportService.swift`
 - `docs/research/2026-09-11-shareable-transcripts/report.md`
 - `docs/research/2026-09-11-shareable-transcripts/share-ui-prototype.html`
 
@@ -214,7 +214,7 @@ Users need a low-friction way to share only the useful text while preserving Mac
 - KTD4. **Persist an ordered local publication ledger and outbox.** GRDB owns remote identity, last confirmed revision, local projection digest, lifecycle receipts, and idempotent pending operations independently from the source row. This is required for R19, R23-R24 and for deletion while offline or during an uncertain create response.
 - KTD5. **Use an isolated Cloudflare share deployment.** A dedicated Worker uses D1 as authoritative lifecycle metadata and private R2 for immutable ciphertext objects; object creation precedes an atomic metadata-pointer update, while stop commits denial before cleanup. A permanent owner-unlinked commitment reserves each accepted locator after ordinary terminal history expires. This follows the existing hosting ecosystem without reusing telemetry consent, storage, credentials, or logs.
 - KTD6. **Serve a small first-party static viewer.** The viewer fetches an active envelope, decrypts and renders locally, and performs all recipient conveniences without third-party assets or telemetry. Deployment integrity remains an explicit trust boundary under R20-R22 and R26-R27.
-- KTD7. **Keep v1 app-facing but Core-owned.** SwiftUI supplies the initial user surface, while bundle, crypto, transport, credentials, and lifecycle live in `MacParakeetCore` behind reusable protocols. The public CLI is deferred without making future agent access depend on UI code.
+- KTD7. **Keep v1 app-facing but Core-owned.** SwiftUI supplies the initial user surface, while bundle, crypto, transport, credentials, and lifecycle live in `SottoCore` behind reusable protocols. The public CLI is deferred without making future agent access depend on UI code.
 
 ### High-Level Technical Design
 
@@ -291,7 +291,7 @@ stateDiagram-v2
 ### Cross-Repository Sequencing
 
 The app work belongs in this repository.
-The hosted Worker, viewer, database migration, DNS binding, public privacy copy, and deployment configuration belong in the companion `macparakeet-website` repository.
+The hosted Worker, viewer, database migration, DNS binding, public privacy copy, and deployment configuration belong in the companion `sotto-website` repository.
 
 Build the shared fixture and service contract first, then land the service and viewer while the app flag remains off.
 Before durable credential, deletion, and app-integration work depends on the hosted surface, use a disposable synthetic share to verify that representative browsers and sharing channels preserve the fragment and that the planned privacy explanation is understood.
@@ -320,7 +320,7 @@ The app may merge after it passes against a disposable or staging service, but p
 - **Goal:** Produce exactly previewable text bundles and interoperable encrypted envelopes without exposing ineligible local data.
 - **Requirements:** R1-R8, R12-R13, R25-R27; F1-F3; AE1, AE3, AE6; KTD1-KTD2.
 - **Dependencies:** None.
-- **Files:** `Sources/MacParakeetCore/Services/Sharing/ShareBundle.swift`, `Sources/MacParakeetCore/Services/Sharing/ShareProjection.swift`, `Sources/MacParakeetCore/Services/Sharing/ShareLink.swift`, `Sources/MacParakeetCore/Services/Sharing/ShareCryptography.swift`, `spec/contracts/share-link-bundle-v1.md`, `spec/contracts/share-service-v1.md`, `spec/contracts/fixtures/share-crypto-v1.json`, `Tests/MacParakeetTests/Services/Sharing/ShareProjectionTests.swift`, `Tests/MacParakeetTests/Services/Sharing/ShareLinkContractTests.swift`, `Tests/MacParakeetTests/Services/Sharing/ShareCryptoEnvelopeTests.swift`, `Tests/MacParakeetTests/Services/Sharing/ShareBundleV1Tests.swift`.
+- **Files:** `Sources/SottoCore/Services/Sharing/ShareBundle.swift`, `Sources/SottoCore/Services/Sharing/ShareProjection.swift`, `Sources/SottoCore/Services/Sharing/ShareLink.swift`, `Sources/SottoCore/Services/Sharing/ShareCryptography.swift`, `spec/contracts/share-link-bundle-v1.md`, `spec/contracts/share-service-v1.md`, `spec/contracts/fixtures/share-crypto-v1.json`, `Tests/SottoTests/Services/Sharing/ShareProjectionTests.swift`, `Tests/SottoTests/Services/Sharing/ShareLinkContractTests.swift`, `Tests/SottoTests/Services/Sharing/ShareCryptoEnvelopeTests.swift`, `Tests/SottoTests/Services/Sharing/ShareBundleV1Tests.swift`.
 - **Approach:**
   1. Build a sharing-specific allowlisted projection from resolved display data and make the preview render that immutable value.
   2. Finalize the two normative contracts, then serialize the v1 bundle, enforce its size and structural rules, generate locator/key/nonce values, and construct the complete URL from them.
@@ -341,7 +341,7 @@ The app may merge after it passes against a disposable or staging service, but p
 - **Goal:** Give the app durable accountless management, exact lifecycle receipts, and safe retry behavior across restarts and lost responses.
 - **Requirements:** R9-R19, R23-R29, R31; F1, F3-F6; AE2-AE5, AE7-AE8; KTD3-KTD4.
 - **Dependencies:** U1.
-- **Files:** `Sources/MacParakeetCore/Models/SharePublication.swift`, `Sources/MacParakeetCore/Database/SharePublicationRepository.swift`, `Sources/MacParakeetCore/Database/DatabaseManager.swift`, `Sources/MacParakeetCore/Services/Sharing/ShareCredentialStore.swift`, `Sources/MacParakeetCore/Services/Sharing/ShareRemoteClient.swift`, `Sources/MacParakeetCore/Services/Sharing/ShareCoordinator.swift`, `Sources/MacParakeetCore/Database/README.md`, `Tests/MacParakeetTests/Database/SharePublicationRepositoryTests.swift`, `Tests/MacParakeetTests/Services/Sharing/ShareCredentialStoreTests.swift`, `Tests/MacParakeetTests/Services/Sharing/ShareRemoteClientTests.swift`, `Tests/MacParakeetTests/Services/Sharing/ShareCoordinatorTests.swift`.
+- **Files:** `Sources/SottoCore/Models/SharePublication.swift`, `Sources/SottoCore/Database/SharePublicationRepository.swift`, `Sources/SottoCore/Database/DatabaseManager.swift`, `Sources/SottoCore/Services/Sharing/ShareCredentialStore.swift`, `Sources/SottoCore/Services/Sharing/ShareRemoteClient.swift`, `Sources/SottoCore/Services/Sharing/ShareCoordinator.swift`, `Sources/SottoCore/Database/README.md`, `Tests/SottoTests/Database/SharePublicationRepositoryTests.swift`, `Tests/SottoTests/Services/Sharing/ShareCredentialStoreTests.swift`, `Tests/SottoTests/Services/Sharing/ShareRemoteClientTests.swift`, `Tests/SottoTests/Services/Sharing/ShareCoordinatorTests.swift`.
 - **Approach:**
   1. Add non-cascading share and ordered-outbox persistence with the next migration after the implementation branch's current schema.
   2. Wrap the existing Keychain primitive with a dedicated sharing namespace for owner, recovery, and per-share content keys; do not couple sharing to licensing identifiers.
@@ -370,7 +370,7 @@ The app may merge after it passes against a disposable or staging service, but p
 - **Goal:** Publish and read encrypted snapshots at `share.macparakeet.com` with authoritative lifecycle enforcement and no recipient tracking.
 - **Requirements:** R5-R9, R11-R13, R16-R18, R20-R27, R30-R31; F1-F6; AE2-AE3, AE5-AE9; KTD1-KTD3, KTD5-KTD6.
 - **Dependencies:** U1 for the shared fixture and both v1 contracts.
-- **Target repo:** `macparakeet-website`.
+- **Target repo:** `sotto-website`.
 - **Files:** `wrangler.share.toml`, `workers/share-service.ts`, `workers/share-service-core.mjs`, `scripts/migrations/2026-09-share-service.sql`, `public/share/index.html`, `public/share/viewer.js`, `public/share/viewer.css`, `scripts/sync-share-fixture.mjs`, `test-fixtures/share-crypto-v1.json`, `test-fixtures/share-crypto-v1.provenance.json`, `tests/share-api-v1.test.mjs`, `tests/share-idempotency-v1.test.mjs`, `tests/share-expiry-retention-v1.test.mjs`, `tests/share-redaction-v1.test.mjs`, `tests/share-viewer-v1.test.mjs`, `package.json`.
 - **Approach:**
   1. Create a deployment isolated from telemetry with dedicated D1, private R2, secrets, routes, logs, quotas, kill switch, and read-only mode.
@@ -403,13 +403,13 @@ The app may merge after it passes against a disposable or staging service, but p
 - **Goal:** Let a publisher preview, create, copy, update, expire, recover, and permanently stop links with honest pending and privacy states.
 - **Requirements:** R1-R3, R7-R18, R20, R23-R26, R28-R29; F1, F3, F5-F6; AE1-AE5, AE7; KTD4, KTD7.
 - **Dependencies:** U1-U2 and a contract-compatible U3 staging service.
-- **Files:** `Sources/MacParakeetCore/AppFeatures.swift`, `Sources/MacParakeetViewModels/ShareDraftViewModel.swift`, `Sources/MacParakeetViewModels/ShareManagementViewModel.swift`, `Sources/MacParakeet/Views/Transcription/ShareTranscriptSheet.swift`, `Sources/MacParakeet/Views/Transcription/SharedSharesView.swift`, `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift`, `Sources/MacParakeet/AppEnvironment.swift`, `Sources/MacParakeet/AppEnvironmentConfigurer.swift`, `Tests/MacParakeetTests/ViewModels/ShareDraftViewModelTests.swift`, `Tests/MacParakeetTests/ViewModels/ShareManagementViewModelTests.swift`, `Tests/MacParakeetTests/Views/ShareTranscriptPresentationTests.swift`.
+- **Files:** `Sources/SottoCore/AppFeatures.swift`, `Sources/SottoViewModels/ShareDraftViewModel.swift`, `Sources/SottoViewModels/ShareManagementViewModel.swift`, `Sources/Sotto/Views/Transcription/ShareTranscriptSheet.swift`, `Sources/Sotto/Views/Transcription/SharedSharesView.swift`, `Sources/Sotto/Views/Transcription/TranscriptResultView.swift`, `Sources/Sotto/AppEnvironment.swift`, `Sources/Sotto/AppEnvironmentConfigurer.swift`, `Tests/SottoTests/ViewModels/ShareDraftViewModelTests.swift`, `Tests/SottoTests/ViewModels/ShareManagementViewModelTests.swift`, `Tests/SottoTests/Views/ShareTranscriptPresentationTests.swift`.
 - **Approach:**
   1. Add a release-safe feature gate and app environment dependencies without constructing network work while the gate is unavailable.
-  2. Implement contextual selection, exact preview, availability-aware transcript options, expiry choices, bearer-link explanation, and publish success with copy and `.parakeetAction(...)` system sharing.
+  2. Implement contextual selection, exact preview, availability-aware transcript options, expiry choices, bearer-link explanation, and publish success with copy and `.sottoAction(...)` system sharing.
   3. Implement Shared by me management for active, stale, detached, pending, expired, and stopped records with explicit same-link update and irreversible-stop confirmation.
   4. Offer optional recovery-code creation and import without blocking first publish or implying that it restores content keys.
-- **Patterns to follow:** Existing export option availability, stale notes/action gating, app-environment injection, testable `@Observable` state, and `.parakeetAction(...)` button styling.
+- **Patterns to follow:** Existing export option availability, stale notes/action gating, app-environment injection, testable `@Observable` state, and `.sottoAction(...)` button styling.
 - **Test scenarios:**
   - Covers AE1. Meeting and transcript-only defaults select the agreed sections, and changing toggles updates the exact immutable preview.
   - The UI rejects an empty selection, unavailable transcript options, past custom dates, and dates beyond the original 90-day ceiling without silently clamping.
@@ -430,7 +430,7 @@ The app may merge after it passes against a disposable or staging service, but p
 - **Goal:** Preserve the user's local deletion intent while guaranteeing that active remote links are durably queued for terminal deletion.
 - **Requirements:** R17-R19, R24, R27-R28; F4; AE4, AE7; KTD4.
 - **Dependencies:** U2 and U4.
-- **Files:** `Sources/MacParakeetCore/Services/Sharing/TranscriptionDeletionCoordinator.swift`, `Sources/MacParakeetViewModels/TranscriptionDeletionCleanup.swift`, `Sources/MacParakeetViewModels/TranscriptionViewModel.swift`, `Sources/MacParakeetViewModels/TranscriptionLibraryViewModel.swift`, `Sources/MacParakeetCore/Database/TranscriptionRepository.swift`, `Tests/MacParakeetTests/ViewModels/TranscriptionDeletionCleanupTests.swift`, `Tests/MacParakeetTests/Database/ShareDeletionPropagationTests.swift`.
+- **Files:** `Sources/SottoCore/Services/Sharing/TranscriptionDeletionCoordinator.swift`, `Sources/SottoViewModels/TranscriptionDeletionCleanup.swift`, `Sources/SottoViewModels/TranscriptionViewModel.swift`, `Sources/SottoViewModels/TranscriptionLibraryViewModel.swift`, `Sources/SottoCore/Database/TranscriptionRepository.swift`, `Tests/SottoTests/ViewModels/TranscriptionDeletionCleanupTests.swift`, `Tests/SottoTests/Database/ShareDeletionPropagationTests.swift`.
 - **Approach:** Route single-item and bulk deletion through one coordinator that records terminal share operations and detaches share associations in the same transaction that authorizes source deletion, then lets the existing local artifact cleanup continue independently.
 - **Execution note:** Add characterization coverage for every current deletion entry point before replacing direct repository calls.
 - **Test scenarios:**
@@ -448,7 +448,7 @@ The app may merge after it passes against a disposable or staging service, but p
 - **Goal:** Prove the implementation matches its privacy claims and leave public enablement as an explicit, reversible release decision.
 - **Requirements:** R4-R8, R17-R27, R30-R31; AE6-AE9; KTD5-KTD7.
 - **Dependencies:** U1-U5.
-- **Files:** `docs/share-service-privacy-and-operations.md`, `spec/15-shareable-transcripts.md`, `spec/adr/002-local-only.md`, `spec/adr/029-encrypted-shareable-transcript-snapshots.md`, `spec/contracts/share-link-bundle-v1.md`, `spec/contracts/share-service-v1.md`, `spec/contracts/telemetry-v1.md`, `spec/README.md`, `spec/contracts/README.md`, `Sources/MacParakeet/Views/Settings/SettingsView.swift`; in `macparakeet-website`: `src/pages/privacy.astro`, share deployment and incident runbooks.
+- **Files:** `docs/share-service-privacy-and-operations.md`, `spec/15-shareable-transcripts.md`, `spec/adr/002-local-only.md`, `spec/adr/029-encrypted-shareable-transcript-snapshots.md`, `spec/contracts/share-link-bundle-v1.md`, `spec/contracts/share-service-v1.md`, `spec/contracts/telemetry-v1.md`, `spec/README.md`, `spec/contracts/README.md`, `Sources/Sotto/Views/Settings/SettingsView.swift`; in `sotto-website`: `src/pages/privacy.astro`, share deployment and incident runbooks.
 - **Approach:** Reconcile governing docs with observed staging behavior, complete synthetic cross-browser and network/log evidence, conduct an independent security review, and keep the app flag off until a separate release decision accepts every documented gate.
 - **Test scenarios:**
   - Packet and application-log capture across create, read, update, expiry, recovery, report, and delete contains no prohibited secret or content.
@@ -469,9 +469,9 @@ The app may merge after it passes against a disposable or staging service, but p
 | Native build | `swift build` in the app worktree after integration. | All first-party sharing code compiles with Swift 6 concurrency checks and the default-off configuration. |
 | Native final suite | `swift test` once as the final app-repository code gate. | The full suite passes; do not infer browser, service, or deployment correctness from it. |
 | Native formatting | `xcrun swift-format lint --recursive --configuration .swift-format Sources Tests` as a report-only gate matching repository policy. | No new sharing-file formatting warnings; existing unrelated warnings are reported, not rewritten. |
-| Service contract suite | Add and run `pnpm test:share` in `macparakeet-website`. | API, auth, lifecycle, idempotency, concurrency, retention, redaction, and abuse semantics match `share-service-v1`. |
+| Service contract suite | Add and run `pnpm test:share` in `sotto-website`. | API, auth, lifecycle, idempotency, concurrency, retention, redaction, and abuse semantics match `share-service-v1`. |
 | Viewer browser suite | Add and run `pnpm test:share-viewer` against a disposable environment. | The committed Swift fixture decrypts and every recipient convenience, accessibility, CSP, and no-external-request scenario passes. |
-| Website build | `pnpm build` in `macparakeet-website`. | Existing site output and the isolated share deployment build without regression. |
+| Website build | `pnpm build` in `sotto-website`. | Existing site output and the isolated share deployment build without regression. |
 | Cross-repo fixture | The app repository owns `share-crypto-v1.json`; the website vendors it only through a sync command pinned to an app commit and records the source digest. | Native, service, and browser tests consume byte-identical data, and CI fails on a provenance or digest mismatch. |
 | Staging lifecycle | Exercise create, explicit update, exact expiry, permanent stop, recovery, offline retry, and deletion with synthetic data. | Receipts, cache behavior, object cleanup, and UI states match the contracts under lost responses and concurrency. |
 | Privacy capture | Inspect app, browser, Worker, edge, D1, R2, APM, crash, and support evidence for all flows. | No plaintext, fragment, complete URL, content-derived metadata, or owner/recovery secret appears outside its allowed boundary. |

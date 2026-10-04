@@ -1,6 +1,6 @@
-# MacParakeet independent app audit — 2026-10-02
+# Sotto independent app audit — 2026-10-02
 
-MacParakeet has useful architectural foundations: shared Core logic, a broad
+Sotto has useful architectural foundations: shared Core logic, a broad
 automation contract, source-separated meeting audio, transactional storage,
 correction overlays and substantial deterministic tests. The best next work
 is to protect user intent across asynchronous operations, make uncertain

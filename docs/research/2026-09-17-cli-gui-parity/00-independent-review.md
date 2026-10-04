@@ -14,7 +14,7 @@ gated off). The remaining work that is both **real** and **small** is:
 
 1. A Homebrew/standalone CLI bug: LLM-backed CLI paths construct `LLMService()`
    against `UserDefaults.standard`, so they miss the GUI’s saved provider in the
-   shared `com.macparakeet.MacParakeet` suite.
+   shared `com.sotto.Sotto` suite.
 2. Additive agent mutations that already exist in Core and the GUI: speaker
    rename/assign/merge, library title rename, a few JSON/catalog holes.
 
@@ -26,7 +26,7 @@ split, not a wiring bug. Skip.
 | Finding | Source | Ship? |
 | --- | --- | --- |
 | Homebrew `cards generate` / meeting import+split auto-prompts/cards cannot see GUI LLM config | `02-config-llm.md` | **Yes** — two call sites |
-| SpeechEngine / runtime prefs already pass `macParakeetAppDefaults()` | `02` | No code |
+| SpeechEngine / runtime prefs already pass `sottoAppDefaults()` | `02` | No code |
 | Speaker identity mutations (rename/assign/merge/…) have no CLI wrapper | `03`, `05` | **Yes** — rename, assign, merge-speakers only |
 | Timed-text CLI is meeting-only; GUI is transcription-scoped | `03`, `05` | **Follow-up** — not this PR (naming/surface decision) |
 | No CLI title rename after create | `03` | **Yes** — `history rename` matching GUI gates |

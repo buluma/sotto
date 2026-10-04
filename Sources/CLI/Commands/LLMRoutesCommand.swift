@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 struct LLMRoutesCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
@@ -44,7 +44,7 @@ struct LLMRoutesSetCommand: ParsableCommand {
 
     func run() throws {
         try emitJSONOrRethrow(json: json) {
-            let defaults = macParakeetAppDefaults()
+            let defaults = sottoAppDefaults()
             let store = LLMConfigStore()
             let snapshot = try setLLMRoute(
                 task, options: llm, store: store, cliStore: LocalCLIConfigStore(defaults: defaults))

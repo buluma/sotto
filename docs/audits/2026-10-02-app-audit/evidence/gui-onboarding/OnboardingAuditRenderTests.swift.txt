@@ -3,15 +3,15 @@
 import AppKit
 import SwiftUI
 import XCTest
-@testable import MacParakeet
-@testable import MacParakeetCore
-@testable import MacParakeetViewModels
+@testable import Sotto
+@testable import SottoCore
+@testable import SottoViewModels
 
 @MainActor
 final class OnboardingAuditRenderTests: XCTestCase {
     func testRenderSyntheticOnboardingStates() async throws {
-        guard let capturePath = ProcessInfo.processInfo.environment["MACPARAKEET_AUDIT_RENDER_DIR"] else {
-            throw XCTSkip("Audit-only probe requires MACPARAKEET_AUDIT_RENDER_DIR")
+        guard let capturePath = ProcessInfo.processInfo.environment["SOTTO_AUDIT_RENDER_DIR"] else {
+            throw XCTSkip("Audit-only probe requires SOTTO_AUDIT_RENDER_DIR")
         }
         Telemetry.configure(NoOpTelemetryService())
         _ = NSApplication.shared
@@ -71,7 +71,7 @@ final class OnboardingAuditRenderTests: XCTestCase {
             isWhisperModelDownloaded: { true },
             downloadWhisperModel: { _, _ in },
             preferredLanguages: { ["en-US"] },
-            defaults: UserDefaults(suiteName: makeIsolatedDefaultsSuite("com.macparakeet.audit-render."))!,
+            defaults: UserDefaults(suiteName: makeIsolatedDefaultsSuite("com.sotto.audit-render."))!,
             practicePasteGrace: .zero
         )
     }

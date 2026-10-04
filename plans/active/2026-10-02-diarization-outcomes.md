@@ -44,11 +44,11 @@ overlaps Nemotron training and cannot support held-out quality claims.
 | `Services/MeetingRecording/MeetingTranscriptFinalizer.swift:57-86,129-151` can produce source-only `Me`/`Others`, or a mixture of source buckets and detected identities. | Neither a nonzero `speakerCount` nor any nonnil word speaker ID proves acoustic word attribution. Evaluate attribution against this run's actual detected ID roster. |
 | `Services/Diarization/SpeakerAttributionReadService.swift:34-60` copies the automatic record and changes its effective words/roster. | The outcome remains evidence about automatic processing; corrections must preserve it and must not rewrite its provenance. |
 
-Paths in that table are relative to `Sources/MacParakeetCore/`.
+Paths in that table are relative to `Sources/SottoCore/`.
 
 ## Recommended domain model
 
-Add `Sources/MacParakeetCore/Models/DiarizationOutcome.swift` containing small
+Add `Sources/SottoCore/Models/DiarizationOutcome.swift` containing small
 Codable, Equatable, Sendable types. Give the public JSON explicit stable keys
 and string values; do not expose Swift associated-enum synthesized encoding.
 
@@ -115,7 +115,7 @@ speaker activity was empty. These rules avoid contradictory user explanations.
 
 ## APIs and integration points
 
-1. **Adapter receipts.** Extend `MacParakeetDiarizationResult`
+1. **Adapter receipts.** Extend `SottoDiarizationResult`
    (`DiarizationService.swift:5-27`) with optional provenance, default nil for
    existing mocks/test fixtures. Production adapters always populate it,
    including successful empty results. Add a cheap protocol descriptor method

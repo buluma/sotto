@@ -4,18 +4,18 @@
 > Ship target: **originally app v0.7.0; shipped in the v0.6 release scope**
 > Issue: TBD
 > Related: ADR-018 (Ask tab), ADR-013 (Prompt Library — pattern reference, not extension), `plans/completed/cli-as-canonical-parakeet-surface.md`
-> Touches: `Sources/MacParakeet/Views/MeetingRecording/LiveAskPaneView.swift:311,438`, `Sources/CLI/Commands/`
+> Touches: `Sources/Sotto/Views/MeetingRecording/LiveAskPaneView.swift:311,438`, `Sources/CLI/Commands/`
 > Shipped on `feat/ask-quick-prompts` in three commits (data layer → CLI → GUI). 51 new tests; full suite 2160 / 2160 passing.
 
 ## Overview
 
 Replace the hardcoded starter and follow-up pill enums in the live meeting Ask tab with a user-customizable, GRDB-backed system. Users can edit, reorder, hide, and create their own starter prompts (CATCH UP / CAPTURE / CHALLENGE) and follow-up prompts (Tell me more / Why? / TL;DR) from a dedicated **Ask Prompts** sheet, reachable via a footer link in the existing sparkle ✨ menu popover.
 
-**Three consumers of one core**: GUI sheet (the polished UI), CLI subcommand (`macparakeet-cli quick-prompts ...`), and JSON export/import (versioned wire format). Building all three in v1 keeps the data layer cleanly decoupled from any single UI and aligns with the CLI-canonical-surface direction. Power users can version-control their pills in git, agents (OpenClaw / Hermes) can read/write them programmatically, and the headless round-trip test path catches regressions the GUI alone wouldn't.
+**Three consumers of one core**: GUI sheet (the polished UI), CLI subcommand (`sotto-cli quick-prompts ...`), and JSON export/import (versioned wire format). Building all three in v1 keeps the data layer cleanly decoupled from any single UI and aligns with the CLI-canonical-surface direction. Power users can version-control their pills in git, agents (OpenClaw / Hermes) can read/write them programmatically, and the headless round-trip test path catches regressions the GUI alone wouldn't.
 
 ## Why Not Reuse Prompt Library
 
-`Prompt` (in `Sources/MacParakeetCore/Models/Prompt.swift`) models heavyweight, document-producing transforms with `Auto-Run`, `summaries` table caching, and source-agnostic application. Ask pills are lightweight conversational shortcuts with a *display label* and a *richer prompt body* that fires as a chat message. Bolting a scope flag onto `Prompt` would conflate two different mental models. Instead: a parallel, smaller table that follows the same shape so the patterns are familiar and the design language stays consistent.
+`Prompt` (in `Sources/SottoCore/Models/Prompt.swift`) models heavyweight, document-producing transforms with `Auto-Run`, `summaries` table caching, and source-agnostic application. Ask pills are lightweight conversational shortcuts with a *display label* and a *richer prompt body* that fires as a chat message. Bolting a scope flag onto `Prompt` would conflate two different mental models. Instead: a parallel, smaller table that follows the same shape so the patterns are familiar and the design language stays consistent.
 
 ## Design Decisions (Settled)
 
@@ -34,26 +34,26 @@ Replace the hardcoded starter and follow-up pill enums in the live meeting Ask t
 
 | File | Target | Purpose |
 |------|--------|---------|
-| `Sources/MacParakeetCore/Models/QuickPrompt.swift` | Core | `QuickPrompt` model, `Kind` enum, built-in seed values |
-| `Sources/MacParakeetCore/Models/QuickPromptBundle.swift` | Core | Versioned wire format (`version: 1`), encode/decode + coercion rules |
-| `Sources/MacParakeetCore/Database/QuickPromptRepository.swift` | Core | Protocol + GRDB-backed CRUD + reconciler + import-merge logic |
-| `Sources/MacParakeetViewModels/QuickPromptsViewModel.swift` | ViewModels | Sheet state, edit/create/reorder/restore-defaults |
-| `Sources/MacParakeet/Views/MeetingRecording/AskPromptsSheet.swift` | GUI | The "Ask Prompts" management sheet |
+| `Sources/SottoCore/Models/QuickPrompt.swift` | Core | `QuickPrompt` model, `Kind` enum, built-in seed values |
+| `Sources/SottoCore/Models/QuickPromptBundle.swift` | Core | Versioned wire format (`version: 1`), encode/decode + coercion rules |
+| `Sources/SottoCore/Database/QuickPromptRepository.swift` | Core | Protocol + GRDB-backed CRUD + reconciler + import-merge logic |
+| `Sources/SottoViewModels/QuickPromptsViewModel.swift` | ViewModels | Sheet state, edit/create/reorder/restore-defaults |
+| `Sources/Sotto/Views/MeetingRecording/AskPromptsSheet.swift` | GUI | The "Ask Prompts" management sheet |
 | `Sources/CLI/Commands/QuickPromptsCommand.swift` | CLI | `quick-prompts list/show/add/set/delete/restore-defaults/export/import` |
-| `Tests/MacParakeetTests/QuickPromptRepositoryTests.swift` | Tests | CRUD + seeding + reconciler idempotency + import-merge |
-| `Tests/MacParakeetTests/QuickPromptBundleTests.swift` | Tests | Round-trip encode/decode, schema version, builtIn coercion |
-| `Tests/MacParakeetTests/QuickPromptsViewModelTests.swift` | Tests | Edit, reorder, restore-default, visibility |
+| `Tests/SottoTests/QuickPromptRepositoryTests.swift` | Tests | CRUD + seeding + reconciler idempotency + import-merge |
+| `Tests/SottoTests/QuickPromptBundleTests.swift` | Tests | Round-trip encode/decode, schema version, builtIn coercion |
+| `Tests/SottoTests/QuickPromptsViewModelTests.swift` | Tests | Edit, reorder, restore-default, visibility |
 | `Tests/CLITests/QuickPromptsCommandTests.swift` | Tests | CLI parsing, JSON envelope, exit codes |
 
 ## Modified Files
 
 | File | Change |
 |------|--------|
-| `Sources/MacParakeetCore/Database/DatabaseManager.swift` | New migration `v0.10-quick-prompts` — create table, seed built-ins from existing enums |
-| `Sources/MacParakeet/Views/MeetingRecording/LiveAskPaneView.swift` | Read pills from `viewModel.quickPrompts.starters` / `.followUps` instead of `LiveAskStarterPrompts.groups` / `LiveAskFollowUpPrompts.all`; add "Edit pills…" footer link to `PromptMenuButton` popover; keep enums as built-in seed source only (or move to `QuickPrompt.swift`) |
-| `Sources/MacParakeetViewModels/TranscriptChatViewModel.swift` | Hold a `QuickPromptsViewModel` (or just expose `starters` / `followUps` reactive arrays); refresh on sheet dismiss |
-| `Sources/MacParakeet/App/AppEnvironment.swift` | Construct `QuickPromptRepository`, run reconciler on app start, inject into ViewModels |
-| `Sources/CLI/MacParakeetCLI.swift` | Register `QuickPromptsCommand` in subcommand list |
+| `Sources/SottoCore/Database/DatabaseManager.swift` | New migration `v0.10-quick-prompts` — create table, seed built-ins from existing enums |
+| `Sources/Sotto/Views/MeetingRecording/LiveAskPaneView.swift` | Read pills from `viewModel.quickPrompts.starters` / `.followUps` instead of `LiveAskStarterPrompts.groups` / `LiveAskFollowUpPrompts.all`; add "Edit pills…" footer link to `PromptMenuButton` popover; keep enums as built-in seed source only (or move to `QuickPrompt.swift`) |
+| `Sources/SottoViewModels/TranscriptChatViewModel.swift` | Hold a `QuickPromptsViewModel` (or just expose `starters` / `followUps` reactive arrays); refresh on sheet dismiss |
+| `Sources/Sotto/App/AppEnvironment.swift` | Construct `QuickPromptRepository`, run reconciler on app start, inject into ViewModels |
+| `Sources/CLI/SottoCLI.swift` | Register `QuickPromptsCommand` in subcommand list |
 | `Sources/CLI/CHANGELOG.md` | Add entry to `[Unreleased]` for new `quick-prompts` subcommand surface (minor bump) |
 
 ## Data Model
@@ -84,7 +84,7 @@ Built-in seed values live as a `static let builtIns: [QuickPrompt]` in `QuickPro
 
 ```json
 {
-  "schema": "macparakeet.quick_prompts",
+  "schema": "sotto.quick_prompts",
   "version": 1,
   "exportedAt": "2026-05-02T20:00:00Z",
   "appVersion": "0.7.0",
@@ -114,14 +114,14 @@ Built-in seed values live as a `static let builtIns: [QuickPrompt]` in `QuickPro
 ## CLI Surface (locked under `Sources/CLI/CHANGELOG.md` semver)
 
 ```
-macparakeet-cli quick-prompts list [--kind starter|follow-up] [--visible-only] [--json]
-macparakeet-cli quick-prompts show <id> [--json]
-macparakeet-cli quick-prompts add --kind <k> --label <s> --prompt <s> [--group <s>] [--hidden] [--json]
-macparakeet-cli quick-prompts set <id> [--label <s>] [--prompt <s>] [--group <s>] [--visible|--hidden] [--sort-order <n>] [--json]
-macparakeet-cli quick-prompts delete <id> [--json]                # rejects built-ins (errorType: "validation")
-macparakeet-cli quick-prompts restore-defaults [--kind <k>] [--id <uuid>] [--json]
-macparakeet-cli quick-prompts export [--out <path>] [--kind <k>] [--include-builtins] [--json]
-macparakeet-cli quick-prompts import <path> [--mode merge|replace] [--dry-run] [--json]
+sotto-cli quick-prompts list [--kind starter|follow-up] [--visible-only] [--json]
+sotto-cli quick-prompts show <id> [--json]
+sotto-cli quick-prompts add --kind <k> --label <s> --prompt <s> [--group <s>] [--hidden] [--json]
+sotto-cli quick-prompts set <id> [--label <s>] [--prompt <s>] [--group <s>] [--visible|--hidden] [--sort-order <n>] [--json]
+sotto-cli quick-prompts delete <id> [--json]                # rejects built-ins (errorType: "validation")
+sotto-cli quick-prompts restore-defaults [--kind <k>] [--id <uuid>] [--json]
+sotto-cli quick-prompts export [--out <path>] [--kind <k>] [--include-builtins] [--json]
+sotto-cli quick-prompts import <path> [--mode merge|replace] [--dry-run] [--json]
 ```
 
 - `import --mode merge` (default): UPSERT by id; rows not in file preserved.
@@ -168,7 +168,7 @@ No unique index on label — users can have duplicate labels across customs (e.g
 ### Step 2.5 — Export DTO
 - Create `QuickPromptBundle` with `schema`, `version`, `exportedAt`, `appVersion`, `prompts: [ExportedQuickPrompt]`.
 - `encode(from: [QuickPrompt])` and `decode(from: Data) throws`.
-- `decode` enforces `schema == "macparakeet.quick_prompts"` and `version == 1`; unknown fields ignored (forward-compat); missing required fields throw with clear path (e.g. `prompts[3].label`).
+- `decode` enforces `schema == "sotto.quick_prompts"` and `version == 1`; unknown fields ignored (forward-compat); missing required fields throw with clear path (e.g. `prompts[3].label`).
 - `isBuiltIn` coerced to `false` on decode unless `id` matches a known seed UUID (defended against forged built-ins).
 - Tests: round-trip, schema-version mismatch error, unknown-field tolerance, builtIn coercion.
 
@@ -213,7 +213,7 @@ No unique index on label — users can have duplicate labels across customs (e.g
 - `export` and `import` are async; honor `--json` envelope per CLI CHANGELOG.md.
 - Confirmation prompt for `import --mode replace` unless `--json`.
 - `import --dry-run` writes summary JSON, never opens write transaction.
-- Register in `MacParakeetCLI.swift` subcommands list.
+- Register in `SottoCLI.swift` subcommands list.
 - Tests in `Tests/CLITests/QuickPromptsCommandTests.swift`: parse all subcommands, verify exit codes, verify `--json` envelope on success and failure paths.
 
 ### Step 9 — CLI CHANGELOG
@@ -222,7 +222,7 @@ No unique index on label — users can have duplicate labels across customs (e.g
   - `quick-prompts` subcommand surface: `list`, `show`, `add`, `set`,
     `delete`, `restore-defaults`, `export`, `import`. Manages live-meeting
     Ask tab pills (starter + follow-up). Stable JSON wire format
-    (`schema: "macparakeet.quick_prompts"`, `version: 1`).
+    (`schema: "sotto.quick_prompts"`, `version: 1`).
   - `errorType: "import_schema"` for malformed import files.
   ```
 - Confirm version line in CHANGELOG bumps minor (additive).

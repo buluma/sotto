@@ -13,9 +13,9 @@
 > ```bash
 > git fetch origin
 > git diff --stat origin/main -- \
->   Sources/MacParakeetCore/Database/DatabaseManager.swift \
->   Sources/MacParakeetCore/Database/TranscriptionRepository.swift \
->   Sources/MacParakeetCore/Services/TranscriptionService.swift \
+>   Sources/SottoCore/Database/DatabaseManager.swift \
+>   Sources/SottoCore/Database/TranscriptionRepository.swift \
+>   Sources/SottoCore/Services/TranscriptionService.swift \
 >   Sources/CLI/Commands/
 > # Re-confirm the "grounding facts" claims below before building.
 > ```
@@ -48,9 +48,9 @@ Target queries, in increasing difficulty:
    (cross-corpus synthesis)
 
 The architectural bet (per ADR-027 and the CLI-canonical positioning):
-**MacParakeet does not answer questions; it gives agents the tools to.**
+**Sotto does not answer questions; it gives agents the tools to.**
 The query runtime is whatever agent the user already runs (Claude Code, Codex,
-ChatGPT), talking to `macparakeet-cli`. No in-app chat in this plan.
+ChatGPT), talking to `sotto-cli`. No in-app chat in this plan.
 
 Corpus math: a heavy user accrues 1–2k recordings ≈ 10–50M tokens over years.
 Too big to scan raw; trivially small for SQLite FTS5. This is an
@@ -103,7 +103,7 @@ trap.
    plan: the FTS index and its consuming `search` verb ship **in the same PR**.
 3. **Summary pipeline seam**: completed transcriptions flow through
    `PromptResultsViewModel.autoGeneratePromptResults`
-   (`MacParakeetViewModels/PromptResultsViewModel.swift:354`) into
+   (`SottoViewModels/PromptResultsViewModel.swift:354`) into
    `LLMService`; results land in `summaries` keyed by `transcriptionId`
    (`Database/DatabaseManager.swift:469`). Generic **JSON-schema output already
    exists** in `LLMService` (used by the LM Studio formatter path,
@@ -258,7 +258,7 @@ over thousands of rows shouldn't block first launch.
 - Citations: model returns approximate quotes/timestamps; a deterministic
   post-pass resolves them to `seq` ranges (fuzzy match against segment text);
   unresolvable citations are dropped, not guessed.
-- Backfill: `macparakeet-cli cards generate [--all|--stale|<id>]` — iterates
+- Backfill: `sotto-cli cards generate [--all|--stale|<id>]` — iterates
   the library, respects staleness, reports cost/progress. Works on
   audio-deleted recordings (transcripts persist).
 - **Retranscription invalidation**: when a transcript is regenerated (the
@@ -275,15 +275,15 @@ designed**: this is the v1 hypothesis, refined by Phase 3 trace-runs before
 the surface is documented as stable.
 
 ```
-macparakeet-cli search <query> [--since --until --source meeting|file|url]
+sotto-cli search <query> [--since --until --source meeting|file|url]
                                [--speaker <name>] [--limit N] [--json]
   → segment hits: {transcriptionId, title, recordedAt, source, seq,
      startMs?, speaker?, snippet, rank}
 
-macparakeet-cli cards list [--since --until --source --limit] [--json|--ndjson]
+sotto-cli cards list [--since --until --source --limit] [--json|--ndjson]
   → card + joined deterministic fields (title, date, duration, attendees, source)
 
-macparakeet-cli transcript <id> [--around <hh:mm:ss|ms> --window <dur>]
+sotto-cli transcript <id> [--around <hh:mm:ss|ms> --window <dur>]
                                 [--around-seq <n> --context <k>]
   → segment slice with timestamps/speakers (extends the existing transcript
     output path; exact command placement is open question §8.1)

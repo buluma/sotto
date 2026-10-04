@@ -17,8 +17,8 @@ The release owner built the app through Xcode Release and rebuilt the production
 
 | Artifact | Size in bytes | SHA-256 |
 | --- | ---: | --- |
-| Submitted `MacParakeet.app.zip` | 156945557 | `e67736b71c162e05c6adb6967175a5b4cb18cb321c926fe4d3832aa4d7e523ad` |
-| Final stapled `MacParakeet.dmg` | 167213899 | `17fbf6c6a2a3ed6ada8ce3f0816adae041832f27d7b3a9a2ac9e3499859bcb22` |
+| Submitted `Sotto.app.zip` | 156945557 | `e67736b71c162e05c6adb6967175a5b4cb18cb321c926fe4d3832aa4d7e523ad` |
+| Final stapled `Sotto.dmg` | 167213899 | `17fbf6c6a2a3ed6ada8ce3f0816adae041832f27d7b3a9a2ac9e3499859bcb22` |
 
 Both files remained unchanged during these checks. The ZIP stays at its original local path; this task recorded its identity without copying or moving it. The DMG hash was captured after the release owner stapled it and checked again after read-only mounting. See the [ZIP manifest](evidence/package-runtime/zip-manifest.json), [DMG manifest](evidence/package-runtime/dmg-manifest.json), and [cleanup record](evidence/package-runtime/dmg-cleanup.json).
 

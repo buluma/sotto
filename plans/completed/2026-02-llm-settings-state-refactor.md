@@ -173,8 +173,8 @@ Default recommendation:
 
 Files likely touched:
 
-1. `Sources/MacParakeetViewModels/LLMSettingsViewModel.swift`
-2. New draft type file in `Sources/MacParakeetViewModels/`
+1. `Sources/SottoViewModels/LLMSettingsViewModel.swift`
+2. New draft type file in `Sources/SottoViewModels/`
 
 Tasks:
 
@@ -186,8 +186,8 @@ Tasks:
 
 Files likely touched:
 
-1. `Sources/MacParakeetViewModels/LLMSettingsViewModel.swift`
-2. `Sources/MacParakeet/Views/Settings/LLMSettingsView.swift`
+1. `Sources/SottoViewModels/LLMSettingsViewModel.swift`
+2. `Sources/Sotto/Views/Settings/LLMSettingsView.swift`
 
 Tasks:
 
@@ -200,8 +200,8 @@ Tasks:
 
 Files likely touched:
 
-1. `Sources/MacParakeetViewModels/LLMSettingsViewModel.swift`
-2. `Sources/MacParakeetCore/Services/LLMConfigStore.swift`
+1. `Sources/SottoViewModels/LLMSettingsViewModel.swift`
+2. `Sources/SottoCore/Services/LLMConfigStore.swift`
 3. Existing tests if behavior changes
 
 Tasks:
@@ -214,7 +214,7 @@ Tasks:
 
 Files likely touched:
 
-1. `Sources/MacParakeet/Views/Settings/LLMSettingsView.swift`
+1. `Sources/Sotto/Views/Settings/LLMSettingsView.swift`
 
 Tasks:
 

@@ -24,7 +24,7 @@ private actor FixtureEngine: VoiceControlDecisionEngine {
     func decide(goal: String, snapshot: VoiceControlSnapshot, history: [VoiceControlAction]) async throws
         -> VoiceControlDecision
     {
-        guard snapshot.applicationName.contains("MacParakeet synthetic flight search") else {
+        guard snapshot.applicationName.contains("Sotto synthetic flight search") else {
             throw NSError(domain: "Wrong fixture", code: 9)
         }
         let start = Date()
@@ -43,7 +43,7 @@ private actor FixtureEngine: VoiceControlDecisionEngine {
 
 @main struct BrowserQualification {
     static func main() async throws {
-        guard ProcessInfo.processInfo.environment["MACPARAKEET_BROWSER_FIXTURE_QUALIFICATION"] == "1",
+        guard ProcessInfo.processInfo.environment["SOTTO_BROWSER_FIXTURE_QUALIFICATION"] == "1",
             let key = ProcessInfo.processInfo.environment["JEV_API_KEY"], !key.isEmpty
         else {
             throw NSError(domain: "Fixture opt-in and API key required", code: 1)
@@ -59,7 +59,7 @@ private actor FixtureEngine: VoiceControlDecisionEngine {
             await adapter.stop(); throw NSError(domain: "No browser connected", code: 2)
         }
         let initial = try await adapter.observe()
-        guard initial.applicationName.contains("MacParakeet synthetic flight search") else {
+        guard initial.applicationName.contains("Sotto synthetic flight search") else {
             await adapter.stop(); throw NSError(domain: "Fixture identity required", code: 3)
         }
         print("PRE_NAV_READY"); fflush(stdout)

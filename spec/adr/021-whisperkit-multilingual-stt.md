@@ -7,9 +7,9 @@
 
 ## Context
 
-ADR-001 chose Parakeet TDT 0.6B-v3 as MacParakeet's primary speech model because it is extremely fast, accurate for English and supported European languages, and well suited to Apple Silicon through FluidAudio CoreML. That decision still holds for the default path.
+ADR-001 chose Parakeet TDT 0.6B-v3 as Sotto's primary speech model because it is extremely fast, accurate for English and supported European languages, and well suited to Apple Silicon through FluidAudio CoreML. That decision still holds for the default path.
 
-The gap is language coverage. Parakeet v3 covers 25 European languages and does not cover Korean, Japanese, Chinese, Hindi, Arabic, and many other languages that users reasonably expect from a local transcription app. The old docs described this as a hard limitation. Main now includes Whisper support so MacParakeet can remain local-first while covering those languages.
+The gap is language coverage. Parakeet v3 covers 25 European languages and does not cover Korean, Japanese, Chinese, Hindi, Arabic, and many other languages that users reasonably expect from a local transcription app. The old docs described this as a hard limitation. Main now includes Whisper support so Sotto can remain local-first while covering those languages.
 
 The product requirement is not "replace Parakeet." It is:
 
@@ -54,12 +54,12 @@ Language hints are normalized to canonical Whisper language codes. Region-style 
 `WhisperEngine` wraps WhisperKit behind the same `STTTranscribing` shape used by the rest of the app. It:
 
 - uses `large-v3-v20240930_turbo_632MB` by default,
-- stores models under `~/Library/Application Support/MacParakeet/models/stt/whisper/`,
+- stores models under `~/Library/Application Support/Sotto/models/stt/whisper/`,
 - refuses to auto-download during transcription,
 - exposes an explicit model download path through the CLI and Settings,
 - returns `STTResult(text:words:language:)` where WhisperKit reports language.
 
-The default SPM dependency includes WhisperKit. CI and syntax/concurrency checks may set `MACPARAKEET_SKIP_WHISPERKIT=1` while upstream packages catch up with Swift 6 language-mode strictness.
+The default SPM dependency includes WhisperKit. CI and syntax/concurrency checks may set `SOTTO_SKIP_WHISPERKIT=1` while upstream packages catch up with Swift 6 language-mode strictness.
 
 ### 4. Extend, do not fork, the scheduler architecture
 
@@ -98,14 +98,14 @@ Final transcription and crash recovery use that captured selection. The settings
 The CLI keeps Parakeet as default:
 
 ```bash
-macparakeet-cli transcribe file.mp3 --format json
+sotto-cli transcribe file.mp3 --format json
 ```
 
 Whisper is explicit:
 
 ```bash
-macparakeet-cli models download whisper-large-v3-v20240930-turbo-632MB
-macparakeet-cli transcribe korean.mp3 --engine whisper --language ko --format json
+sotto-cli models download whisper-large-v3-v20240930-turbo-632MB
+sotto-cli transcribe korean.mp3 --engine whisper --language ko --format json
 ```
 
 `--language` is ignored by Parakeet. JSON output may include an additive top-level `language` field when the selected engine reports it.
@@ -114,7 +114,7 @@ macparakeet-cli transcribe korean.mp3 --engine whisper --language ko --format js
 
 ### Why WhisperKit
 
-WhisperKit gives broad language coverage while staying local. It is a better fit than a cloud STT fallback because MacParakeet's core promise is that audio never leaves the Mac.
+WhisperKit gives broad language coverage while staying local. It is a better fit than a cloud STT fallback because Sotto's core promise is that audio never leaves the Mac.
 
 ### Why not auto-fallback
 
@@ -147,7 +147,7 @@ Meeting recordings span minutes or hours and have recovery semantics. Pinning gi
 
 ### Positive
 
-- MacParakeet covers Korean, Japanese, Chinese, and many other languages locally.
+- Sotto covers Korean, Japanese, Chinese, and many other languages locally.
 - Parakeet's performance remains the default path.
 - CLI callers can choose an engine per job without mutating GUI settings.
 - Meeting recording remains deterministic under settings changes and crash recovery.
@@ -163,7 +163,7 @@ Meeting recordings span minutes or hours and have recovery semantics. Pinning gi
 
 ## Implementation Notes
 
-- `Package.swift`: optional WhisperKit dependency from `argmax-oss-swift`, skipped by `MACPARAKEET_SKIP_WHISPERKIT=1`.
+- `Package.swift`: optional WhisperKit dependency from `argmax-oss-swift`, skipped by `SOTTO_SKIP_WHISPERKIT=1`.
 - `SpeechEnginePreference.swift`: persisted engine, language, model-variant normalization.
 - `WhisperLanguageCatalog.swift`: user-facing language list/search.
 - `WhisperEngine.swift`: WhisperKit loading, local model discovery, download, decoding options, word timing mapping.
@@ -177,6 +177,6 @@ Meeting recordings span minutes or hours and have recovery semantics. Pinning gi
 
 - [ADR-001: Parakeet TDT 0.6B-v3 as Primary STT Engine](001-parakeet-stt.md)
 - [ADR-016: Centralized STT Runtime and Scheduler](016-centralized-stt-runtime-scheduler.md)
-- `Sources/MacParakeetCore/STT/WhisperEngine.swift`
-- `Sources/MacParakeetCore/SpeechEnginePreference.swift`
+- `Sources/SottoCore/STT/WhisperEngine.swift`
+- `Sources/SottoCore/SpeechEnginePreference.swift`
 - `Sources/CLI/CHANGELOG.md`

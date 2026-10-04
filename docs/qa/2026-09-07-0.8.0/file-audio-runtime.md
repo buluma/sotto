@@ -4,14 +4,14 @@ Completed 2026-09-07. Track selection, invalid-track handling, and two-speaker r
 
 ## Candidate and isolation
 
-- Executable: the root-owned copied `macparakeet-cli-runtime`, SHA-256 `f8a62b79ece6045909d15ece2fd086eed7e10ca04ebc870d9fc50ed76774f095`, verified before and after execution.
+- Executable: the root-owned copied `sotto-cli-runtime`, SHA-256 `f8a62b79ece6045909d15ece2fd086eed7e10ca04ebc870d9fc50ed76774f095`, verified before and after execution.
 - Compiled source provenance supplied by root: base `8548c099af5ee2ab0ed4dd9efe757d85c498cca0` plus recovery fix `c506d7ef7d4cf98f3986cfb5de84ced6b4ce701e`. GUI-only cache commit `df98cfbd41a150f8ee510dd1333bfa6db176e342` does not change this CLI's exercised paths.
 - Stable comparison channel: `v0.7.3`; no stable-binary A/B inference was performed.
-- `CFFIXED_USER_HOME=/tmp/macparakeet-080-qa/isolated-home` used the prepared public model cache. Every run set `MACPARAKEET_TELEMETRY=0`, `DO_NOT_TRACK=1`, an owned `TMPDIR`, and a separate owned `--database`.
+- `CFFIXED_USER_HOME=/tmp/sotto-080-qa/isolated-home` used the prepared public model cache. Every run set `SOTTO_TELEMETRY=0`, `DO_NOT_TRACK=1`, an owned `TMPDIR`, and a separate owned `--database`.
 - Every command explicitly selected raw processing, engine, model variant, and speaker-detection mode. No configuration or model-selection writes were made. Successful runs intentionally saved only public/generated content to their disposable database so persistence could be checked.
 - Inference was sequential, with a 180-second process-group deadline per invocation. No case timed out. No desktop interaction, audio playback, microphone/system-audio capture, Swift build, or package test ran in this subtask.
 
-Raw working directory: `/tmp/macparakeet-080-qa/file-audio-runtime`. Curated evidence links below resolve after its `sanitized-artifacts/` contents are copied to `evidence/file-audio-runtime/` beside this report. SQLite databases and temporary model/conversion files are excluded from that curated set.
+Raw working directory: `/tmp/sotto-080-qa/file-audio-runtime`. Curated evidence links below resolve after its `sanitized-artifacts/` contents are copied to `evidence/file-audio-runtime/` beside this report. SQLite databases and temporary model/conversion files are excluded from that curated set.
 
 ## Observed matrix
 

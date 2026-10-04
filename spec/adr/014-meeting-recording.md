@@ -20,17 +20,17 @@
 
 ## Context
 
-MacParakeet has three co-equal modes: system-wide dictation, file transcription, and meeting recording (added by this ADR). Parakeet STT via FluidAudio CoreML is the default on-device transcription path; ADR-021 adds optional WhisperKit for broader local language coverage, and ADR-001 amendments add opt-in Nemotron and Cohere engines. Users have requested the ability to record live meetings and calls — capturing system audio, mic audio, or both, then transcribing the result.
+Sotto has three co-equal modes: system-wide dictation, file transcription, and meeting recording (added by this ADR). Parakeet STT via FluidAudio CoreML is the default on-device transcription path; ADR-021 adds optional WhisperKit for broader local language coverage, and ADR-001 amendments add opt-in Nemotron and Cohere engines. Users have requested the ability to record live meetings and calls — capturing system audio, mic audio, or both, then transcribing the result.
 
-This came from exploring [GitHub #52](https://github.com/moona3k/macparakeet/issues/52) (hotkey profiles). The core ask was different workflows for different use cases. Meeting recording is the direct answer — a third mode that extends MacParakeet's voice-to-text capability without changing the product's simplicity.
+This came from exploring [GitHub #52](https://github.com/moona3k/macparakeet/issues/52) (hotkey profiles). The core ask was different workflows for different use cases. Meeting recording is the direct answer — a third mode that extends Sotto's voice-to-text capability without changing the product's simplicity.
 
-The initial audio capture layer was ported from [Oatmeal](https://github.com/moona3k/oatmeal) and used Core Audio process taps for system audio plus AVAudioEngine for mic capture. Follow-up VPIO testing showed that Core Audio process taps and VPIO do not reliably coexist in MacParakeet's single-process meeting/dictation architecture, so system audio capture moved to ScreenCaptureKit while the mic path keeps AVAudioEngine. Later live-call testing showed that VPIO can muffle the user's outgoing mic for other participants, so the shipped meeting mic default is raw capture while VPIO remains explicit opt-in plumbing.
+The initial audio capture layer was ported from [Oatmeal](https://github.com/moona3k/oatmeal) and used Core Audio process taps for system audio plus AVAudioEngine for mic capture. Follow-up VPIO testing showed that Core Audio process taps and VPIO do not reliably coexist in Sotto's single-process meeting/dictation architecture, so system audio capture moved to ScreenCaptureKit while the mic path keeps AVAudioEngine. Later live-call testing showed that VPIO can muffle the user's outgoing mic for other participants, so the shipped meeting mic default is raw capture while VPIO remains explicit opt-in plumbing.
 
 ## Decision
 
 ### 1. Add meeting recording as a third mode
 
-MacParakeet becomes three co-equal modes:
+Sotto becomes three co-equal modes:
 
 | Mode | Audio Source | Duration | Output |
 |------|-------------|----------|--------|
@@ -215,14 +215,14 @@ To reduce phantom "Me" fragments when users are on speakers:
 - The guard affects live mic chunk transcription only; mic audio is still stored and included in the finalized meeting artifact.
 - Joiner queue overflow and sync-lag telemetry are logged for long-session observability.
 - `MeetingTranscriptSourceReconciler` drops mic runs of >=5 words whose tokens fuzzy-match the remote speaker's *simultaneous* system words (>=80% in-order match within a +/-600 ms window), regardless of confidence. This is a duplicate-speech heuristic, not proof of acoustic echo; simultaneous repeated speech remains a possible false positive (2026-06-10, issue #480). Short runs keep the conservative confidence-gated rule.
-- The opt-in experimental `StreamingMeetingEchoSuppressor` carries partial frames across batches (contiguous frames for stateful processors, no raw-tail leak) and supports an env-configured reference delay (`MACPARAKEET_MEETING_ECHO_REFERENCE_DELAY_MS`) approximating the echo-path latency (2026-06-10). It requires an available LocalVQE-compatible runtime/model; otherwise meeting mic conditioning remains passthrough.
+- The opt-in experimental `StreamingMeetingEchoSuppressor` carries partial frames across batches (contiguous frames for stateful processors, no raw-tail leak) and supports an env-configured reference delay (`SOTTO_MEETING_ECHO_REFERENCE_DELAY_MS`) approximating the echo-path latency (2026-06-10). It requires an available LocalVQE-compatible runtime/model; otherwise meeting mic conditioning remains passthrough.
 - Dictation capture remains raw and unchanged (ADR-015 isolation still applies).
 
 ## Rationale
 
 ### Why not keep meeting recording in Oatmeal only? (historical positioning)
 
-Oatmeal adds intelligence on top of recording: AI meeting notes, entity extraction, calendar integration, cross-meeting RAG. MacParakeet's meeting recording is the simple, free version — just record and transcribe. This creates a natural funnel: MacParakeet (free) → Oatmeal (paid) for users who want the intelligence layer.
+Oatmeal adds intelligence on top of recording: AI meeting notes, entity extraction, calendar integration, cross-meeting RAG. Sotto's meeting recording is the simple, free version — just record and transcribe. This creates a natural funnel: Sotto (free) → Oatmeal (paid) for users who want the intelligence layer.
 
 ### Why reuse Transcription (not a new MeetingRecording model)?
 
@@ -230,7 +230,7 @@ A separate model would require duplicating the entire library infrastructure: re
 
 ### Why ScreenCaptureKit (not Core Audio process taps)?
 
-Core Audio process taps were the original choice because they provide audio-only capture and worked for raw mic capture. They are no longer the correct production solution for MacParakeet: VPIO is a duplex I/O unit that introduces aggregate-device state, and MacParakeet's process tap also depends on aggregate-device output clocking. ScreenCaptureKit moves system audio capture to the WindowServer/replayd capture path and avoids claiming the HAL output device. That keeps system audio reliable and preserves the option to test VPIO without making it the shipped meeting mic default.
+Core Audio process taps were the original choice because they provide audio-only capture and worked for raw mic capture. They are no longer the correct production solution for Sotto: VPIO is a duplex I/O unit that introduces aggregate-device state, and Sotto's process tap also depends on aggregate-device output clocking. ScreenCaptureKit moves system audio capture to the WindowServer/replayd capture path and avoids claiming the HAL output device. That keeps system audio reliable and preserves the option to test VPIO without making it the shipped meeting mic default.
 
 ### Why a separate coordinator (not extending DictationFlowCoordinator)?
 
@@ -270,7 +270,7 @@ Dictation has complex paste/cancel/undo behavior that meeting recording doesn't 
 
 ### Positive
 
-- MacParakeet becomes a complete voice-to-text tool (dictation + files + meetings)
+- Sotto becomes a complete voice-to-text tool (dictation + files + meetings)
 - Meeting recordings get prompt library, multi-summary, chat, and export for free
 - System audio capture no longer depends on HAL aggregate-device clocking
 - Clean architecture: parallel services, no coupling to existing dictation flow
@@ -282,7 +282,7 @@ Dictation has complex paste/cancel/undo behavior that meeting recording doesn't 
 
 - **New permission:** Screen & System Audio Recording permission is a significant UX cost for source modes that include system audio. Users may be reluctant to grant it, so microphone-only recording remains available without that permission.
 - **Larger audio files:** Meeting recordings generate much larger files than dictations (50–100 MB for 60 minutes). Audio is kept by default.
-- **Product scope expansion:** MacParakeet goes from "two things well" to "three things well." Must resist further scope creep.
+- **Product scope expansion:** Sotto goes from "two things well" to "three things well." Must resist further scope creep.
 - **Code ported from Oatmeal:** ~1,200 lines of audio capture code to adapt. Divergence over time will need to be managed.
 - **ScreenCaptureKit dependency:** system audio capture now depends on `SCStream` lifecycle and `CMSampleBuffer` adaptation rather than Core Audio process-tap IO procs.
 - **Residual suppression tradeoff:** dominant-system live gating may still drop very quiet mic utterances during loud remote speech windows.

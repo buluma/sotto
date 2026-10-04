@@ -63,14 +63,14 @@ Pure monitor + signals wiring + telemetry. **No UI, no recovery.** Instrumentati
 
 | File | Change |
 |------|--------|
-| `Sources/MacParakeetCore/Audio/MeetingMicHealthMonitor.swift` *(new, pure)* | `ingest(micSignal:systemSignal:now:) -> [HealthEvent]`. Signatures `.micMissing` (no mic buffers while system active), `.micSilent` (mic buffers all-zero/near-silent while system active), `.micGap` (>~1s since last mic buffer while system active). ~3s continuous-system-audio confirmation gate before any trip. Emits `.stallSuspected(signature:)` and `.recovered`. Holds no clock — `now` passed in. |
-| `Sources/MacParakeetCore/Audio/MeetingAudioCaptureService.swift` | Feed per-buffer liveness signals into the monitor: mic arrival timestamp + non-silent flag from `.microphoneBuffer` events; system activity flag from the system-audio path. Monitor instance owned/driven here; the existing `MeetingAudioCaptureEvent` stream is the source. |
-| `Sources/MacParakeetCore/Services/Telemetry/TelemetryEvent.swift` | Add `mic_stall_detected` (props: `signature` = `mic_missing`/`mic_silent`/`mic_gap`, coarse `elapsed_ms`). No audio/transcript content. |
-| `../macparakeet-website/functions/api/telemetry.ts` | Mirror `mic_stall_detected` into `ALLOWED_EVENTS`. **Deploy before any flag-on build** — the Worker rejects the whole batch on an unknown event. |
-| `Sources/MacParakeetCore/AppFeatures.swift` | Add `meetingCaptureReliabilityEnabled` kill-switch (default-on intent), documented in the existing flag-doc style. When off: monitor does not observe, repair stage skipped. |
+| `Sources/SottoCore/Audio/MeetingMicHealthMonitor.swift` *(new, pure)* | `ingest(micSignal:systemSignal:now:) -> [HealthEvent]`. Signatures `.micMissing` (no mic buffers while system active), `.micSilent` (mic buffers all-zero/near-silent while system active), `.micGap` (>~1s since last mic buffer while system active). ~3s continuous-system-audio confirmation gate before any trip. Emits `.stallSuspected(signature:)` and `.recovered`. Holds no clock — `now` passed in. |
+| `Sources/SottoCore/Audio/MeetingAudioCaptureService.swift` | Feed per-buffer liveness signals into the monitor: mic arrival timestamp + non-silent flag from `.microphoneBuffer` events; system activity flag from the system-audio path. Monitor instance owned/driven here; the existing `MeetingAudioCaptureEvent` stream is the source. |
+| `Sources/SottoCore/Services/Telemetry/TelemetryEvent.swift` | Add `mic_stall_detected` (props: `signature` = `mic_missing`/`mic_silent`/`mic_gap`, coarse `elapsed_ms`). No audio/transcript content. |
+| `../sotto-website/functions/api/telemetry.ts` | Mirror `mic_stall_detected` into `ALLOWED_EVENTS`. **Deploy before any flag-on build** — the Worker rejects the whole batch on an unknown event. |
+| `Sources/SottoCore/AppFeatures.swift` | Add `meetingCaptureReliabilityEnabled` kill-switch (default-on intent), documented in the existing flag-doc style. When off: monitor does not observe, repair stage skipped. |
 
 **Tests**
-- `Tests/MacParakeetTests/Audio/MeetingMicHealthMonitorTests.swift` *(new)* — table tests: each signature fires only after the ~3s confirmation window; none fires while system audio is silent (genuine quiet, no false alarm); `.micGap` boundary at ~1s; `.recovered` after the mic resumes; mixed sequences (system active → mic dies → mic resumes). All deterministic via injected `now`.
+- `Tests/SottoTests/Audio/MeetingMicHealthMonitorTests.swift` *(new)* — table tests: each signature fires only after the ~3s confirmation window; none fires while system audio is silent (genuine quiet, no false alarm); `.micGap` boundary at ~1s; `.recovered` after the mic resumes; mixed sequences (system active → mic dies → mic resumes). All deterministic via injected `now`.
 
 **Ship criteria:** With the flag on, a stalled mic during a meeting (system audio active) emits exactly one `mic_stall_detected` with the right signature, after the confirmation window — and a genuinely quiet stretch emits nothing. No UI, no behavior change to the recording.
 
@@ -80,12 +80,12 @@ Surface the confirmed `.stallSuspected` event as a gentle, non-blocking warning.
 
 | File | Change |
 |------|--------|
-| `Sources/MacParakeetViewModels/MeetingRecordingPanelViewModel.swift` | Add a non-blocking `micHealthWarning` state next to `micLevel`/`systemLevel`, set from the monitor's `.stallSuspected`, cleared on `.recovered`. Never modal, never stops recording. |
-| `Sources/MacParakeetViewModels/MeetingRecordingPillViewModel.swift` | Mirror the warning state so the floating pill and the Transcribe tile stay in sync (shared VM pattern). |
-| `Sources/MacParakeet/Views/MeetingRecording/` | Render the warning: gentle copy "This meeting may be missing your side", dismissible, non-blocking. Reuse existing panel/pill styling; no new floating surface if an inline banner suffices. |
+| `Sources/SottoViewModels/MeetingRecordingPanelViewModel.swift` | Add a non-blocking `micHealthWarning` state next to `micLevel`/`systemLevel`, set from the monitor's `.stallSuspected`, cleared on `.recovered`. Never modal, never stops recording. |
+| `Sources/SottoViewModels/MeetingRecordingPillViewModel.swift` | Mirror the warning state so the floating pill and the Transcribe tile stay in sync (shared VM pattern). |
+| `Sources/Sotto/Views/MeetingRecording/` | Render the warning: gentle copy "This meeting may be missing your side", dismissible, non-blocking. Reuse existing panel/pill styling; no new floating surface if an inline banner suffices. |
 
 **Tests**
-- `Tests/MacParakeetTests/ViewModels/MeetingRecordingPanelViewModelTests.swift` *(extend)* — `.stallSuspected` sets `micHealthWarning`; `.recovered` clears it; warning never changes recording state.
+- `Tests/SottoTests/ViewModels/MeetingRecordingPanelViewModelTests.swift` *(extend)* — `.stallSuspected` sets `micHealthWarning`; `.recovered` clears it; warning never changes recording state.
 
 **Ship criteria:** A confirmed mid-meeting mic stall shows the gentle warning on the panel and pill; recording continues uninterrupted; the warning clears if the mic recovers.
 
@@ -95,16 +95,16 @@ The completeness-repair stage. Pure planner + offline VAD + selective re-transcr
 
 | File | Change |
 |------|--------|
-| `Sources/MacParakeetCore/Services/MeetingRecording/MeetingTranscriptCoverageRepair.swift` *(new, pure)* | `plan(liveSegments:offlineVADSegments:) -> RepairPlan`. `RepairPlan` = `.accept` / `.selective(gaps: [SpeechRegion])` / `.fullReTranscribe`. Coverage-ratio math + ≥~0.8s gap detection below a per-region coverage threshold. No STT, no audio I/O. |
-| `Sources/MacParakeetCore/Services/MeetingRecording/MeetingVADService.swift` | Add/confirm an offline (non-streaming) pass over a retained `.m4a` returning the speech regions present in the audio. (Reuse the existing Silero machinery; this is offline analysis, not live chunking.) |
-| `Sources/MacParakeetCore/Services/MeetingRecording/MeetingRecordingService.swift` | After the existing finalize produces the saved transcript in `stopRecording()`, run the repair stage **async**: offline VAD pass over retained mic + system `.m4a` → `MeetingTranscriptCoverageRepair.plan(...)` → for `.selective`, enqueue gap re-transcription on `STTScheduler`'s **background slot** → splice results → write the repaired transcript back to the `Transcription` row. Must not block finalization UI; the meeting lands in the library on the live transcript and updates in place when repair completes. |
-| `Sources/MacParakeetCore/Services/MeetingRecording/MeetingTranscriptFinalizer.swift` / `MeetingTranscriptAssembler.swift` | Splice helper to merge re-transcribed gap segments into the assembled transcript by timestamp; reuse the assembler's word/segment normalization. Per-chunk transcription itself is unchanged. |
-| `Sources/MacParakeetCore/Services/Telemetry/TelemetryEvent.swift` | Add `meeting_transcript_repair` (props: `decision` = `accept`/`selective`/`full`, `gap_count`). No content. |
-| `../macparakeet-website/functions/api/telemetry.ts` | Mirror `meeting_transcript_repair`. Deploy before flag-on. |
+| `Sources/SottoCore/Services/MeetingRecording/MeetingTranscriptCoverageRepair.swift` *(new, pure)* | `plan(liveSegments:offlineVADSegments:) -> RepairPlan`. `RepairPlan` = `.accept` / `.selective(gaps: [SpeechRegion])` / `.fullReTranscribe`. Coverage-ratio math + ≥~0.8s gap detection below a per-region coverage threshold. No STT, no audio I/O. |
+| `Sources/SottoCore/Services/MeetingRecording/MeetingVADService.swift` | Add/confirm an offline (non-streaming) pass over a retained `.m4a` returning the speech regions present in the audio. (Reuse the existing Silero machinery; this is offline analysis, not live chunking.) |
+| `Sources/SottoCore/Services/MeetingRecording/MeetingRecordingService.swift` | After the existing finalize produces the saved transcript in `stopRecording()`, run the repair stage **async**: offline VAD pass over retained mic + system `.m4a` → `MeetingTranscriptCoverageRepair.plan(...)` → for `.selective`, enqueue gap re-transcription on `STTScheduler`'s **background slot** → splice results → write the repaired transcript back to the `Transcription` row. Must not block finalization UI; the meeting lands in the library on the live transcript and updates in place when repair completes. |
+| `Sources/SottoCore/Services/MeetingRecording/MeetingTranscriptFinalizer.swift` / `MeetingTranscriptAssembler.swift` | Splice helper to merge re-transcribed gap segments into the assembled transcript by timestamp; reuse the assembler's word/segment normalization. Per-chunk transcription itself is unchanged. |
+| `Sources/SottoCore/Services/Telemetry/TelemetryEvent.swift` | Add `meeting_transcript_repair` (props: `decision` = `accept`/`selective`/`full`, `gap_count`). No content. |
+| `../sotto-website/functions/api/telemetry.ts` | Mirror `meeting_transcript_repair`. Deploy before flag-on. |
 
 **Tests**
-- `Tests/MacParakeetTests/MeetingRecording/MeetingTranscriptCoverageRepairTests.swift` *(new)* — table tests: full coverage → `.accept`; one gap ≥0.8s → `.selective` with the right region; sub-0.8s gaps ignored; very-low coverage → `.fullReTranscribe`; boundary cases on the coverage threshold; live segments that fully overlap VAD → no gaps.
-- `Tests/MacParakeetTests/MeetingRecording/MeetingTranscriptRepairIntegrationTests.swift` *(new)* — with a mock STT scheduler, assert selective repair enqueues on the **background** slot (never the reserved dictation slot), the original transcript is preserved if repair fails, and the saved row updates on success.
+- `Tests/SottoTests/MeetingRecording/MeetingTranscriptCoverageRepairTests.swift` *(new)* — table tests: full coverage → `.accept`; one gap ≥0.8s → `.selective` with the right region; sub-0.8s gaps ignored; very-low coverage → `.fullReTranscribe`; boundary cases on the coverage threshold; live segments that fully overlap VAD → no gaps.
+- `Tests/SottoTests/MeetingRecording/MeetingTranscriptRepairIntegrationTests.swift` *(new)* — with a mock STT scheduler, assert selective repair enqueues on the **background** slot (never the reserved dictation slot), the original transcript is preserved if repair fails, and the saved row updates on success.
 
 **Ship criteria:** A meeting with a known live-dropped region produces a saved transcript that, after repair, covers the dropped speech; a healthy meeting takes the `.accept` path and finalizes byte-identical to today; repair runs on the background slot and never blocks finalization. REQ-MEET-013 wording narrowed by the coordinator.
 
@@ -112,13 +112,13 @@ The completeness-repair stage. Pure planner + offline VAD + selective re-transcr
 
 | File | Change |
 |------|--------|
-| `Sources/MacParakeetCore/Services/MeetingRecording/MeetingRecordingService.swift` | Wire the `.fullReTranscribe` tier: when the planner reports systemic failure / very-low coverage, re-run STT over the whole retained audio on the background slot (optionally length-capped — see open questions). |
-| `Sources/MacParakeetCore/Services/MeetingRecording/MeetingRecordingRecoveryService.swift` | Run the coverage-repair stage on crash-recovered sessions (ADR-019) — they re-enter the same post-stop pipeline, so the repair attaches for free; recovered sessions are the most likely to have lossy live transcripts. |
-| `Sources/MacParakeetCore/AppFeatures.swift` *(optional)* | Add a separate confirmed-signature gate for the v2 live mic-recovery restart (REQ-MEET-017 v2) once `mic_stall_detected` field data justifies it. Not implemented in this plan beyond the flag. |
+| `Sources/SottoCore/Services/MeetingRecording/MeetingRecordingService.swift` | Wire the `.fullReTranscribe` tier: when the planner reports systemic failure / very-low coverage, re-run STT over the whole retained audio on the background slot (optionally length-capped — see open questions). |
+| `Sources/SottoCore/Services/MeetingRecording/MeetingRecordingRecoveryService.swift` | Run the coverage-repair stage on crash-recovered sessions (ADR-019) — they re-enter the same post-stop pipeline, so the repair attaches for free; recovered sessions are the most likely to have lossy live transcripts. |
+| `Sources/SottoCore/AppFeatures.swift` *(optional)* | Add a separate confirmed-signature gate for the v2 live mic-recovery restart (REQ-MEET-017 v2) once `mic_stall_detected` field data justifies it. Not implemented in this plan beyond the flag. |
 
 **Tests**
-- `Tests/MacParakeetTests/MeetingRecording/MeetingTranscriptCoverageRepairTests.swift` *(extend)* — systemic-failure pattern → `.fullReTranscribe`.
-- `Tests/MacParakeetTests/MeetingRecording/MeetingRecordingRecoveryServiceTests.swift` *(extend)* — a recovered session runs the coverage-repair stage and the repaired transcript is saved with the existing `recoveredFromCrash` provenance intact.
+- `Tests/SottoTests/MeetingRecording/MeetingTranscriptCoverageRepairTests.swift` *(extend)* — systemic-failure pattern → `.fullReTranscribe`.
+- `Tests/SottoTests/MeetingRecording/MeetingRecordingRecoveryServiceTests.swift` *(extend)* — a recovered session runs the coverage-repair stage and the repaired transcript is saved with the existing `recoveredFromCrash` provenance intact.
 
 **Ship criteria:** Systemic live-chunk failure triggers a full background re-transcription rather than leaving a near-empty transcript; crash-recovered sessions get coverage repair without extra UX.
 
@@ -126,7 +126,7 @@ The completeness-repair stage. Pure planner + offline VAD + selective re-transcr
 
 - `swift test` baseline before each phase; all green after. Full suite usually ~1–2 min.
 - Pure cores (`MeetingMicHealthMonitorTests`, `MeetingTranscriptCoverageRepairTests`) are deterministic, no hardware — these are the bulk of the coverage and must run in normal CI.
-- The mic-stall *capture* path (real AVAudioEngine) is hardware-gated and forensic, consistent with `2026-05-dictation-stall-integration-tests.md`'s `MACPARAKEET_HARDWARE_TESTS=1` convention — do not put real-mic tests in the default suite.
+- The mic-stall *capture* path (real AVAudioEngine) is hardware-gated and forensic, consistent with `2026-05-dictation-stall-integration-tests.md`'s `SOTTO_HARDWARE_TESTS=1` convention — do not put real-mic tests in the default suite.
 - No-LLM / no-VAD-model smoke: with VAD model uncached, the repair stage degrades to `.accept` (no offline pass available) and the meeting still finalizes — verify no regression.
 - Mutation check (per the onboarding-watchdog-test plan's habit): break the confirmation gate / break the gap detector and confirm the relevant table test fails.
 
@@ -150,7 +150,7 @@ The completeness-repair stage. Pure planner + offline VAD + selective re-transcr
 - [ ] Selective repair re-transcribes only uncovered gaps on the background slot; healthy meetings stay `.accept` and byte-identical
 - [ ] Full-fallback tier handles systemic failure; crash-recovered sessions get coverage repair
 - [ ] Original live transcript + retained `.m4a` never destroyed by repair
-- [ ] Both telemetry events mirrored in `macparakeet-website/functions/api/telemetry.ts` and deployed before flag-on
+- [ ] Both telemetry events mirrored in `sotto-website/functions/api/telemetry.ts` and deployed before flag-on
 - [x] ADR/spec status updated for Phase A; coverage-repair wording remains for
   Phase C
 - [x] `swift test` exits 0; docs/spec progress updated (`spec/README.md`, `spec/02-features.md`)

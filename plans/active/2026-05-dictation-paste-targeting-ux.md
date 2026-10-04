@@ -6,7 +6,7 @@ Updated: 2026-05-10
 
 ## Decision
 
-MacParakeet dictation should default to the **finish-target model**:
+Sotto dictation should default to the **finish-target model**:
 
 ```text
 user speaks

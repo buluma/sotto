@@ -6,9 +6,9 @@
 > frontmatter schema before attempting.
 >
 > Current release note (2026-05-19): the host CLI is published as
-> `macparakeet-cli 2.3.1` and Homebrew install has been verified. The
+> `sotto-cli 2.3.1` and Homebrew install has been verified. The
 > remaining unknown is ClawHub's current skill-package schema/runtime, not
-> the `macparakeet-cli` distribution path.
+> the `sotto-cli` distribution path.
 
 ## What ClawHub actually is (corrected)
 
@@ -32,7 +32,7 @@ ClawHub README confirms:
 - **ClawHub uses `SKILL.md`** (with frontmatter metadata)
 - **`SOUL.md` belongs to a different agent registry** (onlycrabs.ai)
 
-The `integrations/openclaw/SOUL.md` file in the macparakeet repo was
+The `integrations/openclaw/SOUL.md` file in the sotto repo was
 therefore misnamed. **Resolved** in [PR #146](https://github.com/moona3k/macparakeet/pull/146)
 (merged 2026-04-25): renamed to `integrations/openclaw/README.md`
 for consistency with the Hermes-flavored entry point, and updated the
@@ -47,7 +47,7 @@ content to reference the SKILL.md format.
    `requires`, etc.) and what they validate against.
 3. **Create a properly-formed skill package** — directory with
    `SKILL.md` (frontmatter + body), `install.sh` (installs the
-   `macparakeet-cli` host binary), and possibly `examples/` with
+   `sotto-cli` host binary), and possibly `examples/` with
    illustrative invocations.
 4. **Run `clawhub skill publish <path>`** and capture the resulting
    ClawHub URL.
@@ -56,10 +56,10 @@ content to reference the SKILL.md format.
 
 ```markdown
 ---
-name: macparakeet-stt
+name: sotto-stt
 version: 2.3.1
 author: moona3k
-description: Local Parakeet TDT speech-to-text for Apple Silicon. Wraps macparakeet-cli (GPL-3.0-or-later).
+description: Local Parakeet TDT speech-to-text for Apple Silicon. Wraps sotto-cli (GPL-3.0-or-later).
 tags: [stt, transcription, voice, apple-silicon, local, parakeet]
 requires:
   - platform: darwin
@@ -68,10 +68,10 @@ requires:
 license: GPL-3.0-or-later
 ---
 
-# macparakeet-stt
+# sotto-stt
 
 Local speech-to-text and transcription for an OpenClaw agent running
-on Apple Silicon. Wraps `macparakeet-cli` so an OpenClaw skill can
+on Apple Silicon. Wraps `sotto-cli` so an OpenClaw skill can
 transcribe local audio/video files, transcribe YouTube URLs, search
 the user's prior dictation/transcription history, and run a prompt
 against a transcription. All execution is local on the Apple Neural
@@ -80,13 +80,13 @@ Engine; no cloud STT.
 ## Install
 
 ```bash
-brew install moona3k/tap/macparakeet-cli
+brew install moona3k/tap/sotto-cli
 ```
 
 ## Capabilities
 
 (table of capabilities → CLI invocations — see
-`integrations/openclaw/` in the macparakeet repo for the canonical
+`integrations/openclaw/` in the sotto repo for the canonical
 list)
 
 ## Privacy
@@ -106,7 +106,7 @@ before publishing.
   rejected — or worse, accepted in a degraded form that misrepresents
   the skill.
 - **Untested ClawHub runtime**: `brew install
-  moona3k/tap/macparakeet-cli` is verified locally, but the skill's
+  moona3k/tap/sotto-cli` is verified locally, but the skill's
   `install.sh` wrapper still needs to be tested in ClawHub's runtime
   environment.
 - **Post-acquisition uncertainty**: OpenClaw was acquired by OpenAI
@@ -136,7 +136,7 @@ this ClawHub publication succeeding first.
 
 ## Submission checklist (for the future)
 
-- [x] Brew tap live and `brew install moona3k/tap/macparakeet-cli` verified
+- [x] Brew tap live and `brew install moona3k/tap/sotto-cli` verified
 - [ ] OpenClaw CLI installed locally
 - [ ] SKILL.md frontmatter schema verified against current docs
 - [ ] Sandbox test of `clawhub skill publish` succeeded

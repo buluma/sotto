@@ -6,7 +6,7 @@
 
 ## Context
 
-MacParakeet has a rich transcript dataset (file transcriptions, YouTube transcriptions, dictation history) but no way to do anything intelligent with it beyond deterministic text cleanup. Users can export transcripts but can't summarize them, ask questions about them, or transform them with AI.
+Sotto has a rich transcript dataset (file transcriptions, YouTube transcriptions, dictation history) but no way to do anything intelligent with it beyond deterministic text cleanup. Users can export transcripts but can't summarize them, ask questions about them, or transform them with AI.
 
 ### Previous Attempt (ADR-008)
 
@@ -27,11 +27,11 @@ Cloud models (Claude, GPT-4, Gemini) are dramatically better than any local 8B f
 
 ### Competitive Validation
 
-Char (fastrepl/char) — a meeting transcription app — supports this general BYO-provider pattern. That validates the product direction even though MacParakeet now uses a mixed transport layer: Anthropic native Messages API, Ollama native `/api/chat`, OpenAI-compatible providers including LM Studio, and Local CLI subprocess execution.
+Char (fastrepl/char) — a meeting transcription app — supports this general BYO-provider pattern. That validates the product direction even though Sotto now uses a mixed transport layer: Anthropic native Messages API, Ollama native `/api/chat`, OpenAI-compatible providers including LM Studio, and Local CLI subprocess execution.
 
 ## Decision
 
-**Public/default LLM features use external providers via API.** MacParakeet does not bundle a model, does not download one automatically, and does not expose a public/default in-process runtime unless the Local MLX gates pass. Users configure their preferred provider in Settings.
+**Public/default LLM features use external providers via API.** Sotto does not bundle a model, does not download one automatically, and does not expose a public/default in-process runtime unless the Local MLX gates pass. Users configure their preferred provider in Settings.
 
 ### Supported Providers
 
@@ -55,7 +55,7 @@ The current implementation supports these provider/runtime types through one sha
 | Local MLX | In-process local, developer-gated | `inprocess://local` | N/A |
 | Apple Intelligence | On-device OS model, macOS 26+ | `appleintelligence://system` | N/A |
 
-**Amendment (2026-04-03): Local CLI provider.** Users with Claude Code or Codex subscriptions can use their CLI tools (`claude -p`, `codex exec`, or any custom command) for summaries, chat, and transforms — no separate API key needed. The CLI tool runs as a subprocess via `posix_spawn` with process group management. Prompts are delivered via stdin and `MACPARAKEET_*` environment variables. This extends the provider model without changing the `LLMClientProtocol` — a `RoutingLLMClient` dispatches `.localCLI` contexts to `LocalCLILLMClient` and everything else to the HTTP `LLMClient`. See PR #47.
+**Amendment (2026-04-03): Local CLI provider.** Users with Claude Code or Codex subscriptions can use their CLI tools (`claude -p`, `codex exec`, or any custom command) for summaries, chat, and transforms — no separate API key needed. The CLI tool runs as a subprocess via `posix_spawn` with process group management. Prompts are delivered via stdin and `SOTTO_*` environment variables. This extends the provider model without changing the `LLMClientProtocol` — a `RoutingLLMClient` dispatches `.localCLI` contexts to `LocalCLILLMClient` and everything else to the HTTP `LLMClient`. See PR #47.
 
 **Implementation note (2026-04-04):** Anthropic now uses the native Messages API and Ollama uses its native `/api/chat` endpoint. OpenAI, Gemini, OpenRouter, and LM Studio use OpenAI-compatible chat completions. The shared abstraction is the service/client interface, not a single wire protocol.
 
@@ -69,13 +69,13 @@ The current implementation supports these provider/runtime types through one sha
 4. **No default provider.** User must explicitly choose and configure. No "sign up for our cloud" upsell.
 5. **Transcription stays local.** Audio never leaves the device. The app can remain fully local when users choose only local providers/features. LLM requests may send transcript or selected text, user notes, prompts, questions, and chat history to the configured provider/CLI tool. Dispatch follows a user action or an enabled automation such as prompt auto-run or AI Formatter; it does not require a new click for every request. This distinction must be clear in the UI.
 
-**Amendment (2026-07-04): direction confirmed, positioning fixed.** Product decision: MacParakeet will offer a first-party local model (Qwen/Gemma-class via MLX) as a dead-simple, one-click *option* aimed at non-technical and privacy-first users, while cloud/frontier providers remain the recommended quality path per surface until the local model demonstrably reaches parity there. Phase 0 in `plans/active/2026-06-27-on-device-local-llm.md` gates the public product promise, any default/recommendation, and the shipped surface scope; it is not a denial that non-public foundation code can exist. Shipping bar per surface: fidelity-safe and clearly above the deterministic pipeline to *offer*; cloud parity to *recommend*. Agentic/tool-calling and whole-library analysis stay cloud-first until proven.
+**Amendment (2026-07-04): direction confirmed, positioning fixed.** Product decision: Sotto will offer a first-party local model (Qwen/Gemma-class via MLX) as a dead-simple, one-click *option* aimed at non-technical and privacy-first users, while cloud/frontier providers remain the recommended quality path per surface until the local model demonstrably reaches parity there. Phase 0 in `plans/active/2026-06-27-on-device-local-llm.md` gates the public product promise, any default/recommendation, and the shipped surface scope; it is not a denial that non-public foundation code can exist. Shipping bar per surface: fidelity-safe and clearly above the deterministic pipeline to *offer*; cloud parity to *recommend*. Agentic/tool-calling and whole-library analysis stay cloud-first until proven.
 
-**Amendment (2026-07-05): developer-gated Local MLX foundation.** The provider seam, gated MLX runtime wiring, verified model downloader, and one-click Settings card may exist in `main` as non-public infrastructure. `AppFeatures.inProcessLocalLLMEnabled` stays `false`; developers expose the option with `MacParakeetEnableInProcessLocalLLM` or `--enable-local-ai`. Public one-click setup remains blocked by runtime capability gating, setup UX, release readiness, and Phase 0 quality evidence. The first plausible public scope is single-transcript cleanup/summarization/Q&A; cross-meeting or whole-library analysis remains future-gated. The app still never bundles a model, never downloads one automatically, and never recommends Local MLX over cloud/frontier quality until surface-specific evidence justifies that change.
+**Amendment (2026-07-05): developer-gated Local MLX foundation.** The provider seam, gated MLX runtime wiring, verified model downloader, and one-click Settings card may exist in `main` as non-public infrastructure. `AppFeatures.inProcessLocalLLMEnabled` stays `false`; developers expose the option with `SottoEnableInProcessLocalLLM` or `--enable-local-ai`. Public one-click setup remains blocked by runtime capability gating, setup UX, release readiness, and Phase 0 quality evidence. The first plausible public scope is single-transcript cleanup/summarization/Q&A; cross-meeting or whole-library analysis remains future-gated. The app still never bundles a model, never downloads one automatically, and never recommends Local MLX over cloud/frontier quality until surface-specific evidence justifies that change.
 
 **Amendment (2026-09-14): per-task selection, if split.** The current runtime still stores one `LLMProviderConfig` and resolves it for every LLM call. If model selection is later split, it follows [ADR-032](032-llm-task-group-routing.md): a few tasks with inherit / general-LLM route / specialist recipe, not a picker per AI feature. Specialists are task-bound recipes, not default-list model IDs. That ADR does not change this ADR's provider, privacy, or shared-client decisions, and it does not schedule the work.
 
-**Amendment (2026-09-16): Apple Intelligence short-task provider.** Eligible macOS 26+ Macs may select Apple's on-device Foundation Models as an explicit LLM provider (`LLMProviderID.appleIntelligence`). It is not auto-selected, not a bundled MacParakeet model, and not a fallback for other providers. The OS owns the ~3B weights and the ~4096-token window; MacParakeet uses a dedicated ~12k-character English-calibrated budget for short answers and ~6k for rewrite-shaped work, and maps overflow/guardrail failures instead of silently stitching chunks. Long English transcripts are middle-truncated with the same marker as other providers. The app floor stays macOS 14.2; the tile is hidden when the device is ineligible or the OS is older. See issue #1062.
+**Amendment (2026-09-16): Apple Intelligence short-task provider.** Eligible macOS 26+ Macs may select Apple's on-device Foundation Models as an explicit LLM provider (`LLMProviderID.appleIntelligence`). It is not auto-selected, not a bundled Sotto model, and not a fallback for other providers. The OS owns the ~3B weights and the ~4096-token window; Sotto uses a dedicated ~12k-character English-calibrated budget for short answers and ~6k for rewrite-shaped work, and maps overflow/guardrail failures instead of silently stitching chunks. Long English transcripts are middle-truncated with the same marker as other providers. The app floor stays macOS 14.2; the tile is hidden when the device is ineligible or the OS is older. See issue #1062.
 
 **Amendment (2026-09-27): Apple Intelligence serves dictation cleanup only.** The ~4096-token window holds input and answer together. Measured with `SystemLanguageModel.tokenCount`, the timestamped, speaker-labeled transcripts the app sends run about 2.8-3.2 characters per token, so a 25-minute video's Chapter Breakdown overflowed the window, and fitting it would have kept only about a fifth of the transcript's head and tail. Apple Intelligence is therefore offered only for the cleanup route, not as Default AI or for analysis; saved routes that break this rule are cleared at launch. This restriction also applies to explicit inline CLI requests through the shared generation service. Revisit when Apple ships a larger window.
 
@@ -119,7 +119,7 @@ One Swift service boundary with provider-aware routing. The current implementati
 
 ### Bring-your-own-model via local providers
 
-Users who want local-only LLM can install Ollama (`brew install ollama && ollama pull llama3.2`) and point MacParakeet at `localhost:11434`. They get local privacy with whatever model they choose. MacParakeet doesn't need to know or care what model is running.
+Users who want local-only LLM can install Ollama (`brew install ollama && ollama pull llama3.2`) and point Sotto at `localhost:11434`. They get local privacy with whatever model they choose. Sotto doesn't need to know or care what model is running.
 
 ## Consequences
 
@@ -147,7 +147,7 @@ Users who want local-only LLM can install Ollama (`brew install ollama && ollama
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    MacParakeet App                        │
+│                    Sotto App                        │
 │                                                          │
 │  TranscriptResultView / DictationHistoryView             │
 │       │                                                  │
@@ -240,12 +240,12 @@ public protocol LLMServiceProtocol: Sendable {
 
 | Component | Target | Notes |
 |-----------|--------|-------|
-| `LLMClientProtocol` | MacParakeetCore | HTTP client, no UI deps |
-| `LLMProviderConfig` | MacParakeetCore | Model + Codable |
-| `LLMService` | MacParakeetCore | Domain operations (summarize, chat, transform) |
-| `LLMSettingsView` | MacParakeet (GUI) | Provider picker, API key input, test connection |
-| `TranscriptChatView` | MacParakeet (GUI) | Chat UI for transcript Q&A |
-| `LLMViewModel` | MacParakeetViewModels | Testable orchestration |
+| `LLMClientProtocol` | SottoCore | HTTP client, no UI deps |
+| `LLMProviderConfig` | SottoCore | Model + Codable |
+| `LLMService` | SottoCore | Domain operations (summarize, chat, transform) |
+| `LLMSettingsView` | Sotto (GUI) | Provider picker, API key input, test connection |
+| `TranscriptChatView` | Sotto (GUI) | Chat UI for transcript Q&A |
+| `LLMViewModel` | SottoViewModels | Testable orchestration |
 
 ## Alternatives Considered
 

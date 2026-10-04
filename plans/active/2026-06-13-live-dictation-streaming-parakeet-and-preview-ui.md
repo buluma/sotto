@@ -8,11 +8,11 @@
 >
 > **Background reading (read first)**: `docs/research/live-dictation-streaming.md`
 > §0 (how we got here / the two complexities), §2 (mechanism), §3 (hard
-> requirements). `Sources/MacParakeetCore/STT/README.md`, `spec/adr/016-*`,
+> requirements). `Sources/SottoCore/STT/README.md`, `spec/adr/016-*`,
 > `spec/adr/021-*`.
 >
 > **Drift check (run first)**:
-> `git diff --stat 2473828f5..HEAD -- Sources/MacParakeetCore/STT/STTScheduler.swift Sources/MacParakeetCore/STT/STTRuntime.swift Sources/MacParakeetCore/STT/STTClientProtocol.swift Sources/MacParakeetCore/Services/Dictation/DictationService.swift Sources/MacParakeetCore/Audio/AudioRecorder.swift Sources/MacParakeet/App/AppEnvironment.swift Sources/MacParakeet/Views/Dictation/DictationOverlayView.swift`
+> `git diff --stat 2473828f5..HEAD -- Sources/SottoCore/STT/STTScheduler.swift Sources/SottoCore/STT/STTRuntime.swift Sources/SottoCore/STT/STTClientProtocol.swift Sources/SottoCore/Services/Dictation/DictationService.swift Sources/SottoCore/Audio/AudioRecorder.swift Sources/Sotto/App/AppEnvironment.swift Sources/Sotto/Views/Dictation/DictationOverlayView.swift`
 > Any change since `2473828f5` → re-verify anchors (STOP on material mismatch).
 
 ## Status
@@ -65,7 +65,7 @@ confirmed/volatile two-tone, timing-backed trimming, audio↔text alignment,
 - **A1**: remove `liveTranscriptPreviewText(...)` from `holdToTalkContent` (`:427`) + `recordingContent` (`:509`) so the capsule returns to its compact shape. Add a floating preview as a sibling **above** `overlayContent` in `body` (`:232`), gated on `state == .recording && preview present`; grows upward into the headroom, pill pinned.
 - **A2**: style as **single-style ephemeral tail text** (reuse DesignSystem atoms; shape differs from the pill; display-only — no hit targets). No two-tone.
 - **A3**: if 2 lines clip, bump panel height (160→190) keeping the bottom anchor + re-center; don't touch width.
-- **A4 verify**: `scripts/dev/run_app.sh` (Nemotron) — capsule identical at all times, preview floats above; `swift build --target MacParakeet`. Shippable as its own PR.
+- **A4 verify**: `scripts/dev/run_app.sh` (Nemotron) — capsule identical at all times, preview floats above; `swift build --target Sotto`. Shippable as its own PR.
 
 ---
 
@@ -114,7 +114,7 @@ Confirmed/volatile two-tone + a smoother source (e.g. `SlidingWindowAsrManager`)
 - Part A: screenshots + overlay VM tests.
 
 ## Docs to update (after shipping)
-ADR/spec live-preview wording; `spec/README.md` Release Channels And Feature Flags (feature + `liveDictationStreamingEnabled` in the main-vs-release delta); `Sources/MacParakeetCore/STT/README.md` (display-only ephemeral preview + sample-preview API + single-flight + "never the paste"); `docs/research/live-dictation-streaming.md` (record Whisper probe; flip status); `spec/02-features.md`/`spec/README.md`. Move plan → `completed/`; update board + advisor index. Note: ADR-016 cites FluidAudio 0.13.6 but `Package.resolved` is 0.15.2 — reconcile.
+ADR/spec live-preview wording; `spec/README.md` Release Channels And Feature Flags (feature + `liveDictationStreamingEnabled` in the main-vs-release delta); `Sources/SottoCore/STT/README.md` (display-only ephemeral preview + sample-preview API + single-flight + "never the paste"); `docs/research/live-dictation-streaming.md` (record Whisper probe; flip status); `spec/02-features.md`/`spec/README.md`. Move plan → `completed/`; update board + advisor index. Note: ADR-016 cites FluidAudio 0.13.6 but `Package.resolved` is 0.15.2 — reconcile.
 
 ## STOP conditions
 - Drift on any anchor since `2473828f5`.

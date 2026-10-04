@@ -98,23 +98,23 @@ multi-selectable, "Generate titles" becomes a natural bulk action.
 ## Verified current state (file:line)
 
 - Reusable pattern (source of truth to mirror):
-  `Sources/MacParakeetViewModels/DictationHistoryViewModel.swift`
+  `Sources/SottoViewModels/DictationHistoryViewModel.swift`
   — `selectedDictationIDs: Set<UUID>` + `isBulkSelectionModeEnabled` (~104-111),
   `beginBulkSelection`/`exitBulkSelection` (~237-246),
   `requestDeleteSelectedDictations`/`confirmDeleteSelectedDictations` (~248-268),
   shared `deleteDictations(_:using:)` (~280-301), count-aware alert copy (~303-312).
-- Action bar UI to mirror: `Sources/MacParakeet/Views/History/DictationHistoryView.swift`
+- Action bar UI to mirror: `Sources/Sotto/Views/History/DictationHistoryView.swift`
   — `selectedActionsBar` (~173-220), Delete button (~208-214), bar shown when mode on (~83-89).
 - Library views to modify:
-  `Sources/MacParakeet/Views/Transcription/TranscriptionLibraryView.swift`
+  `Sources/Sotto/Views/Transcription/TranscriptionLibraryView.swift`
   — grid vs meetings-list routing (~75-79), filter chips (~44-57),
   `thumbnailGrid` (~137-160), `meetingsList` (~162-185),
   single-delete (context menu → `pendingDelete`, alert ~85-105 → `deleteTranscription`),
   meeting audio-only detach (~106-121 → `deleteMeetingAudio`).
-- `Sources/MacParakeet/Views/Meetings/MeetingsView.swift` — "Recent Meetings"
+- `Sources/Sotto/Views/Meetings/MeetingsView.swift` — "Recent Meetings"
   list reuses `MeetingRowCard` (~406-449).
 - Library ViewModel to extend:
-  `Sources/MacParakeetViewModels/TranscriptionLibraryViewModel.swift`
+  `Sources/SottoViewModels/TranscriptionLibraryViewModel.swift`
   — `transcriptions` / `filteredTranscriptions` / `groupedTranscriptions`,
   `deleteTranscription(_:)` (~152-165) calling
   `TranscriptionDeletionCleanup.removeOwnedAssets()` + repo `delete(id:)`;
@@ -136,7 +136,7 @@ multi-selectable, "Generate titles" becomes a natural bulk action.
   selected rows/cards and checkmarks. This matches the app's coral-orange action
   language and the Library filter chips.
 - **Destructive color:** reserve `DesignSystem.Colors.errorRed` and
-  `.parakeetAction(.destructive)` for the actual destructive actions:
+  `.sottoAction(.destructive)` for the actual destructive actions:
   `Delete Audio Only...`, `Delete Items...`, `Delete Meetings...`, and
   confirmation buttons.
 - **Do not use red for selection state.** Selection is a reversible staging mode;

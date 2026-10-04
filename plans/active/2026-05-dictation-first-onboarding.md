@@ -7,7 +7,7 @@
 > When done, update this plan's row in `plans/README.md`.
 >
 > **Drift check (run first)**:
-> `git diff --stat 237bb8ae1..HEAD -- Sources/MacParakeetViewModels/OnboardingViewModel.swift Sources/MacParakeet/Views/Onboarding/OnboardingFlowView.swift Sources/MacParakeetCore/AppFeatures.swift`
+> `git diff --stat 237bb8ae1..HEAD -- Sources/SottoViewModels/OnboardingViewModel.swift Sources/Sotto/Views/Onboarding/OnboardingFlowView.swift Sources/SottoCore/AppFeatures.swift`
 > If any of those changed since `237bb8ae1`, compare the "Current state" line
 > anchors below against the live code before editing; on a mismatch, re-locate
 > the symbol by name (the anchors are line *hints*, not contracts) and, if the
@@ -25,7 +25,7 @@
 
 ## Why this matters
 
-MacParakeet's North Star is a fast, local-first **voice** app: dictation is the
+Sotto's North Star is a fast, local-first **voice** app: dictation is the
 headline; meeting recording + calendar are optional. But first-run onboarding
 puts **Meeting Recording** and **Calendar** setup *in the critical path before*
 the user reaches the hotkey + speech-model steps that actually make dictation
@@ -103,7 +103,7 @@ is known-flaky on CI — re-run a failed job, don't "fix" it.
 
 ## Current state (line anchors at `237bb8ae1` — verify before editing)
 
-- `Sources/MacParakeetViewModels/OnboardingViewModel.swift`
+- `Sources/SottoViewModels/OnboardingViewModel.swift`
   - `enum Step` with the 8 cases: line **22**.
   - `meetingRecordingSkipped` / `calendarSkipped` stored props: **63 / 65**;
     their `UserDefaults` keys + reset: **108–109, 146–147, 168–173**.
@@ -115,7 +115,7 @@ is known-flaky on CI — re-run a failed job, don't "fix" it.
   - `startEngineWarmUp()`: **396**; sets `isBusy` (**416**); generation/observation-token
     guards that make it idempotent: **411–423**; stall watchdog `.failed` path: **419**;
     download-duration anchor `warmUpStartedAt → .ready`: **~479–484**.
-- `Sources/MacParakeet/Views/Onboarding/OnboardingFlowView.swift`
+- `Sources/Sotto/Views/Onboarding/OnboardingFlowView.swift`
   - `visibleSteps`/`totalSteps`/progress index: **55–58** (read from the VM static).
   - `stepBody(_:)` switch: **325** · `meetingRecordingStep`: **429** ·
     `calendarStep`: **502** · `doneStep`: **877**.
@@ -123,11 +123,11 @@ is known-flaky on CI — re-run a failed job, don't "fix" it.
   - exhaustive `Step` switches to fix: `stepIcon` (~**197**), `titleForStep`
     (~**1059**), `subtitleForStep`/`continueHint` (~**1078/1232**),
     `primaryButtonTitle` (~**1096**).
-- `Sources/MacParakeetCore/AppFeatures.swift` — `meetingRecordingEnabled` (**12**),
+- `Sources/SottoCore/AppFeatures.swift` — `meetingRecordingEnabled` (**12**),
   `calendarEnabled` (**24**); doc-comments currently claim to hide an onboarding step.
-- `Sources/MacParakeet/Hotkey/GlobalShortcutManager.swift:49` —
+- `Sources/Sotto/Hotkey/GlobalShortcutManager.swift:49` —
   `CGEvent.tapCreate` session tap (needs Accessibility; see Design §3).
-- Tests: `Tests/MacParakeetTests/ViewModels/OnboardingViewModelTests.swift` (770 lines) — extend this.
+- Tests: `Tests/SottoTests/ViewModels/OnboardingViewModelTests.swift` (770 lines) — extend this.
 
 Convention to match: `@MainActor @Observable` ViewModels; telemetry via
 `Telemetry.send(.<case>)`; tests are XCTest, in-memory, deterministic.
@@ -135,10 +135,10 @@ Convention to match: `@MainActor @Observable` ViewModels; telemetry via
 ## Scope
 
 **In scope (Part A):**
-- `Sources/MacParakeetViewModels/OnboardingViewModel.swift`
-- `Sources/MacParakeet/Views/Onboarding/OnboardingFlowView.swift`
-- `Sources/MacParakeetCore/AppFeatures.swift` (doc-comments only)
-- `Tests/MacParakeetTests/ViewModels/OnboardingViewModelTests.swift`
+- `Sources/SottoViewModels/OnboardingViewModel.swift`
+- `Sources/Sotto/Views/Onboarding/OnboardingFlowView.swift`
+- `Sources/SottoCore/AppFeatures.swift` (doc-comments only)
+- `Tests/SottoTests/ViewModels/OnboardingViewModelTests.swift`
 - Docs on completion: `spec/adr/005-onboarding-first-run.md`,
   `spec/02-features.md`, and `spec/README.md`. Old `REQ-*` references are
   historical only; do not update the retired requirements index.
@@ -265,7 +265,7 @@ only one that can deadlock the user):
 Delete `Step.meetingRecording` / `Step.calendar`, their step views, the skip
 methods, and the persisted skip booleans + keys (Design §1). Keep the shared
 permission plumbing — grep its call sites first.
-**Verify**: `grep -nE "case meetingRecording|case calendar" Sources/MacParakeetViewModels/OnboardingViewModel.swift` → **no matches in the `Step` enum**; `grep -rn "skipMeetingRecordingStep\|skipCalendarStep\|meetingRecordingSkipped\|calendarSkipped" Sources/` → **no matches**.
+**Verify**: `grep -nE "case meetingRecording|case calendar" Sources/SottoViewModels/OnboardingViewModel.swift` → **no matches in the `Step` enum**; `grep -rn "skipMeetingRecordingStep\|skipCalendarStep\|meetingRecordingSkipped\|calendarSkipped" Sources/` → **no matches**.
 
 **Step 2 — Simplify `visibleSteps` + fix exhaustive switches.**
 Make `visibleSteps` the static 6-step list `[.welcome,.microphone,.accessibility,.hotkey,.engine,.done]`. Fix every `Step` switch in the VM and view so the project compiles. Update `AppFeatures` doc-comments.
@@ -273,7 +273,7 @@ Make `visibleSteps` the static 6-step list `[.welcome,.microphone,.accessibility
 
 **Step 3 — Ready-screen meetings line.**
 Add the one quiet line to `doneStep`, gated on `AppFeatures.meetingRecordingEnabled` (Design §2).
-**Verify**: `swift build` → exit 0; `grep -n "Record Meeting" Sources/MacParakeet/Views/Onboarding/OnboardingFlowView.swift` → one match inside `doneStep`.
+**Verify**: `swift build` → exit 0; `grep -n "Record Meeting" Sources/Sotto/Views/Onboarding/OnboardingFlowView.swift` → one match inside `doneStep`.
 
 **Step 4 — Tests.**
 Extend `OnboardingViewModelTests.swift` (see Test plan).
@@ -299,7 +299,7 @@ Confirm first "Record Meeting" → screen prompt; Settings → calendar request;
 
 ## Test plan
 
-Extend `Tests/MacParakeetTests/ViewModels/OnboardingViewModelTests.swift` (model
+Extend `Tests/SottoTests/ViewModels/OnboardingViewModelTests.swift` (model
 new tests after the existing cases there — XCTest, in-memory `UserDefaults`):
 
 **Part A:**
@@ -322,11 +322,11 @@ new tests after the existing cases there — XCTest, in-memory `UserDefaults`):
 Part A is done when ALL hold:
 
 - [ ] `swift build` exits 0.
-- [ ] `grep -nE "case meetingRecording|case calendar" Sources/MacParakeetViewModels/OnboardingViewModel.swift` → no matches in the `Step` enum.
+- [ ] `grep -nE "case meetingRecording|case calendar" Sources/SottoViewModels/OnboardingViewModel.swift` → no matches in the `Step` enum.
 - [ ] `grep -rn "skipMeetingRecordingStep\|skipCalendarStep\|meetingRecordingSkipped\|calendarSkipped" Sources/` → no matches.
 - [ ] `swift test` exits 0; new `OnboardingViewModelTests` for the 6-step flow exist and pass.
 - [ ] Manual: `scripts/dev/run_app.sh` → onboarding is 6 steps, no Meeting Recording / Calendar; Ready screen shows the meetings discoverability line.
-- [ ] `git -C ../macparakeet-website status` clean (no telemetry.ts change) **and** no `Sources/.../telemetry` change — this plan adds no event.
+- [ ] `git -C ../sotto-website status` clean (no telemetry.ts change) **and** no `Sources/.../telemetry` change — this plan adds no event.
 - [ ] Only in-scope files modified (`git status`).
 - [ ] Docs updated: ADR-005 amendment, `spec/02-features.md` + `spec/README.md` progress, optional `REQ-ONB-001`.
 - [ ] `plans/README.md` status row updated.

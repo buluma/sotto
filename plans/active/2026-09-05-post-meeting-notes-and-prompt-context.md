@@ -47,7 +47,7 @@ custom prompt.
 - `MeetingArtifactStore` already materializes the canonical DB value into
   `notes.md`, `meeting.md`, `transcript.json`, and the meeting manifest. Empty
   notes remove the stale `notes.md` file.
-- `macparakeet-cli meetings notes get|set|append|clear` already uses the desired
+- `sotto-cli meetings notes get|set|append|clear` already uses the desired
   normalization and artifact-refresh semantics.
 - Saved and live meeting Chat/Ask already read the latest non-empty notes at
   send time and add them to the chat context. That behavior does not need a
@@ -292,7 +292,7 @@ transcript.
 Preserve the renderer's current single-pass substitution so literal template
 markers inside notes are never recursively interpreted.
 
-The GUI and `macparakeet-cli prompts run` must call this exact shared path.
+The GUI and `sotto-cli prompts run` must call this exact shared path.
 Auto-run prompts use their own captured checkbox value. Existing Chat/Ask
 assembly remains unchanged.
 
@@ -403,7 +403,7 @@ Remain explicitly out of scope:
 
 ### Renderer decision
 
-Preserve `MarkdownContentView(_:, font:)` as MacParakeet's local façade so the
+Preserve `MarkdownContentView(_:, font:)` as Sotto's local façade so the
 third-party choice never leaks across feature views. Replace its ad hoc parser
 behind that boundary with
 [`SwiftStreamingMarkdown`](https://github.com/microsoft/SwiftStreamingMarkdown).
@@ -509,7 +509,7 @@ mouse and keyboard link activation, VoiceOver task states, and light/dark mode.
 
 ### Historical fork visual QA record — 2026-09-05
 
-QA ran against commit `023809123cb4` in `MacParakeet-Dev.app`, with an isolated
+QA ran against commit `023809123cb4` in `Sotto-Dev.app`, with an isolated
 database under `/tmp` so no real meeting data was changed.
 
 Passed in the real app:
@@ -641,20 +641,20 @@ presentation limitation rather than a newly introduced regression.
 
 Core and persistence:
 
-- `Sources/MacParakeetCore/Models/Prompt.swift`
-- `Sources/MacParakeetCore/Models/PromptResult.swift`
-- `Sources/MacParakeetCore/Models/PromptSystemPromptAssembler.swift`
-- `Sources/MacParakeetCore/Database/DatabaseManager.swift`
-- `Sources/MacParakeetCore/Database/PromptRepository.swift`
-- `Sources/MacParakeetCore/Database/TranscriptionRepository.swift`
+- `Sources/SottoCore/Models/Prompt.swift`
+- `Sources/SottoCore/Models/PromptResult.swift`
+- `Sources/SottoCore/Models/PromptSystemPromptAssembler.swift`
+- `Sources/SottoCore/Database/DatabaseManager.swift`
+- `Sources/SottoCore/Database/PromptRepository.swift`
+- `Sources/SottoCore/Database/TranscriptionRepository.swift`
 
 ViewModels and UI:
 
-- `Sources/MacParakeetViewModels/PromptsViewModel.swift`
-- `Sources/MacParakeetViewModels/PromptResultsViewModel.swift`
-- `Sources/MacParakeetViewModels/TranscriptionViewModel.swift`
-- `Sources/MacParakeet/Views/Transcription/PromptLibraryView.swift`
-- `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift`
+- `Sources/SottoViewModels/PromptsViewModel.swift`
+- `Sources/SottoViewModels/PromptResultsViewModel.swift`
+- `Sources/SottoViewModels/TranscriptionViewModel.swift`
+- `Sources/Sotto/Views/Transcription/PromptLibraryView.swift`
+- `Sources/Sotto/Views/Transcription/TranscriptResultView.swift`
 
 CLI and contracts:
 

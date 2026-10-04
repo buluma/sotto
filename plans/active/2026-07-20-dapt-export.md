@@ -19,7 +19,7 @@ hardware readiness from that historical evidence.
 
 ## Goal
 
-Export any saved or newly produced MacParakeet transcription as a DAPT 1.0
+Export any saved or newly produced Sotto transcription as a DAPT 1.0
 original-language transcript, preserving aligned timing, language, speaker
 attribution, and available display labels without inventing metadata when those
 inputs are absent.
@@ -109,8 +109,8 @@ inputs are absent.
   untimed event and no stale speaker references.
 - App single, bulk, transcription auto-save, and meeting auto-save exports
   write collision-safe `.dapt.xml` files.
-- `macparakeet-cli export --format dapt` and
-  `macparakeet-cli transcribe --format dapt` share the same renderer and support
+- `sotto-cli export --format dapt` and
+  `sotto-cli transcribe --format dapt` share the same renderer and support
   stdout/file output.
 - Existing export behavior stays green under focused and final full-suite tests.
 

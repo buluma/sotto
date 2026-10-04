@@ -12,13 +12,13 @@ voice-driven command layer.
 
 ## Thesis
 
-**Transforms — system-wide hotkey-driven LLM rewrites on selected text — is the right next major surface for MacParakeet.** It's commonly framed as a writing-assistant feature (WisprFlow's `Polish` and `Prompt Engineer` on Opt+1/Opt+2), but for us it's better understood as the **hotkey-driven half of Command Mode**: the same selection-capture → LLM-rewrite → in-place-replace primitive that voice Command Mode will need, with a much simpler trigger.
+**Transforms — system-wide hotkey-driven LLM rewrites on selected text — is the right next major surface for Sotto.** It's commonly framed as a writing-assistant feature (WisprFlow's `Polish` and `Prompt Engineer` on Opt+1/Opt+2), but for us it's better understood as the **hotkey-driven half of Command Mode**: the same selection-capture → LLM-rewrite → in-place-replace primitive that voice Command Mode will need, with a much simpler trigger.
 
 Building Transforms first lays the foundation. The voice variant ("select text, hold Fn, say 'make this more formal'") becomes a swap on the trigger layer once the primitive is solid.
 
 ## Why this is more conservative than it looks
 
-Reading the audit, it's tempting to characterize this as scope creep — MacParakeet drifting from "voice app" into "writing assistant." Two reasons that framing is wrong:
+Reading the audit, it's tempting to characterize this as scope creep — Sotto drifting from "voice app" into "writing assistant." Two reasons that framing is wrong:
 
 1. **The roadmap already says this.** `plans/active/2026-05-voice-command-agent-mode.md` lists "selected-text rewrite" as candidate capability #1. `docs/agent-mode-vision.md` names "rewrite selected text" as an Agent Mode primitive. We are not adding a new product direction; we are picking the shortest path to a primitive we've already committed to.
 
@@ -32,7 +32,7 @@ Reading the audit, it's tempting to characterize this as scope creep — MacPara
    | Dictation has both `rawTranscript` and `cleanTranscript` stored separately | Built; ready for Undo AI edit too |
    | Accessibility permission already requested (for paste simulation) | Built |
    | Paste-back via simulated Cmd+V | Built; used by dictation insertion |
-   | CLI surface that proves the prompt-driven rewrite shape works | Built (`macparakeet-cli llm transform`) |
+   | CLI surface that proves the prompt-driven rewrite shape works | Built (`sotto-cli llm transform`) |
 
    The originally new pieces were narrow: AX-based selection capture, the
    Transforms management UI, and the bind-N-hotkeys-to-N-transforms mux. ADR-022
@@ -72,7 +72,7 @@ Other trigger surfaces (right-click context menu, floating action button, menu b
 
 Five components. Three are new; two are extensions of existing code.
 
-### 1. `SelectionCaptureService` (new, in `MacParakeetCore/Services/System/`)
+### 1. `SelectionCaptureService` (new, in `SottoCore/Services/System/`)
 
 ```swift
 public enum SelectionCaptureResult {
@@ -102,7 +102,7 @@ Strategy:
 
 Trap to avoid: don't restore the clipboard immediately after reading. The paste-back path (component 5) needs the result text on the clipboard. Restore only after paste-back completes or fails.
 
-### 2. `SelectionReplacementService` (new, in `MacParakeetCore/Services/System/`)
+### 2. `SelectionReplacementService` (new, in `SottoCore/Services/System/`)
 
 ```swift
 public actor SelectionReplacementService {
@@ -122,7 +122,7 @@ Strategy by context:
 
 The clipboard backup/restore dance is well-known to be racy; cribbing from Raycast / Espanso's approach is the right move. The 250ms read timeout and ~500ms write timeout match conventional values.
 
-### 3. `TransformExecutor` (new, in `MacParakeetCore/Services/Transforms/`)
+### 3. `TransformExecutor` (new, in `SottoCore/Services/Transforms/`)
 
 ```swift
 public actor TransformExecutor {
@@ -164,7 +164,7 @@ Collision rules:
 - Transforms hotkeys must not collide with the user's dictation hotkey or the meeting-toggle hotkey. Surface a clear inline error in the binding UI.
 - Don't collide with the well-known macOS Opt+letter combos that produce alt-characters (Opt+e, Opt+u, etc. are dead keys). Restrict the default Opt+1..Opt+9 range and let users override.
 
-### 5. Transforms management UI (new, in `Sources/MacParakeet/Views/Transforms/`)
+### 5. Transforms management UI (new, in `Sources/Sotto/Views/Transforms/`)
 
 A new top-level sidebar item — sibling of Vocabulary, Library, Settings.
 
@@ -226,9 +226,9 @@ Three concrete directions worth prototyping (pick one for v1, the others stay in
 2. **Morphing rosette.** A miniature version of the meeting-pill rosette continuously morphs between regular polygons (hexagon → heptagon → octagon → back). Ties into our existing geometric language but doesn't read as "recording." Slow tempo (~1.5s per morph cycle) to feel deliberate.
 3. **Bezier scribe.** A single coral curve traces a continuous loop — drawing forward, then erasing from the tail at the same rate, so the curve appears to be "writing" itself indefinitely. Cursive feel. Best fit for the "polishing your words" mental model.
 
-My lean: **#3 (Bezier scribe)** for v1. It's the most on-theme for a writing/refinement surface, the least likely to be confused with the dictation overlay's waveform or the meeting pill's rosette, and the easiest to communicate as "MacParakeet has its own animation language."
+My lean: **#3 (Bezier scribe)** for v1. It's the most on-theme for a writing/refinement surface, the least likely to be confused with the dictation overlay's waveform or the meeting pill's rosette, and the easiest to communicate as "Sotto has its own animation language."
 
-Implementation note: the loader is a self-contained SwiftUI view (`TransformLoader.swift` under `Sources/MacParakeet/Views/Transforms/`). It exposes a single `isActive: Bool` binding so the same view can be reused in the management UI's preview pane (showing the loader idle at the corner of each Transform card on hover, as a discovery hint).
+Implementation note: the loader is a self-contained SwiftUI view (`TransformLoader.swift` under `Sources/Sotto/Views/Transforms/`). It exposes a single `isActive: Bool` binding so the same view can be reused in the management UI's preview pane (showing the loader idle at the corner of each Transform card on hover, as a discovery hint).
 
 ## No-selection and error UX
 

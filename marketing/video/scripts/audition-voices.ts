@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * Audition Kokoro voices for the MacParakeet brand voice.
+ * Audition Kokoro voices for the Sotto brand voice.
  *
  * Generates a short test phrase in each of a curated shortlist of voices,
  * writes them to `public/audio/audition/`, and prints which file is which

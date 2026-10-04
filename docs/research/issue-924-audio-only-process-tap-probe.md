@@ -3,7 +3,7 @@
 Status: experiment only; not a production backend.
 
 This probe answers one narrow question from issue #924: can a Core Audio
-process tap capture deterministic system playback when MacParakeet does not
+process tap capture deterministic system playback when Sotto does not
 start a microphone or VPIO path? It does not reverse ADR-014, compare long-run
 reliability with ScreenCaptureKit, or establish compatibility across macOS
 versions and output devices.
@@ -71,8 +71,8 @@ exercise teardown and re-creation in the same process, so a later cycle exposes
 stale aggregate-device or process-tap state instead of process exit hiding it:
 
 ```bash
-MACPARAKEET_PROCESS_TAP_PROBE_CYCLES=20 \
-MACPARAKEET_PROCESS_TAP_PROBE_DEADLINE_SECONDS=90 \
+SOTTO_PROCESS_TAP_PROBE_CYCLES=20 \
+SOTTO_PROCESS_TAP_PROBE_DEADLINE_SECONDS=90 \
 scripts/run-process-tap-audio-only-probe.sh /absolute/output/directory
 ```
 
@@ -100,7 +100,7 @@ regression suites also passed:
 
 This result directly demonstrates short, audio-only process-tap feasibility on
 the named host. It does **not** demonstrate the first-run permission prompt or
-permission migration for MacParakeet's signed app, coexistence with VPIO,
+permission migration for Sotto's signed app, coexistence with VPIO,
 long-run stability, route/device changes, sleep/wake recovery, or support on
 other macOS releases. `permissionOutcome: process_tap_created` records API
 success, not a claim about which consent UI the user saw.

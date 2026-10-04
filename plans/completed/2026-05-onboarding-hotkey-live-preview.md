@@ -33,7 +33,7 @@ fn+Space → overlay → tap again dismisses. Mirrors both modes the cards teach
 
 ## Design
 
-New `OnboardingHotkeyPreviewController` (`Sources/MacParakeet/Onboarding/`),
+New `OnboardingHotkeyPreviewController` (`Sources/Sotto/Onboarding/`),
 `@MainActor`:
 
 - `arm()` (hotkey step appears): `suspend()` production hotkeys, build step-scoped
@@ -61,17 +61,17 @@ Accessibility is granted (otherwise the preview taps can't arm).
 
 ## Files
 
-- NEW `Sources/MacParakeet/Onboarding/OnboardingHotkeyPreviewController.swift`
-- `Sources/MacParakeet/Views/Onboarding/OnboardingFlowView.swift` — arm/disarm
+- NEW `Sources/Sotto/Onboarding/OnboardingHotkeyPreviewController.swift`
+- `Sources/Sotto/Views/Onboarding/OnboardingFlowView.swift` — arm/disarm
   closures (default `{}`), call in `hotkeyStep` onAppear/onDisappear; "try it" nudge.
-- `Sources/MacParakeet/Onboarding/OnboardingWindowController.swift` — thread
+- `Sources/Sotto/Onboarding/OnboardingWindowController.swift` — thread
   closures into `show`/`OnboardingFlowView`; defensive disarm in `windowWillClose`.
-- `Sources/MacParakeet/App/OnboardingCoordinator.swift` — thread closures.
-- `Sources/MacParakeet/App/AppEnvironmentConfigurer.swift` — `isOnboardingVisible`
+- `Sources/Sotto/App/OnboardingCoordinator.swift` — thread closures.
+- `Sources/Sotto/App/AppEnvironmentConfigurer.swift` — `isOnboardingVisible`
   gate on `onStartDictation`.
-- `Sources/MacParakeet/AppDelegate.swift` — create controller, wire arm/disarm +
+- `Sources/Sotto/AppDelegate.swift` — create controller, wire arm/disarm +
   `isOnboardingVisible` callback.
-- NEW `Tests/MacParakeetTests/Onboarding/OnboardingHotkeyPreviewControllerTests.swift`
+- NEW `Tests/SottoTests/Onboarding/OnboardingHotkeyPreviewControllerTests.swift`
 
 ## Tests
 

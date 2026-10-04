@@ -36,7 +36,7 @@ Out:
 
 ```json
 {
-  "schema": "macparakeet.vocabulary",
+  "schema": "sotto.vocabulary",
   "version": 1,
   "exportedAt": "2026-04-28T12:34:56Z",
   "appVersion": "0.6.0",
@@ -65,16 +65,16 @@ Decisions:
 ## Files
 
 New:
-- `Sources/MacParakeetCore/Models/VocabularyBundle.swift` — Codable DTO.
-- `Sources/MacParakeetCore/Services/VocabularyImportExportService.swift` — pure data shuffling.
-- `Sources/MacParakeetViewModels/VocabularyBackupViewModel.swift` — UI state.
-- `Sources/MacParakeet/Views/Vocabulary/VocabularyBackupSection.swift` — card + buttons.
-- `Sources/MacParakeet/Views/Vocabulary/VocabularyImportPreviewSheet.swift` — modal sheet.
-- `Tests/MacParakeetTests/Services/VocabularyImportExportServiceTests.swift`.
+- `Sources/SottoCore/Models/VocabularyBundle.swift` — Codable DTO.
+- `Sources/SottoCore/Services/VocabularyImportExportService.swift` — pure data shuffling.
+- `Sources/SottoViewModels/VocabularyBackupViewModel.swift` — UI state.
+- `Sources/Sotto/Views/Vocabulary/VocabularyBackupSection.swift` — card + buttons.
+- `Sources/Sotto/Views/Vocabulary/VocabularyImportPreviewSheet.swift` — modal sheet.
+- `Tests/SottoTests/Services/VocabularyImportExportServiceTests.swift`.
 
 Modified:
-- `Sources/MacParakeet/Views/Vocabulary/VocabularyView.swift` — add backup card.
-- `Sources/MacParakeet/AppDelegate.swift` + `AppEnvironmentConfigurer.swift` — wire service + view model.
+- `Sources/Sotto/Views/Vocabulary/VocabularyView.swift` — add backup card.
+- `Sources/Sotto/AppDelegate.swift` + `AppEnvironmentConfigurer.swift` — wire service + view model.
 - `spec/02-features.md` — note vocabulary backup under Vocabulary section.
 
 ## Test plan

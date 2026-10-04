@@ -4,7 +4,7 @@ Date: 2026-09-25. Status: source research and proposed experiment; no runtime ad
 
 ## Recommendation
 
-**Evaluate Pi first, using its reusable agent core inside a small MacParakeet-owned helper.** Keep Swift responsible for the native workspace, selected-source authority, transcript retrieval, citations, and user data. Pi is a credible way to reuse the model/tool loop without adopting a coding assistant's complete application. Model independence should be an explicit adapter contract, with supported capabilities tested per model.
+**Evaluate Pi first, using its reusable agent core inside a small Sotto-owned helper.** Keep Swift responsible for the native workspace, selected-source authority, transcript retrieval, citations, and user data. Pi is a credible way to reuse the model/tool loop without adopting a coding assistant's complete application. Model independence should be an explicit adapter contract, with supported capabilities tested per model.
 
 This refines the earlier “small purpose-built harness” proposal: the small part we own can be the product adapter, rather than a newly written orchestration engine. If the Pi integration proves more difficult to maintain than a bounded Swift loop, retain the same domain tools and replace the runtime. Language alone is insufficient reason to reject reuse.
 
@@ -22,7 +22,7 @@ The old `badlogic/pi-mono` repository URL currently redirects to `earendil-works
 
 ## Pi: distinguish the layers
 
-| Layer | What inspected source provides | Proposed MacParakeet use |
+| Layer | What inspected source provides | Proposed Sotto use |
 | --- | --- | --- |
 | `pi-ai` | Model/provider collection and normalized streaming types | Optional network-provider implementation, or types used by a custom provider bridge |
 | `pi-agent-core` / `Agent` | Stateful adaptive tool loop, events, queues, injectable streaming, context hooks | Start here with a narrow application adapter |
@@ -37,7 +37,7 @@ The core loop obtains a streamed assistant response, executes tool calls, append
 
 Tool execution receives a cancellation signal and can emit partial progress. Events distinguish agent, turn, message, and tool lifecycles. A source-search tool can therefore report visible progress independently of answer text. The event protocol is useful plumbing; citations and coverage still need domain-specific fields and validation. [Tool and event types](https://github.com/earendil-works/pi/blob/d6af72e1857cfb10b41d8ff8e69f0d72b4cf6d31/packages/agent/src/types.ts#L442-L500).
 
-`Agent.abort()` signals its controller. Cancellation remains cooperative across the model stream, custom tools, hooks, and any IPC bridge. The app must await settlement, reject late results from an older run, and own helper shutdown/restart. `AgentOptions` has no explicit total-turn or total-token run limit: proposed MacParakeet policy should use request/turn hooks plus a deadline and byte/token accounting, rather than assuming the runtime prevents endless investigation. [Agent implementation](https://github.com/earendil-works/pi/blob/d6af72e1857cfb10b41d8ff8e69f0d72b4cf6d31/packages/agent/src/agent.ts).
+`Agent.abort()` signals its controller. Cancellation remains cooperative across the model stream, custom tools, hooks, and any IPC bridge. The app must await settlement, reject late results from an older run, and own helper shutdown/restart. `AgentOptions` has no explicit total-turn or total-token run limit: proposed Sotto policy should use request/turn hooks plus a deadline and byte/token accounting, rather than assuming the runtime prevents endless investigation. [Agent implementation](https://github.com/earendil-works/pi/blob/d6af72e1857cfb10b41d8ff8e69f0d72b4cf6d31/packages/agent/src/agent.ts).
 
 ### Model independence and the Swift bridge
 
@@ -45,8 +45,8 @@ Tool execution receives a cancellation signal and can emit partial progress. Eve
 
 There are two plausible provider paths:
 
-1. **Swift-owned providers:** Pi's `streamFn` sends normalized requests to MacParakeet, which uses its selected provider or local engine and returns normalized events. This preserves one authority for credentials, endpoint selection, and provider disclosure. It requires typed tool requests/results, usage, stop reasons, and cancellation throughout the Swift adapter.
-2. **Pi-owned network providers:** `pi-ai` handles configured cloud/OpenAI-compatible endpoints directly. This reuses more provider code, but requires deliberate reconciliation with MacParakeet's settings, Keychain access, and local inference. It does not automatically call an in-process Swift model.
+1. **Swift-owned providers:** Pi's `streamFn` sends normalized requests to Sotto, which uses its selected provider or local engine and returns normalized events. This preserves one authority for credentials, endpoint selection, and provider disclosure. It requires typed tool requests/results, usage, stop reasons, and cancellation throughout the Swift adapter.
+2. **Pi-owned network providers:** `pi-ai` handles configured cloud/OpenAI-compatible endpoints directly. This reuses more provider code, but requires deliberate reconciliation with Sotto's settings, Keychain access, and local inference. It does not automatically call an in-process Swift model.
 
 The second path is supported by Pi's provider collection and per-provider implementations; the first is our architectural inference from the injected stream contract. A provider object and its wire API are distinct abstractions. Pi also exposes compatibility fields for strict schemas, reasoning controls, mid-conversation tools, and other API differences. A unified API does not erase those differences. [Provider/model implementation](https://github.com/earendil-works/pi/blob/d6af72e1857cfb10b41d8ff8e69f0d72b4cf6d31/packages/ai/src/models.ts), [compatibility/model types](https://github.com/earendil-works/pi/blob/d6af72e1857cfb10b41d8ff8e69f0d72b4cf6d31/packages/ai/src/types.ts).
 
@@ -54,7 +54,7 @@ The second path is supported by Pi's provider collection and per-provider implem
 
 Pi separates application messages from provider messages via `convertToLlm`, with `transformContext` before conversion. These are useful projection boundaries for a meeting application. The durable harness additionally offers session/lane state, compaction, and navigation. None of these mechanisms, by themselves, proves excluded meetings cannot survive inside old answers or compacted summaries. [Context projection](https://github.com/earendil-works/pi/blob/d6af72e1857cfb10b41d8ff8e69f0d72b4cf6d31/packages/agent/src/agent-loop.ts#L379-L409), [compaction source](https://github.com/earendil-works/pi/blob/d6af72e1857cfb10b41d8ff8e69f0d72b4cf6d31/packages/agent/src/harness/compaction/compaction.ts).
 
-Proposed rule: freeze selected source IDs and revisions for a request; enforce them in Swift on every read. After removing sources, create a fresh model-context section and exclude prior derived answers/compaction from the active context. Keep the historical conversation visible with its original scope. Cancel or finish the old request before activating the new source set. These are MacParakeet requirements, not Pi guarantees.
+Proposed rule: freeze selected source IDs and revisions for a request; enforce them in Swift on every read. After removing sources, create a fresh model-context section and exclude prior derived answers/compaction from the active context. Keep the historical conversation visible with its original scope. Cancel or finish the old request before activating the new source set. These are Sotto requirements, not Pi guarantees.
 
 ### Native integration cost
 
@@ -89,13 +89,13 @@ History can be loaded and processed independently of the UI, but changing model/
 Proposed product contract:
 
 - The selected model is replaceable through a normalized request/event interface; no meeting tool depends on one vendor's message IDs or SDK types.
-- The tool registry, source allowlist, source revisions, citation identities, and retention rules belong to MacParakeet.
+- The tool registry, source allowlist, source revisions, citation identities, and retention rules belong to Sotto.
 - Capability profiles cover tool calling, schema fidelity, streaming, cancellation, context size, and usage reporting. Validate the chosen model/endpoint before enabling the agentic mode.
 - Models that cannot reliably drive tools get an explicit supported fallback or an unavailable-state explanation. Never silently switch a local user to cloud inference.
 - Switching providers does not replay opaque reasoning state blindly. Rebuild compatible history and preserve source boundaries.
 - Equal answer quality, token accounting, or feature support across models is not promised.
 
-These requirements follow from the adapter differences visible in Pi and Pydantic AI; they are proposed MacParakeet behavior, not existing guarantees.
+These requirements follow from the adapter differences visible in Pi and Pydantic AI; they are proposed Sotto behavior, not existing guarantees.
 
 ## Smallest useful Pi experiment
 

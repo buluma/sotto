@@ -1,7 +1,7 @@
 import ArgumentParser
 import Darwin
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 let cliValidationMisuseExitCode = ExitCode(2)
 
@@ -13,14 +13,14 @@ struct CLIJSONEnvelopeExit: Error {
 /// CLI-local alias for `AppPaths.appDefaults(bundleIdentifier:)`, kept so the
 /// existing call sites across `Sources/CLI/Commands/` don't need to name
 /// the `AppPaths` type at every use.
-func macParakeetAppDefaults(
+func sottoAppDefaults(
     bundleIdentifier: String? = Bundle.main.bundleIdentifier
 ) -> UserDefaults {
     AppPaths.appDefaults(bundleIdentifier: bundleIdentifier)
 }
 
 func currentMeetingAIOutputLanguagePolicy(
-    defaults: UserDefaults = macParakeetAppDefaults()
+    defaults: UserDefaults = sottoAppDefaults()
 ) -> MeetingAIOutputLanguagePolicy {
     MeetingAIOutputLanguagePolicy.current(defaults: defaults)
 }
@@ -29,7 +29,7 @@ func currentMeetingAIOutputLanguagePolicy(
 /// the GUI's preferences suite. Its bare initializer uses .standard, which is
 /// a different domain in the standalone CLI. Tests inject both stores explicitly.
 func makeSharedLLMContextResolver(
-    defaults: UserDefaults = macParakeetAppDefaults(),
+    defaults: UserDefaults = sottoAppDefaults(),
     configStore: any LLMConfigStoreProtocol = LLMConfigStore()
 ) -> StoredLLMExecutionContextResolver {
     StoredLLMExecutionContextResolver(
@@ -39,7 +39,7 @@ func makeSharedLLMContextResolver(
 }
 
 func makeSharedLLMService(
-    defaults: UserDefaults = macParakeetAppDefaults()
+    defaults: UserDefaults = sottoAppDefaults()
 ) -> LLMService {
     LLMService(contextResolver: makeSharedLLMContextResolver(defaults: defaults))
 }

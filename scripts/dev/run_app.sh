@@ -2,27 +2,27 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
-# Build configuration: Debug by default. Set MACPARAKEET_CONFIG=Release for an
+# Build configuration: Debug by default. Set SOTTO_CONFIG=Release for an
 # optimized build (e.g. to feel-test true STT latency — Debug Swift is ~10x
 # slower for the Cohere decoder's per-step work).
-CONFIG="${MACPARAKEET_CONFIG:-Debug}"
+CONFIG="${SOTTO_CONFIG:-Debug}"
 case "$CONFIG" in
   Debug|Release) ;;
-  *) echo "MACPARAKEET_CONFIG must be Debug or Release." >&2; exit 1 ;;
+  *) echo "SOTTO_CONFIG must be Debug or Release." >&2; exit 1 ;;
 esac
 DERIVED_DATA_DIR="$ROOT_DIR/.build/xcode-dev"
 PRODUCT_DIR="$DERIVED_DATA_DIR/Build/Products/$CONFIG"
-APP_BIN="$PRODUCT_DIR/MacParakeet"
-APP_BUNDLE="$PRODUCT_DIR/MacParakeet-Dev.app"
-LOG_FILE="${TMPDIR:-/tmp}/macparakeet-dev.log"
-BUILD_LOG_FILE="${TMPDIR:-/tmp}/macparakeet-dev-build.log"
-APP_MACOS_BIN="$APP_BUNDLE/Contents/MacOS/MacParakeet"
+APP_BIN="$PRODUCT_DIR/Sotto"
+APP_BUNDLE="$PRODUCT_DIR/Sotto-Dev.app"
+LOG_FILE="${TMPDIR:-/tmp}/sotto-dev.log"
+BUILD_LOG_FILE="${TMPDIR:-/tmp}/sotto-dev-build.log"
+APP_MACOS_BIN="$APP_BUNDLE/Contents/MacOS/Sotto"
 # Keep every Dev bundle off the stable app's database and media directories.
 # The override is honored in both Debug and optimized Release configurations.
-APP_STATE_DIR="${MACPARAKEET_DEBUG_APP_STATE_DIR:-$HOME/Library/Application Support/MacParakeet-Dev}"
+APP_STATE_DIR="${SOTTO_DEBUG_APP_STATE_DIR:-$HOME/Library/Application Support/Sotto-Dev}"
 
 pick_codesign_identity() {
-  local preferred="${MACPARAKEET_CODESIGN_IDENTITY:-}"
+  local preferred="${SOTTO_CODESIGN_IDENTITY:-}"
   if [[ -n "$preferred" ]]; then
     printf '%s\n' "$preferred"
     return
@@ -52,7 +52,7 @@ pick_codesign_identity() {
 }
 
 CODESIGN_IDENTITY="$(pick_codesign_identity)"
-APP_ENTITLEMENTS="$ROOT_DIR/scripts/dist/MacParakeet.entitlements"
+APP_ENTITLEMENTS="$ROOT_DIR/scripts/dist/Sotto.entitlements"
 
 sync_frameworks_into_bundle() {
   local source_dir="$1"
@@ -92,7 +92,7 @@ stop_app_processes 10 "$ROOT_DIR" "$APP_BIN" "$APP_MACOS_BIN"
 
 echo "[2/5] Building $CONFIG app bundle (xcodebuild, target signing disabled)…"
 if ! xcodebuild build \
-  -scheme MacParakeet \
+  -scheme Sotto \
   -configuration "$CONFIG" \
   -destination "platform=OS X,arch=arm64" \
   -derivedDataPath "$DERIVED_DATA_DIR" \
@@ -114,9 +114,7 @@ fi
 # the wrapped app binary to use bundle-local Frameworks.
 PKGFW_DIR="$PRODUCT_DIR/PackageFrameworks"
 mkdir -p "$PKGFW_DIR"
-if [[ -d "$PRODUCT_DIR/Sparkle.framework" && ! -e "$PKGFW_DIR/Sparkle.framework" ]]; then
-  ln -s "$PRODUCT_DIR/Sparkle.framework" "$PKGFW_DIR/Sparkle.framework"
-fi
+
 
 echo "[3/5] Wrapping in .app bundle for macOS permissions…"
 # Create a minimal .app bundle so macOS TCC (Accessibility, Microphone) can
@@ -126,7 +124,7 @@ mkdir -p "$MACOS_DIR"
 cp -f "$APP_BIN" "$APP_MACOS_BIN"
 
 # Copy resource bundle (contains discover-fallback.json etc.)
-RESOURCE_BUNDLE="$PRODUCT_DIR/MacParakeet_MacParakeet.bundle"
+RESOURCE_BUNDLE="$PRODUCT_DIR/Sotto_Sotto.bundle"
 if [[ -d "$RESOURCE_BUNDLE" ]]; then
   RESOURCES_DIR="$APP_BUNDLE/Contents/Resources"
   mkdir -p "$RESOURCES_DIR"
@@ -139,6 +137,7 @@ fi
 # for dependencies such as SwiftStreamingMarkdown and its syntax highlighter.
 RESOURCES_DIR="$APP_BUNDLE/Contents/Resources"
 mkdir -p "$RESOURCES_DIR"
+cp "$ROOT_DIR/Assets/AppIcon.icns" "$RESOURCES_DIR/AppIcon.icns"
 while IFS= read -r -d '' bundle; do
   if [[ "$bundle" != "$RESOURCE_BUNDLE" ]]; then
     bundle_name="${bundle##*/}"
@@ -146,8 +145,8 @@ while IFS= read -r -d '' bundle; do
   fi
 done < <(find "$PRODUCT_DIR" -maxdepth 1 -type d -name '*.bundle' -print0)
 mkdir -p "$RESOURCES_DIR/Legal"
-cp "$ROOT_DIR/Sources/MacParakeet/Resources/Legal/MarkdownDependencies.txt" "$RESOURCES_DIR/Legal/MarkdownDependencies.txt"
-cp "$ROOT_DIR/Sources/MacParakeet/Resources/Legal/NemotronDiarization.txt" "$RESOURCES_DIR/Legal/NemotronDiarization.txt"
+cp "$ROOT_DIR/Sources/Sotto/Resources/Legal/MarkdownDependencies.txt" "$RESOURCES_DIR/Legal/MarkdownDependencies.txt"
+cp "$ROOT_DIR/Sources/Sotto/Resources/Legal/NemotronDiarization.txt" "$RESOURCES_DIR/Legal/NemotronDiarization.txt"
 cp "$ROOT_DIR/THIRD_PARTY_LICENSES.md" "$RESOURCES_DIR/Legal/THIRD_PARTY_LICENSES.md"
 
 # Only opted-in Debug launches need the experimental Ask runtime. Ordinary
@@ -187,11 +186,13 @@ cat > "$APP_BUNDLE/Contents/Info.plist" << 'PLIST'
 <plist version="1.0">
 <dict>
     <key>CFBundleIdentifier</key>
-    <string>com.macparakeet.dev</string>
+    <string>com.sotto.dev</string>
     <key>CFBundleName</key>
-    <string>MacParakeet Dev</string>
+    <string>Sotto Dev</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundleExecutable</key>
-    <string>MacParakeet</string>
+    <string>Sotto</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleVersion</key>
@@ -215,11 +216,11 @@ cat > "$APP_BUNDLE/Contents/Info.plist" << 'PLIST'
         </dict>
     </dict>
     <key>NSMicrophoneUsageDescription</key>
-    <string>MacParakeet needs microphone access for voice dictation.</string>
+    <string>Sotto needs microphone access for voice dictation.</string>
     <key>NSAudioCaptureUsageDescription</key>
-    <string>MacParakeet needs system audio recording access for meeting recording.</string>
+    <string>Sotto needs system audio recording access for meeting recording.</string>
     <key>NSCalendarsFullAccessUsageDescription</key>
-    <string>MacParakeet reads your calendar so it can remind you before a meeting starts and (optionally) begin recording for you. Events stay on your Mac.</string>
+    <string>Sotto reads your calendar so it can remind you before a meeting starts and (optionally) begin recording for you. Events stay on your Mac.</string>
 </dict>
 </plist>
 PLIST
@@ -228,13 +229,13 @@ PLIST
 # release app entitlements so permission smoke tests exercise the same TCC
 # capability surface as the signed distribution build. Ad-hoc signatures carry
 # no Team ID, so hardened-runtime library validation would reject the
-# bundle-local Sparkle.framework at load (dyld: "code signature … not valid
+# bundle-local dependency frameworks at load (dyld: "code signature … not valid
 # for use in process") — disable library validation for the ad-hoc fallback
 # only; real identities keep the release entitlement surface.
 SIGN_ENTITLEMENTS="$APP_ENTITLEMENTS"
 if [[ "$CODESIGN_IDENTITY" == "-" ]]; then
   echo "  note: no codesigning identity found; ad-hoc signing with library validation disabled"
-  SIGN_ENTITLEMENTS="$(mktemp -t macparakeet-dev-entitlements)"
+  SIGN_ENTITLEMENTS="$(mktemp -t sotto-dev-entitlements)"
   trap 'rm -f "$SIGN_ENTITLEMENTS"' EXIT
   cp "$APP_ENTITLEMENTS" "$SIGN_ENTITLEMENTS"
   # `Add` fails if the key ever lands in the release entitlements; fall back
@@ -254,10 +255,10 @@ BUILD_DATE_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 BUILD_SOURCE="dev-run-xcodebuild-$(echo "$CONFIG" | tr '[:upper:]' '[:lower:]')"
 
 echo "[4/5] Launching ${CONFIG} app…"
-open -n "$APP_BUNDLE" --env MACPARAKEET_DEBUG_APP_STATE_DIR="$APP_STATE_DIR" \
-  --env MACPARAKEET_GIT_COMMIT="$GIT_COMMIT" \
-  --env MACPARAKEET_BUILD_DATE_UTC="$BUILD_DATE_UTC" \
-  --env MACPARAKEET_BUILD_SOURCE="$BUILD_SOURCE" --args "$@" >"$LOG_FILE" 2>&1
+open -n "$APP_BUNDLE" --env SOTTO_DEBUG_APP_STATE_DIR="$APP_STATE_DIR" \
+  --env SOTTO_GIT_COMMIT="$GIT_COMMIT" \
+  --env SOTTO_BUILD_DATE_UTC="$BUILD_DATE_UTC" \
+  --env SOTTO_BUILD_SOURCE="$BUILD_SOURCE" --args "$@" >"$LOG_FILE" 2>&1
 
 echo "[5/5] Launch requested"
 echo "  bundle: $APP_BUNDLE"

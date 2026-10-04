@@ -4,7 +4,7 @@
 Handles the per-file `results` array emitted by asr-benchmark / ja-benchmark /
 cohere-benchmark, whose entries carry (at least) a filename, reference, and
 hypothesis. Emits {id, ref, hyp, dataset, engine, audio_s?, proc_s?} so every
-engine — FluidAudio-native or MacParakeet-integrated — is scored by the one
+engine — FluidAudio-native or Sotto-integrated — is scored by the one
 canonical scorer (score.py).
 
 Usage:

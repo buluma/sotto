@@ -12,7 +12,7 @@ Remove the **Use Mac mic with Bluetooth headphones** toggle and the
 output-dependent routing policy behind it. Make the microphone picker tell the
 truth instead: **System Default** follows macOS through AVAudioEngine's implicit
 default route, while a named microphone means “use this device or show a clear
-failure.” macOS, not MacParakeet, remains responsible for output selection.
+failure.” macOS, not Sotto, remains responsible for output selection.
 
 The urgent rollback and the stricter picker contract should be implemented as
 two reviewable changes. The first removes the regression-prone Bluetooth policy
@@ -27,13 +27,13 @@ abstraction.
 Apple documents that using a Bluetooth headset's microphone moves the headset
 from high-quality listening into a lower-quality bidirectional mode. It also
 documents separate macOS input and output selections. That establishes the
-product boundary: MacParakeet chooses or follows a **microphone input**;
+product boundary: Sotto chooses or follows a **microphone input**;
 macOS owns the **audio output**. [Apple: reduced Bluetooth sound
 quality](https://support.apple.com/en-ca/102217), [Apple: Sound settings on
 Mac](https://support.apple.com/guide/mac-help/change-sound-settings-on-mac-mchl9777ee30/mac)
 
 The current toggle crosses that boundary. When the user chose **System
-Default**, it made MacParakeet inspect the output transport and sometimes pin a
+Default**, it made Sotto inspect the output transport and sometimes pin a
 different input route explicitly. The same label can therefore mean two
 different routing mechanisms depending on a transient, unrelated output state.
 That is difficult for a user to predict, difficult for support to explain, and
@@ -75,7 +75,7 @@ prove the policy was the right model.
 The reporter is on v0.7.2 (`afc2eff9dd0c`) with an M5 Pro and macOS 26.5.1.
 Their screenshot shows:
 
-- MacParakeet is set to **System Default**.
+- Sotto is set to **System Default**.
 - The UI resolves that default to **MacBook Pro Microphone**.
 - Input Test fails and meeting capture reports **Microphone Unavailable**.
 - Downgrading to v0.6.24 fixes the problem.
@@ -90,7 +90,7 @@ equals the built-in microphone, and Bluetooth output is present or unresolved,
 the reviewed builder removed the implicit default attempt and returned only an
 explicit built-in attempt. Change 1 deletes that policy and preserves the
 invariant in
-[`testSystemDefaultRemainsImplicitWhenBuiltInIsDefault`](../../Tests/MacParakeetTests/Audio/MicrophoneCaptureTests.swift).
+[`testSystemDefaultRemainsImplicitWhenBuiltInIsDefault`](../../Tests/SottoTests/Audio/MicrophoneCaptureTests.swift).
 
 There is also direct field evidence for the exact compatibility hazard. The
 diagnostic log attached to [issue #787](https://github.com/moona3k/macparakeet/issues/787)
@@ -155,16 +155,16 @@ output-dependent remains an invalid and historically regression-prone contract.
 
 ### 1. Input and output are separate decisions
 
-MacParakeet records microphone input. It does not own a general audio-output
+Sotto records microphone input. It does not own a general audio-output
 picker. The user can choose output in macOS Control Center or System Settings;
 Apple exposes input and output as separate selections. [Apple: Sound
 settings](https://support.apple.com/guide/mac-help/change-sound-settings-on-mac-mchl9777ee30/mac)
 
 Therefore the support instruction is not “choose another output in
-MacParakeet.” It is:
+Sotto.” It is:
 
 - choose the desired **output** in macOS;
-- choose or follow the desired **microphone input** in MacParakeet;
+- choose or follow the desired **microphone input** in Sotto;
 - use **Test Input** to verify the actual capture path before dictating or
   recording.
 
@@ -181,11 +181,11 @@ The proposed contract is:
 
 Apple's public documentation describes
 `kAudioOutputUnitProperty_CurrentDevice` as a read/write audio-device ID on the
-I/O audio unit. MacParakeet's implicit path deliberately avoids writing it;
+I/O audio unit. Sotto's implicit path deliberately avoids writing it;
 the explicit path calls `AudioDeviceManager.setInputDevice`. [Apple developer
 documentation](https://developer.apple.com/documentation/audiotoolbox/kaudiooutputunitproperty_currentdevice),
-[`MicrophoneEnginePlatform.swift`](../../Sources/MacParakeetCore/Audio/MicrophoneEnginePlatform.swift),
-[`AudioDeviceManager.swift`](../../Sources/MacParakeetCore/Audio/AudioDeviceManager.swift).
+[`MicrophoneEnginePlatform.swift`](../../Sources/SottoCore/Audio/MicrophoneEnginePlatform.swift),
+[`AudioDeviceManager.swift`](../../Sources/SottoCore/Audio/AudioDeviceManager.swift).
 
 ### 3. “Deterministic” means an honest contract and visible failure
 
@@ -194,7 +194,7 @@ driver state will work. A deterministic recovery model does not mean “this
 route can never fail.” It means:
 
 - the same UI choice always asks Core Audio to do the same thing;
-- MacParakeet never silently substitutes a different microphone;
+- Sotto never silently substitutes a different microphone;
 - Input Test tells the user whether that choice actually works;
 - the error tells them the next concrete choice to try.
 
@@ -209,7 +209,7 @@ That yields two complementary recovery paths without another feature toggle:
    macOS/AVAudioEngine route it implicitly. This is the #218 and likely #796
    compatibility path.
 2. If **System Default** moves to a Bluetooth mic or causes call-mode behavior,
-   explicitly choose **MacBook Pro Microphone** in MacParakeet. The #481 report
+   explicitly choose **MacBook Pro Microphone** in Sotto. The #481 report
    says this was quick and reliable on the affected setup.
 
 This is better than a hidden “resilience” policy because the user can observe,
@@ -222,7 +222,7 @@ The selection must remain meaningful after capture starts:
 - **System Default** is allowed to follow macOS when the default input changes
   mid-session; that is the choice's advertised meaning.
 - A **named microphone** is retried as that same device during a configuration
-  change. If it disconnects or remains unusable, MacParakeet must not switch to
+  change. If it disconnects or remains unusable, Sotto must not switch to
   a different microphone silently.
 - For dictation, stop the capture and show the actionable microphone error.
 - For a meeting, keep any healthy system-audio stream and durable artifacts,
@@ -252,16 +252,16 @@ The platform advances only when the explicit setter fails synchronously or
 successful before the first microphone buffer is known to be usable. A route
 that starts but produces no buffers or digital silence therefore does not
 advance to the next attempt. See
-[`configureAndStartLocked`](../../Sources/MacParakeetCore/Audio/MicrophoneEnginePlatform.swift)
+[`configureAndStartLocked`](../../Sources/SottoCore/Audio/MicrophoneEnginePlatform.swift)
 and the first-buffer handling described in
-[`Audio/README.md`](../../Sources/MacParakeetCore/Audio/README.md).
+[`Audio/README.md`](../../Sources/SottoCore/Audio/README.md).
 
 The Settings UI also explicitly promises silent substitution when a saved mic
-is missing: “Selected microphone is unavailable. MacParakeet will use System
+is missing: “Selected microphone is unavailable. Sotto will use System
 Default until it returns.” See
-[`selectedMicrophoneStatusText`](../../Sources/MacParakeetViewModels/SettingsViewModel.swift)
+[`selectedMicrophoneStatusText`](../../Sources/SottoViewModels/SettingsViewModel.swift)
 and its
-[`SettingsViewModelTests`](../../Tests/MacParakeetTests/ViewModels/SettingsViewModelTests.swift).
+[`SettingsViewModelTests`](../../Tests/SottoTests/ViewModels/SettingsViewModelTests.swift).
 
 Consequences:
 
@@ -311,10 +311,10 @@ It has multiplied the feature surface across:
 - Audio subsystem documentation and diagnostic events.
 
 Relevant sources:
-[`SettingsView.swift`](../../Sources/MacParakeet/Views/Settings/SettingsView.swift),
-[`SettingsViewModel.swift`](../../Sources/MacParakeetViewModels/SettingsViewModel.swift),
-[`AppRuntimePreferences.swift`](../../Sources/MacParakeetCore/AppRuntimePreferences.swift),
-[`AppEnvironment.swift`](../../Sources/MacParakeet/App/AppEnvironment.swift),
+[`SettingsView.swift`](../../Sources/Sotto/Views/Settings/SettingsView.swift),
+[`SettingsViewModel.swift`](../../Sources/SottoViewModels/SettingsViewModel.swift),
+[`AppRuntimePreferences.swift`](../../Sources/SottoCore/AppRuntimePreferences.swift),
+[`AppEnvironment.swift`](../../Sources/Sotto/App/AppEnvironment.swift),
 [`ConfigCommand.swift`](../../Sources/CLI/Commands/ConfigCommand.swift),
 [`SpecCommand.swift`](../../Sources/CLI/Commands/SpecCommand.swift), and
 [`CLI/CHANGELOG.md`](../../Sources/CLI/CHANGELOG.md).
@@ -359,9 +359,9 @@ That last behavior solves a different, tightly bounded problem from #481: an
 idle warm subscriber should not hold a Bluetooth mic open and keep playback in
 the lower-quality profile. It does not change the active input chosen for a
 user-started recording. The distinction is documented in
-[`Audio/README.md`](../../Sources/MacParakeetCore/Audio/README.md) and
+[`Audio/README.md`](../../Sources/SottoCore/Audio/README.md) and
 implemented through the warm-capture input provider in
-[`AppEnvironment.swift`](../../Sources/MacParakeet/App/AppEnvironment.swift).
+[`AppEnvironment.swift`](../../Sources/Sotto/App/AppEnvironment.swift).
 
 The warm-hold check is currently coupled to the active route builder: it
 classifies `attemptsBuilder().first?.deviceID`. Removing the policy changes the
@@ -457,7 +457,7 @@ Goal: complete the deterministic mental model.
    actionable error: reconnect the selected mic, choose System Default, or
    choose another mic.
 5. Make Input Test report both success and the effective route/device. A green
-   test should answer “what did MacParakeet actually hear?”
+   test should answer “what did Sotto actually hear?”
 6. Implement the mid-session contract above: retry the same named device, keep
    healthy meeting system audio/artifacts if it fails, and surface microphone
    loss without silent substitution.

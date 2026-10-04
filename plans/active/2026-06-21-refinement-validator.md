@@ -8,7 +8,7 @@
 > **Step 0 — read the real code first (drift check).** This plan was written
 > against the shipped `TranscriptFormatter` (post-`2026-06-15-transcript-formatter-dedup`).
 > Before editing, read the live versions of:
-> `Sources/MacParakeetCore/TextProcessing/TranscriptFormatter.swift` (the
+> `Sources/SottoCore/TextProcessing/TranscriptFormatter.swift` (the
 > `format(...)` success/error return + the `Lane` enum),
 > `…/TextProcessing/AIFormatter.swift` (`maxTranscriptionInputChars` **and any
 > existing output normalization/validation it already does** — don't duplicate
@@ -78,7 +78,7 @@ we are putting a floor under catastrophic output on a path that has none.
   (`DictationService`) and (b) file/URL + meeting transcription
   (`TranscriptionService`) — route through one method:
   `TranscriptFormatter.format(_:runSource:lane:resolvePrompt:)` in
-  `Sources/MacParakeetCore/TextProcessing/TranscriptFormatter.swift`. The
+  `Sources/SottoCore/TextProcessing/TranscriptFormatter.swift`. The
   per-lane differences (input cap, telemetry source, lifecycle notifications,
   `LLMRun.Feature`) are already modeled by `TranscriptFormatter.Lane`
   (`.dictation` / `.transcription`). One insertion point covers every formatted
@@ -97,10 +97,10 @@ we are putting a floor under catastrophic output on a path that has none.
   whatever a skip/failure would store today (nil in Raw mode). This is correct
   and is the intended behavior — **do not "fix" the Raw-mode nil by changing the
   call sites to store `baseText`; that would be an out-of-scope behavior change.**
-- **No content guard exists.** `grep -rn "overlap\|repetition\|hallucinat" Sources/MacParakeetCore`
+- **No content guard exists.** `grep -rn "overlap\|repetition\|hallucinat" Sources/SottoCore`
   → nothing on formatter output. The only output check is `LLMService`'s
   empty-response rejection.
-- **`TextProcessing` is a pure subsystem** (`Sources/MacParakeetCore/TextProcessing/README.md`,
+- **`TextProcessing` is a pure subsystem** (`Sources/SottoCore/TextProcessing/README.md`,
   ADR-004): the deterministic pipeline does no I/O and never calls an LLM. A
   validator fits this ethos exactly — it is a pure function that *judges* LLM
   output; it does not call an LLM itself.
@@ -111,11 +111,11 @@ we are putting a floor under catastrophic output on a path that has none.
 ## Scope
 
 **In scope** (create/modify):
-- `Sources/MacParakeetCore/TextProcessing/RefinementValidator.swift` (create — the pure validator)
-- `Sources/MacParakeetCore/TextProcessing/TranscriptFormatter.swift` (call the validator at the success return; reject → existing `text: nil` fallback shape; add an injectable enable closure + per-lane limits on `Lane`)
-- `Sources/MacParakeetCore/AppFeatures.swift` (add the default-on kill switch)
-- `Tests/MacParakeetTests/TextProcessing/RefinementValidatorTests.swift` (create)
-- `Tests/MacParakeetTests/TextProcessing/TranscriptFormatterTests.swift` (extend)
+- `Sources/SottoCore/TextProcessing/RefinementValidator.swift` (create — the pure validator)
+- `Sources/SottoCore/TextProcessing/TranscriptFormatter.swift` (call the validator at the success return; reject → existing `text: nil` fallback shape; add an injectable enable closure + per-lane limits on `Lane`)
+- `Sources/SottoCore/AppFeatures.swift` (add the default-on kill switch)
+- `Tests/SottoTests/TextProcessing/RefinementValidatorTests.swift` (create)
+- `Tests/SottoTests/TextProcessing/TranscriptFormatterTests.swift` (extend)
 - `plans/README.md` (status row)
 
 **Out of scope** (do NOT touch):
@@ -156,7 +156,7 @@ we are putting a floor under catastrophic output on a path that has none.
 
 ### The validator (Phase A) — pure value type
 
-`Sources/MacParakeetCore/TextProcessing/RefinementValidator.swift`. Match the
+`Sources/SottoCore/TextProcessing/RefinementValidator.swift`. Match the
 shape of the neighboring `AIFormatter` (a stateless namespace is fine — no
 instance state):
 
@@ -286,7 +286,7 @@ if !trimmed.isEmpty, isValidationEnabled() {
 return FormatterOutcome(text: trimmed.isEmpty ? nil : trimmed, run: run, resolution: resolution)
 ```
 
-- **Do NOT** post `.macParakeetAIFormatterWarning` on rejection. That
+- **Do NOT** post `.sottoAIFormatterWarning` on rejection. That
   notification is for hard LLM failures; a silent fall-back to the clean baseline
   is not a user-facing warning.
 - Add `var validatorLimits: RefinementValidator.Limits` to `TranscriptFormatter.Lane`
@@ -321,9 +321,9 @@ return FormatterOutcome(text: trimmed.isEmpty ? nil : trimmed, run: run, resolut
 
 ### Step 1 (Phase A): Create `RefinementValidator` + unit tests, and calibrate the limits
 
-Create `Sources/MacParakeetCore/TextProcessing/RefinementValidator.swift` per
+Create `Sources/SottoCore/TextProcessing/RefinementValidator.swift` per
 the Design (pure, `public`, only `import Foundation`). Then create
-`Tests/MacParakeetTests/TextProcessing/RefinementValidatorTests.swift` (XCTest —
+`Tests/SottoTests/TextProcessing/RefinementValidatorTests.swift` (XCTest —
 `final class RefinementValidatorTests: XCTestCase`, `func testX()`,
 `XCTAssertEqual`, modeled on `TextProcessingPipelineTests`).
 
@@ -399,7 +399,7 @@ Using the existing `LLMServiceProtocol` mock, add:
 
 ### Step 5: Full suite
 
-**Verify**: `swift test` → all pass. `grep -rn "RefinementValidator" Sources/MacParakeetCore`
+**Verify**: `swift test` → all pass. `grep -rn "RefinementValidator" Sources/SottoCore`
 → matches only in `RefinementValidator.swift` and `TranscriptFormatter.swift`.
 
 ## Test plan
@@ -428,16 +428,16 @@ revert; (5) Phase C telemetry turns threshold tuning into a data-driven follow-u
 
 Machine-checkable. ALL must hold:
 
-- [ ] `Sources/MacParakeetCore/TextProcessing/RefinementValidator.swift` exists; pure (no `import` beyond `Foundation`; no `await`, no `throws`).
+- [ ] `Sources/SottoCore/TextProcessing/RefinementValidator.swift` exists; pure (no `import` beyond `Foundation`; no `await`, no `throws`).
 - [ ] `AppFeatures.refinementValidationEnabled` exists, defaults `true`; `TranscriptFormatter` reads it via an injectable `isValidationEnabled` closure.
 - [ ] `TranscriptFormatter.Lane` exposes `validatorLimits`; `format()` validates the success path only when enabled and text is non-empty.
 - [ ] Reject path returns `text: nil` + the **succeeded** `run` (not a failed run, not nil) + `resolution: nil`, and logs `dictation_ai_formatter_rejected` / `transcription_ai_formatter_rejected reason=…`.
-- [ ] No `.macParakeetAIFormatterWarning` is posted on the rejection path.
+- [ ] No `.sottoAIFormatterWarning` is posted on the rejection path.
 - [ ] `swift test --filter RefinementValidatorTests` passes (all accept fixtures accept, all reject fixtures reject, incl. the comma-repetition and dispersed-phrase cases).
 - [ ] `swift test --filter TranscriptFormatterTests` passes (reject→succeeded-run+baseline, flag-off passthrough via injected closure, Raw-mode).
 - [ ] `TranscriptionServiceTests` and `Dictation` filters pass **without assertion edits**.
 - [ ] `swift test` exits 0.
-- [ ] Transforms untouched: `grep -rn "RefinementValidator" Sources/MacParakeetCore` shows no match under `Services/Transforms/`.
+- [ ] Transforms untouched: `grep -rn "RefinementValidator" Sources/SottoCore` shows no match under `Services/Transforms/`.
 - [ ] `plans/README.md` status row updated.
 
 ## STOP conditions
@@ -458,7 +458,7 @@ Stop and report (do not improvise) if:
 - **Thresholds.** Step 1 calibrates against fixtures; Phase C tunes from real
   telemetry. Ship the calibrated defaults, or hand-tighten first?
 - **Surface rejections to the user?** Recommendation: **no** — silent fallback +
-  log only. It's a quality floor, not an event to act on; `.macParakeetAIFormatterWarning`
+  log only. It's a quality floor, not an event to act on; `.sottoAIFormatterWarning`
   stays reserved for hard failures.
 - **Kill switch.** Keep the default-on `AppFeatures` flag (recommended, matches
   `meetingCaptureReliabilityEnabled`), or wire the gate unconditionally?

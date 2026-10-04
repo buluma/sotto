@@ -95,7 +95,7 @@ The reference (WisprFlow) gates the entire Transforms surface behind a global *O
 
 The mental model: a Transform is "on" if and only if a hotkey is bound to it. Built-ins ship with default hotkeys bound; users can clear them. There is no second-order gate. This is consistent with how the dictation hotkey, the meeting-toggle hotkey, and the global shortcuts in other surfaces work.
 
-The menu-bar **Transforms** submenu (issue #821) is a second trigger that does not require a bound hotkey. Unbound Transforms are still listed and runnable from that submenu unless the user hides them; the "on iff hotkey bound" rule stays the hotkey-path gate, not a menu-bar gate. The submenu lists every visible Transform by default (opt-out hide, not opt-in empty) so the first click works, then users curate via Hide from Menu Bar. The status-button mouse-down snapshots the frontmost app before menu tracking; AX selection capture starts when the status menu opens and is scoped to that app. If the mouse-down snapshot is missing or MacParakeet itself was frontmost, the action fails without falling back to a previously focused app. If AX cannot read the selection, choosing a Transform reactivates the captured app and permits a clipboard fallback only while that app is frontmost. A focus change stops the run. Replacement targets the captured app (`.replaceSelection`), not whatever is focused after the menu closes.
+The menu-bar **Transforms** submenu (issue #821) is a second trigger that does not require a bound hotkey. Unbound Transforms are still listed and runnable from that submenu unless the user hides them; the "on iff hotkey bound" rule stays the hotkey-path gate, not a menu-bar gate. The submenu lists every visible Transform by default (opt-out hide, not opt-in empty) so the first click works, then users curate via Hide from Menu Bar. The status-button mouse-down snapshots the frontmost app before menu tracking; AX selection capture starts when the status menu opens and is scoped to that app. If the mouse-down snapshot is missing or Sotto itself was frontmost, the action fails without falling back to a previously focused app. If AX cannot read the selection, choosing a Transform reactivates the captured app and permits a clipboard fallback only while that app is frontmost. A focus change stops the run. Replacement targets the captured app (`.replaceSelection`), not whatever is focused after the menu closes.
 
 The product-level feature flag `AppFeatures.transformsEnabled` exists as a release gate (replaces `transformsSpikeEnabled`) — when false, the Transforms tab is hidden and the hotkey registry isn't initialized at all. It is not a user preference. It is enabled on `main` after the website telemetry allowlist deploy landed.
 
@@ -105,7 +105,7 @@ Transforms use the user's configured LLM provider (cloud API key, OpenAI-compati
 
 `Polish`, `Distill`, and `Decide` are not gated behind paid tiers. The public build is free / GPL-3.0; Transforms is free.
 
-### 7. CLI parity via `macparakeet-cli transforms` subcommand tree
+### 7. CLI parity via `sotto-cli transforms` subcommand tree
 
 The CLI is a public, semver-tracked contract (`Sources/CLI/CHANGELOG.md`). Coding agents (OpenClaw / Hermes path per `plans/completed/cli-as-canonical-parakeet-surface.md`) need to drive Transforms headlessly for testing and provisioning.
 
@@ -130,7 +130,7 @@ Two events:
 
 Custom-Transform names are never transmitted (every non-built-in maps to `custom` in telemetry). This protects users who name a Transform after the company they're using it for, etc.
 
-Both events must be added to `ALLOWED_EVENTS` in `macparakeet-website/functions/api/telemetry.ts` before they fire in production; the Worker drops the entire batch on any unknown event. This is a two-repo coordination point baked into the rollout plan.
+Both events must be added to `ALLOWED_EVENTS` in `sotto-website/functions/api/telemetry.ts` before they fire in production; the Worker drops the entire batch on any unknown event. This is a two-repo coordination point baked into the rollout plan.
 
 ### 9. Feature-flag rollout (`AppFeatures.transformsEnabled`)
 

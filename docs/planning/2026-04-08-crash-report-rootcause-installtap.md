@@ -64,7 +64,7 @@ loop short-circuits it, see §3.6).
 
 ## 1. Data pulled from telemetry
 
-Source: D1 database `macparakeet-telemetry` on the live Cloudflare Worker.
+Source: D1 database `sotto-telemetry` on the live Cloudflare Worker.
 Queries run at ~2026-04-08T23:45Z. Window: 72 hours.
 
 ```sql
@@ -111,13 +111,13 @@ persisted on disk and uploaded post-upgrade — ignore).
 | 14 | 2026-04-06T17:56:20Z | CA / Apple M4 / 26.2 | 0.5.5 | 0.5.5 | 6 / SIGABRT | DDD7A497-… |
 
 The single `uuid = DDD7A497-EFB2-3CC2-A024-B4C83E9F0F65` on every current crash
-is the `LC_UUID` of the 0.5.5 `MacParakeet` Mach-O. I verified this by mounting
-the live DMG (`downloads.macparakeet.com/MacParakeet.dmg`, 0.5.5 build
+is the `LC_UUID` of the 0.5.5 `Sotto` Mach-O. I verified this by mounting
+the live DMG (`downloads.macparakeet.com/Sotto.dmg`, 0.5.5 build
 `20260406005332`) and running `dwarfdump --uuid`:
 
 ```
 UUID: DDD7A497-EFB2-3CC2-A024-B4C83E9F0F65 (arm64)
-  /Volumes/MacParakeet/MacParakeet.app/Contents/MacOS/MacParakeet
+  /Volumes/Sotto/Sotto.app/Contents/MacOS/Sotto
 ```
 
 The stale row #9 has a different UUID `3BB999A2-9CE1-39E5-AB18-1A87F785E3CF`,
@@ -244,16 +244,16 @@ release binary inside the shipped DMG.
 
 ```sh
 # 1. Download the live 0.5.5 DMG (cache-bust the CDN)
-curl -s -L -o /tmp/MacParakeet-055.dmg \
+curl -s -L -o /tmp/Sotto-055.dmg \
   "https://downloads.macparakeet.com/MacParakeet.dmg?ts=$(date +%s)"
 
 # 2. Mount and verify UUID matches the crash reports
-hdiutil attach -nobrowse -readonly /tmp/MacParakeet-055.dmg
-dwarfdump --uuid /Volumes/MacParakeet/MacParakeet.app/Contents/MacOS/MacParakeet
+hdiutil attach -nobrowse -readonly /tmp/Sotto-055.dmg
+dwarfdump --uuid /Volumes/Sotto/Sotto.app/Contents/MacOS/Sotto
 # → UUID: DDD7A497-EFB2-3CC2-A024-B4C83E9F0F65 (arm64)  ✓ matches telemetry
 
 # 3. Symbolicate the four fixed app offsets from cluster A/C
-atos -o /Volumes/MacParakeet/MacParakeet.app/Contents/MacOS/MacParakeet \
+atos -o /Volumes/Sotto/Sotto.app/Contents/MacOS/Sotto \
      -arch arm64 -l 0x100000000 \
      0x100865c70 0x10080638c 0x100804d70 0x1008044c8
 ```
@@ -327,7 +327,7 @@ own `NSSetUncaughtExceptionHandler` is not firing.
 
 ### 3.2 The actual code path
 
-`Sources/MacParakeetCore/Audio/AudioRecorder.swift` around the crash site
+`Sources/SottoCore/Audio/AudioRecorder.swift` around the crash site
 (full context, line numbers verified against HEAD):
 
 ```swift
@@ -641,7 +641,7 @@ broke recently.
 **Code history — the vulnerable line has been there since v0.1:**
 
 ```
-$ git blame -L 225,230 Sources/MacParakeetCore/Audio/AudioRecorder.swift
+$ git blame -L 225,230 Sources/SottoCore/Audio/AudioRecorder.swift
 …
 60707550 (Daniel Moon 2026-03-20 20:56:50 -0700 227)
     inputNode.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) {
@@ -653,7 +653,7 @@ $ git blame -L 225,230 Sources/MacParakeetCore/Audio/AudioRecorder.swift
 Following the file via `git log --follow`:
 
 - `92460f8` — *Track v0.1 app implementation and align docs* — initial
-  commit of `Sources/MacParakeetCore/Audio/AudioRecorder.swift`. The
+  commit of `Sources/SottoCore/Audio/AudioRecorder.swift`. The
   `installTap(onBus: 0, bufferSize: 4096, format: inputFormat)` pattern
   was present from day one.
 - `6070755` (2026-03-20) — *Fix dictation broken when Bluetooth headphones
@@ -714,7 +714,7 @@ Add a tiny Objective-C helper that converts `NSException` into an
 `NSError` so Swift can catch it:
 
 ```objc
-// Sources/MacParakeetObjCShims/include/MPKObjCExceptionCatcher.h
+// Sources/SottoObjCShims/include/MPKObjCExceptionCatcher.h
 #import <Foundation/Foundation.h>
 NS_ASSUME_NONNULL_BEGIN
 /// Runs `block` and converts any raised NSException into an NSError
@@ -724,7 +724,7 @@ NS_ASSUME_NONNULL_END
 ```
 
 ```objc
-// Sources/MacParakeetObjCShims/MPKObjCExceptionCatcher.m
+// Sources/SottoObjCShims/MPKObjCExceptionCatcher.m
 #import "MPKObjCExceptionCatcher.h"
 BOOL MPKTryBlock(void (^block)(void), NSError **error) {
     @try {
@@ -745,8 +745,8 @@ BOOL MPKTryBlock(void (^block)(void), NSError **error) {
 }
 ```
 
-Add a new SwiftPM target `MacParakeetObjCShims` (C target, no deps) and link
-it into `MacParakeetCore`. This keeps all other targets Swift-only.
+Add a new SwiftPM target `SottoObjCShims` (C target, no deps) and link
+it into `SottoCore`. This keeps all other targets Swift-only.
 
 ### 5.2 Use it in AudioRecorder.configureAndStart
 
@@ -872,7 +872,7 @@ Recommended: do **both** §5.1-5.2 and §5.5.
 Commit `704dfde` (2026-04-06) already made the build script archive the
 dSYM into `dist/`. Verify that 0.5.6 and later ship with the dSYM archived
 and retained (e.g., commit the dSYM to a private bucket, or snapshot
-`dist/MacParakeet.dSYM` to macparakeet-downloads R2 alongside the DMG)
+`dist/Sotto.dSYM` to sotto-downloads R2 alongside the DMG)
 so that any future crash at a different offset can be symbolicated
 immediately.
 
@@ -923,23 +923,23 @@ Ignore.
 ## 7. Exact artifacts referenced
 
 - Live DMG sha:
-  - file: `/tmp/MacParakeet-055.dmg`, size 81139573
+  - file: `/tmp/Sotto-055.dmg`, size 81139573
   - URL: `https://downloads.macparakeet.com/MacParakeet.dmg`
   - `CFBundleShortVersionString`: `0.5.5`
   - `CFBundleVersion`: `20260406005332`
 - Main binary:
-  - `/Volumes/MacParakeet/MacParakeet.app/Contents/MacOS/MacParakeet`
+  - `/Volumes/Sotto/Sotto.app/Contents/MacOS/Sotto`
   - `LC_UUID`: `DDD7A497-EFB2-3CC2-A024-B4C83E9F0F65` (arm64)
   - Matches every `crash_occurred` row on 0.5.5 in the last 48h.
 - Source files (verified against HEAD `fc85bc5`):
-  - `Sources/MacParakeetCore/Audio/AudioRecorder.swift` — crash site at line 227
-  - `Sources/MacParakeetCore/Audio/AudioProcessor.swift` — line 29 (frame 15)
-  - `Sources/MacParakeetCore/Services/DictationService.swift` — line 149
+  - `Sources/SottoCore/Audio/AudioRecorder.swift` — crash site at line 227
+  - `Sources/SottoCore/Audio/AudioProcessor.swift` — line 29 (frame 15)
+  - `Sources/SottoCore/Services/DictationService.swift` — line 149
     (caller of `startCapture`)
-  - `Sources/MacParakeetCore/Services/CrashReporter.swift` — line 202
+  - `Sources/SottoCore/Services/CrashReporter.swift` — line 202
     (signal handler backtrace call)
 - Telemetry queries were run via
-  `npx wrangler d1 execute macparakeet-telemetry --remote --command ...`
+  `npx wrangler d1 execute sotto-telemetry --remote --command ...`
   against D1 database id `7372263e-6a0b-4c70-8188-8f1d6d16bf31`.
 - Relevant commit: `704dfde Archive dSYM during release builds for crash
   symbolication` — added on 2026-04-06 after this bug had already shipped in
@@ -965,7 +965,7 @@ Ignore.
 
 ## 9. Action checklist
 
-- [ ] Implement `MacParakeetObjCShims` SPM target with `MPKTryBlock`.
+- [ ] Implement `SottoObjCShims` SPM target with `MPKTryBlock`.
 - [ ] Wrap `outputFormat(forBus:)`, `installTap(...)`, and `engine.start()` in
       `AudioRecorder.configureAndStart` with `MPKTryBlock`.
 - [ ] Switch the tap to `format: nil` and derive the converter from
@@ -981,7 +981,7 @@ Ignore.
       returns NO with populated error" test.)
 - [ ] Ship 0.5.6 with this fix. Run the release checklist in
       `docs/distribution.md`.
-- [ ] Confirm `dist/MacParakeet.dSYM` is preserved to macparakeet-downloads R2
+- [ ] Confirm `dist/Sotto.dSYM` is preserved to sotto-downloads R2
       as part of the release process so future crashes are symbolicable
       from day one.
 - [ ] Re-query `crash_occurred` 72h after 0.5.6 ships and confirm clusters A
@@ -1102,7 +1102,7 @@ Run these from the project root on any dev machine to redo the second pass:
 
 ```sh
 # 1. Current AudioRecorder.swift matches report line numbers
-sed -n '70,230p' Sources/MacParakeetCore/Audio/AudioRecorder.swift
+sed -n '70,230p' Sources/SottoCore/Audio/AudioRecorder.swift
 
 # 2. startCapture callers (must be exactly one)
 grep -rn 'startCapture\|recorder\.start(' Sources/
@@ -1111,13 +1111,13 @@ grep -rn 'startCapture\|recorder\.start(' Sources/
 grep -rn '@try\|NSException\b' Sources/
 
 # 4. Download 0.5.5 DMG, mount, verify UUID
-curl -s -L -o /tmp/MacParakeet-055.dmg "https://downloads.macparakeet.com/MacParakeet.dmg?ts=$(date +%s)"
-hdiutil attach -nobrowse -readonly /tmp/MacParakeet-055.dmg
-dwarfdump --uuid /Volumes/MacParakeet/MacParakeet.app/Contents/MacOS/MacParakeet
+curl -s -L -o /tmp/Sotto-055.dmg "https://downloads.macparakeet.com/MacParakeet.dmg?ts=$(date +%s)"
+hdiutil attach -nobrowse -readonly /tmp/Sotto-055.dmg
+dwarfdump --uuid /Volumes/Sotto/Sotto.app/Contents/MacOS/Sotto
 # Expected: DDD7A497-EFB2-3CC2-A024-B4C83E9F0F65
 
 # 5. Symbolicate the four fixed app offsets from clusters A and C
-MP=/Volumes/MacParakeet/MacParakeet.app/Contents/MacOS/MacParakeet
+MP=/Volumes/Sotto/Sotto.app/Contents/MacOS/Sotto
 atos -o "$MP" -arch arm64 -l 0x100000000 0x100865c70 0x10080638c 0x100804d70 0x1008044c8
 
 # 6. Walk the installTap call-site neighborhood in 4-byte increments
@@ -1130,15 +1130,15 @@ done
 otool -l "$MP" | grep -E "__debug_" | head  # expect: empty
 
 # 8. Cleanup
-hdiutil detach /Volumes/MacParakeet
-rm -f /tmp/MacParakeet-055.dmg
+hdiutil detach /Volumes/Sotto
+rm -f /tmp/Sotto-055.dmg
 
 # 9. Re-query telemetry for clusters A and C (wrangler must be authed)
-cd ../macparakeet-website
-npx wrangler d1 execute macparakeet-telemetry --remote --command \
+cd ../sotto-website
+npx wrangler d1 execute sotto-telemetry --remote --command \
   "SELECT event_id, session, app_ver, os_ver, chip, country, ts, props FROM events WHERE event='crash_occurred' AND ts >= datetime('now','-72 hours') ORDER BY ts DESC"
 
 # 10. Cluster C onboarding verification
-npx wrangler d1 execute macparakeet-telemetry --remote --command \
+npx wrangler d1 execute sotto-telemetry --remote --command \
   "SELECT session, event, ts, substr(props,1,250) as props FROM events WHERE session IN ('EEAD4122-0A4D-4F29-AEE2-755D9BC616CB','6A865200-B8D0-4CAE-95DC-CB7F9FD2C553','30CF5A2F-EF5F-4C71-93D7-32636A7BAF5E') ORDER BY session, ts"
 ```

@@ -222,7 +222,7 @@ made while a destination loads are saved before switching conversations.
 If a conversation was already created when a later draft save fails, it
 remains reachable in the conversation list while the current draft stays open.
 
-`macparakeet-cli ask` exposes `list`, `new`, `show`, `rename`, `delete`,
+`sotto-cli ask` exposes `list`, `new`, `show`, `rename`, `delete`,
 `sources`, `select`, `draft`, `send`, and `evidence`. These commands emit JSON
 by default, use complete UUIDs and ISO-8601 dates, and expose conversation and
 source revisions. Mutating commands use the expected `--revision`. `send` uses
@@ -251,7 +251,7 @@ host decision, final generation, and citation validation boundaries; helper
 activity text remains available for older consumers.
 
 The CLI surface is additive at version 4.8.0 in this development source. That
-version does not qualify or update the stable MacParakeet.app release.
+version does not qualify or update the stable Sotto.app release.
 
 ## Deferred
 

@@ -1,5 +1,5 @@
 {
-  "description": "Sanitized package-runtime evidence. <REPO> is the owning macparakeet-qa checkout; <QA> is its isolated temporary QA directory; the local Mac hardware identifier is redacted. No release artifact bytes are altered.",
+  "description": "Sanitized package-runtime evidence. <REPO> is the owning sotto-qa checkout; <QA> is its isolated temporary QA directory; the local Mac hardware identifier is redacted. No release artifact bytes are altered.",
   "files": [
     {
       "path": "app-gatekeeper.log",

@@ -57,7 +57,7 @@ preferences were rewritten during this review.
 | Intermediate signed bundle | Build `20260909082721`, source `6c0200ae`, passed signing/privacy/echo checks, helper startup, and local transcription/export. Its notarization upload is preserved under submission `a2c56ec5-7fa1-4726-8732-a13f4d46708e`; it predates the availability-error correction and is superseded. |
 | Isolated GUI startup | A separately identified copy of `6c0200ae` opened Meetings against a verified disposable SQLite path. Auto-note chips required AI setup, so no GUI toggle or provider configuration was attempted. The QA copy quit normally; the user's open app was untouched. |
 
-Local detailed review and command logs are under `/tmp/macparakeet-release-*` on
+Local detailed review and command logs are under `/tmp/sotto-release-*` on
 the review host. They are supporting local evidence, not durable public assets.
 The final candidate receipts below supersede the intermediate build checks.
 DMG acceptance and stapling remain outstanding.
@@ -129,7 +129,7 @@ because tickets cannot be stapled to ZIP archives. Duplicate uploads were paused
 until the separate full restart below. On acceptance, staple the exact DMG,
 validate the staple and Gatekeeper assessment, and record its post-staple hash.
 On `Invalid`, retrieve the notarization log before changing the artifact.
-Supporting receipts are under `/tmp/macparakeet-release-restart-*` on the review
+Supporting receipts are under `/tmp/sotto-release-restart-*` on the review
 host.
 
 ### Second clean restart

@@ -118,7 +118,7 @@ Copied from the contract so this spec cannot drift:
 - Opt-out: default **on**. After disable, only `telemetry_opted_out`.
   Sparkle still fires.
 - Debug / `0.0.0` / `dev-*` / `swiftpm-*` are transport-ineligible unless
-  `MACPARAKEET_TELEMETRY=1`. Exclude `0.0.0` from every product number.
+  `SOTTO_TELEMETRY=1`. Exclude `0.0.0` from every product number.
 - CLI `cli_operation` = one session per invocation. Do not add CLI to DAU.
 
 **Forbidden metrics** (they look like PostHog and are fiction here):
@@ -210,9 +210,9 @@ or `new_users` vs humans. That is the only coupling.
 ## What PostHog-like products actually do here
 
 PostHog (and Mixpanel, Amplitude, Heap) sell a bundle. Mapped onto
-MacParakeet’s privacy model and D1 cost:
+Sotto’s privacy model and D1 cost:
 
-| PostHog surface | Verdict | MacParakeet shape |
+| PostHog surface | Verdict | Sotto shape |
 |---|---|---|
 | Trends | **Keep** | Daily counts from rollups + Sparkle. Most of the report. |
 | Funnels | **Adapt, same-session only** | T0, onboarding steps, permission prompt→grant. Say “session funnel” everywhere. |
@@ -603,7 +603,7 @@ Analytics Engine, Sentry, PostHog.
 
 ## Query notes (copy for implementers)
 
-D1: `macparakeet-telemetry`
+D1: `sotto-telemetry`
 `7372263e-6a0b-4c70-8188-8f1d6d16bf31`, account
 `1542b0baf1922ec403cc44ef3fd39233`. Zone `macparakeet.com`
 `4183d6a922545fb96269e3c24d1611a2`.
@@ -771,7 +771,7 @@ angles, not copy-paste — it used `app_version`, `crash`,
 - Notification path for the three alerts: GitHub issue (reviewer already
   suggests this), email, or a local `osascript` banner on the machine
   that runs the cron. Pick whichever is already in the operator’s loop.
-- Whether Slice 0 lives as a GitHub Action in `macparakeet-website` or a
+- Whether Slice 0 lives as a GitHub Action in `sotto-website` or a
   launchd job on a trusted Mac. Action is better once
   `CLOUDFLARE_API_TOKEN` + D1 execute are available to CI; until then a
   local cron matching `pnpm telemetry:review` is honest.

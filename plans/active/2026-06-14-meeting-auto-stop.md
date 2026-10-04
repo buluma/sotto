@@ -19,7 +19,7 @@ Both feed a **veto-able pre-stop countdown** (reusing `MeetingCountdownToastCont
 ## Scope boundaries
 
 ### In scope
-- Pure `MeetingAutoStopPolicy` in `MacParakeetCore` (mirror of `MeetingMonitor.evaluate`).
+- Pure `MeetingAutoStopPolicy` in `SottoCore` (mirror of `MeetingMonitor.evaluate`).
 - `@MainActor MeetingAutoStopCoordinator` in the app layer (mirror of `MeetingAutoStartCoordinator`), active only while recording.
 - Recognized-app-termination signal via `NSWorkspace.didTerminateApplicationNotification` + a recognized-conferencing-app bundle-ID registry.
 - Sustained dual-channel silence signal via the existing meeting VAD / level signal.
@@ -43,7 +43,7 @@ Both feed a **veto-able pre-stop countdown** (reusing `MeetingCountdownToastCont
 
 ## The pure policy (Core)
 
-`Sources/MacParakeetCore/Services/MeetingRecording/MeetingAutoStopPolicy.swift`
+`Sources/SottoCore/Services/MeetingRecording/MeetingAutoStopPolicy.swift`
 
 ```swift
 public enum MeetingAutoStopPolicy {
@@ -80,11 +80,11 @@ Rules: `.keepRecording` if `!isRecording || isPaused`. App-quit fires only when 
 
 ### Phase A — app-quit fast path + veto countdown + settings (implemented 2026-06-14)
 - **Core:** `MeetingAutoStopPolicy.swift` (+ recognized-app bundle-ID registry).
-- **App:** `Sources/MacParakeet/App/MeetingAutoStopCoordinator.swift` — snapshot running recognized apps at start; `NSWorkspace.didTerminateApplicationNotification` observer; grace clock + reversal; veto countdown; stop via `MeetingRecordingFlowCoordinator` with the `.autoStop` operation trigger. Wire in `AppEnvironmentConfigurer.swift`.
+- **App:** `Sources/Sotto/App/MeetingAutoStopCoordinator.swift` — snapshot running recognized apps at start; `NSWorkspace.didTerminateApplicationNotification` observer; grace clock + reversal; veto countdown; stop via `MeetingRecordingFlowCoordinator` with the `.autoStop` operation trigger. Wire in `AppEnvironmentConfigurer.swift`.
 - **Flow:** distinguish recording-start triggers from stop operation triggers so auto-stop is attributed without becoming a recording-start source.
-- **Settings:** `meetingAutoStopEnabled` on `SettingsViewModel` (namespaced key) + `.macParakeetMeetingAutoStopDidChange` in `AppNotifications.swift` + toggle in the Meeting Recording settings card + `SettingsSearchIndex` entry.
+- **Settings:** `meetingAutoStopEnabled` on `SettingsViewModel` (namespaced key) + `.sottoMeetingAutoStopDidChange` in `AppNotifications.swift` + toggle in the Meeting Recording settings card + `SettingsSearchIndex` entry.
 - **Gate:** `AppFeatures.meetingAutoStopEnabled` (on for `main` dogfooding; per-user setting default off).
-- **Telemetry:** `meeting_auto_stop_proposed/confirmed/vetoed{reason}` + `.settingChanged(setting:.meetingAutoStop)` → mirror to `macparakeet-website/functions/api/telemetry.ts` `ALLOWED_EVENTS`.
+- **Telemetry:** `meeting_auto_stop_proposed/confirmed/vetoed{reason}` + `.settingChanged(setting:.meetingAutoStop)` → mirror to `sotto-website/functions/api/telemetry.ts` `ALLOWED_EVENTS`.
 
 ### Phase B — sustained dual-channel silence signal (implemented 2026-06-14)
 - Sample mic/system silence from the existing meeting VAD/level path (`MeetingVADService` / panel `micLevel`/`systemLevel`) on a `RunLoop.common` timer; maintain `continuousSilenceSeconds`; feed the policy. Nested under the same toggle. Start with a conservative grace (~3–5 min). Prefer "no speech on either channel" (VAD) over a raw RMS threshold if reachable.

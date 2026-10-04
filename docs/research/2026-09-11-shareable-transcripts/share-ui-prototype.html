@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <title>MacParakeet Share Link — UI Prototype</title>
+  <title>Sotto Share Link — UI Prototype</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23e86b3b'/%3E%3Cpath d='M18 18h18c9 0 15 5 15 13s-6 13-15 13H28v8H18V18Zm10 9v8h8c3 0 5-1 5-4s-2-4-5-4h-8Z' fill='white'/%3E%3C/svg%3E">
   <style>
     :root {
@@ -855,10 +855,10 @@
             next.lastEvent = 'The macOS share sheet would open with only the full recipient URL.';
             return next;
           case 'RECIPIENT_COPY':
-            next.lastEvent = 'The recipient copied the visible text in their browser. No view event was sent to MacParakeet.';
+            next.lastEvent = 'The recipient copied the visible text in their browser. No view event was sent to Sotto.';
             return next;
           case 'RECIPIENT_DOWNLOAD':
-            next.lastEvent = 'The recipient generated a Markdown download in their browser. No view event was sent to MacParakeet.';
+            next.lastEvent = 'The recipient generated a Markdown download in their browser. No view event was sent to Sotto.';
             return next;
           case 'REPORT_SHARE':
             next.lastEvent = 'A report would create a rate-limited review case; it would not automatically take the share down.';
@@ -1150,8 +1150,8 @@
     function appSidebar(active) {
       const item = (name, icon, action, key) => `<button class="side-button ${active === key ? 'active' : ''}" data-action="${action}"><span class="side-icon" aria-hidden="true">${icon}</span>${name}</button>`;
       return `<aside class="sidebar">
-        <div class="brand"><span class="brand-mark">P</span>MacParakeet</div>
-        <nav class="side-list" aria-label="MacParakeet sections">
+        <div class="brand"><span class="brand-mark">P</span>Sotto</div>
+        <nav class="side-list" aria-label="Sotto sections">
           ${item('Transcribe', '⌁', 'OPEN_LIBRARY', 'transcribe')}
           ${item('Library', '▦', 'OPEN_LIBRARY', 'library')}
           ${item('Dictations', '◴', 'OPEN_LIBRARY', 'dictations')}
@@ -1205,7 +1205,7 @@
       const chosen = ShareModel.selectedNames(state.selection);
       if (!chosen.length) return '<div class="empty-preview"><div><strong>Nothing selected</strong><br>Choose at least one text section to publish.</div></div>';
       return `<div class="recipient-card">
-        <div class="shared-mark">Shared from MacParakeet</div>
+        <div class="shared-mark">Shared from Sotto</div>
         <h3>${meeting.title}</h3>
         <div class="provenance">Text snapshot · ${draftExpiryPhrase()} · Audio not uploaded</div>
         ${state.selection.summary ? `<h4>Summary</h4><p>${state.localChanged ? meeting.summary.replace('Friday', 'Thursday') : meeting.summary}</p>` : ''}
@@ -1325,8 +1325,8 @@
 
     function renderApp() {
       let main = state.surface === 'shared' ? sharedView() : transcriptDetail();
-      return `<section class="mac-window" aria-label="MacParakeet application prototype">
-        <div class="window-bar"><span class="traffic-lights" aria-hidden="true"><i></i><i></i><i></i></span>MacParakeet</div>
+      return `<section class="mac-window" aria-label="Sotto application prototype">
+        <div class="window-bar"><span class="traffic-lights" aria-hidden="true"><i></i><i></i><i></i></span>Sotto</div>
         <div class="app-shell">${appSidebar(state.surface === 'shared' ? 'shared' : 'library')}${main}</div>
         ${state.dialog === 'create' ? createSheet() : state.dialog === 'success' ? successSheet() : state.dialog === 'expiry' ? expirySheet() : state.dialog === 'stop' ? stopSheet() : ''}
       </section>`;
@@ -1336,14 +1336,14 @@
       const confirmed = state.publishedSnapshot;
       if (state.serverStatus !== 'active' || !confirmed) return `<div class="blocked-page"><div class="blocked-card"><div class="blocked-symbol">×</div><h1>This shared page is no longer available</h1><p>The owner stopped sharing or the link expired. Ask them for a new link if you still need access.</p></div></div>`;
       return `<article class="web-page">
-        <header class="web-brand"><strong>MacParakeet</strong><div class="web-actions"><button class="button" data-action="RECIPIENT_DOWNLOAD">Download Markdown</button><button class="button" data-action="RECIPIENT_COPY">Copy text</button></div></header>
+        <header class="web-brand"><strong>Sotto</strong><div class="web-actions"><button class="button" data-action="RECIPIENT_DOWNLOAD">Download Markdown</button><button class="button" data-action="RECIPIENT_COPY">Copy text</button></div></header>
         <h1>${meeting.title}</h1>
         <p class="web-provenance">${confirmed.revisionTimeLabel} · Snapshot v${state.version} · ${publishedExpiryPhrase()}<br>Text only. Audio was not uploaded.</p>
         ${confirmed.selection.summary ? `<section class="web-section"><h2>Summary</h2><p>${publishedSummary(confirmed)}</p></section>` : ''}
         ${confirmed.selection.notes ? `<section class="web-section"><h2>Notes</h2><ul>${meeting.notes.map(note => `<li>${note}</li>`).join('')}</ul></section>` : ''}
         ${confirmed.selection.transcript ? `<section class="web-section"><h2>Transcript</h2><div class="web-transcript">${meeting.transcript.map(([speaker, time, text]) => { const header = transcriptHeader(speaker, time, confirmed.transcriptOptions); return `<article class="${header ? '' : 'without-labels'}">${header}<p>${text}</p></article>`; }).join('')}</div></section>` : ''}
         <p class="accuracy-note">Transcripts and generated summaries can contain errors. Confirm important details with the people involved.</p>
-        <footer class="web-footer"><span>Shared privately from MacParakeet</span><button data-action="REPORT_SHARE">Report this share</button></footer>
+        <footer class="web-footer"><span>Shared privately from Sotto</span><button data-action="REPORT_SHARE">Report this share</button></footer>
       </article>`;
     }
 

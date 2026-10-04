@@ -6,7 +6,7 @@ Date: 2026-09-17, America/Los_Angeles.
 
 ## Verdict
 
-MacParakeet was sending the app baseline `temperature: 0.7` (and `0.1` for
+Sotto was sending the app baseline `temperature: 0.7` (and `0.1` for
 knowledge cards) to Kimi. Official Moonshot docs fix Kimi K2.5+ / K3
 temperature; any other value 400s. The same model-ID policy now covers native
 Moonshot plus OpenRouter and custom OpenAI-compatible endpoints. First-class
@@ -25,7 +25,7 @@ OpenRouter fallback catalog and ship international OpenAI-compatible APIs.
 
 Vercel AI SDK (`@ai-sdk/moonshotai`, `@ai-sdk/deepseek`, `@ai-sdk/minimax`,
 `@ai-sdk/alibaba`, `@ai-sdk/zai`) uses the same idea: detect family from model
-ID, omit illegal sampling, map thinking to the native field. MacParakeet keeps
+ID, omit illegal sampling, map thinking to the native field. Sotto keeps
 one adapter and one `ChatCompletionsModelPolicy` instead of five packages.
 
 ## Out of first-class scope

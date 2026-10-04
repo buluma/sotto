@@ -27,4 +27,4 @@ is local. Note Muesli's approach specifically (earlier memory says it has a CLI 
 pattern worth adopting; here focus on speakers only).
 
 End with a comparison matrix (mechanism, model, local/cloud, channel prior used?, word
-timestamps?, correction UX, license) and 3-5 narrow lessons for MacParakeet.
+timestamps?, correction UX, license) and 3-5 narrow lessons for Sotto.

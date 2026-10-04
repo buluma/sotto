@@ -123,10 +123,10 @@ SHOULD folded in: skip our cookie in existing hotkey taps; IME that is not ASCII
 
 ## Implementation sketch
 
-1. `Sources/MacParakeetCore/Services/System/StreamingCursorScheduler.swift`  
+1. `Sources/SottoCore/Services/System/StreamingCursorScheduler.swift`
    Pure `schedule(text:)` → `[StreamingCursorBatch]` (`String` + `Duration` delay before that batch). `remainingText(from:)` concatenates unplayed batches.
 
-2. `StreamingCursorInserter` (MainActor)  
+2. `StreamingCursorInserter` (MainActor)
    Inject `StreamingEventPosting` (`typeUnicode(_:)`), `InterruptMonitoring`, `Clock`. Tag events with a private `eventSourceUserData` cookie. `insert` is async, checks `Task.isCancelled` between batches, flushes on cancel/interrupt. Does not sleep when schedule is a single immediate batch (Reduce Motion / one grapheme still uses one event, no 180ms pad if we decide single-batch is instant — **rule:** if `batches.count == 1`, post once and skip settle, so a one-letter “OK” is not artificially slow).
 
    Correction to the duration floor: apply minDuration only when `graphemeCount >= 4`. 1–3 graphemes: one batch, no settle.

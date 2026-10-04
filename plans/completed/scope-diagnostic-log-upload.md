@@ -21,7 +21,7 @@ history* — send a generous **recent window** by default.
 
 Scope by *recency of whole lines*, never by redacting line contents.
 
-### Core (`MacParakeetCore/Audio/DiagnosticLogScope.swift`)
+### Core (`SottoCore/Audio/DiagnosticLogScope.swift`)
 
 - `enum DiagnosticLogScope { case recent, full }`
 - `AudioCaptureDiagnostics.scopedLogForUpload(_ raw: String, scope:, now:) -> String`

@@ -2,7 +2,7 @@
 """Submit a Voice Control inbox command, then wait for the local session log.
 
 Does not use CDP, extensions, or DOM injection. Chrome focusing is tester
-setup only. The product path is the running MacParakeet-Dev Voice Control
+setup only. The product path is the running Sotto-Dev Voice Control
 session.
 """
 from __future__ import annotations
@@ -12,7 +12,7 @@ import json
 import time
 from pathlib import Path
 
-POINTER = Path('/tmp/macparakeet-voice-control')
+POINTER = Path('/tmp/sotto-voice-control')
 DEFAULT_COMMAND = POINTER / 'command.json'
 DEFAULT_LATEST = POINTER / 'latest.json'
 WHERE = POINTER / 'WHERE'

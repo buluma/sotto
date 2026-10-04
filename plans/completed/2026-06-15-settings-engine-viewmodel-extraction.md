@@ -9,7 +9,7 @@
 > When done, update the status row for this plan in `plans/README.md`.
 >
 > **Drift check (run first)**:
-> `git diff --stat 16e3f865f..HEAD -- Sources/MacParakeetViewModels/SettingsViewModel.swift Sources/MacParakeet/Views/Settings/SettingsView.swift`
+> `git diff --stat 16e3f865f..HEAD -- Sources/SottoViewModels/SettingsViewModel.swift Sources/Sotto/Views/Settings/SettingsView.swift`
 > If either changed materially since this plan was written, re-read the engine
 > members before proceeding; on a mismatch with the "Current state" inventory,
 > treat it as a STOP condition.
@@ -27,7 +27,7 @@
 
 `SettingsViewModel` is 2,568 lines and growing (it was 1,265 when its split was
 first planned). Its own intended decomposition is documented but stalled:
-`Sources/MacParakeetViewModels/SettingsRootViewModel.swift:24-28` says "Sub-VMs
+`Sources/SottoViewModels/SettingsRootViewModel.swift:24-28` says "Sub-VMs
 (`Capture`, `Engine`, `AI`, `System`) will be wired in subsequent commits" — they
 never were, and `SettingsView.swift:455` carries the same unfulfilled "Sub-VM
 split (`EngineSettingsViewModel`) lands in a later commit." This plan executes the
@@ -43,7 +43,7 @@ for the Engine portion.
 
 ## Current state
 
-`Sources/MacParakeetViewModels/SettingsViewModel.swift` — `@MainActor @Observable`,
+`Sources/SottoViewModels/SettingsViewModel.swift` — `@MainActor @Observable`,
 constructed with closure injection (see the characterization-test plan for the
 full init). The **engine/model slice** to move (verified at commit `16e3f865f`):
 
@@ -91,11 +91,11 @@ of those call sites valid by forwarding.
 
 Conventions to honor (from `plans/active/2026-04-settings-ia-overhaul.md` §3 and
 `CLAUDE.md`): `@MainActor @Observable` on the new VM; it lives in
-`Sources/MacParakeetViewModels/` and imports **only** `MacParakeetCore` (no
+`Sources/SottoViewModels/` and imports **only** `SottoCore` (no
 SwiftUI/AppKit beyond what `SettingsViewModel` already imports); no fire-and-forget
 `Task { }` without an awaitable caller — preserve the existing async patterns
 exactly as they are when moving them. The existing `LLMSettingsViewModel` +
-`LLMSettingsDraft` (`Sources/MacParakeetViewModels/`) are the in-repo exemplar of a
+`LLMSettingsDraft` (`Sources/SottoViewModels/`) are the in-repo exemplar of a
 focused, tested sub-VM — model the new VM's shape and its test on them.
 
 ## Commands you will need
@@ -107,17 +107,17 @@ focused, tested sub-VM — model the new VM's shape and its test on them.
 | New VM test            | `swift test --filter EngineSettingsViewModelTests`                  | all pass   |
 | Build                  | `swift build`                                                       | exit 0     |
 | Full tests             | `swift test`                                                        | all pass   |
-| Find view call sites   | `grep -rn "speechEnginePreference\|parakeetModelVariant\|nemotronModelVariant\|refreshModelStatus\|downloadNemotronModel\|downloadWhisperModel" Sources/MacParakeet/Views` | the call sites that must keep compiling |
+| Find view call sites   | `grep -rn "speechEnginePreference\|parakeetModelVariant\|nemotronModelVariant\|refreshModelStatus\|downloadNemotronModel\|downloadWhisperModel" Sources/Sotto/Views` | the call sites that must keep compiling |
 
 ## Scope
 
 **In scope** (modify/create):
-- `Sources/MacParakeetViewModels/EngineSettingsViewModel.swift` (create)
-- `Sources/MacParakeetViewModels/SettingsViewModel.swift` (remove the engine slice; add forwarding)
-- `Tests/MacParakeetTests/ViewModels/EngineSettingsViewModelTests.swift` (create)
+- `Sources/SottoViewModels/EngineSettingsViewModel.swift` (create)
+- `Sources/SottoViewModels/SettingsViewModel.swift` (remove the engine slice; add forwarding)
+- `Tests/SottoTests/ViewModels/EngineSettingsViewModelTests.swift` (create)
 - `plans/README.md` (status row); update the status note in
   `plans/active/2026-04-settings-ia-overhaul.md` (mark the Engine sub-VM row done)
-- `Sources/MacParakeetViewModels/SettingsRootViewModel.swift` — only if you choose
+- `Sources/SottoViewModels/SettingsRootViewModel.swift` — only if you choose
   to expose the new VM there (optional; see Step 5)
 
 **Out of scope** (do NOT touch in this plan):
@@ -149,7 +149,7 @@ must land first.
 
 ### Step 1: Create EngineSettingsViewModel owning the engine state
 
-Create `Sources/MacParakeetViewModels/EngineSettingsViewModel.swift`:
+Create `Sources/SottoViewModels/EngineSettingsViewModel.swift`:
 `@MainActor @Observable public final class EngineSettingsViewModel`. Its `init`
 takes exactly the injected dependencies the moved logic needs:
 `defaults: UserDefaults`, `parakeetModelVariantCached`, `nemotronModelVariantCached`,
@@ -208,7 +208,7 @@ run the "Find view call sites" grep and confirm each referenced member has a shi
 
 ### Step 4: Add focused tests for the new VM
 
-Create `Tests/MacParakeetTests/ViewModels/EngineSettingsViewModelTests.swift`,
+Create `Tests/SottoTests/ViewModels/EngineSettingsViewModelTests.swift`,
 modeled on `LLMSettingsViewModelTests.swift`. Construct `EngineSettingsViewModel`
 directly with injected stubs and re-assert the same behaviors the characterization
 tests pin (selection persistence, switch-confirmation state machine, downloaded-
@@ -232,7 +232,7 @@ and leave it to the follow-up.
 - In `plans/active/2026-04-settings-ia-overhaul.md` §3, annotate the
   `EngineSettingsViewModel` row as shipped (with this branch name).
 - Confirm `SettingsViewModel.swift` line count dropped meaningfully
-  (`wc -l Sources/MacParakeetViewModels/SettingsViewModel.swift`).
+  (`wc -l Sources/SottoViewModels/SettingsViewModel.swift`).
 
 ## Test plan
 
@@ -249,15 +249,15 @@ and leave it to the follow-up.
 
 Machine-checkable. ALL must hold:
 
-- [ ] `Sources/MacParakeetViewModels/EngineSettingsViewModel.swift` exists; is `@MainActor @Observable`; imports only `Foundation`/`MacParakeetCore` (no SwiftUI).
+- [ ] `Sources/SottoViewModels/EngineSettingsViewModel.swift` exists; is `@MainActor @Observable`; imports only `Foundation`/`SottoCore` (no SwiftUI).
 - [ ] `swift build` exits 0.
 - [ ] `swift test --filter SettingsViewModelTests` passes **without edits to assertions**.
 - [ ] `swift test --filter SettingsEngineCharacterizationTests` passes **without edits to assertions**.
 - [ ] `swift test --filter EngineSettingsViewModelTests` passes (≥ 10 tests).
 - [ ] `swift test` exits 0 (full suite).
-- [ ] `wc -l Sources/MacParakeetViewModels/SettingsViewModel.swift` is at least ~300 lines smaller than the 2,568 baseline.
-- [ ] `grep -n "import SwiftUI" Sources/MacParakeetViewModels/EngineSettingsViewModel.swift` → no matches.
-- [ ] No `Sources/MacParakeet/Views/**` file is modified (forwarding kept them valid; `git status --porcelain Sources/MacParakeet/Views` is empty).
+- [ ] `wc -l Sources/SottoViewModels/SettingsViewModel.swift` is at least ~300 lines smaller than the 2,568 baseline.
+- [ ] `grep -n "import SwiftUI" Sources/SottoViewModels/EngineSettingsViewModel.swift` → no matches.
+- [ ] No `Sources/Sotto/Views/**` file is modified (forwarding kept them valid; `git status --porcelain Sources/Sotto/Views` is empty).
 - [ ] `plans/README.md` and the IA plan's Engine row updated.
 
 ## STOP conditions
@@ -272,7 +272,7 @@ Stop and report back (do not improvise) if:
   half-moved.
 - `SettingsViewModelTests` or the characterization tests require **assertion** edits
   (not just a constructor/type rename) to pass — that means behavior changed.
-- A view in `Sources/MacParakeet/Views` cannot be kept compiling via a forwarding
+- A view in `Sources/Sotto/Views` cannot be kept compiling via a forwarding
   shim (e.g. it used a `private` member through `@testable`/same-module access) —
   report it rather than widening access or editing the view.
 - The engine slice turns out to be entangled with non-engine state such that a clean

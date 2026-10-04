@@ -4,7 +4,7 @@
 
 ## Summary
 
-MacParakeet should keep always-loaded agent instructions short, concrete, and
+Sotto should keep always-loaded agent instructions short, concrete, and
 verification-oriented. Durable startup context should explain how to build,
 test, navigate, and avoid known project hazards. Volatile feature catalogs,
 release deltas, long plans, and historical requirement indexes should live in
@@ -83,7 +83,7 @@ Source: https://arxiv.org/abs/2307.03172
 ### Agent Interfaces Matter
 
 `SWE-agent` argues that language-model agents are end users of software tools
-and benefit from purpose-built agent-computer interfaces. The MacParakeet
+and benefit from purpose-built agent-computer interfaces. The Sotto
 translation is that instructions should emphasize actionable interfaces:
 commands, file locations, test loops, worktree rules, and verification paths.
 A giant prose encyclopedia is a weaker interface than a concise guide plus
@@ -112,14 +112,14 @@ Source: https://arxiv.org/abs/2303.11366
 ### Benchmarks Do Not Replace Local Verification
 
 Work on SWE-bench contamination/memorization argues that benchmark gains can
-overstate generalizable coding ability. For MacParakeet, this reinforces the
+overstate generalizable coding ability. For Sotto, this reinforces the
 need for local verification: current code, focused tests, full tests when
 appropriate, CI, and review. Do not assume a frontier model will infer every
 repo-specific invariant from broad coding ability.
 
 Source: https://arxiv.org/html/2506.12286v1
 
-## MacParakeet Decisions
+## Sotto Decisions
 
 1. Keep root startup docs under roughly one screen of essential guidance per
    file when possible.

@@ -1,16 +1,16 @@
-# ASR Model Landscape for MacParakeet
+# ASR Model Landscape for Sotto
 
 Research date: 2026-06-30
 Updated: 2026-07-06 after FluidAudio v0.15.4 exposed Parakeet Unified token
 timings through `StreamingUnifiedAsrManager`.
 
 Audience: product, engineering, and release reviewers deciding which speech
-models should power MacParakeet's dictation, meetings, and file/media
+models should power Sotto's dictation, meetings, and file/media
 transcription surfaces.
 
 ## Executive Readout
 
-MacParakeet is no longer a single-model speech app. The current app exposes
+Sotto is no longer a single-model speech app. The current app exposes
 seven selectable local ASR builds across four engine families:
 
 1. Parakeet TDT 0.6B v3, the default multilingual Parakeet build.
@@ -20,12 +20,12 @@ seven selectable local ASR builds across four engine families:
    runtime with native live dictation partials and token-derived word timings.
 4. Nemotron 3.5 ASR Streaming 0.6B, a multilingual beta streaming build.
 5. Nemotron Speech Streaming EN 0.6B, an English-only beta streaming build.
-6. Whisper Large v3 Turbo through WhisperKit, MacParakeet's broad-language
+6. Whisper Large v3 Turbo through WhisperKit, Sotto's broad-language
    local fallback.
 7. Cohere Transcribe through FluidAudio, a batch-only local accuracy engine.
 
 The most important product distinction is not simply "which model has the
-lowest WER." MacParakeet has five different ASR surfaces with different failure
+lowest WER." Sotto has five different ASR surfaces with different failure
 costs:
 
 | Product surface | Primary success criterion | Capabilities that matter most |
@@ -41,28 +41,28 @@ costs:
 Every ASR model should be reviewed against the same set of questions before it
 is promoted as a default, recommended fallback, or experimental option.
 
-| Dimension | What to ask | Why MacParakeet cares |
+| Dimension | What to ask | Why Sotto cares |
 | --- | --- | --- |
 | Recognition quality | What benchmark datasets, languages, domains, noise conditions, and audio lengths were measured? Are WER/CER claims vendor-reported or independent? | A model that wins LibriSpeech may still fail meetings, accents, crosstalk, or casual dictation. |
 | Latency shape | What is cold start, warm first token/partial latency, real-time factor, and long-audio throughput on Apple Silicon? | Dictation needs fast stop-to-paste; file/media jobs can trade latency for quality. |
 | Streaming semantics | Does the model emit native partials, chunk-level results, or only batch output? Are partials stable or volatile? | Live preview is display-only for dictation, but live meeting context shapes trust during capture. |
 | Timestamps | Are word, token, segment, or no timestamps exposed? Are confidences available? | Word timings feed exports, transcript navigation, speaker labels, and visualizations. |
 | Language behavior | Is language fixed, hinted, auto-detected, or unsupported? Does forced language improve or hurt results? | Wrong language detection is more damaging for dictation than a visible setup requirement. |
-| Punctuation and casing | Does the model emit readable punctuation/capitalization natively, or does MacParakeet need post-processing? | Raw unpunctuated output is tolerable for some transcripts but poor for daily dictation. |
+| Punctuation and casing | Does the model emit readable punctuation/capitalization natively, or does Sotto need post-processing? | Raw unpunctuated output is tolerable for some transcripts but poor for daily dictation. |
 | Audio-length envelope | What happens at 30 seconds, 5 minutes, 60 minutes, and dense speech? Is chunking native or app-owned? | Meetings and media files need explicit long-audio strategy; silent truncation is unacceptable. |
-| Runtime footprint | Download size, RAM, Core ML compile cost, ANE/GPU/CPU policy, concurrent-lane behavior. | MacParakeet must remain resident, local-first, and responsive while other jobs run. |
+| Runtime footprint | Download size, RAM, Core ML compile cost, ANE/GPU/CPU policy, concurrent-lane behavior. | Sotto must remain resident, local-first, and responsive while other jobs run. |
 | Local/offline posture | Can the model run fully on-device? What network, telemetry, license, and redistribution constraints apply? | Local-first is a product promise, not an implementation detail. |
-| Integration maturity | Is the model already in FluidAudio/WhisperKit with tested Swift surfaces, or would MacParakeet own conversion/runtime glue? | "Great model" is not enough if the app would inherit brittle model conversion or scheduler risk. |
+| Integration maturity | Is the model already in FluidAudio/WhisperKit with tested Swift surfaces, or would Sotto own conversion/runtime glue? | "Great model" is not enough if the app would inherit brittle model conversion or scheduler risk. |
 | Recovery and observability | Can failures be diagnosed, retried, and attributed by engine and variant? | Support needs to know which engine produced a bad transcript and whether retranscription can help. |
 
-## Current MacParakeet Inventory
+## Current Sotto Inventory
 
 This inventory is grounded in the current `origin/main` code used for this
 branch, not older plans or memory.
 
 | Engine/build | Current role in app | Live dictation preview | Meeting live preview | Word timings | Language behavior | Repo evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| Parakeet TDT 0.6B v3 | Default Parakeet build; multilingual default | Tail-window batch preview | Routed through meeting live chunks | Yes, through FluidAudio TDT path | App ignores `--language`; model auto behavior | `Sources/MacParakeetCore/STT/README.md`, `SpeechEnginePreference.swift` |
+| Parakeet TDT 0.6B v3 | Default Parakeet build; multilingual default | Tail-window batch preview | Routed through meeting live chunks | Yes, through FluidAudio TDT path | App ignores `--language`; model auto behavior | `Sources/SottoCore/STT/README.md`, `SpeechEnginePreference.swift` |
 | Parakeet TDT 0.6B v2 | English-only Parakeet opt-in | Tail-window batch preview | Routed through meeting live chunks | Yes, through FluidAudio TDT path | Fixed English-only posture | `SpeechEnginePreference.swift`, `ParakeetModelVariant+ASR.swift` |
 | Parakeet Unified EN 0.6B | English-only Parakeet variant; separate FluidAudio runtime | Native streaming partials; final dictation/file/meeting work now uses the timestamp-capable streaming path | Routed through meeting live chunks | Yes, token-derived via FluidAudio streaming manager | Fixed English | `ParakeetUnifiedEngine.swift`, `STTRuntime.swift` |
 | Nemotron 3.5 ASR Streaming 0.6B | Multilingual beta engine | Native streaming partials | Routed through meeting live chunks | Yes, from token timings when available | Optional language hint or auto | `NemotronEngine.swift`, `STTRuntime.swift` |
@@ -105,7 +105,7 @@ or no-headset meeting QA.
 - Whisper has word timestamps and a preview-capable sample path, but in this app
   it is not a native live dictation engine.
 - Parakeet Unified and both Nemotron builds can drive native live dictation
-  partials through `NativeLiveDictating`, but MacParakeet still treats those
+  partials through `NativeLiveDictating`, but Sotto still treats those
   partials as preview, not the authoritative final result.
 
 ## Benchmark Reading Rules
@@ -124,7 +124,7 @@ these rules when turning vendor model cards into product recommendations.
    windows. They have different latency and battery costs.
 4. Timestamp claims must say what level is exposed. Segment timestamps, token
    timings, word timings, and forced-alignment timestamps are not equivalent.
-5. Core ML numbers matter more than CUDA/server numbers for MacParakeet's
+5. Core ML numbers matter more than CUDA/server numbers for Sotto's
    local-first Mac product, but Core ML conversions can change quality, cold
    start, memory footprint, and supported features.
 
@@ -144,7 +144,7 @@ Core ML conversion is the app-relevant runtime: it runs on-device on Apple
 platforms after download, targets macOS 14+ and iOS 17+, and reports about
 110x real-time speed on M4 Pro batch ASR.
 
-MacParakeet implication: keep this as the "works for most local users" default,
+Sotto implication: keep this as the "works for most local users" default,
 but do not oversell it as universal multilingual ASR. Its coverage is European,
 and language auto-detection can be more product-risky than an explicit English
 model for short dictations.
@@ -160,7 +160,7 @@ to 24 minutes in a full-attention pass. It is CC-BY-4.0 and commercial-ready.
 The card reports strong English leaderboard WER but also shows quality drops
 under noise, which matters for laptop microphones and meetings.
 
-MacParakeet implication: v2 is still valuable even with newer English models
+Sotto implication: v2 is still valuable even with newer English models
 because it has the cleanest timestamp story in the existing Parakeet TDT path.
 It should remain available for English meeting final transcripts and exports.
 
@@ -173,11 +173,11 @@ Parakeet Unified is a 600M FastConformer-RNNT model trained for both offline and
 streaming inference. NVIDIA reports strong offline English WER and a smooth
 latency/quality curve from about 2.08 seconds down to 160 ms. The caveat is
 material: current inference is buffered streaming, which recomputes left
-context, not cache-aware streaming. MacParakeet's implementation now uses
+context, not cache-aware streaming. Sotto's implementation now uses
 FluidAudio's native streaming manager for final output and display partials, so
 the app preserves token-derived word timings.
 
-MacParakeet implication: Unified is a strong English dictation/readability
+Sotto implication: Unified is a strong English dictation/readability
 option with timestamped meeting/export support. It is still not a universal
 Parakeet replacement because it is English-only and uses a different buffered
 streaming runtime from the v2/v3 TDT path.
@@ -196,7 +196,7 @@ Core ML results that are strongest at 1120 ms and 560 ms. The low-latency 160
 ms and 80 ms tiers are much weaker in the FluidAudio card and were tested on
 only 20 files.
 
-MacParakeet implication: the 1120 ms tier MacParakeet surfaces is the right
+Sotto implication: the 1120 ms tier Sotto surfaces is the right
 conservative beta choice. Resist the temptation to chase 80 ms UI responsiveness
 unless the preview is explicitly labeled unstable and product QA proves users
 prefer speed over obvious errors.
@@ -215,7 +215,7 @@ tier is important: those languages require fine-tuning for full transcription.
 The model card also recommends the English-only Nemotron model for English-only
 use.
 
-MacParakeet implication: this is the right strategic direction for live
+Sotto implication: this is the right strategic direction for live
 multilingual preview, but not a blanket "40 languages solved" claim. Product UI
 and docs should distinguish transcription-ready, broad-coverage, and
 adaptation-ready quality tiers.
@@ -232,20 +232,20 @@ optimized large-v3 derivative. The OpenAI README lists roughly 809M parameters,
 about 6 GB VRAM in the original PyTorch context, and around 8x relative speed
 versus the large model on A100; actual Apple performance depends on WhisperKit's
 Core ML conversion. WhisperKit supports on-device Swift usage and recommends
-large-v3 Turbo variants for macOS/iOS accuracy/speed. MacParakeet specifically
+large-v3 Turbo variants for macOS/iOS accuracy/speed. Sotto specifically
 pins WhisperKit through `argmax-oss-swift` exact 0.18.0 when
-`MACPARAKEET_SKIP_WHISPERKIT` is not set, and defaults to
+`SOTTO_SKIP_WHISPERKIT` is not set, and defaults to
 `large-v3-v20240930_turbo_632MB`; describe the shipped artifact as roughly
 632-646 MB rather than using upstream PyTorch memory as a download-size proxy.
 
 Whisper's strengths are breadth and maturity. Its risks are also well
 documented: hallucinated text, repetition, uneven low-resource language
 performance, and poor behavior on silence or clipped short segments. In
-MacParakeet, Whisper has word timings through WhisperKit and can power the
+Sotto, Whisper has word timings through WhisperKit and can power the
 tail-window display-preview path, but it is not a native streaming dictation
 engine.
 
-MacParakeet implication: keep Whisper as the broad-language fallback and a
+Sotto implication: keep Whisper as the broad-language fallback and a
 retranscription tool, not the default dictation experience. Avoid adding
 trailing silence padding to Whisper final dictation paths because silence can
 increase hallucination risk.
@@ -261,23 +261,23 @@ Greek, Dutch, Polish, Vietnamese, Chinese, Arabic, Japanese, and Korean. The API
 requires a language and returns only `text`. Cohere explicitly says it has no
 automatic language detection, no timestamps, and no speaker diarization.
 
-FluidAudio's local integration is more specific for MacParakeet: a
+FluidAudio's local integration is more specific for Sotto: a
 48-layer Conformer encoder, 8-layer Transformer decoder, 35-second baked encoder
 window, 108-token decoder cache, 16,384-token SentencePiece vocabulary, and
-multi-GB Core ML assets. MacParakeet's wrapper guards Cohere's 35-second
+multi-GB Core ML assets. Sotto's wrapper guards Cohere's 35-second
 per-call encoder limit and decoder token cap with a fast single-pass path,
 then falls back to <=20-second windows, 4-second overlap, and smaller recursive
 rechunking if the decoder still caps out. The runtime shape is also important:
 fresh processes pay a large one-time ANE compile cost.
 
-MacParakeet implication: Cohere is correctly implemented as batch-only. It
+Sotto implication: Cohere is correctly implemented as batch-only. It
 should not enter live dictation preview or meeting live preview without a
 different model/runtime. It also cannot support SRT/VTT-quality exports or
 speaker/timing-rich meeting UX by itself.
 
 ## Side-by-Side Capabilities
 
-| Model/build | Architecture | Coverage | Native streaming | Timestamps in current MacParakeet path | Primary risk |
+| Model/build | Architecture | Coverage | Native streaming | Timestamps in current Sotto path | Primary risk |
 | --- | --- | --- | --- | --- | --- |
 | Parakeet TDT v3 | FastConformer-TDT | English + 24 European languages | No; tail-window batch preview | Word timings | European-only scope and language auto-detect on short speech |
 | Parakeet TDT v2 | FastConformer-TDT | English | No; tail-window batch preview | Word timings | English-only and noise sensitivity |
@@ -289,16 +289,16 @@ speaker/timing-rich meeting UX by itself.
 
 ## Candidate Models Not Yet First-Class
 
-| Candidate | Why it matters | Near-term MacParakeet verdict |
+| Candidate | Why it matters | Near-term Sotto verdict |
 | --- | --- | --- |
-| Qwen3-ASR 0.6B/1.7B + Qwen3-ForcedAligner | Purpose-built Qwen ASR family with 30 languages, 22 Chinese dialects, offline/streaming unified inference, and a separate forced aligner for word/character timestamps in 11 languages. Apache-2.0. | High research value, but not ready for native MacParakeet until an Apple-local runtime exists. Docs now include a Transformers backend, but examples remain Python/Torch and GPU-oriented; streaming is vLLM-only and has no timestamps. |
-| Qwen2.5-Omni / Qwen2-Audio / Qwen-Audio | Strong audio-language baselines and useful benchmark context. | Do not prioritize as MacParakeet ASR engines. They are general audio/omni LLMs, not tight local STT runtimes with timestamps and scheduler-friendly footprints. |
+| Qwen3-ASR 0.6B/1.7B + Qwen3-ForcedAligner | Purpose-built Qwen ASR family with 30 languages, 22 Chinese dialects, offline/streaming unified inference, and a separate forced aligner for word/character timestamps in 11 languages. Apache-2.0. | High research value, but not ready for native Sotto until an Apple-local runtime exists. Docs now include a Transformers backend, but examples remain Python/Torch and GPU-oriented; streaming is vLLM-only and has no timestamps. |
+| Qwen2.5-Omni / Qwen2-Audio / Qwen-Audio | Strong audio-language baselines and useful benchmark context. | Do not prioritize as Sotto ASR engines. They are general audio/omni LLMs, not tight local STT runtimes with timestamps and scheduler-friendly footprints. |
 | NVIDIA Canary 1B Flash/v2 | Strong NVIDIA multilingual batch ASR/ST candidate with word/segment timestamps in some cards and four-language or European-language focus depending on the variant. | Good batch/file research candidate if a NeMo sidecar is acceptable. Less attractive for native Mac live preview than Nemotron. |
 | SenseVoiceSmall / FunASR | Practical edge candidate for Chinese, Cantonese, Japanese, Korean, and multilingual ASR; GGUF/CPU deployment path exists. | Worth a prototype for CJK file/media and maybe meeting final transcripts. Legal/license review and timestamp story are blockers for first-class adoption. |
-| Moonshine Streaming | Tiny English ASR family designed for low-latency live transcription and voice commands; MIT license. | Promising English live-preview experiment outside NVIDIA, pending Apple-local runtime and MacParakeet latency/quality testing. Not a meeting/export engine because timestamp and long-form stories are weak. |
+| Moonshine Streaming | Tiny English ASR family designed for low-latency live transcription and voice commands; MIT license. | Promising English live-preview experiment outside NVIDIA, pending Apple-local runtime and Sotto latency/quality testing. Not a meeting/export engine because timestamp and long-form stories are weak. |
 | Vosk/Kaldi | Mature offline streaming API with partials, word timings, compact models, Swift-adjacent bindings. | Useful as a control/reference for streaming UX and word timing, but not a quality upgrade over modern neural engines. |
-| wav2vec2/XLSR | Strong self-supervised/fine-tuning substrate. | Research substrate only; too much productization for current MacParakeet needs. |
-| SeamlessM4T v2 | Translation-heavy speech model with broad language ambition. | Not viable for bundled commercial MacParakeet because of non-commercial license and translation-first scope. |
+| wav2vec2/XLSR | Strong self-supervised/fine-tuning substrate. | Research substrate only; too much productization for current Sotto needs. |
+| SeamlessM4T v2 | Translation-heavy speech model with broad language ambition. | Not viable for bundled commercial Sotto because of non-commercial license and translation-first scope. |
 
 ## Recommendations
 
@@ -306,12 +306,12 @@ speaker/timing-rich meeting UX by itself.
 
 1. Keep Parakeet v3 as the default because it is local, fast, timestamp-capable,
    and has the best default coverage among currently integrated local engines,
-   pending MacParakeet-owned benchmarks.
+   pending Sotto-owned benchmarks.
 2. Keep Parakeet v2 visible as the "English stability / timestamps" option, not
    as a legacy leftover.
 3. Position Parakeet Unified as "best English readability/live partials with
    word timings" rather than a universal Parakeet upgrade.
-4. Keep Nemotron behind beta framing until real MacParakeet QA covers the exact
+4. Keep Nemotron behind beta framing until real Sotto QA covers the exact
    Apple devices, chunk sizes, languages, and meeting/dictation paths.
 5. Keep Whisper as the broad-language fallback and retranscription tool.
 6. Keep Cohere as batch-only and accuracy-focused, with explicit language setup
@@ -329,7 +329,7 @@ speaker/timing-rich meeting UX by itself.
 
 ### Next Research Spikes
 
-1. Run a MacParakeet-owned benchmark set instead of relying on model-card WER:
+1. Run a Sotto-owned benchmark set instead of relying on model-card WER:
    short dictations, noisy laptop mic, 30/60 minute meetings, YouTube/media,
    CJK no-space speech, and silence/clipped-tail adversarial cases.
 2. Prototype Qwen3-ASR 0.6B only if the spike explicitly answers Apple-local
@@ -337,7 +337,7 @@ speaker/timing-rich meeting UX by itself.
    streaming without vLLM.
 3. Prototype SenseVoiceSmall/GGUF for CJK/edge file transcription if licensing
    is acceptable.
-4. Prototype Moonshine for English live preview if MacParakeet wants a tiny
+4. Prototype Moonshine for English live preview if Sotto wants a tiny
    non-NVIDIA fallback for low-latency partials.
 5. Add a user-facing model capability matrix in Settings only after the product
    wording avoids misleading "best model" claims.
@@ -346,17 +346,17 @@ speaker/timing-rich meeting UX by itself.
 
 ### Repository sources
 
-- `Sources/MacParakeetCore/STT/README.md`
-- `Sources/MacParakeetCore/SpeechEnginePreference.swift`
-- `Sources/MacParakeetCore/STT/STTRuntime.swift`
-- `Sources/MacParakeetCore/STT/ParakeetModelVariant+ASR.swift`
-- `Sources/MacParakeetCore/STT/ParakeetUnifiedEngine.swift`
-- `Sources/MacParakeetCore/STT/NemotronEngine.swift`
-- `Sources/MacParakeetCore/STT/NemotronEnglishEngine.swift`
-- `Sources/MacParakeetCore/STT/WhisperEngine.swift`
-- `Sources/MacParakeetCore/STT/CohereTranscribeEngine.swift`
-- `Sources/MacParakeetCore/Services/Capture/LiveChunkTranscriber.swift`
-- `Sources/MacParakeetCore/Services/Dictation/DictationService.swift`
+- `Sources/SottoCore/STT/README.md`
+- `Sources/SottoCore/SpeechEnginePreference.swift`
+- `Sources/SottoCore/STT/STTRuntime.swift`
+- `Sources/SottoCore/STT/ParakeetModelVariant+ASR.swift`
+- `Sources/SottoCore/STT/ParakeetUnifiedEngine.swift`
+- `Sources/SottoCore/STT/NemotronEngine.swift`
+- `Sources/SottoCore/STT/NemotronEnglishEngine.swift`
+- `Sources/SottoCore/STT/WhisperEngine.swift`
+- `Sources/SottoCore/STT/CohereTranscribeEngine.swift`
+- `Sources/SottoCore/Services/Capture/LiveChunkTranscriber.swift`
+- `Sources/SottoCore/Services/Dictation/DictationService.swift`
 - `Package.swift`
 - `spec/06-stt-engine.md`
 - `docs/cli-testing.md`

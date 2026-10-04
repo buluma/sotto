@@ -3,7 +3,7 @@
 Start with the [spec index](../spec/README.md) for product behavior, release
 channels, feature gates and accepted decisions. The
 [architecture map](../spec/03-architecture.md) explains ownership and data flow;
-[subsystem guides](../Sources/MacParakeetCore/) explain local implementation
+[subsystem guides](../Sources/SottoCore/) explain local implementation
 constraints.
 
 | Need | Read |

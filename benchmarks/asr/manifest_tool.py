@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate and summarize the MacParakeet ASR benchmark manifest.
+"""Validate and summarize the Sotto ASR benchmark manifest.
 
 The manifest is the suite contract: engines, datasets, tasks, metrics, and
 decision gates. This tool deliberately stays dependency-free so `run_all.sh

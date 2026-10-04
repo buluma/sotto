@@ -1,7 +1,7 @@
 import ArgumentParser
 import XCTest
 @testable import CLI
-@testable import MacParakeetCore
+@testable import SottoCore
 
 final class HistoryCommandTests: XCTestCase {
 
@@ -50,7 +50,7 @@ final class HistoryCommandTests: XCTestCase {
 
         try AppPaths.ensureDirectories()
         let audioURL = URL(fileURLWithPath: AppPaths.dictationsDir, isDirectory: true)
-            .appendingPathComponent("macparakeet-cli-dictation-\(UUID().uuidString).m4a")
+            .appendingPathComponent("sotto-cli-dictation-\(UUID().uuidString).m4a")
         defer { try? FileManager.default.removeItem(at: audioURL) }
         _ = FileManager.default.createFile(atPath: audioURL.path, contents: Data("audio".utf8))
 
@@ -139,7 +139,7 @@ final class HistoryCommandTests: XCTestCase {
 
         try AppPaths.ensureDirectories()
         let audioURL = URL(fileURLWithPath: AppPaths.youtubeDownloadsDir, isDirectory: true)
-            .appendingPathComponent("macparakeet-cli-asset-\(UUID().uuidString).m4a")
+            .appendingPathComponent("sotto-cli-asset-\(UUID().uuidString).m4a")
         defer { try? FileManager.default.removeItem(at: audioURL) }
         _ = FileManager.default.createFile(atPath: audioURL.path, contents: Data("audio".utf8))
 
@@ -205,7 +205,7 @@ final class HistoryCommandTests: XCTestCase {
 
         try AppPaths.ensureDirectories()
         let protectedDir = URL(fileURLWithPath: AppPaths.youtubeDownloadsDir, isDirectory: true)
-            .appendingPathComponent("macparakeet-cli-protected-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("sotto-cli-protected-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: protectedDir, withIntermediateDirectories: true)
         let audioURL = protectedDir.appendingPathComponent("asset.m4a")
         _ = FileManager.default.createFile(atPath: audioURL.path, contents: Data("audio".utf8))
@@ -248,7 +248,7 @@ final class HistoryCommandTests: XCTestCase {
 
         try AppPaths.ensureDirectories()
         let folder = URL(fileURLWithPath: AppPaths.meetingRecordingsDir, isDirectory: true)
-            .appendingPathComponent("macparakeet-cli-meeting-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("sotto-cli-meeting-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let audioURL = folder.appendingPathComponent("meeting-playback.m4a")
         let systemAudioURL = folder.appendingPathComponent("system-raw.m4a")
@@ -297,7 +297,7 @@ final class HistoryCommandTests: XCTestCase {
 
         try AppPaths.ensureDirectories()
         let folder = URL(fileURLWithPath: AppPaths.meetingRecordingsDir, isDirectory: true)
-            .appendingPathComponent("macparakeet-cli-meeting-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("sotto-cli-meeting-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let audioURL = folder.appendingPathComponent("meeting-playback.m4a")
         XCTAssertTrue(FileManager.default.createFile(atPath: audioURL.path, contents: Data("audio".utf8)))
@@ -335,7 +335,7 @@ final class HistoryCommandTests: XCTestCase {
         let db = try DatabaseManager(path: dbURL.path)
         let repo = TranscriptionRepository(dbQueue: db.dbQueue)
         let meetingRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-meetings-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("sotto-cli-meetings-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: meetingRoot) }
         let folder = meetingRoot.appendingPathComponent("session", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -398,7 +398,7 @@ final class HistoryCommandTests: XCTestCase {
         let db = try DatabaseManager(path: dbURL.path)
         let repo = TranscriptionRepository(dbQueue: db.dbQueue)
         let meetingRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-meetings-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("sotto-cli-meetings-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: meetingRoot) }
         let folder = meetingRoot.appendingPathComponent("session", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -435,7 +435,7 @@ final class HistoryCommandTests: XCTestCase {
         let db = try DatabaseManager(path: dbURL.path)
         let repo = TranscriptionRepository(dbQueue: db.dbQueue)
         let meetingRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-meetings-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("sotto-cli-meetings-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: meetingRoot) }
         let folder = meetingRoot.appendingPathComponent("session", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -473,7 +473,7 @@ final class HistoryCommandTests: XCTestCase {
         let db = try DatabaseManager(path: dbURL.path)
         let repo = TranscriptionRepository(dbQueue: db.dbQueue)
         let meetingRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-meetings-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("sotto-cli-meetings-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: meetingRoot) }
         let folder = meetingRoot.appendingPathComponent("session", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -520,7 +520,7 @@ final class HistoryCommandTests: XCTestCase {
         let db = try DatabaseManager(path: dbURL.path)
         let repo = TranscriptionRepository(dbQueue: db.dbQueue)
         let meetingRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-meetings-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("sotto-cli-meetings-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: meetingRoot) }
         let folder = meetingRoot.appendingPathComponent("session", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -889,17 +889,17 @@ final class HistoryCommandTests: XCTestCase {
 
     private func temporaryDatabaseURL() -> URL {
         FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-\(UUID().uuidString).db")
+            .appendingPathComponent("sotto-cli-\(UUID().uuidString).db")
     }
 
     private func temporaryAssetURL(pathExtension: String) -> URL {
         FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-asset-\(UUID().uuidString).\(pathExtension)")
+            .appendingPathComponent("sotto-cli-asset-\(UUID().uuidString).\(pathExtension)")
     }
 
     private func useTemporaryAppState() throws -> (url: URL, previous: String?) {
         let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-app-state-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("sotto-cli-app-state-\(UUID().uuidString)", isDirectory: true)
         let previous = ProcessInfo.processInfo.environment[AppPaths.debugAppStateDirEnvironmentKey]
         setenv(AppPaths.debugAppStateDirEnvironmentKey, url.path, 1)
         try AppPaths.ensureDirectories()

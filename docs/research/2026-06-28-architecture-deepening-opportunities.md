@@ -118,17 +118,17 @@ artifact.
 
 | What | Location |
 |------|----------|
-| Service exposes capture state as **pull-only async getters** (`micLevel`, `systemLevel`, `elapsedSeconds`, `captureMode`, `microphoneMuteState`) | `Sources/MacParakeetCore/Services/MeetingRecording/MeetingRecordingService.swift:67-73` |
+| Service exposes capture state as **pull-only async getters** (`micLevel`, `systemLevel`, `elapsedSeconds`, `captureMode`, `microphoneMuteState`) | `Sources/SottoCore/Services/MeetingRecording/MeetingRecordingService.swift:67-73` |
 | `CaptureMode` (`.full`/`.paused`/`.stopped`); `captureMode` returns `.stopped` when `currentSession == nil \|\| captureFailed` | same file `:15-23`, getter `:316-321` |
 | `failCapture(_:)` sets `captureFailed = true`, stops capture — **emits no transition** | same file `:935-943` |
 | Capture handlers all gate on `!captureFailed` (no audio processed after failure) | same file `:726, :757, :857, :888, :909, :912` |
 | Service **already** exposes a *push* stream for transcript text — but it is **lossy** (`bufferingNewest(12)`), the wrong semantics for a state stream | same file `:74, :347-356` (policy at `:353`) |
 | `failCapture` has **multiple call paths** (write error, source interruption, error event) → any emitter must be idempotent | reachable from `handleCaptureEvent` `:854-912` |
-| 1 s `startPillPolling`: writes levels/elapsed/mute to VMs; reconciles pause/resume divergence (#235); **synthesizes** `.captureFailed` from `captureMode == .stopped` | `Sources/MacParakeet/App/MeetingRecordingFlowCoordinator.swift:887-971` (failure synth `:946-965`) |
+| 1 s `startPillPolling`: writes levels/elapsed/mute to VMs; reconciles pause/resume divergence (#235); **synthesizes** `.captureFailed` from `captureMode == .stopped` | `Sources/Sotto/App/MeetingRecordingFlowCoordinator.swift:887-971` (failure synth `:946-965`) |
 | Separate 33 ms loop drives only the live audio visualizer (CALayer opacity + change-gated orb) — no state logic | same file `:987-1014` |
 | `togglePause` flips state **after** awaiting the service **deliberately** — its comment says an optimistic pre-await flip would race the poll | same file `:174-201` |
-| State machine's `.captureFailed` event doc-comment says it is "Emitted by the pill polling task when it detects that audio capture has stopped unexpectedly" — the missing seam, documented in code | `Sources/MacParakeetCore/MeetingRecordingFlow/MeetingRecordingFlowStateMachine.swift:29-35`, handled `:135-138` |
-| Contrast: dictation **also polls** (a 50 ms snapshot loop for levels / live-transcript / silence-auto-stop), but dictation surfaces capture *failure* as an **awaited task result**, not a sampled flag | `Sources/MacParakeet/App/DictationFlowCoordinator.swift:1150-1179`; failure via awaited tasks at `:545-549, :972-982` |
+| State machine's `.captureFailed` event doc-comment says it is "Emitted by the pill polling task when it detects that audio capture has stopped unexpectedly" — the missing seam, documented in code | `Sources/SottoCore/MeetingRecordingFlow/MeetingRecordingFlowStateMachine.swift:29-35`, handled `:135-138` |
+| Contrast: dictation **also polls** (a 50 ms snapshot loop for levels / live-transcript / silence-auto-stop), but dictation surfaces capture *failure* as an **awaited task result**, not a sampled flag | `Sources/Sotto/App/DictationFlowCoordinator.swift:1150-1179`; failure via awaited tasks at `:545-549, :972-982` |
 
 ### Why it's friction (deletion test, locality)
 
@@ -205,12 +205,12 @@ narrowed.
 > review; the gap is intentional — Finding 2 (an injectable clock seam) is among
 > the six not written up here, per "Why these two first" above.*
 
-> Read `Sources/MacParakeetCore/STT/README.md` first — it is an excellent,
+> Read `Sources/SottoCore/STT/README.md` first — it is an excellent,
 > current subsystem guide and documents the routing rules this finding reorganizes.
 
 ### Problem
 
-`STTRuntime` (`Sources/MacParakeetCore/STT/STTRuntime.swift`, ~1942 lines) is the
+`STTRuntime` (`Sources/SottoCore/STT/STTRuntime.swift`, ~1942 lines) is the
 sole owner of every speech engine. Engine **capabilities** — can it do live
 dictation? a tail-window preview? which variant axis does it have? — are answered
 by `switch`/`if` chains spread across ~10 engine-discriminating sites plus ~15
@@ -239,7 +239,7 @@ The adapter pattern **already partly exists** — extend it, don't invent it:
 | What | Location |
 |------|----------|
 | All 5 optional engines are actors sharing one batch protocol `STTTranscribing` | `NemotronEngine.swift:5`, `NemotronEnglishEngine.swift:18`, `ParakeetUnifiedEngine.swift:27`, `WhisperEngine.swift:8`, `CohereTranscribeEngine.swift:68` |
-| Three native streaming engines share a second partial protocol, `NativeLiveDictating`; implementations own their own `ANEInferenceGate` calls | `Sources/MacParakeetCore/STT/NativeLiveDictating.swift:1-34` |
+| Three native streaming engines share a second partial protocol, `NativeLiveDictating`; implementations own their own `ANEInferenceGate` calls | `Sources/SottoCore/STT/NativeLiveDictating.swift:1-34` |
 | **Parakeet TDT (v2/v3), the default engine, is NOT wrapped** — bare `interactiveManager`/`backgroundManager` `AsrManager`s on the runtime, transcribed inline on the `STTRuntime` actor | `STTRuntime.swift:83-84`; inline `manager.transcribe(...)` at the pad/URL/preview paths `:504, :554, :687` (each wrapped by `inferenceGate.withExclusiveAccess` at `:503, :553, :686`) |
 
 Engine-discriminating dispatch sites (the friction) — verified labels:

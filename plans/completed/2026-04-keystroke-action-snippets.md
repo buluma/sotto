@@ -9,7 +9,7 @@
 
 Extend the text snippets system to support **keystroke actions** — snippets where speaking a trigger phrase simulates a keypress (e.g., Return, Tab, Escape) instead of inserting replacement text. This enables hands-free command execution in terminal apps like Claude Code CLI.
 
-**User story (from issue #40):** "I started using [MacParakeet] as input in claude code cli and similar. I notice a small thing that would make it work better... when using the terminal it would be amazing to have a configurable word (e.g. RETURN) that — if at the end of a detection — triggers a return keypress."
+**User story (from issue #40):** "I started using [Sotto] as input in claude code cli and similar. I notice a small thing that would make it work better... when using the terminal it would be amazing to have a configurable word (e.g. RETURN) that — if at the end of a detection — triggers a return keypress."
 
 ## Design Decisions
 
@@ -73,9 +73,9 @@ Paste-succeeded-but-keystroke-failed is a new failure mode. The coordinator must
 
 ## Implementation Steps
 
-### Step 1: Add `KeyAction` enum to MacParakeetCore
+### Step 1: Add `KeyAction` enum to SottoCore
 
-Create `Sources/MacParakeetCore/Models/KeyAction.swift`:
+Create `Sources/SottoCore/Models/KeyAction.swift`:
 
 ```swift
 import Foundation
@@ -108,7 +108,7 @@ public enum KeyAction: String, Codable, Sendable, CaseIterable, Equatable {
 
 ### Step 2: Extend `TextSnippet` model
 
-In `Sources/MacParakeetCore/Models/TextSnippet.swift`:
+In `Sources/SottoCore/Models/TextSnippet.swift`:
 
 - Add `action: KeyAction?` field (nil = text snippet, non-nil = keystroke snippet)
 - Text snippets: `expansion` is used, `action` is nil
@@ -151,7 +151,7 @@ GRDB `Codable` conformance handles the optional column automatically (nil when c
 
 ### Step 3: Database migration
 
-In `Sources/MacParakeetCore/Database/DatabaseManager.swift`, add after the last migration:
+In `Sources/SottoCore/Database/DatabaseManager.swift`, add after the last migration:
 
 ```swift
 // v0.7 — Keystroke action snippets (issue #40)
@@ -166,7 +166,7 @@ Existing rows get `action = NULL` → remain text snippets. Zero data migration 
 
 ### Step 4: Add `DictationResult` to the public service boundary
 
-Create `Sources/MacParakeetCore/Models/DictationResult.swift`:
+Create `Sources/SottoCore/Models/DictationResult.swift`:
 
 ```swift
 import Foundation
@@ -184,7 +184,7 @@ public struct DictationResult: Sendable {
 }
 ```
 
-Update `DictationServiceProtocol` in `Sources/MacParakeetCore/Services/DictationService.swift`:
+Update `DictationServiceProtocol` in `Sources/SottoCore/Services/DictationService.swift`:
 
 ```swift
 // Change return types from Dictation to DictationResult
@@ -200,7 +200,7 @@ Update both `stopRecording()` and `undoCancel()` to propagate the result. Both m
 
 ### Step 5: Modify text processing pipeline
 
-In `Sources/MacParakeetCore/TextProcessing/TextProcessingPipeline.swift`:
+In `Sources/SottoCore/TextProcessing/TextProcessingPipeline.swift`:
 
 **5a. Split snippets by type in `process()`:**
 
@@ -251,7 +251,7 @@ func extractTrailingAction(
 
 **5c. Update `TextProcessingResult`:**
 
-In `Sources/MacParakeetCore/TextProcessing/TextProcessingResult.swift`:
+In `Sources/SottoCore/TextProcessing/TextProcessingResult.swift`:
 
 ```swift
 public struct TextProcessingResult: Sendable {
@@ -331,7 +331,7 @@ If this becomes a real issue, a future iteration can match against the pre-expan
 
 ### Step 6: Propagate action through refinement layer
 
-In `Sources/MacParakeetCore/TextProcessing/TextRefinementService.swift`, update `TextRefinementResult`:
+In `Sources/SottoCore/TextProcessing/TextRefinementService.swift`, update `TextRefinementResult`:
 
 ```swift
 public struct TextRefinementResult: Sendable {
@@ -358,7 +358,7 @@ In `refine()`, pass through the action for deterministic mode. Raw mode returns 
 
 ### Step 7: Add `simulateKeystroke()` to ClipboardService
 
-In `Sources/MacParakeetCore/Services/ClipboardService.swift`:
+In `Sources/SottoCore/Services/ClipboardService.swift`:
 
 **7a. Add to protocol with default implementation:**
 
@@ -432,7 +432,7 @@ public func pasteTextWithAction(_ text: String, postPasteAction: KeyAction?) asy
 
 ### Step 8: Wire action through DictationFlowCoordinator
 
-In `Sources/MacParakeet/App/DictationFlowCoordinator.swift`:
+In `Sources/Sotto/App/DictationFlowCoordinator.swift`:
 
 **8a. Store the action alongside the dictation:**
 
@@ -511,7 +511,7 @@ self.pendingPostPasteAction = nil
 
 ### Step 9: Update the Snippets UI
 
-In `Sources/MacParakeetViewModels/TextSnippetsViewModel.swift`:
+In `Sources/SottoViewModels/TextSnippetsViewModel.swift`:
 
 **9a. Add state for snippet type selection:**
 
@@ -566,7 +566,7 @@ public func addSnippet() {
 
 ### Step 10: Update TextSnippetsView UI
 
-In `Sources/MacParakeet/Views/Vocabulary/TextSnippetsView.swift`:
+In `Sources/Sotto/Views/Vocabulary/TextSnippetsView.swift`:
 
 **10a. Add Snippet card — add type picker:**
 
@@ -629,7 +629,7 @@ HStack(alignment: .top, spacing: DesignSystem.Spacing.sm) {
 
 ### Step 11: Tests
 
-**11a. Pipeline unit tests** in `Tests/MacParakeetTests/TextProcessing/TextProcessingPipelineTests.swift`:
+**11a. Pipeline unit tests** in `Tests/SottoTests/TextProcessing/TextProcessingPipelineTests.swift`:
 
 ```swift
 // MARK: - Keystroke Action Snippets
@@ -743,7 +743,7 @@ func testTriggerMidTextAndAtEnd() {
 }
 ```
 
-**11b. Refinement service test** in `Tests/MacParakeetTests/TextProcessing/TextRefinementServiceTests.swift`:
+**11b. Refinement service test** in `Tests/SottoTests/TextProcessing/TextRefinementServiceTests.swift`:
 
 ```swift
 func testRawModeSkipsActionSnippets() async {
@@ -777,7 +777,7 @@ func testDeterministicModeReturnsAction() async {
 }
 ```
 
-**11c. KeyAction model tests** in `Tests/MacParakeetTests/Models/KeyActionTests.swift`:
+**11c. KeyAction model tests** in `Tests/SottoTests/Models/KeyActionTests.swift`:
 
 ```swift
 func testKeyActionKeyCodes() {
@@ -806,7 +806,7 @@ func testKeyActionLabels() {
 - **Migration test** — verify existing text snippets survive migration with `action = nil`
 - **Repository round-trip** — verify save/fetch of `TextSnippet` with `action: .returnKey` preserves the action
 
-**11e. ViewModel tests** in `Tests/MacParakeetTests/ViewModels/TextSnippetsViewModelTests.swift`:
+**11e. ViewModel tests** in `Tests/SottoTests/ViewModels/TextSnippetsViewModelTests.swift`:
 
 ```swift
 func testAddKeystrokeSnippet() {
@@ -843,7 +843,7 @@ func testDuplicateTriggerAcrossTypes() {
 
 ### Step 12: Telemetry
 
-Add `keystrokeSnippetFired` event to `TelemetryEventName` in `Sources/MacParakeetCore/Services/TelemetryEvent.swift`:
+Add `keystrokeSnippetFired` event to `TelemetryEventName` in `Sources/SottoCore/Services/TelemetryEvent.swift`:
 
 ```swift
 case keystrokeSnippetFired = "keystroke_snippet_fired"
@@ -855,24 +855,24 @@ Fire it in the coordinator when a post-paste action executes. Props: `action` (r
 
 | File | Change |
 |------|--------|
-| `Sources/MacParakeetCore/Models/KeyAction.swift` | **NEW** — enum with keyCode, label, Codable |
-| `Sources/MacParakeetCore/Models/DictationResult.swift` | **NEW** — wraps Dictation + ephemeral KeyAction |
-| `Sources/MacParakeetCore/Models/TextSnippet.swift` | Add `action: KeyAction?` field |
-| `Sources/MacParakeetCore/TextProcessing/TextProcessingPipeline.swift` | Split snippet types, add `extractTrailingAction()`, wire in `process()` |
-| `Sources/MacParakeetCore/TextProcessing/TextProcessingResult.swift` | Add `postPasteAction: KeyAction?` |
-| `Sources/MacParakeetCore/TextProcessing/TextRefinementService.swift` | Pass through `postPasteAction` in result |
-| `Sources/MacParakeetCore/Services/ClipboardService.swift` | Add `simulateKeystroke()`, `pasteTextWithAction()` with protocol default |
-| `Sources/MacParakeetCore/Services/DictationService.swift` | Return `DictationResult` from `stopRecording()` and `undoCancel()` |
-| `Sources/MacParakeetCore/Services/TelemetryEvent.swift` | Add `keystrokeSnippetFired` event |
-| `Sources/MacParakeetCore/Database/DatabaseManager.swift` | Add migration for `action` column |
-| `Sources/MacParakeetViewModels/TextSnippetsViewModel.swift` | Add keystroke type state, update `addSnippet()` |
-| `Sources/MacParakeet/Views/Vocabulary/TextSnippetsView.swift` | Type picker, conditional expansion/action UI, guidance tip |
-| `Sources/MacParakeet/App/DictationFlowCoordinator.swift` | Store and execute `pendingPostPasteAction`, clear on cancel/failure |
-| `Tests/MacParakeetTests/TextProcessing/TextProcessingPipelineTests.swift` | ~12 new test cases |
-| `Tests/MacParakeetTests/TextProcessing/TextRefinementServiceTests.swift` | 2 new tests (raw mode, deterministic mode) |
-| `Tests/MacParakeetTests/Models/KeyActionTests.swift` | **NEW** — keyCode, Codable, label tests |
-| `Tests/MacParakeetTests/ViewModels/TextSnippetsViewModelTests.swift` | 2 new tests (add keystroke, duplicate prevention) |
-| `Tests/MacParakeetTests/Database/TextSnippetRepositoryTests.swift` | Round-trip test with action field |
+| `Sources/SottoCore/Models/KeyAction.swift` | **NEW** — enum with keyCode, label, Codable |
+| `Sources/SottoCore/Models/DictationResult.swift` | **NEW** — wraps Dictation + ephemeral KeyAction |
+| `Sources/SottoCore/Models/TextSnippet.swift` | Add `action: KeyAction?` field |
+| `Sources/SottoCore/TextProcessing/TextProcessingPipeline.swift` | Split snippet types, add `extractTrailingAction()`, wire in `process()` |
+| `Sources/SottoCore/TextProcessing/TextProcessingResult.swift` | Add `postPasteAction: KeyAction?` |
+| `Sources/SottoCore/TextProcessing/TextRefinementService.swift` | Pass through `postPasteAction` in result |
+| `Sources/SottoCore/Services/ClipboardService.swift` | Add `simulateKeystroke()`, `pasteTextWithAction()` with protocol default |
+| `Sources/SottoCore/Services/DictationService.swift` | Return `DictationResult` from `stopRecording()` and `undoCancel()` |
+| `Sources/SottoCore/Services/TelemetryEvent.swift` | Add `keystrokeSnippetFired` event |
+| `Sources/SottoCore/Database/DatabaseManager.swift` | Add migration for `action` column |
+| `Sources/SottoViewModels/TextSnippetsViewModel.swift` | Add keystroke type state, update `addSnippet()` |
+| `Sources/Sotto/Views/Vocabulary/TextSnippetsView.swift` | Type picker, conditional expansion/action UI, guidance tip |
+| `Sources/Sotto/App/DictationFlowCoordinator.swift` | Store and execute `pendingPostPasteAction`, clear on cancel/failure |
+| `Tests/SottoTests/TextProcessing/TextProcessingPipelineTests.swift` | ~12 new test cases |
+| `Tests/SottoTests/TextProcessing/TextRefinementServiceTests.swift` | 2 new tests (raw mode, deterministic mode) |
+| `Tests/SottoTests/Models/KeyActionTests.swift` | **NEW** — keyCode, Codable, label tests |
+| `Tests/SottoTests/ViewModels/TextSnippetsViewModelTests.swift` | 2 new tests (add keystroke, duplicate prevention) |
+| `Tests/SottoTests/Database/TextSnippetRepositoryTests.swift` | Round-trip test with action field |
 | Mock files (MockDictationService, etc.) | Update return types to `DictationResult` |
 
 ## Out of Scope

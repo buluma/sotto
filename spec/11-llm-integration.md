@@ -5,7 +5,7 @@
 > ADR: ADR-011 (Cloud API keys + optional local providers); ADR-032 (task-group routing)
 > Note: §1 (Transcript Summary) is superseded by [spec/12-processing-layer.md](12-processing-layer.md) — Prompt Library + multi-summary architecture. §3's old UserDefaults custom-transform design is superseded by ADR-022's productized `Prompt.Category.transform` Transforms. Provider protocol, formatter, chat, and CLI sections remain current.
 
-This spec defines how MacParakeet integrates LLM-powered features via user-selected providers,
+This spec defines how Sotto integrates LLM-powered features via user-selected providers,
 including external providers, local servers/CLI tools, and a developer-gated in-process local
 model option.
 
@@ -133,9 +133,9 @@ URL; keys are region-specific. ByteDance Doubao / Volcengine Ark and Tencent
 Hunyuan remain custom OpenAI-Compatible endpoints because they use
 account-specific model IDs rather than a public catalog.
 
-**Local CLI:** Users with Claude Code or Codex subscriptions can use their CLI tools directly. The app runs the configured command as a subprocess via `posix_spawn`, delivering prompts via stdin and `MACPARAKEET_*` environment variables. No API key needed — the CLI tool manages its own authentication. Built-in presets for Claude Code (`claude -p --model haiku`) and Codex (`codex exec --model gpt-5.4-mini`), or any custom command. See PR #47.
+**Local CLI:** Users with Claude Code or Codex subscriptions can use their CLI tools directly. The app runs the configured command as a subprocess via `posix_spawn`, delivering prompts via stdin and `SOTTO_*` environment variables. No API key needed — the CLI tool manages its own authentication. Built-in presets for Claude Code (`claude -p --model haiku`) and Codex (`codex exec --model gpt-5.4-mini`), or any custom command. See PR #47.
 
-**Apple Intelligence:** On macOS 26 Tahoe or later, eligible Macs can use the on-device Foundation Models ~3B system model with no API key and no MacParakeet download. The user must enable Apple Intelligence in System Settings; MacParakeet does not auto-select this provider. The 4096-token window holds the input and the answer together, so it serves the cleanup route only: a summary, chat, or card over a meeting-length transcript would see only a fraction of it (timestamped, speaker-labeled transcripts measure about 2.8-3.2 characters per token). Settings offers it only in the Dictation & cleanup row; `llm routes set analysis` rejects it; and the app clears a saved Apple Intelligence default or analysis route at launch (saved API keys are kept). The AI Formatter (dictation cleanup and transcription AI formatting) uses an English-calibrated ~6k-character round-trip budget so the answer can be about as long as the source. It never truncates; an oversized request fails and falls back to deterministic cleanup instead (see [spec/07-text-processing.md](07-text-processing.md#optional-ai-formatting)). Inline CLI requests follow the same cleanup-only policy: summaries, chat, prompt results, knowledge cards, and Transforms reject Apple Intelligence before generation, including streaming requests. See issue #1062.
+**Apple Intelligence:** On macOS 26 Tahoe or later, eligible Macs can use the on-device Foundation Models ~3B system model with no API key and no Sotto download. The user must enable Apple Intelligence in System Settings; Sotto does not auto-select this provider. The 4096-token window holds the input and the answer together, so it serves the cleanup route only: a summary, chat, or card over a meeting-length transcript would see only a fraction of it (timestamped, speaker-labeled transcripts measure about 2.8-3.2 characters per token). Settings offers it only in the Dictation & cleanup row; `llm routes set analysis` rejects it; and the app clears a saved Apple Intelligence default or analysis route at launch (saved API keys are kept). The AI Formatter (dictation cleanup and transcription AI formatting) uses an English-calibrated ~6k-character round-trip budget so the answer can be about as long as the source. It never truncates; an oversized request fails and falls back to deterministic cleanup instead (see [spec/07-text-processing.md](07-text-processing.md#optional-ai-formatting)). Inline CLI requests follow the same cleanup-only policy: summaries, chat, prompt results, knowledge cards, and Transforms reject Apple Intelligence before generation, including streaming requests. See issue #1062.
 
 ### OpenCode Go (custom endpoint)
 
@@ -146,15 +146,15 @@ with that base URL and a Messages-compatible model. There is no new provider typ
 See OpenCode's [usage requirements and endpoint list](https://opencode.ai/docs/go/).
 The Anthropic catalog filter remains Claude-only, so Go Messages model IDs must
 be supplied explicitly rather than selected from that adapter's discovered list.
-Its catalog changes independently of MacParakeet; a listed model requiring the
+Its catalog changes independently of Sotto; a listed model requiring the
 Responses API is not supported by the current app's chat adapters. Tool execution,
 multimodal inputs, and coding-agent workflows are not added by this integration.
 OpenCode describes Go as a coding-agent service; header compliance does not
-guarantee that every MacParakeet workload is permitted by its usage policy.
+guarantee that every Sotto workload is permitted by its usage policy.
 
 For HTTPS requests to the exact `opencode.ai` host (default port or 443) at
 `/zen/go/v1/chat/completions`, `/zen/go/v1/messages`, or `/zen/go/v1/models`,
-the candidate sends `User-Agent: MacParakeet` and
+the candidate sends `User-Agent: Sotto` and
 `x-opencode-session: <opaque UUID>`. HTTP, alternate ports, lookalike/subdomains,
 and unrelated paths do not receive this session header. Redirects outside these
 endpoints are refused, so neither credentials nor prompt content follow them.
@@ -308,7 +308,7 @@ public struct LLMFormatterResult: Sendable {
 
 For Prompt Library result generation, `ChatCompletionOptions.default` remains
 the operation baseline (`temperature = 0.7`). Optional per-prompt settings are
-overlaid on that baseline; an unset value therefore inherits MacParakeet's
+overlaid on that baseline; an unset value therefore inherits Sotto's
 current behavior instead of requesting a raw provider default. The native
 Ollama baseline likewise retains explicit thinking-off behavior. Other LLM
 operations continue to use their existing option construction.
@@ -605,7 +605,7 @@ See the
 **Custom Transforms:**
 - User provides a name, prompt body, optional shortcut, and optional running label
 - Stored in SQLite through `PromptRepository`
-- Managed by the GUI Transforms tab or `macparakeet-cli transforms`
+- Managed by the GUI Transforms tab or `sotto-cli transforms`
 - Run output can be recorded locally in `transform_history`; `llm_runs` stores only metadata when a durable source row exists
 
 **System prompt for transforms:**
@@ -625,10 +625,10 @@ Respond with only the transformed text. Do not add explanations or preamble.
 
 The public Settings flow defaults to no AI provider and recommends cloud/frontier
 providers for best answer quality. The Local MLX one-click card is visible only
-when the developer override is active (`MacParakeetEnableInProcessLocalLLM` or
+when the developer override is active (`SottoEnableInProcessLocalLLM` or
 `--enable-local-ai`); the public feature flag remains off. That card RAM-gates
 machines below 16 GB, downloads the verified Qwen3 model to
-`Application Support/MacParakeet/LLMModels/`, verifies size + SHA-256 hashes,
+`Application Support/Sotto/LLMModels/`, verifies size + SHA-256 hashes,
 tests the in-process runtime, and only then saves `.inProcessLocal`.
 
 The setup header and settings card describe the saved provider: a failed test
@@ -726,7 +726,7 @@ The production context adapter is `FocusedAppContextService`, an AppKit-shaped
 service that reads `NSWorkspace.shared.frontmostApplication` without giving Core
 UI ownership. Focus drift is handled by preferring a valid stop/undo-time
 context and falling back to the start-time context when the finish context is
-missing or points at MacParakeet itself.
+missing or points at Sotto itself.
 
 Profiles apply only to Dictation AI Formatter in V1. File/URL and meeting
 transcription formatting continues to use the transcript formatter prompt
@@ -739,7 +739,7 @@ realistic provider timeouts (#493).
 
 Browser hostname/domain matching is intentionally deferred. In V1, Gmail in
 Chrome can match an exact Chrome profile or the coarse `browser` category, but
-MacParakeet does not inspect the active tab URL or window title.
+Sotto does not inspect the active tab URL or window title.
 
 ### Transcript View (with LLM features)
 
@@ -815,27 +815,27 @@ cloud providers that need one. Supported providers: `anthropic`, `openai`,
 
 ```bash
 # Test provider connectivity
-macparakeet-cli llm test-connection --provider openai --api-key sk-...
+sotto-cli llm test-connection --provider openai --api-key sk-...
 
 # Summarize a transcript file
-macparakeet-cli llm summarize transcript.txt --provider anthropic --api-key sk-ant-...
+sotto-cli llm summarize transcript.txt --provider anthropic --api-key sk-ant-...
 
 # Chat with a transcript (--question flag required)
-macparakeet-cli llm chat transcript.txt --provider openai --api-key sk-... --question "What were the action items?"
+sotto-cli llm chat transcript.txt --provider openai --api-key sk-... --question "What were the action items?"
 
 # Transform text with custom instruction
-macparakeet-cli llm transform input.txt --provider anthropic --api-key sk-ant-... --prompt "Make formal"
+sotto-cli llm transform input.txt --provider anthropic --api-key sk-ant-... --prompt "Make formal"
 
 # LM Studio provider (API key optional)
-macparakeet-cli llm test-connection --provider lmstudio --model qwen3.5-27b
-macparakeet-cli llm summarize transcript.txt --provider lmstudio --model qwen3.5-27b
-macparakeet-cli llm summarize transcript.txt --provider lmstudio --model qwen3.5-27b --api-key-env LM_API_TOKEN
+sotto-cli llm test-connection --provider lmstudio --model qwen3.5-27b
+sotto-cli llm summarize transcript.txt --provider lmstudio --model qwen3.5-27b
+sotto-cli llm summarize transcript.txt --provider lmstudio --model qwen3.5-27b --api-key-env LM_API_TOKEN
 ```
 
 ```bash
 # Local CLI provider (no API key needed)
-macparakeet-cli llm test-connection --provider cli --command "claude -p --model haiku"
-macparakeet-cli llm summarize transcript.txt --provider cli --command "claude -p --model haiku"
+sotto-cli llm test-connection --provider cli --command "claude -p --model haiku"
+sotto-cli llm summarize transcript.txt --provider cli --command "claude -p --model haiku"
 ```
 
 Additional options: `--model`, `--base-url`, `--stream`, `--json`, `--command` (Local CLI only). Use `-` as input to read from stdin. `--json` emits a structured envelope with `output`, `provider`, `model`, optional `usage`, optional `stopReason`, `latencyMs`, and optional `effectiveSettings`. The latter is populated for a prompt-result request only when the adapter can return an honest normalized receipt; unrelated LLM operations omit it. `llm test-connection --json` emits `{ok, provider, model, latencyMs}` on success. `--json --stream` is rejected until NDJSON streaming lands.

@@ -41,7 +41,7 @@ change to `models clear`.
 
 ## Layers
 
-- **Core** (`MacParakeetCore`)
+- **Core** (`SottoCore`)
   - `STTRuntime.deleteParakeetModel(version:)` → removes the leaf cache dir
     `AsrModels.defaultCacheDirectory(for:)`; emits `model_operation`/`delete_model`
     telemetry. Pure `removeParakeetModelFiles(at:)` underneath for tests.

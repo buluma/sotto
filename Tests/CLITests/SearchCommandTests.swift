@@ -1,6 +1,6 @@
 import XCTest
 @testable import CLI
-@testable import MacParakeetCore
+@testable import SottoCore
 
 final class SearchCommandTests: XCTestCase {
     private static let searchHitKeys: Set<String> = [
@@ -94,7 +94,7 @@ final class SearchCommandTests: XCTestCase {
 
     func testUntimedSearchAndTranscriptJSONEmitExplicitNullKeys() async throws {
         let path = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-search-null-contract-\(UUID().uuidString).db").path
+            .appendingPathComponent("sotto-search-null-contract-\(UUID().uuidString).db").path
         defer { Fixture(path: path, meetingID: UUID(), fileID: UUID()).cleanup() }
         let manager = try DatabaseManager(path: path)
         let transcription = Transcription(
@@ -175,7 +175,7 @@ final class SearchCommandTests: XCTestCase {
 
     func testCJKSearchJSONUsesNullRankAndSafeSnippet() async throws {
         let path = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-search-cjk-\(UUID().uuidString).db").path
+            .appendingPathComponent("sotto-search-cjk-\(UUID().uuidString).db").path
         defer { Fixture(path: path, meetingID: UUID(), fileID: UUID()).cleanup() }
         let manager = try DatabaseManager(path: path)
         let transcription = Transcription(
@@ -202,7 +202,7 @@ final class SearchCommandTests: XCTestCase {
 
     private func makeFixture(index: Bool = true) throws -> Fixture {
         let path = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-search-\(UUID().uuidString).db")
+            .appendingPathComponent("sotto-search-\(UUID().uuidString).db")
             .path
         let manager = try DatabaseManager(path: path)
         let transcriptions = TranscriptionRepository(dbQueue: manager.dbQueue)

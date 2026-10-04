@@ -1,7 +1,7 @@
 import Darwin
 import Foundation
 import XCTest
-@testable import MacParakeetCore
+@testable import SottoCore
 
 final class VoiceControlBrowserWireTests: XCTestCase {
     func testFramesRoundTripWithoutMergingMessages() throws {

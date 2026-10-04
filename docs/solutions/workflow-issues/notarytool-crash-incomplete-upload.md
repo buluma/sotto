@@ -7,7 +7,7 @@ problem_type: workflow_issue
 component: notarization
 severity: high
 applies_when:
-  - Cutting a Developer ID / Sparkle / GitHub MacParakeet release
+  - Cutting a Developer ID / Sparkle / GitHub Sotto release
   - `xcrun notarytool submit` exits 138 / SIGBUS
   - `notarytool history` shows a new ID that stays In Progress
 resolution_type: workflow_improvement
@@ -18,7 +18,7 @@ tags: [release, notarization, notarytool, sparkle, github-releases, r2]
 
 ## Context
 
-MacParakeet 0.8.5 (`fb186349`) signed cleanly, then
+Sotto 0.8.5 (`fb186349`) signed cleanly, then
 `scripts/dist/sign_notarize.sh` called default `notarytool submit` (progress +
 S3 acceleration, no `--wait`). The process died with SIGBUS / exit 138.
 Apple still listed new IDs. Both stayed `In Progress` for the rest of the
@@ -35,7 +35,7 @@ slow. That advice is correct for a **finished** upload. It is wrong for a
 Full timeline and leftover IDs:
 [`docs/audits/2026-09-17-0.8.5-release-postmortem.md`](../../audits/2026-09-17-0.8.5-release-postmortem.md).
 
-Same-day 0.8.4 morning history had seven ghost `MacParakeet.dmg` IDs before one
+Same-day 0.8.4 morning history had seven ghost `Sotto.dmg` IDs before one
 Accepted. The 0.8.0 packaging note already saw SIGBUS 138 with a registered ID
 still In Progress eleven minutes later.
 
@@ -48,14 +48,14 @@ converge. Rebuilding `dist/` discards a signed artifact that was already fine.
 A second, independent trap: local `gh release upload` of the ~174 MB DMG to
 `uploads.github.com` from this Mac fails TLS (HTTP 500, `tls: bad record MAC`,
 LibreSSL stall). `gh` inside Actions also hung. Ubuntu `curl` of the verified
-R2 object attached `MacParakeet.dmg` in 29 seconds.
+R2 object attached `Sotto.dmg` in 29 seconds.
 
 ## Solution
 
 1. Submit with:
 
    ```bash
-   xcrun notarytool submit dist/MacParakeet.app.zip \
+   xcrun notarytool submit dist/Sotto.app.zip \
      --keychain-profile "AC_PASSWORD" \
      --no-wait --no-progress --no-s3-acceleration \
      --output-format json
@@ -70,7 +70,7 @@ R2 object attached `MacParakeet.dmg` in 29 seconds.
 3. Staple only the artifact whose submission is `Accepted`.
 
 4. Upload R2 first. Create the GitHub `vX.Y.Z` release without assets. Attach
-   `MacParakeet.dmg` from a GitHub-hosted Ubuntu job that downloads the R2
+   `Sotto.dmg` from a GitHub-hosted Ubuntu job that downloads the R2
    object and checks size + SHA-256 before POSTing to
    `uploads.github.com`. Recipe: `docs/distribution.md` gotcha 1b.
 
@@ -80,7 +80,7 @@ R2 object attached `MacParakeet.dmg` in 29 seconds.
 path that SIGBUS-crashes on this Mac. JSON output makes “upload finished”
 machine-checkable. Resubmitting the same zip does not change Sparkle bytes.
 R2 is already the Sparkle source of truth; GitHub only needs a copy for the
-Homebrew cask filename `MacParakeet.dmg`.
+Homebrew cask filename `Sotto.dmg`.
 
 ## Prevention
 

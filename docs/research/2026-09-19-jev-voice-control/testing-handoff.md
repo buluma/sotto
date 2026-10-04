@@ -20,7 +20,7 @@ Run in a dedicated window of the existing Chrome process, with the production na
 4. **Stop.** During model work and during a pending effect. No new effects afterward. Unknown effects are not replayed. The UI distinguishes stopped, waiting, failed, and completed.
 5. **Ordinary versus consequential.** Search, dropdown selection, field editing, and navigation should not repeatedly ask permission. Use a disposable synthetic payment fixture for confirmation, expiry, and uncertain outcomes. Never a real purchase.
 6. **Integrated voice.** One complete command through the app’s actual command microphone into native execution, then an ordinary dictation and a voice-to-Transform smoke. A typed harness does not satisfy this check.
-7. **Observability.** After a turn, read `/tmp/macparakeet-voice-control/latest.md` first, then `latest.json`. Local logs may include the instruction and labels; Copy diagnostics does not. No keys, raw audio, field values, selected text, or full private page snapshots in shared artifacts.
+7. **Observability.** After a turn, read `/tmp/sotto-voice-control/latest.md` first, then `latest.json`. Local logs may include the instruction and labels; Copy diagnostics does not. No keys, raw audio, field values, selected text, or full private page snapshots in shared artifacts.
 
 Report failures as well as successes. Separate correctness from speed.
 
@@ -38,11 +38,11 @@ From the repository root, following `AGENTS.md`. Do not use Orca.
 
 ```sh
 GIT_EXEC_PATH=/opt/homebrew/opt/git/libexec/git-core \
-MACPARAKEET_DEBUG_APP_STATE_DIR=/tmp/jev-qualification/app-state \
+SOTTO_DEBUG_APP_STATE_DIR=/tmp/jev-qualification/app-state \
 scripts/dev/run_app.sh --enable-voice-control
 ```
 
-Configure BYO Jev through the experimental panel. Credentials live in Keychain service `com.macparakeet.voice-control.jev`, account `apiKey`. Never print the key or put it in shell arguments, documentation, screenshots, logs, or commits.
+Configure BYO Jev through the experimental panel. Credentials live in Keychain service `com.sotto.voice-control.jev`, account `apiKey`. Never print the key or put it in shell arguments, documentation, screenshots, logs, or commits.
 
 ### Synthetic native harness
 

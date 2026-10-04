@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_PATH="${1:-dist/MacParakeet.app}"
-ALLOW_DEV_VERSION_SIGNING="${MACPARAKEET_ALLOW_DEV_VERSION_SIGNING:-0}"
+APP_PATH="${1:-dist/Sotto.app}"
+ALLOW_DEV_VERSION_SIGNING="${SOTTO_ALLOW_DEV_VERSION_SIGNING:-0}"
 
 fail() {
   echo "error: $*" >&2
@@ -26,7 +26,7 @@ if [[ -z "$build_number" ]]; then
 fi
 
 if [[ "$ALLOW_DEV_VERSION_SIGNING" == "1" ]]; then
-  echo "Warning: MACPARAKEET_ALLOW_DEV_VERSION_SIGNING=1; allowing diagnostic signing for version '$short_version'." >&2
+  echo "Warning: SOTTO_ALLOW_DEV_VERSION_SIGNING=1; allowing diagnostic signing for version '$short_version'." >&2
   echo "Verified diagnostic signing version override: $short_version ($build_number)"
   exit 0
 fi

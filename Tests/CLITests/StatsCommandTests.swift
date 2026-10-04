@@ -1,6 +1,6 @@
 import XCTest
 @testable import CLI
-@testable import MacParakeetCore
+@testable import SottoCore
 
 final class StatsCommandTests: XCTestCase {
 

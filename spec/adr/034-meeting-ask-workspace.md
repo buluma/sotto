@@ -22,7 +22,7 @@ also exceed the required authority.
    complete messages from the active section whose source revision map still
    matches. Prior-section messages remain visible as history but are not
    replayed into later runs.
-3. Keep transcript selection, retrieval, and evidence in MacParakeet. Provide
+3. Keep transcript selection, retrieval, and evidence in Sotto. Provide
    only `list_sources`, lexical `search`, indexed `read`, and current
    `get_summary` operations to the agent. Summaries orient; corrected transcript
    passages support claims. Persist citation identity (source UUID, revision,
@@ -50,7 +50,7 @@ also exceed the required authority.
    Ollama/LM Studio loopback routes need no remote consent; other endpoints,
    including generic OpenAI-compatible loopback endpoints, require explicit
    approval in both GUI and CLI. No provider fallback occurs. Expose the same
-   shared service through additive `macparakeet-cli ask` commands.
+   shared service through additive `sotto-cli ask` commands.
 
 ## Default-off integration (2026-09-26)
 

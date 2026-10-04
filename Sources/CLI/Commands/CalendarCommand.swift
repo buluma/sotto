@@ -1,8 +1,8 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
-/// `macparakeet-cli calendar` — agent-friendly access to the EventKit
+/// `sotto-cli calendar` — agent-friendly access to the EventKit
 /// pipeline that powers calendar auto-start. Lets a developer or a CI agent
 /// verify "is my permission set up + does my filter actually pick the right
 /// events?" without launching the GUI.
@@ -16,7 +16,7 @@ struct CalendarCommand: AsyncParsableCommand {
     struct UpcomingCommand: AsyncParsableCommand {
         static let configuration = CommandConfiguration(
             commandName: "upcoming",
-            abstract: "List upcoming calendar events visible to MacParakeet."
+            abstract: "List upcoming calendar events visible to Sotto."
         )
 
         @Option(name: .long, help: "Number of days to look ahead. Default: 1.")
@@ -47,10 +47,10 @@ struct CalendarCommand: AsyncParsableCommand {
                 let annotated = calendarUpcomingJSONEvents(
                     events,
                     skippedOccurrences: CalendarAutoStartPreferences.skippedOccurrences(
-                        defaults: macParakeetAppDefaults()
+                        defaults: sottoAppDefaults()
                     ),
                     skippedEvents: CalendarAutoStartPreferences.skippedEvents(
-                        defaults: macParakeetAppDefaults()
+                        defaults: sottoAppDefaults()
                     )
                 )
 
@@ -117,9 +117,9 @@ private enum CalendarCLIError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .calendarPermissionDenied:
-            return "Calendar access denied. Open System Settings → Privacy & Security → Calendars to grant MacParakeet access."
+            return "Calendar access denied. Open System Settings → Privacy & Security → Calendars to grant Sotto access."
         case .calendarPermissionNotDetermined:
-            return "Calendar access not yet requested. Launch MacParakeet, run onboarding (or visit Settings → Calendar), then retry."
+            return "Calendar access not yet requested. Launch Sotto, run onboarding (or visit Settings → Calendar), then retry."
         }
     }
 }

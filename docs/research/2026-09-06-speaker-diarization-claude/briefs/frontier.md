@@ -36,6 +36,6 @@ oracle count), speed/hardware if reported. Build one comparable benchmark table 
 mark non-comparable cells.
 
 Identify which of ADR-010's and the June frontier doc's claims are now stale. Finish with a
-ranked shortlist of 3 candidates for MacParakeet's async post-processing path with the causal
+ranked shortlist of 3 candidates for Sotto's async post-processing path with the causal
 argument for why each would beat the current FluidAudio 0.15.4 offline pipeline, and what
 a minimal A/B evaluation would look like.

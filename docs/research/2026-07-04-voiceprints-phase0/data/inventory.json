@@ -2,7 +2,7 @@
  "note": "Per-session roster withheld (private-meeting metadata); aggregates only. Full inventory regenerates locally via the harness.",
  "summary": {
   "generatedAt": "2026-07-03T22:49:44-0700",
-  "root": "~/Library/Application Support/MacParakeet/meeting-recordings",
+  "root": "~/Library/Application Support/Sotto/meeting-recordings",
   "sessionCount": 465,
   "dateRange": {},
   "tracks": {

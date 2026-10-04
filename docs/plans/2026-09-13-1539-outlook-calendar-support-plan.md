@@ -12,7 +12,7 @@ deepened: 2026-09-13
 
 ## Goal Capsule
 
-- **Objective:** People who use Outlook or Microsoft 365 can find and configure MacParakeet's calendar integration without mistaking Apple Calendar for the only supported provider.
+- **Objective:** People who use Outlook or Microsoft 365 can find and configure Sotto's calendar integration without mistaking Apple Calendar for the only supported provider.
 - **Means:** Keep EventKit as the single local calendar source and add accurate setup, account-management, refresh, search, and documentation affordances (KTD1-KTD4).
 - **Authority:** Current repository behavior and Apple/Microsoft platform contracts outrank implementation preference; issues #502 and #1013 establish the user problem.
 - **Execution profile:** Standard, user-visible feature across Settings, Meetings discovery copy, search, and governing documentation.
@@ -25,7 +25,7 @@ deepened: 2026-09-13
 
 ### Summary
 
-MacParakeet already reads every event calendar exposed by EventKit, including Exchange sources configured in macOS Internet Accounts. The product must explain that Outlook and Microsoft 365 work through that local account setup, provide a direct recovery path when an account is missing, and refresh visible calendars after the user returns from System Settings.
+Sotto already reads every event calendar exposed by EventKit, including Exchange sources configured in macOS Internet Accounts. The product must explain that Outlook and Microsoft 365 work through that local account setup, provide a direct recovery path when an account is missing, and refresh visible calendars after the user returns from System Settings.
 
 ### Problem Frame
 
@@ -35,14 +35,14 @@ Issues #502 and #1013 independently ask for Outlook calendar integration after c
 
 **Provider boundary**
 
-- R1. MacParakeet must continue to use EventKit as its only calendar backend and must not add a Microsoft sign-in or cloud calendar data path.
+- R1. Sotto must continue to use EventKit as its only calendar backend and must not add a Microsoft sign-in or cloud calendar data path.
 - R2. User-facing copy must state that Microsoft 365 and Exchange calendars work when added to Calendar on this Mac, while avoiding a blanket promise for Outlook-only local data or unverified shared calendars.
 
 **Setup and recovery**
 
 - R3. Calendar settings must expose an Internet Accounts action and an explicit calendar refresh whether the current visible-calendar list is empty or populated.
 - R4. Calendar settings must distinguish initial loading from a loaded empty result and show actionable guidance when EventKit returns no calendars.
-- R5. Returning to MacParakeet after account or permission changes must refresh Calendar authorization and the visible-calendar list without requiring an app restart.
+- R5. Returning to Sotto after account or permission changes must refresh Calendar authorization and the visible-calendar list without requiring an app restart.
 - R6. A denied Calendar permission must keep the existing Privacy & Security recovery path distinct from the Internet Accounts setup path.
 
 **Discovery and documentation**
@@ -55,16 +55,16 @@ Issues #502 and #1013 independently ask for Outlook calendar integration after c
 - F1. **Outlook-only setup**
   - **Trigger:** A user searches Settings for Outlook or opens Meeting Recording calendar settings.
   - **Steps:** The UI explains the macOS account requirement, opens Internet Accounts, and refreshes permission and calendars after the user returns.
-  - **Outcome:** A newly enabled Exchange calendar appears in MacParakeet without restarting the app.
+  - **Outcome:** A newly enabled Exchange calendar appears in Sotto without restarting the app.
   - **Covered by:** R2-R5, R7
 - F2. **Existing calendars plus Exchange**
   - **Trigger:** A user already has iCloud, Google, or another EventKit calendar but wants to add Microsoft 365.
   - **Steps:** The account-management action remains visible beside the populated calendar controls, and refresh preserves the current include/exclude choices.
-  - **Outcome:** The user can add Exchange without MacParakeet introducing a second provider model.
+  - **Outcome:** The user can add Exchange without Sotto introducing a second provider model.
   - **Covered by:** R1, R3-R5
 - F3. **Permission recovery**
   - **Trigger:** Calendar authorization is denied or revoked.
-  - **Steps:** MacParakeet directs the user to the Calendar privacy pane; account-management guidance does not replace that permission fix.
+  - **Steps:** Sotto directs the user to the Calendar privacy pane; account-management guidance does not replace that permission fix.
   - **Outcome:** Authorization and account setup remain understandable as separate prerequisites.
   - **Covered by:** R5-R6
 
@@ -93,7 +93,7 @@ Issues #502 and #1013 independently ask for Outlook calendar integration after c
 ### Sources and Research
 
 - `docs/research/2026-09-13-issues-502-1013-outlook-calendar.md` records the issue review, repository evidence, Apple EventKit/Exchange contracts, Microsoft setup boundary, Graph comparison, and verification limits.
-- `Sources/MacParakeetCore/Calendar/CalendarService.swift` is the provider-neutral EventKit implementation and already enumerates all event calendars.
+- `Sources/SottoCore/Calendar/CalendarService.swift` is the provider-neutral EventKit implementation and already enumerates all event calendars.
 - `spec/adr/017-calendar-meeting-auto-start.md` owns the local-first calendar architecture.
 
 ---
@@ -112,7 +112,7 @@ Issues #502 and #1013 independently ask for Outlook calendar integration after c
 
 - Preserve `CalendarService`, `CalendarServicing`, `CalendarEvent`, and persisted calendar identifiers unchanged.
 - Keep Calendar and Internet Accounts navigation separate because they resolve different failure states.
-- Keep new buttons on the existing `.parakeetAction(...)` styling path and preserve accessibility labels and hints.
+- Keep new buttons on the existing `.sottoAction(...)` styling path and preserve accessibility labels and hints.
 - Prevent an initial “No calendars found” flash by representing loading separately from a completed empty lookup.
 - Guard asynchronous reload completion against permission changes before applying the result.
 
@@ -140,18 +140,18 @@ Issues #502 and #1013 independently ask for Outlook calendar integration after c
 - **Requirements:** R2-R6; covers F1-F3 and AE1-AE3.
 - **Dependencies:** None.
 - **Files:**
-  - `Sources/MacParakeet/Views/Settings/CalendarSettingsView.swift`
-  - `Sources/MacParakeetViewModels/SettingsViewModel.swift`
-  - `Sources/MacParakeet/Views/Settings/SettingsView.swift`
-  - `Tests/MacParakeetTests/ViewModels/SettingsViewModelTests.swift`
-  - `Tests/MacParakeetTests/Calendar/MockCalendarService.swift`
+  - `Sources/Sotto/Views/Settings/CalendarSettingsView.swift`
+  - `Sources/SottoViewModels/SettingsViewModel.swift`
+  - `Sources/Sotto/Views/Settings/SettingsView.swift`
+  - `Tests/SottoTests/ViewModels/SettingsViewModelTests.swift`
+  - `Tests/SottoTests/Calendar/MockCalendarService.swift`
 - **Approach:**
   1. Add accurate Microsoft 365/Exchange-through-macOS guidance to the calendar connection surface.
   2. Put loading/completed state and visible calendars in the existing `SettingsViewModel`, inject the existing `CalendarServicing` boundary, and keep the view declarative instead of adding another state object.
   3. Keep Microsoft guidance, Manage Accounts, and Refresh outside the auto-start-only controls so they remain available when the mode is off and in both empty and populated states.
   4. Open Internet Accounts through a small injected URL opener, with ordered current/legacy pane candidates and a generic System Settings fallback.
   5. Route initial appearance, app activation, permission changes, and explicit refresh through the KTD3 operation; invalidate older in-flight results and clear calendars as soon as access is absent.
-- **Patterns to follow:** Existing Calendar permission recovery and notification-settings URL candidates in `SettingsViewModel`; `NSApplication.didBecomeActiveNotification` handling in `SettingsView`; `.parakeetAction(...)` buttons in Settings views.
+- **Patterns to follow:** Existing Calendar permission recovery and notification-settings URL candidates in `SettingsViewModel`; `NSApplication.didBecomeActiveNotification` handling in `SettingsView`; `.sottoAction(...)` buttons in Settings views.
 - **Test scenarios:**
   - Covers AE1. Initial loading does not render a completed empty diagnosis; a completed empty result exposes both account-management and refresh recovery.
   - Covers AE2. A populated list retains the existing per-calendar selection controls and keeps account management discoverable.
@@ -159,7 +159,7 @@ Issues #502 and #1013 independently ask for Outlook calendar integration after c
   - A reload that completes after permission is revoked does not install stale calendars in the view.
   - Two overlapping reloads can only apply the newer result.
   - A denied-to-granted permission transition loads the visible calendars without changing auto-start or exclusion preferences.
-  - Returning from System Settings triggers permission and visible-calendar refresh without restarting MacParakeet.
+  - Returning from System Settings triggers permission and visible-calendar refresh without restarting Sotto.
   - Internet Accounts URL candidates are attempted in order, stop after success, and fall back to generic System Settings when none resolves.
 - **Verification:** The Settings view builds with Swift 6 concurrency checks, existing calendar-focused tests remain green, and manual source inspection confirms every permission/load state has one accurate recovery action.
 
@@ -169,9 +169,9 @@ Issues #502 and #1013 independently ask for Outlook calendar integration after c
 - **Requirements:** R2, R7; covers F1 and AE4.
 - **Dependencies:** U1.
 - **Files:**
-  - `Sources/MacParakeetViewModels/SettingsSearchIndex.swift`
-  - `Tests/MacParakeetTests/ViewModels/SettingsSearchIndexTests.swift`
-  - `Sources/MacParakeet/Views/Meetings/MeetingsView.swift`
+  - `Sources/SottoViewModels/SettingsSearchIndex.swift`
+  - `Tests/SottoTests/ViewModels/SettingsSearchIndexTests.swift`
+  - `Sources/Sotto/Views/Meetings/MeetingsView.swift`
 - **Approach:** Add Outlook, Microsoft 365, Exchange, and Internet Accounts search synonyms, and revise the Meetings connection description without diagnosing an empty event list as a missing account.
 - **Patterns to follow:** The feature-flag-aware `meeting.calendar` search entry and the existing Meetings-to-Settings navigation.
 - **Test scenarios:**
@@ -190,7 +190,7 @@ Issues #502 and #1013 independently ask for Outlook calendar integration after c
   - `spec/README.md`
   - `spec/adr/017-calendar-meeting-auto-start.md`
   - `docs/research/2026-09-13-issues-502-1013-outlook-calendar.md`
-- **Approach:** Document Microsoft 365/Exchange support through macOS Internet Accounts, the lack of a MacParakeet Microsoft sign-in, the in-product recovery path, and the absence of physical Microsoft-account certification in this environment.
+- **Approach:** Document Microsoft 365/Exchange support through macOS Internet Accounts, the lack of a Sotto Microsoft sign-in, the in-product recovery path, and the absence of physical Microsoft-account certification in this environment.
 - **Patterns to follow:** Release-state language in `README.md` and `spec/README.md`; amendment-style decision history in ADR-017.
 - **Test scenarios:** Test expectation: none -- these files document the implemented behavior and its verification boundary without changing runtime behavior.
 - **Verification:** Documentation agrees with the final code, does not claim Graph/OAuth or universal Outlook coverage, and distinguishes development-source behavior from the stable DMG.

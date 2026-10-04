@@ -13,7 +13,7 @@ import tempfile
 import time
 
 REPO = Path(__file__).resolve().parents[2]
-ACCOUNT = "macparakeet-e2e"
+ACCOUNT = "sotto-e2e"
 NOTES = "Native journey persisted notes: cedar launch approved after relaunch."
 TRANSCRIPT = "Synthetic meeting transcript: the cedar launch is approved."
 
@@ -26,12 +26,12 @@ def processes():
 
 def preflight(attested):
     if not attested or pwd.getpwuid(os.getuid()).pw_name != ACCOUNT or os.getuid() == 0:
-        raise RuntimeError("Requires --disposable-account in the dedicated macparakeet-e2e logged-in account. State overrides do not isolate shared preferences or Keychain.")
+        raise RuntimeError("Requires --disposable-account in the dedicated sotto-e2e logged-in account. State overrides do not isolate shared preferences or Keychain.")
     if Path("/dev/console").stat().st_uid != os.getuid():
         raise RuntimeError("The disposable account must own the active GUI console")
-    if any(uid == os.getuid() and Path(command).name in ("MacParakeet", "MacParakeet-Dev")
+    if any(uid == os.getuid() and Path(command).name in ("Sotto", "Sotto-Dev")
            for _, uid, command in processes()):
-        raise RuntimeError("Quit existing MacParakeet instances yourself before qualification")
+        raise RuntimeError("Quit existing Sotto instances yourself before qualification")
     if shutil.disk_usage(REPO).free < 25 * 1024**3:
         raise RuntimeError("Requires at least 25 GiB free for the owned build")
 
@@ -113,14 +113,14 @@ def main():
     if args.preflight_only:
         print("PASS disposable-account preflight")
         return
-    root = Path(tempfile.mkdtemp(prefix="macparakeet-native-e2e-"))
+    root = Path(tempfile.mkdtemp(prefix="sotto-native-e2e-"))
     print(f"Evidence retained at {root}", flush=True)
     (root / "owned-native-journey").write_text(ACCOUNT + "\n")
-    env = dict(os.environ, MACPARAKEET_NATIVE_E2E_ROOT=str(root),
-               MACPARAKEET_DEBUG_APP_STATE_DIR=str(root / "state"), MACPARAKEET_CONFIG="Debug",
-               MACPARAKEET_TELEMETRY="0")
-    bundle = REPO / ".build/xcode-dev/Build/Products/Debug/MacParakeet-Dev.app"
-    binary = bundle / "Contents/MacOS/MacParakeet"
+    env = dict(os.environ, SOTTO_NATIVE_E2E_ROOT=str(root),
+               SOTTO_DEBUG_APP_STATE_DIR=str(root / "state"), SOTTO_CONFIG="Debug",
+               SOTTO_TELEMETRY="0")
+    bundle = REPO / ".build/xcode-dev/Build/Products/Debug/Sotto-Dev.app"
+    binary = bundle / "Contents/MacOS/Sotto"
     log = (root / "journey.log").open("w")
     owned_pid = None
 
@@ -154,11 +154,11 @@ def main():
         ax("press", "meeting-notes-tab")
         ax("assert", "meeting-notes-editor", "Original synthetic notes")
         ax("set", "meeting-notes-editor", NOTES)
-        wait_for_notes(root / "state/macparakeet.db", NOTES)
+        wait_for_notes(root / "state/sotto.db", NOTES)
         # Ordinary AppKit quit flushes derived note artifacts; SIGTERM bypasses it.
         ax("quit", "application")
-        run(["open", "-n", str(bundle), "--env", "MACPARAKEET_DEBUG_APP_STATE_DIR=" + str(root / "state"),
-             "--env", "MACPARAKEET_TELEMETRY=0"])
+        run(["open", "-n", str(bundle), "--env", "SOTTO_DEBUG_APP_STATE_DIR=" + str(root / "state"),
+             "--env", "SOTTO_TELEMETRY=0"])
         owned_pid = launched_pid()
         ax("press", "sidebar-Library")
         ax("press", "library-item-" + meeting_id)

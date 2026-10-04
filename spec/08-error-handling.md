@@ -31,7 +31,7 @@
 | Model download failed | Network error during CoreML model download | "Check internet connection and retry" |
 | Whisper model missing | Whisper selected before its local model is downloaded | Keep Parakeet available; show Whisper download action |
 | Engine busy | STT jobs are queued/running or a meeting speech-engine lease is active | Disable engine switch; retry after work finishes |
-| Engine switch stalled | WhisperKit/Core ML compile (`aned`) can block Settings far longer than the usual 3–5 minute first-load estimate; the prepare watchdog only reports at 15/60/180/300 seconds and cannot interrupt the load | After 5 minutes, Settings shows an honest stalled state. **Use previous engine** restores the prior selection without cancelling Core ML, killing `aned`, or deleting shared caches. Speech stays paused until the compiler finishes; Settings keeps a residual “still compiling” banner after leave. A late success after leave is not persisted. Relaunching MacParakeet does not always recover a stuck compiler. |
+| Engine switch stalled | WhisperKit/Core ML compile (`aned`) can block Settings far longer than the usual 3–5 minute first-load estimate; the prepare watchdog only reports at 15/60/180/300 seconds and cannot interrupt the load | After 5 minutes, Settings shows an honest stalled state. **Use previous engine** restores the prior selection without cancelling Core ML, killing `aned`, or deleting shared caches. Speech stays paused until the compiler finishes; Settings keeps a residual “still compiling” banner after leave. A late success after leave is not persisted. Relaunching Sotto does not always recover a stuck compiler. |
 
 ### Processing Errors
 
@@ -73,10 +73,10 @@
 
 ## Meeting Recording Crash Recovery
 
-During active meeting recording, MacParakeet writes fragmented source audio and a lock file into the meeting session directory:
+During active meeting recording, Sotto writes fragmented source audio and a lock file into the meeting session directory:
 
 ```
-~/Library/Application Support/MacParakeet/meeting-recordings/{uuid}/
+~/Library/Application Support/Sotto/meeting-recordings/{uuid}/
   microphone-raw.m4a
   system-raw.m4a
   recording.lock
@@ -130,10 +130,10 @@ When first-run local model setup fails:
 Local diagnostics use `os.Logger`. Current subsystems are layered by target:
 
 ```swift
-Logger(subsystem: "com.macparakeet.app", category: "DictationFlow")
-Logger(subsystem: "com.macparakeet.core", category: "TranscriptionService")
-Logger(subsystem: "com.macparakeet.viewmodels", category: "SettingsViewModel")
-Logger(subsystem: "com.macparakeet", category: "CalendarService") // legacy/simple cases
+Logger(subsystem: "com.sotto.app", category: "DictationFlow")
+Logger(subsystem: "com.sotto.core", category: "TranscriptionService")
+Logger(subsystem: "com.sotto.viewmodels", category: "SettingsViewModel")
+Logger(subsystem: "com.sotto", category: "CalendarService") // legacy/simple cases
 ```
 
 New log lines should use stable event-style messages with `key=value`
@@ -157,7 +157,7 @@ coarse device transport, and classified `error_type`.
 
 Shareable audio diagnostics are stricter than local `os.Logger` entries. Raw
 `localizedDescription` values may be kept in private OSLog fields for local
-debugging, but `~/Library/Logs/MacParakeet/dictation-audio.log` and any future
+debugging, but `~/Library/Logs/Sotto/dictation-audio.log` and any future
 diagnostic bundle must use classified `error_type` plus sanitized, single-line
 `error_detail` values. Device identity in these shareable logs is limited to
 `present`/`none` and coarse transport labels such as `built-in`, `usb`,
@@ -176,11 +176,11 @@ diagnostic bundle must use classified `error_type` plus sanitized, single-line
 ## Error Reporting
 
 Errors are always logged locally. If telemetry is enabled, non-identifying
-operation failures and crash reports may also be sent to MacParakeet's
+operation failures and crash reports may also be sent to Sotto's
 self-hosted telemetry pipeline.
 
 The in-app feedback flow has an explicit opt-in control for attaching
-`~/Library/Logs/MacParakeet/dictation-audio.log` when users report dictation or
+`~/Library/Logs/Sotto/dictation-audio.log` when users report dictation or
 meeting recording problems. The attachment is scoped to a recent window by
 default (`DiagnosticLogScope.recent`: the last 7 days, with 2 MB / 20k-line
 safety ceilings, falling back to the last few hundred lines when nothing is
@@ -190,7 +190,7 @@ the time window to the entire on-disk log for intermittent issues. Scoping
 selects *whole lines by recency*; it never edits line contents, which are
 already privacy-scrubbed at write time.
 A broader diagnostic bundle is still a follow-up:
-it should contain recent MacParakeet `os.Logger` entries, the audio diagnostics
+it should contain recent Sotto `os.Logger` entries, the audio diagnostics
 log, app version/build info, and redacted runtime metadata. It must not include
 audio, transcripts, notes, prompts, file names, file paths, URLs, API keys, or
 microphone identity (names, CoreAudio device IDs, device UIDs), and it must not

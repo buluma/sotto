@@ -1,6 +1,6 @@
 import XCTest
 @testable import CLI
-@testable import MacParakeetCore
+@testable import SottoCore
 
 /// Exercise the CLI's post-processing boundary with real Core persistence.
 /// Audio conversion and recognition are deterministic substitutes; no model,

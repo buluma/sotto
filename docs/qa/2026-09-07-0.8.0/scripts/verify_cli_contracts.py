@@ -36,14 +36,14 @@ def main():
     state_dir = args.output / "app-state"
     fixed_home = args.output / "foundation-home"
     fixed_home.mkdir()
-    database = state_dir / "macparakeet.db"
+    database = state_dir / "sotto.db"
     env = dict(os.environ)
     env.update({
-        "MACPARAKEET_DEBUG_APP_STATE_DIR": str(state_dir),
+        "SOTTO_DEBUG_APP_STATE_DIR": str(state_dir),
         "CFFIXED_USER_HOME": str(fixed_home),
-        "MACPARAKEET_TELEMETRY": "0",
+        "SOTTO_TELEMETRY": "0",
         "DO_NOT_TRACK": "1",
-        "MACPARAKEET_DEBUG_SQL": "0",
+        "SOTTO_DEBUG_SQL": "0",
     })
     records = []
     requests = []

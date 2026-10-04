@@ -36,7 +36,7 @@ below is source-proven unnecessary work, not a measured production slowdown.
 
 ### [CLI-DATA-01] Let Core own the completed retranscription row
 
-- **Evidence**: `Sources/CLI/Commands/RetranscribeCommand.swift:496-505` and `:537-555` await completed Core retranscription, then copy the original metadata back and issue another generic save. The helper at `:680-699` restores stale notes, chat, favorite, title, audio and artifact pointers. `Sources/MacParakeetCore/Services/TranscriptionService.swift:2257-2259` already uses the atomic `savePreservingUserMetadata` boundary; `Sources/MacParakeetCore/Database/TranscriptionRepository.swift:321-336` rejects deleted rows and merges live metadata in its write transaction.
+- **Evidence**: `Sources/CLI/Commands/RetranscribeCommand.swift:496-505` and `:537-555` await completed Core retranscription, then copy the original metadata back and issue another generic save. The helper at `:680-699` restores stale notes, chat, favorite, title, audio and artifact pointers. `Sources/SottoCore/Services/TranscriptionService.swift:2257-2259` already uses the atomic `savePreservingUserMetadata` boundary; `Sources/SottoCore/Database/TranscriptionRepository.swift:321-336` rejects deleted rows and merges live metadata in its write transaction.
 - **Trigger**: Retranscribe a retained recording through the CLI while renaming it, editing/clearing notes, changing its favorite state, or detaching audio through another surface. A deletion after Core's save but before the CLI's extra save is another affected interleaving.
 - **Impact**: The CLI can lose user edits and recreate a deleted recording. Restored stale paths can also disagree with current assets. The affected file path includes retained local, YouTube and podcast sources; meeting paths include archived and fallback processing.
 - **Effort**: S, including deterministic regression coverage and contract documentation.
@@ -47,7 +47,7 @@ below is source-proven unnecessary work, not a measured production slowdown.
 
 ### [CLI-DATA-02] Prevent nonfailed dictation reruns from resurrecting deleted takes
 
-- **Evidence**: `Sources/CLI/Commands/RetranscribeCommand.swift:436-438` unconditionally saves a rerun when the original row was not failed. The failed-take path already uses `saveIfCurrentStatus` at `:446`; `Sources/MacParakeetCore/Database/DictationRepository.swift:142-155` performs that existence/status check and write in one transaction.
+- **Evidence**: `Sources/CLI/Commands/RetranscribeCommand.swift:436-438` unconditionally saves a rerun when the original row was not failed. The failed-take path already uses `saveIfCurrentStatus` at `:446`; `Sources/SottoCore/Database/DictationRepository.swift:142-155` performs that existence/status check and write in one transaction.
 - **Trigger**: Delete a completed or cancelled dictation after the CLI resolves its retained recording but before recognition finishes, or complete that cancelled take through another operation.
 - **Impact**: Generic save can recreate deleted history, overwrite an intervening status transition and recount a previously completed take in lifetime statistics.
 - **Effort**: S.
@@ -59,7 +59,7 @@ below is source-proven unnecessary work, not a measured production slowdown.
 
 ### [CLI-DATA-03] Put byte budgets on external CLI output
 
-- **Evidence**: `Sources/MacParakeetCore/Services/LLM/LocalCLIExecutor.swift:565-574` reads both child streams to EOF into unbounded `Data`. The process timeout is a time budget (`:589-591`), with a default of 300 seconds (`:15-16`), not an output budget. `Sources/MacParakeetCore/Services/YouTubeDownloader.swift:293-318` similarly retains all downloader stderr while it runs.
+- **Evidence**: `Sources/SottoCore/Services/LLM/LocalCLIExecutor.swift:565-574` reads both child streams to EOF into unbounded `Data`. The process timeout is a time budget (`:589-591`), with a default of 300 seconds (`:15-16`), not an output budget. `Sources/SottoCore/Services/YouTubeDownloader.swift:293-318` similarly retains all downloader stderr while it runs.
 - **Trigger**: A configured external helper emits excessive progress/debug output or enters an output loop before its timeout.
 - **Impact**: The main process retains all bytes, then creates additional strings for decoding/sanitization. A time-bounded helper can still cause substantial memory pressure or an out-of-memory termination. This is a resource-containment concern; the user-selected shell template itself is an intentional product capability, not an injection finding.
 - **Effort**: M.
@@ -69,7 +69,7 @@ below is source-proven unnecessary work, not a measured production slowdown.
 
 ### [CLI-DATA-04] Stop decoding entire records for lookup and count operations
 
-- **Evidence**: `Sources/CLI/Commands/CLIHelpers.swift:228-229` resolves a dictation prefix by fetching and decoding every visible dictation before filtering. `Sources/CLI/Commands/StatsCommand.swift:26` obtains a favorite count by fetching full favorite transcriptions. `Sources/MacParakeetCore/Database/DictationRepository.swift:235-249` confirms the unbounded default fetch.
+- **Evidence**: `Sources/CLI/Commands/CLIHelpers.swift:228-229` resolves a dictation prefix by fetching and decoding every visible dictation before filtering. `Sources/CLI/Commands/StatsCommand.swift:26` obtains a favorite count by fetching full favorite transcriptions. `Sources/SottoCore/Database/DictationRepository.swift:235-249` confirms the unbounded default fetch.
 - **Trigger**: A long-lived local library queried repeatedly by an agent, especially one with lengthy transcripts and word/speaker timing payloads.
 - **Impact**: Prefix lookup has linear Swift allocations in history size; a scalar favorite count reads and decodes full transcript rows unnecessarily. The 10K-row process probe above did not show a latency penalty; attribution would need a repository-level allocation/query benchmark.
 - **Effort**: S for dedicated SQL-backed lookup/count operations and equivalence tests; M including a representative synthetic-library benchmark.
@@ -79,7 +79,7 @@ below is source-proven unnecessary work, not a measured production slowdown.
 
 ### [CLI-DATA-05] Qualify a recoverable whole-library backup workflow
 
-- **Evidence**: `Sources/CLI/Commands/ExportCommand.swift:6-12` and `:105-120` export individual transcripts in document formats; `Sources/CLI/Commands/MeetingImportCommand.swift:13-23` imports media as a new meeting. `Sources/MacParakeetCore/Database/README.md:122-149` distinguishes canonical rows from derived segments/cards, while split receipts and share revocation authority deliberately have independent lifetimes later in that document. A search of the CLI/database tree found no whole-library backup/restore command.
+- **Evidence**: `Sources/CLI/Commands/ExportCommand.swift:6-12` and `:105-120` export individual transcripts in document formats; `Sources/CLI/Commands/MeetingImportCommand.swift:13-23` imports media as a new meeting. `Sources/SottoCore/Database/README.md:122-149` distinguishes canonical rows from derived segments/cards, while split receipts and share revocation authority deliberately have independent lifetimes later in that document. A search of the CLI/database tree found no whole-library backup/restore command.
 - **Impact**: Users who rely on the app as durable local speech memory need a demonstrable recovery route for database records, original audio, notes, corrections, prompt versions and required receipts. Text export and media re-import do not reconstruct that state. This is a product/recovery recommendation, not evidence that current files are being lost.
 - **Effort**: L, initially a design and restore drill rather than immediate feature implementation.
 - **Risk**: HIGH for a new restore implementation: migration skew, SQLite consistency, missing media, duplicate IDs and secret/revocation handling require explicit semantics.
@@ -100,12 +100,12 @@ Maintain the hand-authored semantic descriptions, but add reverse coverage of ne
 
 Positive evidence observed in code:
 
-- File-backed migration locking, foreign keys and a five-second busy timeout are explicit (`Sources/MacParakeetCore/Database/DatabaseManager.swift:19-24`, `:74-79`). Health uses a read-only initializer rather than applying migrations.
-- Shared transcription completion merges current metadata and refuses to recreate a missing recording (`Sources/MacParakeetCore/Database/TranscriptionRepository.swift:321-336`). CLI completion needed to respect that ownership.
-- Meeting import builds in a managed staging folder under a media mutation lease, publishes its folder before creating the durable row and retains retryable failures (`Sources/MacParakeetCore/Services/MeetingImport/MeetingImportService.swift:144-205`). The apparent stale-staging race is protected by the common lease; it was not reported as a defect.
+- File-backed migration locking, foreign keys and a five-second busy timeout are explicit (`Sources/SottoCore/Database/DatabaseManager.swift:19-24`, `:74-79`). Health uses a read-only initializer rather than applying migrations.
+- Shared transcription completion merges current metadata and refuses to recreate a missing recording (`Sources/SottoCore/Database/TranscriptionRepository.swift:321-336`). CLI completion needed to respect that ownership.
+- Meeting import builds in a managed staging folder under a media mutation lease, publishes its folder before creating the durable row and retains retryable failures (`Sources/SottoCore/Services/MeetingImport/MeetingImportService.swift:144-205`). The apparent stale-staging race is protected by the common lease; it was not reported as a defect.
 - Whole-meeting audio clearing refuses sessions that are recording or await transcription/recovery (`Sources/CLI/Commands/HistoryCommand.swift:435-447`). Asset cleanup has managed-path and active-finalization checks.
-- Transcription deletion enqueues durable sharing stop intent before asset removal and obtains the relevant media/child-processing leases (`Sources/MacParakeetCore/Services/Sharing/TranscriptionDeletionCoordinator.swift:12-25`). This is a stronger boundary than directly deleting the SQLite row.
-- yt-dlp executes through argv with `--` before the URL (`Sources/MacParakeetCore/Services/YouTubeDownloader.swift:400-435`). Local CLI prompt data is delivered through stdin (`Sources/MacParakeetCore/Services/LLM/LocalCLIExecutor.swift:576-586`). User-configured shell templates and standard proxy/PATH inheritance are intentional surfaces.
+- Transcription deletion enqueues durable sharing stop intent before asset removal and obtains the relevant media/child-processing leases (`Sources/SottoCore/Services/Sharing/TranscriptionDeletionCoordinator.swift:12-25`). This is a stronger boundary than directly deleting the SQLite row.
+- yt-dlp executes through argv with `--` before the URL (`Sources/SottoCore/Services/YouTubeDownloader.swift:400-435`). Local CLI prompt data is delivered through stdin (`Sources/SottoCore/Services/LLM/LocalCLIExecutor.swift:576-586`). User-configured shell templates and standard proxy/PATH inheritance are intentional surfaces.
 
 These observations do not establish complete absence of injection, filesystem race, data-loss, or supply-chain defects. Cryptographic sharing, Keychain access, endpoint auth, all decoder paths and third-party binaries were not comprehensively audited here. No broad claim of security certification is made.
 

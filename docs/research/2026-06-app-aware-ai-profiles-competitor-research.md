@@ -1,6 +1,6 @@
 # App-Aware AI Profiles Research - June 2026
 
-> Freshness stance: existing MacParakeet docs and older branches are historical
+> Freshness stance: existing Sotto docs and older branches are historical
 > inputs only. This packet prioritizes current `origin/main`, fresh GitHub issue
 > state, and fresh external repo/product research gathered on 2026-06-03.
 
@@ -17,7 +17,7 @@ current app and, in more mature products, the active browser hostname. The
 profile can then override prompt/style, language, engine, provider/model,
 formatting, and send behavior.
 
-For MacParakeet, the right first slice is narrower:
+For Sotto, the right first slice is narrower:
 
 - Add app-aware profiles for the opt-in Dictation AI Formatter.
 - Match exact bundle ID first, then coarse local app category, then the existing
@@ -33,33 +33,33 @@ For MacParakeet, the right first slice is narrower:
 This solves the user-visible examples from `#117` and `#412` without turning the
 first release into a full workflow engine.
 
-## Current MacParakeet Baseline
+## Current Sotto Baseline
 
 Fresh local inspection of `origin/main` at `05055bc8` found:
 
 - Dictation AI Formatter has one global prompt in runtime preferences. It is
   injected as a no-argument closure from `AppEnvironment` into
   `DictationService`.
-  - `Sources/MacParakeet/App/AppEnvironment.swift`
-  - `Sources/MacParakeetCore/Services/Dictation/DictationService.swift`
-  - `Sources/MacParakeetCore/TextProcessing/AIFormatter.swift`
+  - `Sources/Sotto/App/AppEnvironment.swift`
+  - `Sources/SottoCore/Services/Dictation/DictationService.swift`
+  - `Sources/SottoCore/TextProcessing/AIFormatter.swift`
 - Dictation already samples the frontmost app near stop/undo time for
   privacy-safe telemetry category. This is the right lifecycle moment for
   paste-target prompt selection.
-  - `Sources/MacParakeet/App/DictationFlowCoordinator.swift`
-  - `Sources/MacParakeetCore/Services/Telemetry/TelemetryAppCategory.swift`
+  - `Sources/Sotto/App/DictationFlowCoordinator.swift`
+  - `Sources/SottoCore/Services/Telemetry/TelemetryAppCategory.swift`
 - Transform selection capture already returns exact local app context through
   `SelectionCaptureTarget`. Transform history stores source app bundle/name
   locally, while telemetry sends only a coarse `app_category`.
-  - `Sources/MacParakeetCore/Services/System/SelectionCaptureService.swift`
-  - `Sources/MacParakeetCore/Services/Transforms/TransformExecutor.swift`
-  - `Sources/MacParakeet/App/TransformsCoordinator.swift`
+  - `Sources/SottoCore/Services/System/SelectionCaptureService.swift`
+  - `Sources/SottoCore/Services/Transforms/TransformExecutor.swift`
+  - `Sources/Sotto/App/TransformsCoordinator.swift`
 - Prompt source scoping exists, but it is transcription-source scoping
   (`meeting`, `file`, etc.), not app-context scoping.
-  - `Sources/MacParakeetCore/Models/Prompt.swift`
-  - `Sources/MacParakeetCore/Database/PromptRepository.swift`
+  - `Sources/SottoCore/Models/Prompt.swift`
+  - `Sources/SottoCore/Database/PromptRepository.swift`
 
-Implication: MacParakeet already has the local app-category privacy contract and
+Implication: Sotto already has the local app-category privacy contract and
 most of the app-context plumbing. The missing feature is deterministic prompt
 resolution before AI formatting.
 
@@ -161,7 +161,7 @@ Current shape:
 Important caution:
 
 - Website matching is loose substring matching after stripping protocol and
-  `www.`. That creates false-positive risk. MacParakeet should parse URLs,
+  `www.`. That creates false-positive risk. Sotto should parse URLs,
   normalize hosts, and match host suffixes if/when browser domains ship.
 
 Lessons:
@@ -188,7 +188,7 @@ Current shape:
 Lesson:
 
 - Handy is a useful baseline for "global prompt only", which is exactly the
-  limitation the MacParakeet issues are asking to move past.
+  limitation the Sotto issues are asking to move past.
 
 ### OpenWhispr
 
@@ -236,7 +236,7 @@ Lesson:
 - Exact bundle prompt binding is enough to ship a useful app-specific prompt
   feature.
 - Capture timing must be tested around overlays and focus changes; app context
-  capture can be correct in principle but wrong in practice if MacParakeet
+  capture can be correct in principle but wrong in practice if Sotto
   itself becomes frontmost.
 
 ### Yapper
@@ -256,7 +256,7 @@ Current shape:
 Lesson:
 
 - "Context in the prompt" and "context used for routing" are different systems.
-  MacParakeet should implement deterministic routing first, not rely on the LLM
+  Sotto should implement deterministic routing first, not rely on the LLM
   to infer style from injected app context.
 
 ### Anarlog / Hyprnote / Char
@@ -303,7 +303,7 @@ Current shape:
 Lesson:
 
 - App provenance in history is valuable even before routing exists.
-- Capture-at-start is a useful reliability reference, but MacParakeet's paste
+- Capture-at-start is a useful reliability reference, but Sotto's paste
   target model still needs stop/undo-time context or a documented fallback when
   focus drifts.
 
@@ -347,7 +347,7 @@ Lesson:
 
 - Category defaults are product-friendly and easier than exact-app rules for
   casual users.
-- MacParakeet should support local category profiles, but preserve the existing
+- Sotto should support local category profiles, but preserve the existing
   global prompt as fallback and avoid turning on surprise rewrites by default.
 
 ### Raycast Dictation
@@ -363,7 +363,7 @@ Current shape from broader research:
 
 Lesson:
 
-- Built-in style templates help onboarding, but MacParakeet should keep them as
+- Built-in style templates help onboarding, but Sotto should keep them as
   creation templates or explicit opt-ins so the local-first default remains
   unchanged.
 
@@ -382,7 +382,7 @@ Current shape:
 Lesson:
 
 - Prompt inputs should be structured and explicit. Do not silently stuff
-  clipboard/screen/selection context into a profile. If MacParakeet adds these
+  clipboard/screen/selection context into a profile. If Sotto adds these
   later, each source needs its own opt-in.
 
 ### MacWhisper
@@ -399,7 +399,7 @@ Current shape:
 Lesson:
 
 - The simplest useful feature is exact app -> prompt for dictation. This is
-  enough to address the MacParakeet issues without browser/domain matching.
+  enough to address the Sotto issues without browser/domain matching.
 
 ### Amical
 
@@ -418,7 +418,7 @@ Current shape:
 Lesson:
 
 - Built-in defaults plus custom overrides is a strong product shape.
-- MacParakeet can start with custom profiles and templates, then decide later
+- Sotto can start with custom profiles and templates, then decide later
   whether category defaults should auto-apply.
 
 ### Espanso
@@ -535,7 +535,7 @@ Common fields across competitors:
 - Output formatting.
 - Auto-submit/send key behavior.
 
-MacParakeet v1 should include only:
+Sotto v1 should include only:
 
 - Name.
 - Enabled state.
@@ -555,22 +555,22 @@ Competitors split between start-time capture and just-after-start capture:
 - FluidVoice captures active app before overlays change focus.
 - Hex captures frontmost app at recording start and persists it as history
   metadata.
-- MacParakeet currently refreshes app category near stop/undo time to reflect
+- Sotto currently refreshes app category near stop/undo time to reflect
   the paste target.
 
-Recommended MacParakeet stance:
+Recommended Sotto stance:
 
 - Use stop/undo-time context for v1 prompt resolution because it matches the
   existing paste-target telemetry model.
 - Also test focus drift explicitly. If stop/undo-time context is missing or is
-  MacParakeet itself, fall back to a start-time snapshot captured before any
-  MacParakeet UI can become frontmost.
+  Sotto itself, fall back to a start-time snapshot captured before any
+  Sotto UI can become frontmost.
 - Record which local context source was used for debugging, but do not send the
   exact app or source decision to telemetry.
 
 ### Matching Order
 
-Recommended MacParakeet v1:
+Recommended Sotto v1:
 
 1. Explicit exact-bundle profile.
 2. Coarse app-category profile.
@@ -593,8 +593,8 @@ Build Dictation AI Formatter profiles.
 
 The user can add a profile for Slack, Mail, Terminal, Cursor, etc., or for a
 coarse category like Email or Terminal. If AI Formatter is enabled and the
-focused paste target matches the profile at stop/undo time, MacParakeet uses
-that profile's prompt. If focus has drifted to MacParakeet or the context is
+focused paste target matches the profile at stop/undo time, Sotto uses
+that profile's prompt. If focus has drifted to Sotto or the context is
 unknown, the runtime can fall back to a start-time snapshot. Otherwise it uses
 the existing global prompt.
 

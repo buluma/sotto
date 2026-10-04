@@ -5,16 +5,16 @@
 
 ## Context
 
-People have useful recordings from before MacParakeet or from other recorders.
+People have useful recordings from before Sotto or from other recorders.
 Generic file transcription does not enter the meeting lifecycle with its
 speaker-aware playback, artifacts, retry, and meeting automation. External
-files remain user-owned; importing them must not grant MacParakeet authority
+files remain user-owned; importing them must not grant Sotto authority
 to delete or rewrite those originals. Historical dates also cannot serve as
 the retention age of a newly stored copy.
 
 ## Decision
 
-Offer one-file import in Meetings and `macparakeet-cli meetings import` through
+Offer one-file import in Meetings and `sotto-cli meetings import` through
 one Core service. Normalize a supported local audio/video file into a managed
 system-only meeting archive and use ordinary meeting finalization, settlement,
 and saved-audio automation. The default audio stream selected by the converter
@@ -43,7 +43,7 @@ a shipped stable release or physical/runtime verification.
 
 The managed copy consumes storage independently of its external source. Users
 may delete or retain each independently. Retention and deletion only operate
-on MacParakeet-owned artifacts. Delete-immediately is applied after a successful
+on Sotto-owned artifacts. Delete-immediately is applied after a successful
 import; retryable imports keep managed audio until Retry can finish. Import does
 not change local STT or explicitly configured AI-provider boundaries.
 

@@ -168,9 +168,9 @@ class QueryAudioDiagnosticsTests(unittest.TestCase):
         self.assertEqual(diagnostics.query_log(self.path)["status"], "unreadable")
 
     def test_default_path_honors_explicit_and_debug_environment(self):
-        with patch.dict(os.environ, {"MACPARAKEET_DEBUG_APP_STATE_DIR": "/tmp/debug"}, clear=True):
+        with patch.dict(os.environ, {"SOTTO_DEBUG_APP_STATE_DIR": "/tmp/debug"}, clear=True):
             self.assertEqual(diagnostics.default_log_path(), Path("/tmp/debug/logs/dictation-audio.log"))
-            with patch.dict(os.environ, {"MACPARAKEET_AUDIO_DIAGNOSTICS_LOG_PATH": "/tmp/chosen.log"}):
+            with patch.dict(os.environ, {"SOTTO_AUDIO_DIAGNOSTICS_LOG_PATH": "/tmp/chosen.log"}):
                 self.assertEqual(diagnostics.default_log_path(), Path("/tmp/chosen.log"))
 
     def test_naive_timestamps_and_unbounded_limits_are_rejected(self):

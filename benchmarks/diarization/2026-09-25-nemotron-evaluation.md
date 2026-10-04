@@ -313,7 +313,7 @@ Final verification passed:
 - Final real-model E2E rerun: one test passed in 36.94 seconds, including
   30.95 seconds meeting finalization and 3.05 seconds file processing.
 - Release benchmark build, first-party Swift 6 language-mode build
-  (`MACPARAKEET_SKIP_WHISPERKIT=1`), strict formatting of new Swift files,
+  (`SOTTO_SKIP_WHISPERKIT=1`), strict formatting of new Swift files,
   subsystem README references and shell-script syntax.
 
 The receipt hashes the final logs and binaries. GUI bundle/runtime and physical
@@ -344,7 +344,7 @@ actionable code findings; GitHub CI and review status are recorded on the PR.
 
 Use the [benchmark README](README.md), committed manifests, isolated
 [0.15.7 baseline package](Baseline/README.md), and opt-in
-[Nemotron E2E test](../../Tests/MacParakeetTests/Services/Diarization/NemotronDiarizationE2ETests.swift).
+[Nemotron E2E test](../../Tests/SottoTests/Services/Diarization/NemotronDiarizationE2ETests.swift).
 Large audio, raw predictions and scorer artifacts remain outside Git. The
 [results/provenance receipt](2026-09-25-nemotron-results.json) includes aggregate
 and individual scores, paired uncertainty, runtime, input/model hashes,

@@ -104,7 +104,7 @@ past 99:59) **not regressed** — the new CALayer badge stays single-line at
 - **Driving the dev app for measurement** (Accessibility is granted, AppleScript
   works): `scripts/dev/run_app.sh` builds + relaunches (kills old instance,
   non-blocking). Trigger meeting:
-  `osascript -e 'tell application "System Events" to tell process "MacParakeet" to click menu item "Start Recording" of menu 1 of menu bar item "Capture" of menu bar 1'`
+  `osascript -e 'tell application "System Events" to tell process "Sotto" to click menu item "Start Recording" of menu 1 of menu bar item "Capture" of menu bar 1'`
   (toggles to "Stop Recording"). Open workspace: same pattern with
   `"Meetings"` of `"Go"`. "Start Dictation" is also under "Capture".
 - **Measure CPU:** `top -l N -s 1 -pid <pid> -stats pid,cpu,command | grep "^<pid>"`
@@ -113,7 +113,7 @@ past 99:59) **not regressed** — the new CALayer badge stays single-line at
 - **Pill render harness** (preview pill states without launching the app, faithful
   because it compiles the real `MerkabaPillIconView`):
   `plans/active/assets/pill_preview_harness.swift`. Run:
-  `swiftc -o /tmp/pillrender plans/active/assets/pill_preview_harness.swift Sources/MacParakeet/Views/MeetingRecording/MerkabaPillIcon.swift && /tmp/pillrender`
+  `swiftc -o /tmp/pillrender plans/active/assets/pill_preview_harness.swift Sources/Sotto/Views/MeetingRecording/MerkabaPillIcon.swift && /tmp/pillrender`
   → writes a PNG. Edit the `panels` array to render variants (hover, paused,
   long timestamps). Used to tune the 54×86 compaction + verify the hover badge.
 - **⚠️ A meeting recording may still be live on the dev app** (the owner started

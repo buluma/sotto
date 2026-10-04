@@ -18,9 +18,9 @@ Extract the implicit state machine in `DictationFlowCoordinator` into an explici
 
 ## Design Decisions
 
-### State Machine Lives in MacParakeetCore
+### State Machine Lives in SottoCore
 
-The state machine is pure logic with no UI dependencies — it belongs in `MacParakeetCore` so it can be tested by the existing test target (`MacParakeetTests` imports `@testable MacParakeetCore`). It also models the dictation flow at a domain level, not a UI level.
+The state machine is pure logic with no UI dependencies — it belongs in `SottoCore` so it can be tested by the existing test target (`SottoTests` imports `@testable SottoCore`). It also models the dictation flow at a domain level, not a UI level.
 
 ### Pure Value Type (struct + enum)
 
@@ -249,15 +249,15 @@ Key changes from v1:
 
 ## Implementation Steps
 
-### Step 1: Create DictationFlowStateMachine in MacParakeetCore
+### Step 1: Create DictationFlowStateMachine in SottoCore
 
-**File:** `Sources/MacParakeetCore/DictationFlow/DictationFlowStateMachine.swift`
+**File:** `Sources/SottoCore/DictationFlow/DictationFlowStateMachine.swift`
 
 Create the state machine with all types defined above and the `handle(_:)` transition function. Pure, synchronous, no imports beyond Foundation.
 
 ### Step 2: Write Exhaustive Tests
 
-**File:** `Tests/MacParakeetTests/DictationFlow/DictationFlowStateMachineTests.swift`
+**File:** `Tests/SottoTests/DictationFlow/DictationFlowStateMachineTests.swift`
 
 Test every transition in the table above, plus:
 - Invalid transitions return empty effects and don't change state
@@ -277,7 +277,7 @@ Test every transition in the table above, plus:
 
 ### Step 3: Refactor DictationFlowCoordinator to Use the State Machine
 
-**File:** `Sources/MacParakeet/App/DictationFlowCoordinator.swift`
+**File:** `Sources/Sotto/App/DictationFlowCoordinator.swift`
 
 Replace the 11 state variables with:
 ```swift
@@ -318,6 +318,6 @@ The `executeEffects` method loops through effects and dispatches each one. Synch
 
 | File | Action | Notes |
 |------|--------|-------|
-| `Sources/MacParakeetCore/DictationFlow/DictationFlowStateMachine.swift` | **New** | Pure state machine |
-| `Tests/MacParakeetTests/DictationFlow/DictationFlowStateMachineTests.swift` | **New** | Exhaustive transition tests |
-| `Sources/MacParakeet/App/DictationFlowCoordinator.swift` | **Modified** | Refactored to use state machine |
+| `Sources/SottoCore/DictationFlow/DictationFlowStateMachine.swift` | **New** | Pure state machine |
+| `Tests/SottoTests/DictationFlow/DictationFlowStateMachineTests.swift` | **New** | Exhaustive transition tests |
+| `Sources/Sotto/App/DictationFlowCoordinator.swift` | **Modified** | Refactored to use state machine |

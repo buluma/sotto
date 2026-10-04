@@ -1,11 +1,11 @@
 [
   {
-    "relative_path": "Contents/MacOS/MacParakeet",
+    "relative_path": "Contents/MacOS/Sotto",
     "sha256": "ee456a117f5ebe416ad60dca798817402bc5dd7814ad947f0e3974c6e241bc03",
     "matches_submitted_zip": true
   },
   {
-    "relative_path": "Contents/MacOS/macparakeet-cli",
+    "relative_path": "Contents/MacOS/sotto-cli",
     "sha256": "98af21250125a7096494c421ce3cf15829974caeb50e0ed5ae2897c70096d3b3",
     "matches_submitted_zip": true
   },

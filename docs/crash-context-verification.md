@@ -37,8 +37,8 @@ The C benchmark is reproducible without launching the app:
 
 ```sh
 xcrun clang -O2 -std=c11 -Wall -Wextra -Werror \
-  -I Sources/MacParakeetObjCShims/include \
-  Sources/MacParakeetObjCShims/MPKCrashSignalHandler.c \
+  -I Sources/SottoObjCShims/include \
+  Sources/SottoObjCShims/MPKCrashSignalHandler.c \
   scripts/dev/tests/crash_context_probe.c -o /tmp/crash-context-probe
 /tmp/crash-context-probe benchmark
 ```

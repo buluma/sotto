@@ -1,15 +1,15 @@
 # Logging & Telemetry Review -- 2026-05-02
 
 > Status: REVIEWED. Article reviewed: [Logging Sucks](https://loggingsucks.com/).
-> Scope: MacParakeet app/core/viewmodels/CLI telemetry, local logging, crash
+> Scope: Sotto app/core/viewmodels/CLI telemetry, local logging, crash
 > reporting, and the checked-in Cloudflare telemetry Worker in
-> `macparakeet-website`.
+> `sotto-website`.
 > Follow-up tracker:
 > [`2026-05-02-logging-telemetry-issues.md`](2026-05-02-logging-telemetry-issues.md).
 
 ## Bottom Line
 
-MacParakeet is already in good shape against the article's core advice. The app
+Sotto is already in good shape against the article's core advice. The app
 does not rely only on scattered string logs; it has typed, privacy-safe
 operation events for the main workflows:
 
@@ -22,7 +22,7 @@ operation events for the main workflows:
 - `cli_operation`
 
 That is the right desktop-app translation of "one wide event per request".
-Because MacParakeet deliberately avoids persistent user IDs, it should not copy
+Because Sotto deliberately avoids persistent user IDs, it should not copy
 the article's user-centric high-cardinality model literally. Short-lived
 `operation_id`, `workflow_id`, and `session` IDs are the right privacy-preserving
 correlation mechanism.

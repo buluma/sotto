@@ -126,7 +126,7 @@ deadlock guards, not expected-path latency targets.
 
 ### Slice C — documentation and diagnostics
 
-1. Update `Sources/MacParakeetCore/Audio/README.md` with the bounded callback
+1. Update `Sources/SottoCore/Audio/README.md` with the bounded callback
    and partial-start ownership rule.
 2. Amend ADR-014's meeting lifecycle/state-machine sections and ADR-015's
    concurrency invariants. Update the recovery contract only if implementation

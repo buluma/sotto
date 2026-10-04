@@ -7,8 +7,8 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
-const helper = process.env.MACPARAKEET_ASK_TEST_HELPER
-  ? resolve(process.env.MACPARAKEET_ASK_TEST_HELPER)
+const helper = process.env.SOTTO_ASK_TEST_HELPER
+  ? resolve(process.env.SOTTO_ASK_TEST_HELPER)
   : resolve(dirname(fileURLToPath(import.meta.url)), '../dist/ask-helper.cjs');
 const runID = '00000000-0000-0000-0000-000000000001';
 const scopeID = '00000000-0000-0000-0000-000000000002';

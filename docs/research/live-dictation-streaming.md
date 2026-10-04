@@ -45,7 +45,7 @@ preview's tail wobble ever actually bothers us.)
 
 Accepted code-cited findings now baked in:
 1. **No live frames for Parakeet/Whisper today** — the sample sink is created only on the Nemotron-gated live path (`DictationService.swift:714-789`); `AudioRecorder` mirrors only if it's non-nil (`:536-541`). → decouple a display-preview sink.
-2. **No samples-based STT API** — STT is path-based (`STTClientProtocol.swift:17`), scheduler jobs carry `audioPath` (`STTScheduler.swift:23`), runtime Parakeet calls `manager.transcribe(audioURL)` (`STTRuntime.swift:345`). FluidAudio *does* have `[Float]` batch (`AsrManager.swift:482`) and WhisperKit too (`WhisperKit.swift:896`), but MacParakeet doesn't expose it through the scheduler. → add an explicit sample-preview API; **don't improvise** `.dictation` jobs.
+2. **No samples-based STT API** — STT is path-based (`STTClientProtocol.swift:17`), scheduler jobs carry `audioPath` (`STTScheduler.swift:23`), runtime Parakeet calls `manager.transcribe(audioURL)` (`STTRuntime.swift:345`). FluidAudio *does* have `[Float]` batch (`AsrManager.swift:482`) and WhisperKit too (`WhisperKit.swift:896`), but Sotto doesn't expose it through the scheduler. → add an explicit sample-preview API; **don't improvise** `.dictation` jobs.
 3. **Single-flight** — one preview pass in flight at a time; skip timer ticks while one runs; ignore stale results by pass/session ID.
 4. **Stop / switch / quiesce ordering** — scheduler rejects an interactive `.dictation` job while a live session exists (`:426`). Preview holds **no** live-session reservation, but it still needs explicit cancellation: on stop, cancel preview → bounded drain → final; on engine switch, cancel preview → bounded drain → switch if drained, or fast `engineBusy` if runtime work is still active; on shutdown/cache-clear, wait for real preview drain under the unhealthy-runtime watchdog before runtime teardown.
 5. **Ephemeral, not stable** — earlier words *can* shift (different right-context + sliding left boundary each pass). Render as **ephemeral tail text**; never label it "stable"/"confirmed."
@@ -140,8 +140,8 @@ Debug builds can show the real overlay surface without microphone/STT setup:
 
 ```bash
 scripts/dev/run_app.sh
-APP_BUNDLE=".build/xcode-dev/Build/Products/Debug/MacParakeet-Dev.app"
-pkill -f "MacParakeet-Dev.app/Contents/MacOS/MacParakeet" || true
+APP_BUNDLE=".build/xcode-dev/Build/Products/Debug/Sotto-Dev.app"
+pkill -f "Sotto-Dev.app/Contents/MacOS/Sotto" || true
 open -na "$APP_BUNDLE" --args \
   --qa-dictation-preview-overlay \
   --qa-dictation-preview-text "Drafting the launch notes now. The live preview updates while final dictation is still streaming in."

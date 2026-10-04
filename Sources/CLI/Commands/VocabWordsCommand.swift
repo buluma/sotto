@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 struct VocabWordsCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
@@ -16,7 +16,7 @@ struct VocabWordsCommand: AsyncParsableCommand {
     )
 
     static func recognitionBoostingStatusLine(
-        defaults: UserDefaults = macParakeetAppDefaults()
+        defaults: UserDefaults = sottoAppDefaults()
     ) -> String {
         let capabilities = SpeechEngineCapabilityRegistry.capabilities(
             for: SpeechEnginePreference.current(defaults: defaults),

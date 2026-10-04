@@ -1,6 +1,6 @@
 import Darwin
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 // Chrome owns this process. stdout is exclusively the native messaging stream.
 // The extension never receives the local pairing secret or the Jev API key.

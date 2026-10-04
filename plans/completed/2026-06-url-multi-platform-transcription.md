@@ -44,7 +44,7 @@ Two parts:
 ## Architecture
 
 ### Core (pure, testable — no SwiftUI)
-- **NEW `MediaPlatform`** (`Sources/MacParakeetCore/Utilities/MediaPlatform.swift`):
+- **NEW `MediaPlatform`** (`Sources/SottoCore/Utilities/MediaPlatform.swift`):
   - `enum MediaPlatform` cases: youtube, x, vimeo, facebook, tiktok, instagram,
     applePodcasts, soundcloud, twitch, … (+ recognition by host).
   - `static func recognize(_ urlString:) -> MediaPlatform?` — host-based, best-effort.

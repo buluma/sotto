@@ -1,7 +1,7 @@
-# `macparakeet-cli` — maintainer guide
+# `sotto-cli` — maintainer guide
 
-This directory is the `macparakeet-cli` target: a Swift [ArgumentParser]
-CLI that shares all real logic with `MacParakeetCore`. It is a **public
+This directory is the `sotto-cli` target: a Swift [ArgumentParser]
+CLI that shares all real logic with `SottoCore`. It is a **public
 automation contract**, not a GUI mirror — humans, shell scripts, CI, and AI
 agents depend on its commands, flags, JSON shapes, and exit codes.
 
@@ -12,13 +12,13 @@ from an agent, read [`integrations/README.md`](../../integrations/README.md).
 
 ```
 Sources/CLI/
-├── MacParakeetCLI.swift        # @main entry: root command, subcommand list,
+├── SottoCLI.swift        # @main entry: root command, subcommand list,
 │                               #   cliVersion, exit-code normalization
 ├── CHANGELOG.md                # the public ledger + compatibility policy
 └── Commands/
     ├── CLIHelpers.swift        # shared lookups, JSON envelopes, errorType
     │                           #   taxonomy, emitJSONOrRethrow wrappers
-    ├── CLITelemetry.swift      # opt-out/CI/DO_NOT_TRACK-gated instrumentation
+    ├── CLITelemetry.swift      # local operation hooks; no telemetry transport
     ├── SpecCommand.swift       # `spec --json`: the machine-readable catalog
     ├── AskCommand.swift        # durable, source-scoped Ask automation
     ├── SavedMeetingProcessingContext.swift # shared import/split processing construction
@@ -49,7 +49,7 @@ Each command is a `ParsableCommand` / `AsyncParsableCommand`. Command families
   so piping `--json` through `jq` stays clean.
 - **Exit codes:** `0` success, `1` runtime failure (work attempted, failed),
   `2` validation/misuse (bad invocation before work started), `130` SIGINT.
-  Normalization lives in `MacParakeetCLI.normalizedExitCode(for:)`; validation
+  Normalization lives in `SottoCLI.normalizedExitCode(for:)`; validation
   failures map to `2`.
 - **JSON output:** use `printJSON(_:)` / `printEnvelope(...)` (both use the
   shared `cliJSONEncoder`: ISO-8601 dates, sorted keys, pretty-printed).
@@ -84,7 +84,7 @@ Each command is a `ParsableCommand` / `AsyncParsableCommand`. Command families
 3. **Document** the change in [`CHANGELOG.md`](./CHANGELOG.md) under
    `[Unreleased]` with the right Added/Changed/Fixed bucket and semver impact.
 4. **Version** at release time: promote `[Unreleased]` to a dated
-   `## [x.y.z]` section and bump `CLI.cliVersion` in `MacParakeetCLI.swift` to
+   `## [x.y.z]` section and bump `CLI.cliVersion` in `SottoCLI.swift` to
    match. `CLIVersionTests` pins the binary version to the latest *released*
    header.
 5. **Test** in `Tests/CLITests/`. Lock anything an external caller branches on:
@@ -96,10 +96,10 @@ Each command is a `ParsableCommand` / `AsyncParsableCommand`. Command families
 ## Testing
 
 ```bash
-swift build --product macparakeet-cli
+swift build --product sotto-cli
 swift test --filter CLITests
-swift run macparakeet-cli --help
-swift run macparakeet-cli spec --json | jq .
+swift run sotto-cli --help
+swift run sotto-cli spec --json | jq .
 ```
 
 Manual/QA matrix and provider notes: [`docs/cli-testing.md`](../../docs/cli-testing.md).

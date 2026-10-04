@@ -47,7 +47,7 @@ Proceed to full F10a implementation only when all are true:
 2. Accessibility permission can be toggled/revoked for manual negative tests
 3. test apps installed: TextEdit, Notes, Slack, Safari, VS Code
 4. command CLI path remains usable for transform baseline:
-`macparakeet-cli llm command "<command>" "<selected_text>"`
+`sotto-cli llm command "<command>" "<selected_text>"`
 5. no concurrent feature branch mutates `HotkeyManager` and `ClipboardService` contracts without rebasing this plan
 
 ## Execution Governance

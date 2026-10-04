@@ -15,7 +15,7 @@ The branch that followed this plan successfully centralized runtime ownership an
 - meeting
 - batch
 
-After a final product and architecture review on 2026-04-06, MacParakeet's approved target architecture was simplified further. The accepted end state is now:
+After a final product and architecture review on 2026-04-06, Sotto's approved target architecture was simplified further. The accepted end state is now:
 
 - one process-wide STT control plane
 - one shared STT runtime owner
@@ -55,7 +55,7 @@ This plan assumed the end-state scheduler would keep three fixed execution lanes
 2. Meeting lane
 3. Batch lane
 
-That design protects concurrent meeting and dictation work well, but it permanently reserves real inference capacity for file / YouTube transcription. For MacParakeet's product priorities, that turned out to be a stronger commitment than necessary.
+That design protects concurrent meeting and dictation work well, but it permanently reserves real inference capacity for file / YouTube transcription. For Sotto's product priorities, that turned out to be a stronger commitment than necessary.
 
 The approved target architecture therefore does **not** reserve a dedicated third file-transcription slot in v1.
 

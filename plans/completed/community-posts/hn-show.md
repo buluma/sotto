@@ -27,7 +27,7 @@ self-promotion, so the framing matters more than the content.
 ## Title
 
 ```
-Show HN: macparakeet-cli – local Parakeet STT on Apple Silicon for AI agents
+Show HN: sotto-cli – local Parakeet STT on Apple Silicon for AI agents
 ```
 
 (80 chars; HN soft-limit is 80 in the title field.)
@@ -47,11 +47,11 @@ chance to add context without making the title too dense. Post this
 **immediately** after submitting:
 
 ````markdown
-Hi HN — Daniel, maintainer of MacParakeet here.
+Hi HN — Daniel, maintainer of Sotto here.
 
-Quick context: this repo has had a macOS app (system-wide dictation, file transcription) since the start. The CLI used to feel internal; it is now a versioned public surface with semver, a written compatibility policy, stable JSON output on every read-only command, and a brew install path. Current release: `macparakeet-cli 2.3.1`.
+Quick context: this repo has had a macOS app (system-wide dictation, file transcription) since the start. The CLI used to feel internal; it is now a versioned public surface with semver, a written compatibility policy, stable JSON output on every read-only command, and a brew install path. Current release: `sotto-cli 2.3.1`.
 
-The reason I'm doing the reframe is that Apple Silicon Mac minis are increasingly the home for personal AI agent daemons (OpenClaw, Hermes, custom shell loops). Voice / STT is the documented gap in that stack: Whisper.cpp doesn't use the Neural Engine, the OpenAI Whisper API breaks local-first, parakeet-mlx (Python) doesn't have a memory layer or prompts. `macparakeet-cli` is exactly the slot between those.
+The reason I'm doing the reframe is that Apple Silicon Mac minis are increasingly the home for personal AI agent daemons (OpenClaw, Hermes, custom shell loops). Voice / STT is the documented gap in that stack: Whisper.cpp doesn't use the Neural Engine, the OpenAI Whisper API breaks local-first, parakeet-mlx (Python) doesn't have a memory layer or prompts. `sotto-cli` is exactly the slot between those.
 
 Architecture summary:
 
@@ -61,13 +61,13 @@ Architecture summary:
               FluidAudio             (CoreML on the Apple Neural Engine)
                        │
               ┌────────┴────────┐
-              │ MacParakeetCore │   Swift library, no SwiftUI views
+              │ SottoCore │   Swift library, no SwiftUI views
               │ STT · DB · LLM  │
               └────────┬────────┘
                        │
             ┌──────────┴──────────┐
             ▼                     ▼
-    macparakeet-cli         MacParakeet.app
+    sotto-cli         Sotto.app
     (semver 2.3.1)          (SwiftUI, GUI consumer)
 ```
 

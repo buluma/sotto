@@ -45,7 +45,7 @@ This is not a feature expansion. The goal is to make the existing telemetry syst
 
 ### 1. Introduce a typed event layer
 
-Create a dedicated type in `MacParakeetCore`, likely one of:
+Create a dedicated type in `SottoCore`, likely one of:
 
 ```swift
 public enum TelemetryEventSpec: Sendable {
@@ -153,8 +153,8 @@ Questions for the reviewer:
 
 Files likely touched:
 
-1. `Sources/MacParakeetCore/Services/TelemetryEvent.swift`
-2. `Sources/MacParakeetCore/Services/TelemetryService.swift`
+1. `Sources/SottoCore/Services/TelemetryEvent.swift`
+2. `Sources/SottoCore/Services/TelemetryService.swift`
 3. New contract type file if needed
 
 Tasks:
@@ -167,15 +167,15 @@ Tasks:
 
 Files likely touched:
 
-1. `Sources/MacParakeetCore/Services/DictationService.swift`
-2. `Sources/MacParakeetCore/Services/TranscriptionService.swift`
-3. `Sources/MacParakeetCore/Services/LLMService.swift`
-4. `Sources/MacParakeetViewModels/SettingsViewModel.swift`
-5. `Sources/MacParakeetViewModels/DictationHistoryViewModel.swift`
-6. `Sources/MacParakeetViewModels/CustomWordsViewModel.swift`
-7. `Sources/MacParakeetViewModels/TextSnippetsViewModel.swift`
-8. `Sources/MacParakeet/App/AppEnvironment.swift`
-9. `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift`
+1. `Sources/SottoCore/Services/DictationService.swift`
+2. `Sources/SottoCore/Services/TranscriptionService.swift`
+3. `Sources/SottoCore/Services/LLMService.swift`
+4. `Sources/SottoViewModels/SettingsViewModel.swift`
+5. `Sources/SottoViewModels/DictationHistoryViewModel.swift`
+6. `Sources/SottoViewModels/CustomWordsViewModel.swift`
+7. `Sources/SottoViewModels/TextSnippetsViewModel.swift`
+8. `Sources/Sotto/App/AppEnvironment.swift`
+9. `Sources/Sotto/Views/Transcription/TranscriptResultView.swift`
 
 Tasks:
 
@@ -187,8 +187,8 @@ Tasks:
 
 Files likely touched:
 
-1. `Sources/MacParakeetCore/Services/TelemetryService.swift`
-2. `Tests/MacParakeetTests/TelemetryServiceTests.swift`
+1. `Sources/SottoCore/Services/TelemetryService.swift`
+2. `Tests/SottoTests/TelemetryServiceTests.swift`
 
 Tasks:
 

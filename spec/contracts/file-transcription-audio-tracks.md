@@ -20,7 +20,7 @@ preserving the zero-friction path for ordinary single-track files.
 
 - Transcribe-tab file, folder, and drag/drop ingestion
 - Sequential local-file batches
-- `macparakeet-cli transcribe`
+- `sotto-cli transcribe`
 - File retranscription through the app or CLI
 
 ## Stable Semantics

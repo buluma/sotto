@@ -2,9 +2,9 @@
 
 Scope: how shipping meeting and transcription products make speaker attribution reliable, based
 only on official docs, API references, and vendor engineering posts observed on 2026-09-06.
-Companion evidence excerpts: `evidence/production-*.md`. Local baseline for MacParakeet comes
+Companion evidence excerpts: `evidence/production-*.md`. Local baseline for Sotto comes
 from `spec/adr/010-speaker-diarization.md` and the 2026-09-06 peer review
-(`../2026-09-06-oss-review-astra/macparakeet-baseline.md`), read but not modified.
+(`../2026-09-06-oss-review-astra/sotto-baseline.md`), read but not modified.
 
 ## 1. Verdict
 
@@ -15,14 +15,14 @@ word-level assignment of ASR output to an overlap-free ("exclusive") diarization
 confidence that drives a correction UI, and (e) an explicit, revocable enrollment path for
 cross-meeting identity.
 
-MacParakeet already holds the strongest non-acoustic signal a local recorder can have: separate
+Sotto already holds the strongest non-acoustic signal a local recorder can have: separate
 microphone and system-audio sources, and it already diarizes asynchronously on retained audio.
 The products that publish results comparable to "perfect separation" get there by treating
 channel identity as ground truth and diarizing only inside each channel. The gap between
-MacParakeet and the best-documented practice is therefore not mainly the model. It is the
+Sotto and the best-documented practice is therefore not mainly the model. It is the
 surrounding contract: speaker-count priors from the user, word-level assignment against an
 exclusive timeline, confidence-driven review, propagate-on-rename corrections, and an opt-in
-voiceprint store that MacParakeet can hold locally, unlike the cloud vendors that must delete
+voiceprint store that Sotto can hold locally, unlike the cloud vendors that must delete
 outputs within 24 hours.
 
 ## 2. Findings
@@ -181,20 +181,20 @@ identification" as a feature. Pixel deletes voice models minutes after labeling.
 not collar or overlap scoring. Deepgram gives relative CER and preference votes only. No
 platform (Zoom, Teams, Meet, Granola, Otter) publishes any attribution accuracy.
 
-## 3. Implications for MacParakeet
+## 3. Implications for Sotto
 
-MacParakeet's current state per ADR-010: FluidAudio offline pipeline (Community-1 segmentation,
+Sotto's current state per ADR-010: FluidAudio offline pipeline (Community-1 segmentation,
 WeSpeaker embeddings, VBx clustering), meetings diarize only the isolated system-audio track,
 microphone words are source-labeled "Me", exclusive output trims overlaps (overlap words can get
 a nil speaker), no cross-file identity, and speaker rename updates a mapping table. That is
 structurally the same shape the cloud vendors recommend. The gaps are in the contract around
 the model.
 
-### 3.1 Five strongest patterns for MacParakeet's situation
+### 3.1 Five strongest patterns for Sotto's situation
 
 1. **Treat channel identity as ground truth and diarize only within the remote channel.**
    This is exactly AssemblyAI's "multichannel plus speaker labels" and Deepgram's per-channel
-   diarization, and it is what MacParakeet already does with "Me" on the mic track. Keep it, and
+   diarization, and it is what Sotto already does with "Me" on the mic track. Keep it, and
    extend it: never let a clustering pass reassign a mic-track word to a remote speaker, and use
    the cleaned mic track (ADR-028) to avoid echo of remote voices being clustered as a new
    speaker on the system track. Causal path: the documented accuracy advantage comes from
@@ -213,13 +213,13 @@ the model.
    timeline, and give nil-speaker words a documented fallback.** pyannoteAI's merge tutorial and
    WhisperX's `assign_word_speakers` are the only publicly specified alignment rules, and they
    pair exclusive diarization with maximum-overlap assignment plus nearest-midpoint fill.
-   MacParakeet already has exclusive output; ADR-010 notes overlap words may be unlabeled. Adopting
+   Sotto already has exclusive output; ADR-010 notes overlap words may be unlabeled. Adopting
    `fill_nearest` semantics and exposing the assignment as a separate, testable step from
    clustering makes drift and boundary errors auditable.
 
 4. **Emit per-turn confidence and use it to drive review, not just display.** pyannoteAI's
    turn-level confidence and Deepgram's per-word `speaker_confidence` exist for one reason:
-   "Focus human review time on the most uncertain segments". MacParakeet can compute a cheap
+   "Focus human review time on the most uncertain segments". Sotto can compute a cheap
    proxy from cluster margin (distance to the assigned centroid versus the next-best centroid) and
    from turn duration, and surface only low-confidence turns for confirmation. This turns the
    user's correction budget into the accuracy lever that every vendor without enrollment relies
@@ -228,7 +228,7 @@ the model.
 5. **Make corrections propagate, and make cross-meeting identity an explicit local opt-in.**
    Otter's "tag once, applies to all Speaker #s, rename across conversations, Rematch old
    meetings" is the documented gold standard for correction UX. Fireflies' "apply to one or all"
-   is the minimum. Because MacParakeet retains audio and is local-first, it can hold the
+   is the minimum. Because Sotto retains audio and is local-first, it can hold the
    voiceprint store that pyannoteAI forces callers to keep, with Teams-style controls: opt-in per
    person, delete on demand, expiry, and a "Distinguish only" mode that never names anyone.
    Enrollment should come from confirmed turns (Otter's "a few tagged paragraphs", pyannoteAI's
@@ -237,7 +237,7 @@ the model.
 ### 3.2 Anti-patterns to avoid
 
 - **Mixing mic and system audio before diarization.** No vendor documents this; every one that
-  can separate channels does so. It throws away MacParakeet's best signal.
+  can separate channels does so. It throws away Sotto's best signal.
 - **Forcing an exact speaker count.** AssemblyAI merges surplus speakers into existing labels
   and warns to use exact counts only when certain. Use bounds.
 - **Per-paragraph renames that do not propagate.** Pixel Recorder and Zoom cloud transcripts
@@ -248,10 +248,10 @@ the model.
   absence of biometrics. A local app has less exposure but should still default to no persistent
   voiceprints and label the feature clearly.
 - **Treating live labels as final.** Soniox and pyannoteAI both document that streaming labels
-  flip and that full-context batch is materially better. MacParakeet's live preview should not
+  flip and that full-context batch is materially better. Sotto's live preview should not
   show speaker labels that the final pass will contradict.
 - **Quoting vendor DER or cpWER as a target without conditions.** Collar, overlap scoring, and
-  oracle count are unstated in most claims; MacParakeet's own 2-4% CoreML quantization loss
+  oracle count are unstated in most claims; Sotto's own 2-4% CoreML quantization loss
   (ADR-010) is already a larger effect than some vendor-to-vendor differences.
 - **LLM name inference as the identity source.** Granola and AssemblyAI use it, but only as a
   layer over channel or diarization labels, and Granola does so because it has no audio to
@@ -267,8 +267,8 @@ the model.
   per-participant paragraph). Wording may differ slightly.
 - **Vendor accuracy claims are unverified and conditions are incomplete.** pyannoteAI omits
   collar; AssemblyAI omits collar, overlap scoring, and oracle count; Deepgram gives no absolute
-  numbers. None of them evaluate the two-channel meeting condition MacParakeet has, so their
-  numbers do not bound MacParakeet's achievable error.
+  numbers. None of them evaluate the two-channel meeting condition Sotto has, so their
+  numbers do not bound Sotto's achievable error.
 - **Channel identity fails when the user is not alone on the mic.** In-room meetings, speaker
   playback without AEC, or a second person at the laptop collapse to "Me", the same failure
   Fathom and Granola document. A within-mic-channel diarization pass would be needed for that
@@ -281,12 +281,12 @@ the model.
   models trained to emit it; a margin-based proxy may be poorly calibrated. It should be
   validated on the retained corpus before it gates any UI.
 - **Cross-meeting voiceprints create a new data class.** Teams documents a one-year expiry, user
-  export, and admin deletion; pyannoteAI pushes storage to the caller. MacParakeet would need a
+  export, and admin deletion; pyannoteAI pushes storage to the caller. Sotto would need a
   contract document for the store, deletion on speaker delete, and exclusion from exports by
   default. False accepts are not published by any vendor, so thresholds must be tuned locally.
 - **Word-level timestamp drift between Parakeet ASR and the diarizer is not addressed by any
   vendor doc.** The maximum-overlap rule tolerates small drift but not systematic offset;
-  MacParakeet should measure offset on its own corpus.
+  Sotto should measure offset on its own corpus.
 
 ## 5. Sources
 
@@ -373,4 +373,4 @@ Fireflies and Fathom
 Local (read-only)
 - spec/adr/010-speaker-diarization.md (amendments 2026-07-03 and 2026-07-05)
 - spec/adr/028-meeting-echo-cancellation.md
-- docs/research/2026-09-06-oss-review-astra/macparakeet-baseline.md
+- docs/research/2026-09-06-oss-review-astra/sotto-baseline.md

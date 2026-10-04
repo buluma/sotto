@@ -11,7 +11,7 @@ The competitor examples, ratings, prices, and model-quality comparisons below
 are historical decision inputs from February–March 2026, not a current market
 survey or a benchmark of today's providers.
 
-MacParakeet is entering a market where the dominant player (WisprFlow) relies on cloud processing. WisprFlow sends audio to remote servers for transcription and AI refinement, which creates three problems users consistently report:
+Sotto is entering a market where the dominant player (WisprFlow) relies on cloud processing. WisprFlow sends audio to remote servers for transcription and AI refinement, which creates three problems users consistently report:
 
 1. **Privacy**: Audio data leaves the device. Users dictating medical notes, legal documents, proprietary code, or personal journals have legitimate privacy concerns.
 2. **Latency**: WisprFlow users report 20-30 second server delays during peak usage hours. Cloud dependency means performance varies with server load, network conditions, and geographic distance.
@@ -96,11 +96,11 @@ A local 8B model produces mediocre summaries. Cloud models (Claude, GPT-4) produ
 | No provider (default) | No | No | No LLM features |
 | Ollama | No | No with a localhost server; remote endpoints send text off-device | Depends on configured model |
 | Local CLI | No | Depends on the CLI tool | Varies by tool/provider |
-| Apple Intelligence provider | No | No; MacParakeet uses the on-device Foundation Models API only | Depends on the system model |
+| Apple Intelligence provider | No | No; Sotto uses the on-device Foundation Models API only | Depends on the system model |
 | Cloud API key | No | Yes, for configured AI workflows | Depends on configured model |
 
 Users make an informed choice. The UI makes the tradeoff explicit. Apple's
-broader Intelligence platform may use Private Cloud Compute, but MacParakeet's
+broader Intelligence platform may use Private Cloud Compute, but Sotto's
 Apple Intelligence provider uses the on-device Foundation Models API with no
 cloud fallback.
 
@@ -112,7 +112,7 @@ their own behavior.
 
 ### Official paid distribution still works
 
-Cloud LLM costs are paid directly by the user to their provider (Anthropic, OpenAI, etc.). MacParakeet has zero server costs for core speech and zero marginal STT cost per user. The original one-time purchase model (ADR-003) was superseded by the current free/GPL release, but GPL-compatible paid official distribution, support, hosted services, or team features remain possible.
+Cloud LLM costs are paid directly by the user to their provider (Anthropic, OpenAI, etc.). Sotto has zero server costs for core speech and zero marginal STT cost per user. The original one-time purchase model (ADR-003) was superseded by the current free/GPL release, but GPL-compatible paid official distribution, support, hosted services, or team features remain possible.
 
 ### Market validation
 
@@ -120,7 +120,7 @@ Cloud LLM costs are paid directly by the user to their provider (Anthropic, Open
 - Raycast — optional AI features with user's API key
 - Char (fastrepl/char) — meeting transcription with cloud + local-provider support
 - Apple Intelligence platform — on-device processing and, in other Apple
-  surfaces, Private Cloud Compute; MacParakeet uses only its on-device model
+  surfaces, Private Cloud Compute; Sotto uses only its on-device model
 
 ## Consequences
 

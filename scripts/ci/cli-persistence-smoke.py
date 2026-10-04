@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Exercise real CLI persistence across processes using an isolated database.
 
-Usage: python3 scripts/ci/cli-persistence-smoke.py /absolute/path/to/macparakeet-cli
+Usage: python3 scripts/ci/cli-persistence-smoke.py /absolute/path/to/sotto-cli
 No models, network calls, or existing app data are needed.
 """
 
@@ -51,17 +51,17 @@ def run_json(cli, database, environment, *arguments, expected_exit=0):
 
 
 def main():
-    require(len(sys.argv) == 2, "Usage: cli-persistence-smoke.py /absolute/path/to/macparakeet-cli")
+    require(len(sys.argv) == 2, "Usage: cli-persistence-smoke.py /absolute/path/to/sotto-cli")
     cli = Path(sys.argv[1])
     require(cli.is_absolute(), f"CLI path must be absolute: {cli}")
     require(cli.is_file() and os.access(cli, os.X_OK), f"CLI is not executable: {cli}")
 
-    with tempfile.TemporaryDirectory(prefix="macparakeet-cli-smoke-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="sotto-cli-smoke-") as temporary:
         root = Path(temporary)
         database = root / "smoke.sqlite"
         environment = os.environ.copy()
-        environment["MACPARAKEET_TELEMETRY"] = "0"
-        environment["MACPARAKEET_DEBUG_APP_STATE_DIR"] = str(root / "app-state")
+        environment["SOTTO_TELEMETRY"] = "0"
+        environment["SOTTO_DEBUG_APP_STATE_DIR"] = str(root / "app-state")
 
         collections = run_json(cli, database, environment, "collections", "list")
         require(isinstance(collections, list) and not collections, "Fresh database has collections")

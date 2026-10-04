@@ -1,10 +1,10 @@
-# Evidence: MacParakeet speaker-attribution call trace at origin/main 57e3391a
+# Evidence: Sotto speaker-attribution call trace at origin/main 57e3391a
 
 All paths are relative to the repository root at 57e3391a4e25a0ea87fd9519d2a01dfdcf78e6cf.
 Read with `git show origin/main:<path>`; the working tree has unrelated uncommitted edits but none
 of the files below differ from origin/main except where noted.
 
-## DiarizationService (Sources/MacParakeetCore/Services/Diarization/DiarizationService.swift)
+## DiarizationService (Sources/SottoCore/Services/Diarization/DiarizationService.swift)
 
 - 73-91: public inits. Default `config: OfflineDiarizerConfig = .default`; the constraint init
   calls `offlineConfig(speakerConstraint:)` (202-214) which only sets numSpeakers or min/max.
@@ -14,23 +14,23 @@ of the files below differ from origin/main except where noted.
   rounding (139-144); labels "Speaker N" (146-151).
 - Nothing else from `DiarizationResult` (speakerDatabase, chunkEmbeddings, qualityScore,
   timings) is consumed.
-- App wiring: Sources/MacParakeet/App/AppEnvironment.swift:234 `DiarizationService()` (default config).
+- App wiring: Sources/Sotto/App/AppEnvironment.swift:234 `DiarizationService()` (default config).
 - CLI wiring: Sources/CLI/Commands/TranscribeCommand.swift:441-449 `makeDiarizationService` (default
   config unless a count constraint is given).
 
-## SpeakerMerger (Sources/MacParakeetCore/Services/Diarization/SpeakerMerger.swift)
+## SpeakerMerger (Sources/SottoCore/Services/Diarization/SpeakerMerger.swift)
 
 - 9-61: for each word, scan segments that overlap [startMs, endMs); the segment with the largest
   overlap wins; equal overlap keeps the earlier segment (46-50); zero overlap leaves speakerId nil
   (55-57). No smoothing, no boundary snapping, no confidence use.
 
-## File / URL path (Sources/MacParakeetCore/Services/TranscriptionService.swift)
+## File / URL path (Sources/SottoCore/Services/TranscriptionService.swift)
 
 - 1644: `diarizationRequested = diarizationService != nil && shouldDiarize()`.
 - 1647-1650: `audioProcessor.convert` to WAV.
 - 1664-1678: STT, words from `result.words`.
 - 1690: diarization runs only when `!words.isEmpty` (engines without word timings skip it; test
-  at Tests/MacParakeetTests/Services/TranscriptionServiceTests.swift:540-600).
+  at Tests/SottoTests/Services/TranscriptionServiceTests.swift:540-600).
 - 1696-1709: `diarize(audioURL: wavURL)` on the same WAV; merge; `speakerCount`, `speakers`,
   `diarizationSegments` set from the diarizer output.
 - 1716-1726: failure is non-fatal; telemetry `diarizationFailed`.
@@ -52,7 +52,7 @@ of the files below differ from origin/main except where noted.
 - 1236-1252 `makeMeetingTranscriptionStub`: a fresh `Transcription` per run; `calendarEventSnapshot`
   is stored (1250) but not used as a speaker-count prior.
 
-## MeetingTranscriptFinalizer (Sources/MacParakeetCore/Services/MeetingRecording/MeetingTranscriptFinalizer.swift)
+## MeetingTranscriptFinalizer (Sources/SottoCore/Services/MeetingRecording/MeetingTranscriptFinalizer.swift)
 
 - 34-43 `shiftedWords`: every word gets `speakerId = source.rawValue` ("microphone" / "system")
   (87-101).
@@ -66,19 +66,19 @@ of the files below differ from origin/main except where noted.
 - 127-160 `buildDiarizationSegments`: derived from words with a 1.5 s same-speaker gap merge, not
   from the diarizer's own segments.
 
-## MeetingTranscriptSourceReconciler (Sources/MacParakeetCore/Services/MeetingRecording/MeetingTranscriptSourceReconciler.swift)
+## MeetingTranscriptSourceReconciler (Sources/SottoCore/Services/MeetingRecording/MeetingTranscriptSourceReconciler.swift)
 
 - 154-163 constants: run gap 1.2 s, timing tolerance 0.6 s, low-confidence duplicate <= 0.65 avg
   (or <= 0.80 for 1-2 words), exact simultaneous echo >= 3 words, fuzzy simultaneous echo >= 5
   words with 0.8 similarity.
 - 165-195: only microphone words are ever removed; system words are never removed.
 
-## MeetingTranscriptAssembler (Sources/MacParakeetCore/Services/MeetingRecording/MeetingTranscriptAssembler.swift)
+## MeetingTranscriptAssembler (Sources/SottoCore/Services/MeetingRecording/MeetingTranscriptAssembler.swift)
 
 - Live preview only (used by MeetingRecordingService.swift:300). Speakers are source labels
   "Me"/"Others" (221-227); no diarization during recording.
 
-## TranscriptSegmenter (Sources/MacParakeetCore/Utilities/TranscriptSegmenter.swift)
+## TranscriptSegmenter (Sources/SottoCore/Utilities/TranscriptSegmenter.swift)
 
 - 171-203: a segment flushes on speaker change (173-182), sentence punctuation after >= 3 words,
   a gap > 1.5 s, or 40 words. Words with nil speakerId inherit the current speaker (185-188).
@@ -87,9 +87,9 @@ of the files below differ from origin/main except where noted.
 
 ## Rename and persistence
 
-- Sources/MacParakeetViewModels/TranscriptionViewModel.swift:1608-1680 `renameSpeaker`: edits the
+- Sources/SottoViewModels/TranscriptionViewModel.swift:1608-1680 `renameSpeaker`: edits the
   `speakers` roster label and re-labels `transcriptSegments`; persists via
-  `TranscriptionRepository.updateSpeakers` (Sources/MacParakeetCore/Database/TranscriptionRepository.swift:534-545);
+  `TranscriptionRepository.updateSpeakers` (Sources/SottoCore/Database/TranscriptionRepository.swift:534-545);
   refreshes meeting artifacts.
 - Retranscription: `retranscribeMeeting` (TranscriptionService.swift:142-148, 179-203) calls
   `transcribeMeeting`, which builds a new record; the GUI copies id/createdAt back
@@ -103,7 +103,7 @@ of the files below differ from origin/main except where noted.
 
 ## Export
 
-- Sources/MacParakeetCore/Services/MeetingRecording/MeetingMarkdownRenderer.swift:227-280:
+- Sources/SottoCore/Services/MeetingRecording/MeetingMarkdownRenderer.swift:227-280:
   speaker paragraphs only when `hasSpeakerLabeledWords` and the transcript is not user-edited;
   label falls back to the raw id.
 - Sources/CLI/Commands/TranscribeCommand.swift:1047-1078, 1135-1168: text output prints labels at
@@ -111,7 +111,7 @@ of the files below differ from origin/main except where noted.
 
 ## Preferences and flags
 
-- Sources/MacParakeetCore/AppRuntimePreferences.swift:514-517: `speakerDiarization` and
+- Sources/SottoCore/AppRuntimePreferences.swift:514-517: `speakerDiarization` and
   `meetingSpeakerDiarization` keys, both default true.
 - Sources/CLI/Commands/TranscribeCommand.swift:131-144, 349-439: `--speaker-detection
   app-default|on|off`, `--speaker-count`, `--speaker-min`, `--speaker-max`, `--no-diarize`.
@@ -120,7 +120,7 @@ of the files below differ from origin/main except where noted.
 
 ## Audio capture facts relevant to diarization input
 
-- Sources/MacParakeetCore/Audio/SystemAudioStream.swift:76, 368: ScreenCaptureKit system audio at
+- Sources/SottoCore/Audio/SystemAudioStream.swift:76, 368: ScreenCaptureKit system audio at
   2 channels; it is the full system output mix, not a per-process tap.
 - spec/adr/028-meeting-echo-cancellation.md:27-84: cleaned mic is derived offline with LocalVQE
   echo-only; fallback to raw mic is observable via reason codes.

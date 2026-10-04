@@ -6,7 +6,7 @@ The runner uses the existing DEBUG CLI from candidate `8548c099af5ee2ab0ed4dd9ef
 
 Fixture setup is explicit: the CLI initializes its schema and adds a custom prompt; Python SQLite inserts an invented transcription and the prompt's inference settings. This verifies the executable/persistence boundary, not GUI editing or real inference quality. The legacy migration fixture reconstructs the pre-v0.29 column shape from this owned database; it is not a database produced by a v0.7.3 binary.
 
-Reusable runner: [`scripts/verify_cli_contracts.py`](scripts/verify_cli_contracts.py). Runtime evidence is retained under `/tmp/macparakeet-080-qa/cli-contract-runtime/` with binary identity, arguments, exit codes, stdout/stderr, synthetic requests and stored results. No Swift build/test, audio or GUI invocation is performed by this runner.
+Reusable runner: [`scripts/verify_cli_contracts.py`](scripts/verify_cli_contracts.py). Runtime evidence is retained under `/tmp/sotto-080-qa/cli-contract-runtime/` with binary identity, arguments, exit codes, stdout/stderr, synthetic requests and stored results. No Swift build/test, audio or GUI invocation is performed by this runner.
 
 ## Historical run-02 execution
 
@@ -17,8 +17,8 @@ and defaults to CLI 4.0.0.
 
 ```bash
 python3 docs/qa/2026-09-07-0.8.0/scripts/verify_cli_contracts.py \
-  --cli .build/debug/macparakeet-cli \
-  --output /tmp/macparakeet-080-qa/cli-contract-runtime/run-02 \
+  --cli .build/debug/sotto-cli \
+  --output /tmp/sotto-080-qa/cli-contract-runtime/run-02 \
   --candidate 8548c099af5ee2ab0ed4dd9efe757d85c498cca0
 ```
 

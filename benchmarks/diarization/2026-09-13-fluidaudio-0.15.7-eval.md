@@ -19,7 +19,7 @@ This does **not** close [#944](https://github.com/moona3k/macparakeet/issues/944
 | Date | 2026-09-13 |
 | Machine | Apple M4 Pro, arm64 |
 | OS | macOS 26.6.2 (25G83) |
-| Worktree | `/Users/dmoon/code/macparakeet-fa0157-eval` |
+| Worktree | `/Users/dmoon/code/sotto-fa0157-eval` |
 | Branch | `fix/1023-fluidaudio-0.15.7` |
 | Base `HEAD` before pin | `566bd042` (`origin/main`) |
 | Baseline CLI | `$HOME/asr-bench/fluidaudio-0.15.7-ab/cli-0.15.6` (copied before the pin) |
@@ -34,7 +34,7 @@ This does **not** close [#944](https://github.com/moona3k/macparakeet/issues/944
 One `.build` tree. The 0.15.6 binary was copied out, then the pin was applied
 and rebuilt in place.
 
-Local MacParakeet meeting folders were **not** used as labels. Calendar 1:1
+Local Sotto meeting folders were **not** used as labels. Calendar 1:1
 rows that already showed two system speakers had no recoverable audio.
 Remaining long system tracks in the library are 4–15 speakers and unlabeled.
 
@@ -152,7 +152,7 @@ is unconstrained clustering, which #891 does not change. Auto 1:1 still uses
 ## ASR methodology
 
 LibriSpeech `test-clean` at `$HOME/asr-bench/LibriSpeech/test-clean` (2620
-flacs on disk). Runner: `benchmarks/asr/run_macparakeet.py --limit 200
+flacs on disk). Runner: `benchmarks/asr/run_sotto.py --limit 200
 --selection stride --engine parakeet-v3` (evenly spaced 200 utterances, not
 the first 200). `--speaker-detection off --no-history --format transcript`.
 
@@ -166,14 +166,14 @@ Wall clock is not a speed claim (model already warm; 0.15.6 62.8 s vs 0.15.7
 38.1 s for the 200-file batch is confounded by cache).
 
 ```sh
-python3 benchmarks/asr/run_macparakeet.py \
+python3 benchmarks/asr/run_sotto.py \
   --cli "$HOME/asr-bench/fluidaudio-0.15.7-ab/cli-0.15.6" \
   --dataset-dir "$HOME/asr-bench/LibriSpeech/test-clean" \
   --dataset-name test-clean --engine parakeet-v3 --limit 200 --selection stride \
   --records "$HOME/asr-bench/fluidaudio-0.15.7-ab/asr/baseline_parakeet-v3_test-clean_200.jsonl" \
   --work-dir "$HOME/asr-bench/fluidaudio-0.15.7-ab/asr/baseline-work"
 
-python3 benchmarks/asr/run_macparakeet.py \
+python3 benchmarks/asr/run_sotto.py \
   --cli "$HOME/asr-bench/fluidaudio-0.15.7-ab/cli-0.15.7" \
   --dataset-dir "$HOME/asr-bench/LibriSpeech/test-clean" \
   --dataset-name test-clean --engine parakeet-v3 --limit 200 --selection stride \

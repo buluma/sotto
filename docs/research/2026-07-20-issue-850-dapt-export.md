@@ -1,14 +1,14 @@
-# Issue #850: DAPT export for MacParakeet
+# Issue #850: DAPT export for Sotto
 
 ## Bottom line
 
-MacParakeet should support DAPT 1.0 as an original-language transcript export.
-The format is a strong fit for MacParakeet's existing timed-word, language, and
+Sotto should support DAPT 1.0 as an original-language transcript export.
+The format is a strong fit for Sotto's existing timed-word, language, and
 optional speaker-label data, and it still has an honest conforming shape when
 speaker diarization or word timing is absent.
 
 Speaker diarization quality is not a DAPT-specific blocker. DAPT character
-metadata is optional, so MacParakeet should include it only when the stored
+metadata is optional, so Sotto should include it only when the stored
 transcript has aligned speaker-attributed words. If diarization is disabled,
 fails, or produces incomplete attribution, the export remains useful and valid
 without character references. This is the same underlying accuracy boundary as
@@ -27,20 +27,20 @@ more explicit rather than making it more authoritative.
 - Validation sources: [w3c/dapt XSD validator](https://github.com/w3c/dapt/tree/main/schema-validator),
   [W3C DAPT tests](https://github.com/w3c/dapt-tests), and
   [BBC TTML validator](https://github.com/bbc/ttml-validator).
-- Existing MacParakeet export boundary:
-  [`ExportService.swift`](../../Sources/MacParakeetCore/Services/ExportService.swift),
-  [`TranscriptResultActions.swift`](../../Sources/MacParakeet/Views/Transcription/TranscriptResultActions.swift),
-  [`AutoSaveService.swift`](../../Sources/MacParakeetCore/Services/AutoSaveService.swift),
+- Existing Sotto export boundary:
+  [`ExportService.swift`](../../Sources/SottoCore/Services/ExportService.swift),
+  [`TranscriptResultActions.swift`](../../Sources/Sotto/Views/Transcription/TranscriptResultActions.swift),
+  [`AutoSaveService.swift`](../../Sources/SottoCore/Services/AutoSaveService.swift),
   and [`ExportCommand.swift`](../../Sources/CLI/Commands/ExportCommand.swift).
 
-No open MacParakeet PR or branch currently overlaps DAPT.
+No open Sotto PR or branch currently overlaps DAPT.
 
 ## What DAPT requires
 
 DAPT is a TTML2-based exchange format for transcription and translation
 workflows. The standard explicitly lists speech-to-text output as a use for an
 original-language transcript ([DAPT section
-2.1.3](https://www.w3.org/TR/dapt/#other-uses)). A minimal MacParakeet document
+2.1.3](https://www.w3.org/TR/dapt/#other-uses)). A minimal Sotto document
 needs:
 
 - a TTML `<tt>` root;
@@ -59,7 +59,7 @@ identifiers are optional. When character data exists, each character is a
 `ttm:agent type="character"` with an alias name and events can reference it via
 `ttm:agent` ([DAPT section 4.2](https://www.w3.org/TR/dapt/#character)).
 
-Those rules give MacParakeet four honest output tiers:
+Those rules give Sotto four honest output tiers:
 
 1. aligned word timings plus speaker IDs and display labels: timed events with
    labeled character agents;
@@ -70,12 +70,12 @@ Those rules give MacParakeet four honest output tiers:
    event without agents.
 
 The fourth tier must not manufacture a whole-file time range or speaker mapping.
-An untimed event says exactly what MacParakeet knows; a synthetic timed event
+An untimed event says exactly what Sotto knows; a synthetic timed event
 would appear more precise than the source data.
 
-## Mapping from MacParakeet
+## Mapping from Sotto
 
-| MacParakeet data | DAPT representation | Rule |
+| Sotto data | DAPT representation | Rule |
 |---|---|---|
 | `language` | root `xml:lang` and, when known, `daptm:langSrc` | Normalize known language codes; use `xml:lang="und"` and omit `langSrc` when unavailable. |
 | `wordTimestamps` | timed script events | Reuse `TranscriptCueBuilder` so DAPT, SRT, and VTT share deterministic timing/speaker boundaries. |
@@ -84,7 +84,7 @@ would appear more precise than the source data.
 | `cleanTranscript` / `rawTranscript` without words | one untimed script event | Prefer the same display text as existing text exports. |
 | effective display title | `ttm:title` metadata | Human-readable metadata only; no local path or private source URL. |
 
-MacParakeet currently persists a single transcript-level language, so this
+Sotto currently persists a single transcript-level language, so this
 first implementation should not pretend to provide per-event mixed-language
 metadata. DAPT can carry that later without a format redesign if the data model
 gains it.
@@ -97,7 +97,7 @@ The app stores stable anonymous speaker IDs on words and separate renameable
 labels in `speakers`.
 
 DAPT should carry those labels as character aliases, but it should not claim
-persistent identity, cast/actor identity, or confidence that MacParakeet does
+persistent identity, cast/actor identity, or confidence that Sotto does
 not store. Anonymous labels such as `Speaker 1`, `Me`, or `Others 1` are valid
 character names for interchange. If attribution is absent or partial, events
 without a character reference remain conforming.
@@ -110,14 +110,14 @@ timings or a dominant-speaker guess.
 
 - Add a pure DAPT renderer behind `ExportService.formatDAPT` and
   `exportToDAPT`.
-- Use `.dapt.xml` as MacParakeet's filename convention. DAPT defines XML
+- Use `.dapt.xml` as Sotto's filename convention. DAPT defines XML
   serialization but does not prescribe a dedicated filename extension; the
   double extension stays recognizable to people and generic XML tools.
 - Add DAPT to the app's single export, bulk export, and transcription/meeting
   auto-save format pickers.
-- Add `--format dapt` to `macparakeet-cli export` and to one-step
-  `macparakeet-cli transcribe`, both using the shared renderer.
-- Keep `macparakeet-cli meetings export` unchanged. That command exports the
+- Add `--format dapt` to `sotto-cli export` and to one-step
+  `sotto-cli transcribe`, both using the shared renderer.
+- Keep `sotto-cli meetings export` unchanged. That command exports the
   deterministic meeting artifact/Markdown contract, while the generic
   transcript exporter already handles meeting transcription rows.
 - Add a dedicated boundary contract for DAPT v1 output, focused tests, CLI
@@ -129,7 +129,7 @@ timings or a dominant-speaker guess.
 - DAPT is still a Candidate Recommendation Draft. The implementation should
   pin the DAPT 1.0 profile URI and keep the mapping isolated so later standard
   changes are contained.
-- MacParakeet's diarization error rate is inherited by every speaker-aware
+- Sotto's diarization error rate is inherited by every speaker-aware
   export. DAPT should remain a faithful carrier, not an accuracy claim.
 - Per-event language, non-dialogue sound classification, actor/talent identity,
   source-media identifiers, confidence extensions, and audio embedding are all
@@ -138,10 +138,10 @@ timings or a dominant-speaker guess.
 
 ## Implementation validation
 
-Four files produced through the real `macparakeet-cli export --format dapt`
+Four files produced through the real `sotto-cli export --format dapt`
 path were checked on 2026-07-20: timed with two labeled speakers, timed with
 stored speaker IDs but no label roster, timed without diarization, and untimed
 without word timestamps. All four passed the current `w3c/dapt` XSD validator
 and the BBC TTML Validator's DAPT rules with zero DAPT-related warnings. The BBC
-tool reports its generic optional-copyright warning because MacParakeet
+tool reports its generic optional-copyright warning because Sotto
 deliberately does not invent rights metadata.

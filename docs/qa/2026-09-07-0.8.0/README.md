@@ -1,4 +1,4 @@
-# MacParakeet 0.8.0 release verification
+# Sotto 0.8.0 release verification
 
 **The candidate is validated for final user QA.** The combined app and DMG are signed, notarized and verified; the exercised GUI, CLI and regression checks passed within the scopes below. Both exact-head CI runs passed, and [PR #979](https://github.com/moona3k/macparakeet/pull/979) merged into main at `e476f156` on 2026-09-08 00:07:14 UTC. This is not certification of every matrix combination, and no release download, appcast or GitHub asset has been published by this QA task.
 
@@ -16,7 +16,7 @@
 | App ZIP notarization | `52abbad6-6f63-49a6-a3de-4fd7f7ba2cb3` — **Accepted** |
 | DMG notarization | `faa10966-3c5d-41e1-990f-bf2f9bafa45f` — **Accepted** |
 
-The owning branch is `release/0.8.0-qa`, based in a dedicated checkout. The later main update added saved meeting notes from PR #959; the combined candidate received its own focused tests, build, package verification and notes GUI pass. Report-only commits do not change the built source identity. GUI checks used an isolated copy with bundle ID `com.macparakeet.qa.release080` and a verified owned SQLite path. That copy has a separate test identity from the notarized distribution app.
+The owning branch is `release/0.8.0-qa`, based in a dedicated checkout. The later main update added saved meeting notes from PR #959; the combined candidate received its own focused tests, build, package verification and notes GUI pass. Report-only commits do not change the built source identity. GUI checks used an isolated copy with bundle ID `com.sotto.qa.release080` and a verified owned SQLite path. That copy has a separate test identity from the notarized distribution app.
 
 [Package verification](package-runtime.md) records strict signatures, staples, Gatekeeper acceptance, app/ZIP/DMG payload equality, signed helper startup and exact artifact hashes. The final stapled DMG is 167,213,899 bytes with SHA-256 `17fbf6c6a2a3ed6ada8ce3f0816adae041832f27d7b3a9a2ac9e3499859bcb22`. Preserve those bytes when producing matching release metadata.
 

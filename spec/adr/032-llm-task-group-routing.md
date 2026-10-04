@@ -11,7 +11,7 @@
 
 ## Context
 
-MacParakeet is a hybrid of latency-sensitive dictation and long-context
+Sotto is a hybrid of latency-sensitive dictation and long-context
 meeting intelligence. Those jobs want opposite LLM properties:
 
 | Job | Surfaces today | Wants |
@@ -194,7 +194,7 @@ A recipe declares:
   reject truncated output
 
 Ship zero or more **built-in** recipes after they beat the current path
-on real MacParakeet text (S1-mini is a cleanup candidate; Hy-MT2 is a
+on real Sotto text (S1-mini is a cleanup candidate; Hy-MT2 is a
 translate candidate only if F31 exists). Power users may duplicate a
 recipe, point it at their server, and edit the template. That is the
 customization asked in #265: control what is sent and what counts as

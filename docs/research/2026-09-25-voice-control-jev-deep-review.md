@@ -5,8 +5,8 @@ computer control) behind `--enable-voice-control` (DEBUG only), and how it uses
 Jev (`jev-1.13.0`, `POST https://api.typesafe.ai/v1/systemone`). Code at `main`
 `779e9b30f` plus the fixes listed in [What changed](#what-changed-in-this-review).
 
-Governing sources read: `Sources/MacParakeetCore/Services/VoiceControl/` (25
-files, about 6,000 lines), `Sources/MacParakeet/App/VoiceControlCoordinator.swift`,
+Governing sources read: `Sources/SottoCore/Services/VoiceControl/` (25
+files, about 6,000 lines), `Sources/Sotto/App/VoiceControlCoordinator.swift`,
 the [contract](../../spec/contracts/voice-control.md), ADR-033, the
 [research folder](2026-09-19-jev-voice-control/README.md), both active plans,
 the [TCU review](2026-09-20-typesafe-computer-use/README.md), the Jev API docs
@@ -31,7 +31,7 @@ the repo's own guidance says should be a Jev decision (AGENTS.md: "Prefer Jev
 for semantic classification, filtering, routing").
 
 The feature has never been exercised live on this machine: there is no Voice
-Control log directory (`~/Library/Logs/MacParakeet/voice-control` does not
+Control log directory (`~/Library/Logs/Sotto/voice-control` does not
 exist), native Google Flights results are still unrecorded, and the integrated
 microphone path is unqualified. Every quality claim so far is fixture evidence.
 
@@ -171,7 +171,7 @@ fix produced new edge cases. That is the empirical case for the change below.
 Recommendation, in order:
 
 0. **Build the eval harness before building more.** The replay corpus exists
-   (`macparakeet-cli voice-control replay`); add a live-Jev run over a fixed set
+   (`sotto-cli voice-control replay`); add a live-Jev run over a fixed set
    of A-class commands and record wrong-target rate, clarification rate and
    p50/p95 voice-to-effect latency. Every change below should be measured
    against it, and the flag decision should rest on those numbers.
@@ -236,7 +236,7 @@ replay corpus, or a product decision:
 
 ## What changed in this review
 
-Code (all in `Sources/MacParakeetCore/Services/VoiceControl/`):
+Code (all in `Sources/SottoCore/Services/VoiceControl/`):
 
 - `VoiceControlWebDestination.swift`: `matchingGoal` reads only the current
   request (`VoiceControlGoalText.currentRequest`); explicit navigation (`open
@@ -294,11 +294,11 @@ Tests: new `VoiceControlIntentAnchoringTests` (8) and `JevClientTransportTests`
 
 - Focused suites (`VoiceControl|JevLean|JevClient|AXTreeWalk|ScreenTextSource|SpokenDateParser|NativeVoiceControl`,
   which includes the CLI `voice-control replay` tests): 234 tests, 0 failures,
-  1 skipped (the opt-in live E2E, `MACPARAKEET_NATIVE_VOICE_CONTROL_E2E=1`).
+  1 skipped (the opt-in live E2E, `SOTTO_NATIVE_VOICE_CONTROL_E2E=1`).
   Run from a clean scratch build path because the shared `.build` cache is stale.
 - Every fixed bug was first reproduced against unmodified `main` with a probe
   test.
-- Swift 6 language-mode gate (the CI command, `MACPARAKEET_SKIP_WHISPERKIT=1
+- Swift 6 language-mode gate (the CI command, `SOTTO_SKIP_WHISPERKIT=1
   swift build -Xswiftc -swift-version -Xswiftc 6`, in a scratch path): passes.
   It rewrites `Package.resolved`; the file was restored.
 - An independent read-only review of the diff found no significant issues. Its

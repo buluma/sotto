@@ -3,10 +3,10 @@
   "locator": "AAECAwQFBgcICQoLDA0ODw",
   "contentKey": "ZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1-f4CBgoM",
   "contentRevision": 1,
-  "plaintext": "{\"schema\":\"com.macparakeet.share-bundle\",\"schemaVersion\":1,\"publishedAt\":\"2026-09-11T22:00:00Z\",\"sections\":[{\"kind\":\"notes\",\"title\":\"Notes\",\"markdown\":\"Fixture notes for share crypto v1.\"}]}",
-  "aad": "com.macparakeet.share-envelope\u0000v1\u0000AAECAwQFBgcICQoLDA0ODw\u00001",
+  "plaintext": "{\"schema\":\"com.sotto.share-bundle\",\"schemaVersion\":1,\"publishedAt\":\"2026-09-11T22:00:00Z\",\"sections\":[{\"kind\":\"notes\",\"title\":\"Notes\",\"markdown\":\"Fixture notes for share crypto v1.\"}]}",
+  "aad": "com.sotto.share-envelope\u0000v1\u0000AAECAwQFBgcICQoLDA0ODw\u00001",
   "envelope": {
-    "schema": "com.macparakeet.share-envelope",
+    "schema": "com.sotto.share-envelope",
     "schemaVersion": 1,
     "algorithm": "A256GCM",
     "nonce": "yMnKy8zNzs_Q0dLT",

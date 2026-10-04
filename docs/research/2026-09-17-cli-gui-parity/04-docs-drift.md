@@ -2,7 +2,7 @@
 
 Investigated against HEAD `fb186349` (`feat/cli-gui-parity`, based on `origin/main`).
 Ground truth used throughout: `CLI.cliVersion = "4.3.0"`
-(`Sources/CLI/MacParakeetCLI.swift:11`), `Sources/CLI/CHANGELOG.md`,
+(`Sources/CLI/SottoCLI.swift:11`), `Sources/CLI/CHANGELOG.md`,
 `spec/contracts/cli-json-v1.md`, and `Sources/CLI/Commands/*.swift`.
 
 ## Method
@@ -18,7 +18,7 @@ those are listed under "Ruled out" so the drift work isn't reopened.
 
 | # | File | Stale claim | Current truth (evidence) | Proposed edit |
 |---|------|-------------|---------------------------|---------------|
-| 1 | `plans/README.md:46` | Row `2026-09-11-issue-895-meeting-split` ("Split accidentally combined saved meetings (#895)") is marked **`TODO — IMPLEMENTATION PLAN READY`**, "no app implementation... Data-integrity, multi-track, recovery and CLI gates remain implementation work." | Fully implemented and shipped: GUI (`Sources/MacParakeet/Views/Meetings/MeetingSplitSheetView.swift`, `Sources/MacParakeetViewModels/MeetingSplitViewModel.swift`), Core (`Sources/MacParakeetCore/Services/MeetingSplit/*`, `MeetingSplitRepository.swift`), CLI (`Sources/CLI/Commands/MeetingSplitCommand.swift`: `meetings split preview\|create\|status\|resume\|discard`), shipped in `Sources/CLI/CHANGELOG.md:150` under `## [4.1.0] — 2026-09-14`. `spec/README.md:345` already states "Meeting import and split, with matching public CLI 4.1+ commands" as shipped in stable 0.8.4; `spec/contracts/cli-json-v1.md:325-343` documents the JSON contract; `integrations/README.md:646-691` and `docs/cli-testing.md:3,7-13` document live usage. `git log` on the plan/command files shows implementation and hardening commits through `e763fb28` (2026-09-12), i.e. 5 days before this HEAD. | Rewrite the row to match the sibling pattern used elsewhere in the same table (e.g. the `2026-09-05-speaker-attribution-editing` row): status `IMPLEMENTED ON MAIN` (or move to `plans/completed/`), citing the shipping commits/PR and CLI 4.1.0, and naming only the genuinely open remainder (if any — a fresh look at #895/#1046 issue threads should confirm whether anything is still open before closing the row outright). |
+| 1 | `plans/README.md:46` | Row `2026-09-11-issue-895-meeting-split` ("Split accidentally combined saved meetings (#895)") is marked **`TODO — IMPLEMENTATION PLAN READY`**, "no app implementation... Data-integrity, multi-track, recovery and CLI gates remain implementation work." | Fully implemented and shipped: GUI (`Sources/Sotto/Views/Meetings/MeetingSplitSheetView.swift`, `Sources/SottoViewModels/MeetingSplitViewModel.swift`), Core (`Sources/SottoCore/Services/MeetingSplit/*`, `MeetingSplitRepository.swift`), CLI (`Sources/CLI/Commands/MeetingSplitCommand.swift`: `meetings split preview\|create\|status\|resume\|discard`), shipped in `Sources/CLI/CHANGELOG.md:150` under `## [4.1.0] — 2026-09-14`. `spec/README.md:345` already states "Meeting import and split, with matching public CLI 4.1+ commands" as shipped in stable 0.8.4; `spec/contracts/cli-json-v1.md:325-343` documents the JSON contract; `integrations/README.md:646-691` and `docs/cli-testing.md:3,7-13` document live usage. `git log` on the plan/command files shows implementation and hardening commits through `e763fb28` (2026-09-12), i.e. 5 days before this HEAD. | Rewrite the row to match the sibling pattern used elsewhere in the same table (e.g. the `2026-09-05-speaker-attribution-editing` row): status `IMPLEMENTED ON MAIN` (or move to `plans/completed/`), citing the shipping commits/PR and CLI 4.1.0, and naming only the genuinely open remainder (if any — a fresh look at #895/#1046 issue threads should confirm whether anything is still open before closing the row outright). |
 
 **This is the one finding that matches the brief's core concern** (a doc that is
 factually wrong about CLI/GUI capability): a plan document tells a reader the
@@ -38,7 +38,7 @@ missing.
 ## Ruled out (checked, not stale)
 
 - **`spec/README.md` release-table CLI version vs `CLI.cliVersion`** — both say
-  `4.3.0` (`spec/README.md:84-85` vs `MacParakeetCLI.swift:11`). Consistent.
+  `4.3.0` (`spec/README.md:84-85` vs `SottoCLI.swift:11`). Consistent.
 - **`spec/README.md:345`** ("Meeting import and split, with matching public
   CLI 4.1+ commands") — verified against `CHANGELOG.md`: both `meetings split`
   and `meetings import <path>` shipped under `## [4.1.0] — 2026-09-14`.
@@ -49,7 +49,7 @@ missing.
   and JSON conventions in `spec/contracts/cli-json-v1.md`. No "not yet
   implemented" / "planned" / "TODO" language found that contradicts shipped
   code (grepped for `not yet|planned|coming soon|does not support|TODO`).
-- **ADR-022 (Transforms) CLI claims** — "CLI parity via `macparakeet-cli
+- **ADR-022 (Transforms) CLI claims** — "CLI parity via `sotto-cli
   transforms` subcommand tree" (line 106) matches
   `Sources/CLI/Commands/TransformsCommand.swift` and the `## Transforms`
   section of `docs/cli-testing.md:676-701`. Accurate.
@@ -70,13 +70,13 @@ missing.
   `status: implemented` already; the legacy file is intentionally frozen per
   `AGENTS.md` ("do not add new REQ IDs... for old references only"). No drift
   to fix.
-- **`integrations/skill/macparakeet-stt/SKILL.md`** (the in-repo
+- **`integrations/skill/sotto-stt/SKILL.md`** (the in-repo
   website/integrations skill) — generic, defers to `spec --json` and the
   canonical guide rather than hardcoding a command list or version number. No
   stale claims.
 - **`plans/README.md:22`** (Audio Speaker Timeline #836) — says "app/CLI
   implementation... remain pending." Verified no matching code exists
-  (`grep -rl "SpeakerTimeline"` under `Sources/CLI`, `Sources/MacParakeetCore`
+  (`grep -rl "SpeakerTimeline"` under `Sources/CLI`, `Sources/SottoCore`
   returns nothing). Claim is still true; not drift.
 - **Meeting import (#906) plans-board row** — no such row exists in
   `plans/README.md`; the feature shipped directly (CHANGELOG 4.1.0,

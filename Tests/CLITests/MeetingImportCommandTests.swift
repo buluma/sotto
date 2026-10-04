@@ -2,7 +2,7 @@ import ArgumentParser
 import Foundation
 import XCTest
 @testable import CLI
-@testable import MacParakeetCore
+@testable import SottoCore
 
 @MainActor
 final class MeetingImportCommandTests: XCTestCase {
@@ -10,7 +10,7 @@ final class MeetingImportCommandTests: XCTestCase {
 
     override func setUpWithError() throws {
         sourceURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-import-\(UUID().uuidString).m4a")
+            .appendingPathComponent("sotto-cli-import-\(UUID().uuidString).m4a")
         try Data().write(to: sourceURL)
     }
 

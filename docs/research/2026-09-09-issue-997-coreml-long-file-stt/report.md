@@ -6,8 +6,8 @@ Issues: [#997](https://github.com/moona3k/macparakeet/issues/997) (open),
 App: 0.7.3 (`d6321f87`, build `20260717011712`)
 Pin: FluidAudio **0.15.6** on current `main` (was 0.15.4 on 0.7.3). Default
 `parallelChunkConcurrency` is still **4** in 0.15.6.
-Method: GitHub feedback + Cloudflare D1 `macparakeet-telemetry` + FluidAudio
-0.15.4 checkout under `.build/checkouts/FluidAudio` + MacParakeet STT path.
+Method: GitHub feedback + Cloudflare D1 `sotto-telemetry` + FluidAudio
+0.15.4 checkout under `.build/checkouts/FluidAudio` + Sotto STT path.
 No hardware repro on this host (M4 Pro / macOS 26, disk full, googlevideo 403).
 
 ## Verdict
@@ -79,12 +79,12 @@ speech.” YouTube’s extra ~40 s is the 51 MB m4a download.
 
 ## Mechanism
 
-### 1. MacParakeet hands FluidAudio a WAV and waits
+### 1. Sotto hands FluidAudio a WAV and waits
 
 File / YouTube / meeting finalize all convert to 16 kHz mono WAV, then call
 `STTRuntime` → `AsrManager.transcribe(audioURL:)` under `ANEInferenceGate`:
 
-```734:736:Sources/MacParakeetCore/STT/STTRuntime.swift
+```734:736:Sources/SottoCore/STT/STTRuntime.swift
             let result = try await inferenceGate.withExclusiveAccess {
                 try await manager.transcribe(audioURL, decoderState: &decoderState)
             }
@@ -92,7 +92,7 @@ File / YouTube / meeting finalize all convert to 16 kHz mono WAV, then call
 
 Managers are created with the FluidAudio default config:
 
-```2346:2347:Sources/MacParakeetCore/STT/STTRuntime.swift
+```2346:2347:Sources/SottoCore/STT/STTRuntime.swift
                 let loadedInteractiveManager = AsrManager(config: .default)
                 let loadedBackgroundManager = AsrManager(config: .default)
 ```
@@ -187,7 +187,7 @@ Their 4-wide speedup numbers were measured on M3, not M2 + Sonoma 14.6.1.
 overlapped (dictation vs file, or STT vs diarization). It is a process-wide
 mutex around the **outer** call, and a no-op on macOS 15+:
 
-```40:42:Sources/MacParakeetCore/Services/ANEInferenceGate.swift
+```40:42:Sources/SottoCore/Services/ANEInferenceGate.swift
     public static var serializationRequiredForCurrentOS: Bool {
         if #available(macOS 15.0, *) { false } else { true }
     }
@@ -200,7 +200,7 @@ predictions at once. The gate cannot see them.
 
 Order of work:
 
-1. MacParakeet ffmpeg → 16 kHz mono WAV (~106 MB for 56 min). Dominates the
+1. Sotto ffmpeg → 16 kHz mono WAV (~106 MB for 56 min). Dominates the
    local 8–13 s.
 2. FluidAudio resamples that WAV to a disk-backed float32 `.raw` (~202 MB) and
    mmaps it.
@@ -295,7 +295,7 @@ Needs a macOS 14 Apple Silicon Mac (M2 preferred). This investigation host
 cannot: googlevideo 403, ~197 MB free, and it is macOS 26 where the job
 would likely succeed anyway.
 
-1. Isolated state (`MACPARAKEET_DEBUG_APP_STATE_DIR` on debug builds) so
+1. Isolated state (`SOTTO_DEBUG_APP_STATE_DIR` on debug builds) so
    production databases are untouched.
 2. 20 s clip of the same sermon → expect success (single window).
 3. Full ~55 min file, Parakeet v3, speaker detection off, **before this
@@ -323,14 +323,14 @@ would likely succeed anyway.
 
 - GitHub [#997](https://github.com/moona3k/macparakeet/issues/997),
   [#995](https://github.com/moona3k/macparakeet/issues/995)
-- D1 `macparakeet-telemetry`, queries in
+- D1 `sotto-telemetry`, queries in
   [evidence/d1-queries.md](evidence/d1-queries.md)
 - FluidAudio 0.15.4: `ASRConstants.swift`, `AsrTypes.swift`,
   `AsrManager.swift`, `ChunkProcessor.swift`, `AsrManager+Pipeline.swift`,
   `Documentation/Architecture.md`, `Documentation/ASR/LongTranscription.md`
-- MacParakeet: `STTRuntime.swift`, `ANEInferenceGate.swift`,
+- Sotto: `STTRuntime.swift`, `ANEInferenceGate.swift`,
   `TranscriptionService.swift`, `STTClientProtocol.swift`,
   `TelemetryEvent.swift`
 - FluidAudio [#661](https://github.com/FluidInference/FluidAudio/issues/661),
   [#320](https://github.com/FluidInference/FluidAudio/issues/320)
-- MacParakeet [#614](https://github.com/moona3k/macparakeet/pull/614)
+- Sotto [#614](https://github.com/moona3k/macparakeet/pull/614)

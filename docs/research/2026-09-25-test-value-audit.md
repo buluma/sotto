@@ -20,11 +20,11 @@ Small duplicate/mock-only cleanups are worthwhile maintenance work, but are not 
 
 ## Method and scope
 
-The audit applies [OpenClaw's test-audit skill at commit 80930af](https://github.com/openclaw/openclaw/blob/80930af448ebabc84174146b56bc106d37fab3b4/.agents/skills/test-audit/SKILL.md). A candidate needs a concrete failure it can detect, its real production owner/callers, overlapping proof, relevant history, and a safe validation path. A suspicious pattern starts an investigation; it is not a deletion rule. Public contracts, persistence, privacy, platform behavior, and observable ordering can justify apparently simple tests. MacParakeet's Swift commands and review workflow replace OpenClaw-specific Node tooling.
+The audit applies [OpenClaw's test-audit skill at commit 80930af](https://github.com/openclaw/openclaw/blob/80930af448ebabc84174146b56bc106d37fab3b4/.agents/skills/test-audit/SKILL.md). A candidate needs a concrete failure it can detect, its real production owner/callers, overlapping proof, relevant history, and a safe validation path. A suspicious pattern starts an investigation; it is not a deletion rule. Public contracts, persistence, privacy, platform behavior, and observable ordering can justify apparently simple tests. Sotto's Swift commands and review workflow replace OpenClaw-specific Node tooling.
 
 Three discovery passes covered Core/audio/STT/storage; UI/view models/CLI/integration; and a mechanical inventory. A separate reviewer challenged the proposed deletions. The primary review examined tooling/privacy boundaries, reproduced a historical verifier defect, and reconciled the hosted evidence. These were technical source/history reviews and deterministic searches; no Jev classification was used.
 
-The tree contains **440 tracked Swift files under Tests**: 414 in `MacParakeetTests` and 26 in `CLITests`, including helpers. Both targets are in the normal SwiftPM run. The new hosted XML contains **7,567 XCTest entries** and a companion report for **30 Swift Testing cases**. XCTest's report omits skip markers; these numbers must not be relabeled as 7,567 successful executed assertions or as independent contracts. Model, permission, hardware, and explicit environment gates still skip some paths.
+The tree contains **440 tracked Swift files under Tests**: 414 in `SottoTests` and 26 in `CLITests`, including helpers. Both targets are in the normal SwiftPM run. The new hosted XML contains **7,567 XCTest entries** and a companion report for **30 Swift Testing cases**. XCTest's report omits skip markers; these numbers must not be relabeled as 7,567 successful executed assertions or as independent contracts. Model, permission, hardware, and explicit environment gates still skip some paths.
 
 `rg` searches for source reads, duplicated assertions, mocks, sleeps, and skip guards supplied leads. Most file reads were of actual exported artifacts, persisted records, or logs. Apparent assertion-free functions often called assertion-bearing helpers. Those matches were not counted as defects. This matters: an automated pattern score would have produced false positives in precisely the tests that exercise real boundaries.
 
@@ -53,9 +53,9 @@ Per-case xUnit times measure a test process lifetime, including startup and setu
 
 ### A. Error-description contract consolidation — first cleanup batch
 
-**Tests and owners.** `AudioFileConverterTests.testAudioProcessorErrorDescriptions` (`Tests/MacParakeetTests/Audio/AudioFileConverterTests.swift:194`) only checks seven constructed errors have non-nil descriptions. The production enum is `AudioProcessorError` in `Sources/MacParakeetCore/Audio/AudioProcessorProtocol.swift:161`; recorder, converter, dictation, and telemetry paths consume it. `DictationServiceErrorTests.swift:26` already checks the exact descriptions of all seven and three input-unavailable variants.
+**Tests and owners.** `AudioFileConverterTests.testAudioProcessorErrorDescriptions` (`Tests/SottoTests/Audio/AudioFileConverterTests.swift:194`) only checks seven constructed errors have non-nil descriptions. The production enum is `AudioProcessorError` in `Sources/SottoCore/Audio/AudioProcessorProtocol.swift:161`; recorder, converter, dictation, and telemetry paths consume it. `DictationServiceErrorTests.swift:26` already checks the exact descriptions of all seven and three input-unavailable variants.
 
-The analogous `STTClientTests.testSTTErrorDescriptions` (`Tests/MacParakeetTests/STT/STTClientTests.swift:221`) checks eight non-nil values. `STTError` in `Sources/MacParakeetCore/STT/STTClientProtocol.swift:179` is emitted by real runtime/scheduler/engine paths. The exact table in `DictationServiceErrorTests.swift:12` misses `engineBusy` and `engineStartFailed`, so deleting the non-nil check immediately would discard weak but unique coverage. `modelDownloadFailed` is missing from both tables.
+The analogous `STTClientTests.testSTTErrorDescriptions` (`Tests/SottoTests/STT/STTClientTests.swift:221`) checks eight non-nil values. `STTError` in `Sources/SottoCore/STT/STTClientProtocol.swift:179` is emitted by real runtime/scheduler/engine paths. The exact table in `DictationServiceErrorTests.swift:12` misses `engineBusy` and `engineStartFailed`, so deleting the non-nil check immediately would discard weak but unique coverage. `modelDownloadFailed` is missing from both tables.
 
 **Failure and history.** Wrong/swapped text passes the non-nil assertions; the exact table catches it. The weaker checks date to the initial `92460f82f` suite, while later capture failure work, including `6b65b34ad`, strengthened the error contracts. These are real user-visible errors, not dead production code.
 
@@ -65,9 +65,9 @@ The analogous `STTClientTests.testSTTErrorDescriptions` (`Tests/MacParakeetTests
 
 ### B. Disconnected clipboard assertions — remove the false claim
 
-**Exact tests.** `CancelFlowTests.testCancelDoesNotPasteOrSave` and `testSTTErrorDuringStop`, in `Tests/MacParakeetTests/Integration/CancelFlowTests.swift:27` and `:99`, assert `mockClipboard.pasteCallCount == 0`. The mock is created at lines 9/16 but is never supplied to `DictationService`. The initializer at lines 19–23 receives audio, STT, and the repository only.
+**Exact tests.** `CancelFlowTests.testCancelDoesNotPasteOrSave` and `testSTTErrorDuringStop`, in `Tests/SottoTests/Integration/CancelFlowTests.swift:27` and `:99`, assert `mockClipboard.pasteCallCount == 0`. The mock is created at lines 9/16 but is never supplied to `DictationService`. The initializer at lines 19–23 receives audio, STT, and the repository only.
 
-**Failure and owner.** Those two clipboard assertions cannot detect a product paste. The same tests' database-empty and STT-error assertions are real and must stay. Actual paste ownership lives in `Sources/MacParakeet/App/DictationFlowCoordinator.swift:814`; service cancellation remains in `Sources/MacParakeetCore/Services/Dictation/DictationService.swift:803`.
+**Failure and owner.** Those two clipboard assertions cannot detect a product paste. The same tests' database-empty and STT-error assertions are real and must stay. Actual paste ownership lives in `Sources/Sotto/App/DictationFlowCoordinator.swift:814`; service cancellation remains in `Sources/SottoCore/Services/Dictation/DictationService.swift:803`.
 
 **History and overlap.** Commit `f14f00ff0` deliberately removed the unused clipboard parameter from the service and stated that the coordinator owns pasting. The test mock survived that refactor. `DictationFlowCoordinatorTests.swift:210` and `:286` use connected clipboard fixtures for practice dismissal, clipboard-only operation, and pending delivery. They do **not** establish an exact replacement for ordinary cancel-before-STT no-paste behavior.
 
@@ -79,7 +79,7 @@ No production code is deleted. Cleanup risk is low; the new race test needs care
 
 ### C. MockSTTClient self-tests — small maintenance cleanup
 
-`STTClientTests.swift:232–284` contains `testMockSTTClientTranscribe`, `testMockSTTClientError`, `testMockSTTClientWarmUp`, `testMockSTTClientShutdown`, and `testMockSTTClientClearModelCache`. They configure or invoke `Tests/MacParakeetTests/STT/MockSTTClient.swift` and assert its returned values, counters, or flags. No real engine, scheduler, or audio is invoked.
+`STTClientTests.swift:232–284` contains `testMockSTTClientTranscribe`, `testMockSTTClientError`, `testMockSTTClientWarmUp`, `testMockSTTClientShutdown`, and `testMockSTTClientClearModelCache`. They configure or invoke `Tests/SottoTests/STT/MockSTTClient.swift` and assert its returned values, counters, or flags. No real engine, scheduler, or audio is invoked.
 
 These scaffold-era tests (`92460f82f`) can detect changes to the fake, but product-owner tests already consume it, including the real service/repository flow in `Integration/DictationFlowTests.swift:23`. Remove these simple self-tests only; keep the fixture and its consumer tests. This is not a rule against testing sophisticated concurrency/fault-injection helpers: a complicated helper can have its own independent correctness risk.
 
@@ -87,7 +87,7 @@ No production seam or meaningful runtime cost is removed. Risk is low; a fixture
 
 ### D. Test-local AEC characterization — preserve the research, reconsider its routing
 
-**Exact tests.** `MeetingAecMeasurementTests.testNLMSDoubleTalkQuantifiesTheTradeoff` and `testNLMSDoubleTalkSIRSweepReportsOverlapAccuracyAndEchoOnlyResidual`, in `Tests/MacParakeetTests/Services/Capture/MeetingAecMeasurementTests.swift:117` and `:156`, run synthetic signals through the test-local `MeetingAecNLMSProcessor` in `MeetingAecMeasurementHarness.swift:487`.
+**Exact tests.** `MeetingAecMeasurementTests.testNLMSDoubleTalkQuantifiesTheTradeoff` and `testNLMSDoubleTalkSIRSweepReportsOverlapAccuracyAndEchoOnlyResidual`, in `Tests/SottoTests/Services/Capture/MeetingAecMeasurementTests.swift:117` and `:156`, run synthetic signals through the test-local `MeetingAecNLMSProcessor` in `MeetingAecMeasurementHarness.swift:487`.
 
 **Actual contract.** The first characterizes a deliberately weak baseline and asserts limited double-talk improvement. The SIR sweep gates echo-only residual reduction while printing overlap measurements. Both use a real `StreamingMeetingEchoSuppressor`, so they are not wholly disconnected from production. However, a shipping LocalVQE model/loader/factory failure can leave both green. Their quality thresholds concern a research processor, not the shipping model's speech quality.
 
@@ -113,7 +113,7 @@ The public `spec` API and its catalog tests must remain. Commit `142a7f9bbb` int
 
 ### G. Library query/style claim — repair, do not delete
 
-`LibrarySourceLabelStyleTests.testMappingMatchesEveryQueryNarrowing` (`Tests/MacParakeetTests/ViewModels/LibrarySourceLabelStyleTests.swift:67`) enumerates twelve scope/filter/style pairs but calls only `sourceLabelStyle`. It never exercises `TranscriptionLibraryViewModel.makeQuery`, so a query broadening can leave the purported query-drift guard green.
+`LibrarySourceLabelStyleTests.testMappingMatchesEveryQueryNarrowing` (`Tests/SottoTests/ViewModels/LibrarySourceLabelStyleTests.swift:67`) enumerates twelve scope/filter/style pairs but calls only `sourceLabelStyle`. It never exercises `TranscriptionLibraryViewModel.makeQuery`, so a query broadening can leave the purported query-drift guard green.
 
 The test still detects style mapping changes and new filter cases. Its contract is meaningful source attribution, and `6c9f0966c` added the table to replace an earlier tautology. Real query tests exist in `TranscriptionLibraryViewModelTests`, but no demonstrated test pairs the actual mixed-source results and style across these combinations. The production style helper has real callers; it is not a test-only seam.
 
@@ -129,7 +129,7 @@ Retain the file; replace mirrored expectations with hand-calculated chunk bounda
 
 ### I. Test-only database insertion wrapper — remove the seam, retain the CLI contract
 
-`DatabaseManager.recordAppliedMigrationIdentifierForTesting` (`Sources/MacParakeetCore/Database/DatabaseManager.swift:73`) is a DEBUG-only one-row SQL insertion wrapper. Its sole repository caller is `ModelLifecycleCommandTests.swift:45`, which inserts a future migration marker and verifies that the CLI health probe reports schema skew instead of decoding an incompatible database as healthy. Commit `0179db4df` introduced that important stale-CLI protection.
+`DatabaseManager.recordAppliedMigrationIdentifierForTesting` (`Sources/SottoCore/Database/DatabaseManager.swift:73`) is a DEBUG-only one-row SQL insertion wrapper. Its sole repository caller is `ModelLifecycleCommandTests.swift:45`, which inserts a future migration marker and verifies that the CLI health probe reports schema skew instead of decoding an incompatible database as healthy. Commit `0179db4df` introduced that important stale-CLI protection.
 
 The same test file already writes the migration ledger through `db.dbQueue.write` for another fixture. Inline this fixture-owned insertion there, remove the production test-only wrapper, and keep the existing schema-skew assertions. Preserve `unknownAppliedMigrationIdentifiers` and `registeredMigrationIdentifiers`: the real health command uses them. This is a small, low-risk production simplification with an unchanged owner-boundary test. **Focused verification:** `swift test --filter ModelLifecycleCommandTests`.
 

@@ -7,7 +7,7 @@ inside compositions. Three subdirectories are expected:
   or `npm run voice:hq` (Higgs Audio V2). Filenames are fixed by the
   voice scripts and referenced by name in `src/compositions/Demo60.tsx`.
   Auditions land in `audio/audition/`.
-- **`screencasts/`** — raw screen recordings captured from MacParakeet
+- **`screencasts/`** — raw screen recordings captured from Sotto
   itself, ideally via Screen Studio. Filenames referenced by
   `src/content/script.ts` (`screencasts/dictation.mp4`, etc.) and by
   Demo60 / HeroLoop30. Until the files exist, `ScreencastSlot` renders

@@ -17,7 +17,7 @@
 > `plans/active/2026-06-12-advisor-index.md`.
 >
 > **Drift check (run first)**:
-> `git diff --stat 3f9361005..HEAD -- Sources/MacParakeetViewModels/OnboardingViewModel.swift Tests/MacParakeetTests/ViewModels/OnboardingViewModelTests.swift Tests/MacParakeetTests/STT/MockSTTClient.swift`
+> `git diff --stat 3f9361005..HEAD -- Sources/SottoViewModels/OnboardingViewModel.swift Tests/SottoTests/ViewModels/OnboardingViewModelTests.swift Tests/SottoTests/STT/MockSTTClient.swift`
 > If any of these changed since `3f9361005`, compare the "Current state"
 > excerpts below against the live code before proceeding; on a mismatch,
 > treat it as a STOP condition.
@@ -49,7 +49,7 @@ the timeout injectable (following the exact precedent of the existing
 
 ## Current state
 
-- `Sources/MacParakeetViewModels/OnboardingViewModel.swift` — `@MainActor`
+- `Sources/SottoViewModels/OnboardingViewModel.swift` — `@MainActor`
   `@Observable` ViewModel for first-run onboarding.
   - Line 99: the constant:
     ```swift
@@ -80,7 +80,7 @@ the timeout injectable (following the exact precedent of the existing
   - Lines 48–52: `public enum EngineState: Sendable, Equatable` with
     `case failed(message: String)` (line 52).
 
-- `Tests/MacParakeetTests/STT/MockSTTClient.swift` — `public actor MockSTTClient`
+- `Tests/SottoTests/STT/MockSTTClient.swift` — `public actor MockSTTClient`
   (line 4). Configuration goes through `configure...` methods because it is an
   actor (e.g. `configureWarmUp(error:progressPhases:)` at line 75;
   `warmUpProgressPhases` property at line 17). Its `public func
@@ -92,7 +92,7 @@ the timeout injectable (following the exact precedent of the existing
   **deliberately does not mutate state** — exactly the property the stall test
   relies on.
 
-- `Tests/MacParakeetTests/ViewModels/OnboardingViewModelTests.swift` — XCTest
+- `Tests/SottoTests/ViewModels/OnboardingViewModelTests.swift` — XCTest
   file. Private helper `makeViewModel(...)` at line 88 forwards all init knobs
   with test-friendly defaults; it already forwards
   `permissionPollingInterval` (declared at line 102, passed at line 119). The
@@ -101,7 +101,7 @@ the timeout injectable (following the exact precedent of the existing
   ```swift
   let perms = MockPermissionService()
   let stt = MockSTTClient()
-  let defaults = UserDefaults(suiteName: "com.macparakeet.tests.\(UUID().uuidString)")!
+  let defaults = UserDefaults(suiteName: "com.sotto.tests.\(UUID().uuidString)")!
   ...
   let vm = makeViewModel(permissionService: perms, sttClient: stt, defaults: defaults)
   vm.jump(to: .engine)
@@ -133,9 +133,9 @@ Important flow facts for getting the test right:
 ## Scope
 
 **In scope** (the only files you should modify):
-- `Sources/MacParakeetViewModels/OnboardingViewModel.swift`
-- `Tests/MacParakeetTests/STT/MockSTTClient.swift`
-- `Tests/MacParakeetTests/ViewModels/OnboardingViewModelTests.swift`
+- `Sources/SottoViewModels/OnboardingViewModel.swift`
+- `Tests/SottoTests/STT/MockSTTClient.swift`
+- `Tests/SottoTests/ViewModels/OnboardingViewModelTests.swift`
 
 **Out of scope** (do NOT touch, even though they look related):
 - `STTRuntime`/`STTClient` production warm-up code — the watchdog is purely
@@ -143,7 +143,7 @@ Important flow facts for getting the test right:
 - The Whisper download stall handling (`startRecommendedWhisperSetup`) — a
   different path with its own progress plumbing; testing it is a separate
   effort.
-- Onboarding views in `Sources/MacParakeet/Views/Onboarding/` — no UI change.
+- Onboarding views in `Sources/Sotto/Views/Onboarding/` — no UI change.
 - Changing the 180s production value or the failure message copy.
 
 ## Git workflow
@@ -188,14 +188,14 @@ In `OnboardingViewModel.swift`:
    ```
 
 **Verify**: `swift build` → exit 0, and
-`grep -n "Self.warmUpStallTimeout" Sources/MacParakeetViewModels/OnboardingViewModel.swift`
+`grep -n "Self.warmUpStallTimeout" Sources/SottoViewModels/OnboardingViewModel.swift`
 → at most the init default (`OnboardingViewModel.warmUpStallTimeout`) and the
 static declaration remain; no `Self.warmUpStallTimeout` uses left inside
 `resetWarmUpStallWatchdog`.
 
 ### Step 2: Add a hang mode to MockSTTClient
 
-In `Tests/MacParakeetTests/STT/MockSTTClient.swift`:
+In `Tests/SottoTests/STT/MockSTTClient.swift`:
 
 1. Add a property `public var warmUpHangIndefinitely = false` next to the
    other warm-up config vars (near line 17), and an actor-friendly setter
@@ -233,7 +233,7 @@ In `OnboardingViewModelTests.swift`:
        let perms = MockPermissionService()
        let stt = MockSTTClient()
        await stt.configureWarmUpHangIndefinitely()
-       let defaults = UserDefaults(suiteName: "com.macparakeet.tests.\(UUID().uuidString)")!
+       let defaults = UserDefaults(suiteName: "com.sotto.tests.\(UUID().uuidString)")!
 
        let vm = makeViewModel(
            permissionService: perms,

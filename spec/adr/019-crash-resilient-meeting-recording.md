@@ -16,7 +16,7 @@ Meeting recordings can run 40+ minutes — far longer than dictation or
 file transcription. Long sessions are also exactly when laptops sleep
 on low battery, the OS nags for a restart, or the app hits an
 edge-case crash. The current `MeetingAudioStorageWriter`
-(`Sources/MacParakeetCore/Audio/MeetingAudioStorageWriter.swift`)
+(`Sources/SottoCore/Audio/MeetingAudioStorageWriter.swift`)
 uses `AVAudioFile`, which writes audio bytes incrementally but only
 flushes the MP4 container's `moov` atom in `deinit` (when the
 writer is set to nil during `finalize()`). Without the `moov` atom,
@@ -125,7 +125,7 @@ uses **1 s initial** + **1 s steady-state**.
 the session folder before any audio is captured:
 
 ```
-~/Library/Application Support/MacParakeet/meeting-recordings/<uuid>/recording.lock
+~/Library/Application Support/Sotto/meeting-recordings/<uuid>/recording.lock
 {
   "sessionId": "<uuid>",
   "startedAt": "<ISO8601>",
@@ -191,7 +191,7 @@ recovery: 1 partial recording").
 
 Startup also reconciles processing meeting rows left behind by an interrupted
 finalization. That reconciliation must distinguish a stale row from work owned
-by another live MacParakeet process: a readable lock at the row's artifact
+by another live Sotto process: a readable lock at the row's artifact
 folder with a live PID protects the row, even when the new process has no local
 queue entry for it. An unowned processing row may move to a retryable error
 only through an atomic compare-and-set from `processing`, so a concurrent
@@ -329,7 +329,7 @@ with both phases.
 Lock files contain only session UUID, start time, process ID, and
 display name — no audio, no transcript, no user-identifying content.
 They're stored in the same
-`~/Library/Application Support/MacParakeet/meeting-recordings/` tree
+`~/Library/Application Support/Sotto/meeting-recordings/` tree
 as the audio they pertain to.
 
 ## References

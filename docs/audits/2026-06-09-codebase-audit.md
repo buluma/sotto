@@ -1,6 +1,6 @@
 # Codebase Audit — 2026-06-09
 
-> **Status:** ACTIVE. Two-pass independent audit of the `macparakeet` codebase
+> **Status:** ACTIVE. Two-pass independent audit of the `sotto` codebase
 > at `main` HEAD `92c3dfdfb` (post-v0.6.22). Covers the ~1,418 commits landed
 > since the 2026-04-26 audit: WhisperKit/Nemotron engines, Parakeet model
 > selection, multi-platform URL + podcast transcription, productized
@@ -108,7 +108,7 @@ let a cancel-then-retrigger skip the wind-down wait).
 (live data loss since 2026-05-23)**
 Swift emits `snippet_edited` (`TextSnippetsViewModel.swift:152`, enum case at
 `TelemetryEvent.swift:62`, added in `0f4298b7a` on 2026-05-23), but
-`ALLOWED_EVENTS` in `macparakeet-website/functions/api/telemetry.ts` does not
+`ALLOWED_EVENTS` in `sotto-website/functions/api/telemetry.ts` does not
 contain it. The Worker rejects the **entire batch** on any unknown event, so
 every user who edits a snippet silently loses that batch — including valid
 co-batched events. Bidirectional diff confirms this is the only Swift event
@@ -117,7 +117,7 @@ missing (97 Swift cases; allowlist extras `app_updated`,
 This is the third occurrence of the two-repo allowlist failure mode —
 consider a CI check that diffs `TelemetryEventName` against the website
 repo's allowlist.
-**Status: FIXED** — `macparakeet-website@af776c9`, deployed 2026-06-09 and
+**Status: FIXED** — `sotto-website@af776c9`, deployed 2026-06-09 and
 verified live (`snippet_edited` → HTTP 200 `stored:1`; unknown-event
 rejection still HTTP 400).
 
@@ -236,7 +236,7 @@ rejection still HTTP 400).
 ## Recommended follow-up sequence
 
 1. **AUDIT-073** — ~~one-line website allowlist fix + deploy~~ **DONE**
-   (`macparakeet-website@af776c9`, verified live). The CI cross-repo diff
+   (`sotto-website@af776c9`, verified live). The CI cross-repo diff
    guard (theme 3) remains open.
 2. **AUDIT-072** — ~~await the cancelled executor before starting the next~~
    **DONE** (PR #475 `067664d2d`).

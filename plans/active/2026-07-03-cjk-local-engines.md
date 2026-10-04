@@ -19,8 +19,8 @@ zh/yue/en/ja/ko) — no dependency upgrade needed.
 
 ## Slice 0 — harness enablement (prerequisite; the gate cannot run today)
 
-The FLEURS runner (`benchmarks/asr/run_macparakeet_fleurs.py`) hardcodes
-the four current engines and shells out to `macparakeet-cli transcribe`,
+The FLEURS runner (`benchmarks/asr/run_sotto_fleurs.py`) hardcodes
+the four current engines and shells out to `sotto-cli transcribe`,
 which cannot name SenseVoice or Parakeet-JA (and `--engine parakeet
 --language ja` silently resolves to language-nil Parakeet). Add a
 harness-side FluidAudio runner (or provisional, clearly-temporary CLI

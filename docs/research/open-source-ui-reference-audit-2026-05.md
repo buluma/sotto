@@ -3,11 +3,11 @@
 > Status: **ACTIVE**
 > Date: 2026-05-15
 > Purpose: Opinionated design and architecture references for improving
-> MacParakeet without copying another app's product shape.
+> Sotto without copying another app's product shape.
 
 ## Executive Take
 
-MacParakeet should not chase generic "beautiful app" aesthetics. The strongest
+Sotto should not chase generic "beautiful app" aesthetics. The strongest
 direction is a native macOS utility with a warm, memorable voice layer:
 
 - **Quiet shell:** NetNewsWire / CotEditor discipline for navigation, reading,
@@ -17,7 +17,7 @@ direction is a native macOS utility with a warm, memorable voice layer:
 - **Serious media workspace:** IINA patterns for playback, transcript/audio
   alignment, and hover-revealed controls.
 - **Modern SwiftUI modules:** IceCubes / CodeEdit patterns for feature-scoped
-  packages and view model boundaries, but only where MacParakeet's current
+  packages and view model boundaries, but only where Sotto's current
   SPM target split benefits.
 - **System trust:** Ice / Snapzy patterns for permissions, menu bar behavior,
   non-activating panels, and high-risk system integrations.
@@ -27,17 +27,17 @@ recording starts, voice is detected, transcription completes, and an audio
 artifact becomes readable. The rest of the app should be restrained, scanable,
 and native.
 
-## Current MacParakeet Baseline
+## Current Sotto Baseline
 
-MacParakeet already has useful foundations:
+Sotto already has useful foundations:
 
 - `NavigationSplitView` shell with Transcribe, Library, Dictations, Vocabulary,
   Feedback, Settings, and feature-gated Transforms.
 - A centralized `DesignSystem` with warm coral, off-white surfaces, rounded
-  typography, spacing, shadows, and semantic `parakeetAction` button styling.
+  typography, spacing, shadows, and semantic `sottoAction` button styling.
 - Floating dictation and meeting pills through AppKit-backed panels and
   SwiftUI content.
-- Separate `MacParakeetViewModels` target for testable UI logic.
+- Separate `SottoViewModels` target for testable UI logic.
 - A concise product/design direction in `docs/ui-inspiration.md`.
 - A broad inspiration catalog in `docs/research/ui-design-inspiration-2026-05.md`.
 
@@ -68,7 +68,7 @@ Observed code patterns:
 
 Borrow:
 
-- Treat MacParakeet's floating surfaces as **state indicators with controllers**,
+- Treat Sotto's floating surfaces as **state indicators with controllers**,
   not incidental views.
 - Give meeting recording a preview-before-commit pattern where possible: before
   starting, show exactly which inputs are ready (`mic`, `system audio`,
@@ -79,11 +79,11 @@ Borrow:
 
 Do not borrow:
 
-- The radial menu itself. MacParakeet is not a spatial command tool.
+- The radial menu itself. Sotto is not a spatial command tool.
 - Heavy glass everywhere. The app should stay readable and local-first, not
   showroom-like.
 
-MacParakeet application:
+Sotto application:
 
 - Refactor dictation/meeting pill controllers toward a shared
   `FloatingStateSurfaceController` pattern only if duplication is becoming
@@ -95,7 +95,7 @@ MacParakeet application:
 
 Repo: <https://github.com/iina/iina>
 
-Why it matters: IINA is the best reference for media UI on macOS. MacParakeet's
+Why it matters: IINA is the best reference for media UI on macOS. Sotto's
 transcription result view has the same hard problem in another form: the user
 needs to read text, scrub audio/video, jump by time, and keep controls out of
 the way.
@@ -121,9 +121,9 @@ Borrow:
 Do not borrow:
 
 - IINA's controller density. It is appropriate for a pro media player, but too
-  much for MacParakeet's consumer voice workflow.
+  much for Sotto's consumer voice workflow.
 
-MacParakeet application:
+Sotto application:
 
 - Make `TranscriptResultView` feel less like a document page and more like a
   readable media artifact: text-first, time-aware, with persistent playback.
@@ -156,10 +156,10 @@ Borrow:
 
 Do not borrow:
 
-- Three-pane RSS structure wholesale. MacParakeet should keep capture as the
+- Three-pane RSS structure wholesale. Sotto should keep capture as the
   first tab and Library as browsing, not become a content reader clone.
 
-MacParakeet application:
+Sotto application:
 
 - Introduce a small formatting layer for transcription/dictation row text,
   summaries, dates, durations, and speaker labels if the current row code keeps
@@ -183,10 +183,10 @@ Borrow:
 
 Do not borrow:
 
-- Document-based app assumptions. MacParakeet stores recordings/transcripts in a
+- Document-based app assumptions. Sotto stores recordings/transcripts in a
   local database and Library, not arbitrary user documents.
 
-MacParakeet application:
+Sotto application:
 
 - Treat long transcripts like first-class reading/editing surfaces. Add
   predictable text selection, search-in-transcript, copy with timestamps, and
@@ -219,11 +219,11 @@ Borrow:
 
 Do not borrow:
 
-- Heavy global environment injection everywhere. MacParakeet already has
+- Heavy global environment injection everywhere. Sotto already has
   explicit view model injection and testable targets; keep that unless a shared
   environment is clearly simpler.
 
-MacParakeet application:
+Sotto application:
 
 - Consider extracting reusable transcript row / prompt result row components
   into a small UI package only if reuse grows across Dictations, Library,
@@ -256,10 +256,10 @@ Borrow:
 
 Do not borrow:
 
-- Ice's deep menu-bar manipulation domain. MacParakeet only needs status,
+- Ice's deep menu-bar manipulation domain. Sotto only needs status,
   capture controls, and quick access.
 
-MacParakeet application:
+Sotto application:
 
 - Add a compact menu bar popover audit: start dictation, start/stop meeting,
   recent item, current permissions, model state, open settings.
@@ -289,9 +289,9 @@ Borrow:
 
 Do not borrow:
 
-- Screenshot/annotation workflows. They are adjacent but not MacParakeet's core.
+- Screenshot/annotation workflows. They are adjacent but not Sotto's core.
 
-MacParakeet application:
+Sotto application:
 
 - Improve meeting recording errors by grouping them as recoverable permission,
   setup, write, cancellation, and already-active states with one clear action.
@@ -314,7 +314,7 @@ Observed code patterns:
 
 Borrow:
 
-- Feature-folder naming discipline when MacParakeet app target gets crowded.
+- Feature-folder naming discipline when Sotto app target gets crowded.
 - AppKit split-view bridges only for precise native behavior SwiftUI cannot
   provide.
 - Command palette thinking for power users, especially if Transforms/Prompts
@@ -322,9 +322,9 @@ Borrow:
 
 Do not borrow:
 
-- IDE-level complexity. MacParakeet is a voice app, not a workspace OS.
+- IDE-level complexity. Sotto is a voice app, not a workspace OS.
 
-MacParakeet application:
+Sotto application:
 
 - If the main window gains an inspector/detail panel, prefer a small AppKit
   split-view bridge with persisted widths over fighting `NavigationSplitView`.
@@ -348,11 +348,11 @@ Do not borrow:
 - License-sensitive code.
 - Dense utility sprawl.
 
-MacParakeet application:
+Sotto application:
 
 - Use deep links/URL commands for automation parity with CLI, especially
-  `macparakeet://transcribe`, `macparakeet://record-meeting`, and
-  `macparakeet://open?id=...` if this becomes a product goal.
+  `sotto://transcribe`, `sotto://record-meeting`, and
+  `sotto://open?id=...` if this becomes a product goal.
 
 ## Design Principles To Apply
 
@@ -418,7 +418,7 @@ Custom controls should be reserved for:
 
 ### 5. Architecture Should Follow Surfaces
 
-MacParakeet already has a good target split. Do not prematurely create many UI
+Sotto already has a good target split. Do not prematurely create many UI
 packages. The next architectural improvement should be feature-scoped app
 folders and small reusable components, not a broad rewrite.
 
@@ -492,7 +492,7 @@ Changes:
 - Keep Settings native, but add a top readiness summary for permissions,
   hotkey, local model, update status, and AI provider.
 - Search should surface exact settings rows, not just tabs.
-- Avoid coral tint cascades; keep `parakeetAction` semantics.
+- Avoid coral tint cascades; keep `sottoAction` semantics.
 
 ### Move 5: Floating Surface Unification
 
@@ -530,7 +530,7 @@ Changes:
 5. **Floating surface controller cleanup**: do only after concrete UI changes
    expose duplication.
 
-## Reference Ranking For MacParakeet
+## Reference Ranking For Sotto
 
 | Rank | Reference | Primary Lesson | Confidence |
 |------|-----------|----------------|------------|
@@ -546,7 +546,7 @@ Changes:
 
 ## Bottom Line
 
-MacParakeet's next design pass should be less about finding a prettier visual
+Sotto's next design pass should be less about finding a prettier visual
 style and more about tightening the three places users judge the app:
 
 1. **Can I trust it before I record?**

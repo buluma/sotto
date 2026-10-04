@@ -2,7 +2,7 @@
 
 @AGENTS.md
 
-> Claude Code overlay for MacParakeet. Keep this file intentionally small:
+> Claude Code overlay for Sotto. Keep this file intentionally small:
 > [`AGENTS.md`](./AGENTS.md) is the canonical cross-agent startup guide and is
 > imported above.
 

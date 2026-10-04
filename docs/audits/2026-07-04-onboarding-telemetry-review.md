@@ -1,7 +1,7 @@
 # Onboarding + Telemetry Review
 
 Date: 2026-07-04
-Source: Cloudflare D1 `macparakeet-telemetry` (`7372263e-6a0b-4c70-8188-8f1d6d16bf31`) and current app code.
+Source: Cloudflare D1 `sotto-telemetry` (`7372263e-6a0b-4c70-8188-8f1d6d16bf31`) and current app code.
 
 ## Live Findings
 

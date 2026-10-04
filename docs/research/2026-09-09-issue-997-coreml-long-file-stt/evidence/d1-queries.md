@@ -1,10 +1,10 @@
 # D1 queries used for issue 997
 
-Database: Cloudflare D1 `macparakeet-telemetry`
-(`7372263e-6a0b-4c70-8188-8f1d6d16bf31`). Run from `macparakeet-website`:
+Database: Cloudflare D1 `sotto-telemetry`
+(`7372263e-6a0b-4c70-8188-8f1d6d16bf31`). Run from `sotto-website`:
 
 ```bash
-npx wrangler d1 execute macparakeet-telemetry --remote --json --command "…"
+npx wrangler d1 execute sotto-telemetry --remote --json --command "…"
 ```
 
 Window unless noted: `app_ver='0.7.3'` and `ts >= '2026-08-10T00:00:00Z'`.

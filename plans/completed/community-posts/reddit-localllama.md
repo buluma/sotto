@@ -24,17 +24,17 @@ Likely options: `Resources`, `Tutorial`, `Discussion`, `New Model`.
 
 Primary:
 ```
-macparakeet-cli 2.3.1 — local Parakeet TDT speech-to-text on Apple Silicon, for AI agents (GPL-3.0)
+sotto-cli 2.3.1 — local Parakeet TDT speech-to-text on Apple Silicon, for AI agents (GPL-3.0)
 ```
 
 Alternatives if 100-char limit is tight:
-- `macparakeet-cli 2.3.1 — local Parakeet STT on Apple Silicon ANE, for agent use`
-- `Local Parakeet TDT CLI for Apple Silicon agents — macparakeet-cli 2.3.1`
+- `sotto-cli 2.3.1 — local Parakeet STT on Apple Silicon ANE, for agent use`
+- `Local Parakeet TDT CLI for Apple Silicon agents — sotto-cli 2.3.1`
 
 ## Post body
 
 ````markdown
-TL;DR: `macparakeet-cli` is now at `2.3.1`: a Swift-native CLI that runs NVIDIA's Parakeet TDT 0.6B v3 on the Apple Neural Engine via FluidAudio. ~155x realtime, ~2.5% WER, ~66 MB memory per inference slot. Free + open-source (GPL-3.0). `brew install moona3k/tap/macparakeet-cli`.
+TL;DR: `sotto-cli` is now at `2.3.1`: a Swift-native CLI that runs NVIDIA's Parakeet TDT 0.6B v3 on the Apple Neural Engine via FluidAudio. ~155x realtime, ~2.5% WER, ~66 MB memory per inference slot. Free + open-source (GPL-3.0). `brew install moona3k/tap/sotto-cli`.
 
 ## Why I'm posting it here
 
@@ -44,18 +44,18 @@ Voice/STT is the documented gap in the local-agent stack on Mac:
 - The OpenAI Whisper API is fast but cloud-only, paid, and breaks the local-first posture this subreddit is built around.
 - `parakeet-mlx` (Python) is the closest thing in spirit, but doesn't carry persistence, prompts, or speaker diarization.
 
-`macparakeet-cli` is the slot between those: Apple Silicon native, ANE-accelerated, persistent SQLite memory, prompt library, semver-stable JSON output. The CLI has existed since v0.1 of the MacParakeet macOS app and powered AI-assisted testing through v0.4–v0.6; the current 2.x line is the maintained public surface.
+`sotto-cli` is the slot between those: Apple Silicon native, ANE-accelerated, persistent SQLite memory, prompt library, semver-stable JSON output. The CLI has existed since v0.1 of the Sotto macOS app and powered AI-assisted testing through v0.4–v0.6; the current 2.x line is the maintained public surface.
 
 ## What you can do with it
 
 ```bash
-brew install moona3k/tap/macparakeet-cli
+brew install moona3k/tap/sotto-cli
 
-macparakeet-cli health --json
-macparakeet-cli transcribe ~/Downloads/podcast.mp3 --format json
-macparakeet-cli transcribe "https://www.youtube.com/watch?v=..." --format json
-macparakeet-cli history search-transcriptions "design review" --json
-macparakeet-cli prompts run "Action items" --transcription <id> \
+sotto-cli health --json
+sotto-cli transcribe ~/Downloads/podcast.mp3 --format json
+sotto-cli transcribe "https://www.youtube.com/watch?v=..." --format json
+sotto-cli history search-transcriptions "design review" --json
+sotto-cli prompts run "Action items" --transcription <id> \
   --provider anthropic --api-key "$KEY" --model claude-sonnet-4-6
 ```
 
@@ -82,12 +82,12 @@ If discussion picks up, drop a follow-up comment with a recipe people often ask 
 ```
 For anyone wiring this into an agent (OpenClaw / Hermes / a custom shell loop), the integration vocabulary lives at <https://github.com/moona3k/macparakeet/tree/main/integrations>. The thin per-ecosystem scaffolds are at integrations/openclaw/ and integrations/hermes/.
 
-If you want to set up a Mac mini as a personal STT box and call it from another machine, the CLI is fine over SSH (just JSON over stdout). The DB lives at `~/Library/Application Support/MacParakeet/macparakeet.db` so you can rsync that for backups.
+If you want to set up a Mac mini as a personal STT box and call it from another machine, the CLI is fine over SSH (just JSON over stdout). The DB lives at `~/Library/Application Support/Sotto/sotto.db` so you can rsync that for backups.
 ```
 
 ## Things to monitor after posting
 
-- Genuine bug reports → file as macparakeet GitHub issues with `bug` label.
+- Genuine bug reports → file as sotto GitHub issues with `bug` label.
 - Feature requests → assess against the "simplicity is the product" north star; not all asks should ship.
 - Questions about FluidAudio / Parakeet TDT internals → defer to FluidAudio docs.
 - Negative comments about closed competitors → don't engage; let the spec numbers speak.

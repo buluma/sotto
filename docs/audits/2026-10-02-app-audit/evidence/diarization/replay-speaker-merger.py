@@ -8,7 +8,7 @@ from pathlib import Path
 import hashlib, json, subprocess, tempfile
 
 repo = Path(__file__).resolve().parents[5]
-source = repo / "Sources/MacParakeetCore/Services/Diarization/SpeakerMerger.swift"
+source = repo / "Sources/SottoCore/Services/Diarization/SpeakerMerger.swift"
 stubs = r"""
 import Foundation
 public struct WordTimestamp {
@@ -56,7 +56,7 @@ run("meeting-fallback-word-with-no-overlap", [
     .init(speakerId: "system:A", startMs: 120000, endMs: 121000)
 ])
 """
-with tempfile.TemporaryDirectory(prefix="macparakeet-merger-audit-") as temporary:
+with tempfile.TemporaryDirectory(prefix="sotto-merger-audit-") as temporary:
     path = Path(temporary) / "main.swift"
     path.write_text(stubs + source.read_text() + probe)
     result = subprocess.run(["swift", str(path)], text=True, capture_output=True, check=True)

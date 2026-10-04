@@ -26,7 +26,7 @@ Ship the core Command Mode GUI flow end-to-end:
 5. result replaces selection via existing paste mechanism
 
 This is the GUI counterpart to the already-working CLI path:
-`macparakeet-cli llm command "<command>" "<selected_text>"`.
+`sotto-cli llm command "<command>" "<selected_text>"`.
 
 ## Scope (F10a)
 
@@ -73,20 +73,20 @@ Also keep `spec/07-text-processing.md` consistent with this split.
 
 ### New files
 
-1. `Sources/MacParakeetCore/Services/AccessibilityService.swift`
-2. `Sources/MacParakeetCore/Services/CommandModeService.swift`
-3. `Sources/MacParakeetCore/Models/CommandModeResult.swift`
-4. `Sources/MacParakeet/Views/CommandMode/CommandModeOverlayView.swift`
-5. `Sources/MacParakeet/Views/CommandMode/CommandModeOverlayController.swift`
-6. `Sources/MacParakeet/Views/CommandMode/CommandModeOverlayViewModel.swift`
-7. `Tests/MacParakeetTests/Services/AccessibilityServiceTests.swift`
-8. `Tests/MacParakeetTests/Services/CommandModeServiceTests.swift`
+1. `Sources/SottoCore/Services/AccessibilityService.swift`
+2. `Sources/SottoCore/Services/CommandModeService.swift`
+3. `Sources/SottoCore/Models/CommandModeResult.swift`
+4. `Sources/Sotto/Views/CommandMode/CommandModeOverlayView.swift`
+5. `Sources/Sotto/Views/CommandMode/CommandModeOverlayController.swift`
+6. `Sources/Sotto/Views/CommandMode/CommandModeOverlayViewModel.swift`
+7. `Tests/SottoTests/Services/AccessibilityServiceTests.swift`
+8. `Tests/SottoTests/Services/CommandModeServiceTests.swift`
 
 ### Modified files
 
-1. `Sources/MacParakeet/Hotkey/HotkeyManager.swift`
-2. `Sources/MacParakeet/AppDelegate.swift`
-3. `Sources/MacParakeet/App/AppEnvironment.swift`
+1. `Sources/Sotto/Hotkey/HotkeyManager.swift`
+2. `Sources/Sotto/AppDelegate.swift`
+3. `Sources/Sotto/App/AppEnvironment.swift`
 4. `spec/02-features.md` (F10a/F10b acceptance split)
 5. `spec/07-text-processing.md` (scope alignment)
 6. `plans/active/2026-02-qwen3-8b-implementation-checklist.md` (mark F10a in progress/completed when done)
@@ -167,7 +167,7 @@ Preview rules:
 
 ### 5. App environment wiring
 
-In `Sources/MacParakeet/App/AppEnvironment.swift`:
+In `Sources/Sotto/App/AppEnvironment.swift`:
 
 1. instantiate `AccessibilityService`
 2. instantiate `CommandModeService`
@@ -175,7 +175,7 @@ In `Sources/MacParakeet/App/AppEnvironment.swift`:
 
 ### 6. App delegate orchestration
 
-In `Sources/MacParakeet/AppDelegate.swift`:
+In `Sources/Sotto/AppDelegate.swift`:
 
 1. add command-mode task/controller/view-model references
 2. `startCommandMode` flow:

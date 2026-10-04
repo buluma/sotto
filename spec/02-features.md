@@ -1,4 +1,4 @@
-# MacParakeet: Features Specification
+# Sotto: Features Specification
 
 > Status: **ACTIVE** - Authoritative, current
 > Current behavior and historical feature groupings. Version headings below
@@ -163,7 +163,7 @@ Meeting Recording and Calendar are opt-in and self-prompt on first use (see ADR-
 
 ### F1: System-Wide Dictation
 
-**What:** Press a hotkey anywhere on macOS, speak, and polished text appears in the active app. The core feature that makes MacParakeet worth using every day.
+**What:** Press a hotkey anywhere on macOS, speak, and polished text appears in the active app. The core feature that makes Sotto worth using every day.
 
 **Activation — Configurable Hotkey:**
 
@@ -365,9 +365,9 @@ Space is always reserved for the tooltip (opacity toggle, not conditional render
 │ Enable Dictation                                             │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│ MacParakeet needs Accessibility permission to:               │
+│ Sotto needs Accessibility permission to:               │
 │                                                              │
-│   • Detect the hotkey when MacParakeet isn't focused         │
+│   • Detect the hotkey when Sotto isn't focused         │
 │   • Insert text into other applications                      │
 │                                                              │
 │ Your dictations stay on your device and are never sent       │
@@ -448,7 +448,7 @@ Display in scrollable result view
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  MacParakeet                                         │
+│  Sotto                                         │
 ├─────────────────────────────────────────────────────┤
 │                                                      │
 │  ┌─────────────────────────────────────────────┐    │
@@ -505,7 +505,7 @@ never aborting the run. The Transcribe tab and the global progress bar show
 "Transcribing N of M · K failed" with a **Cancel all** control. One file routes
 through the unchanged single-file path. YouTube stays single-URL (different
 ingestion model; the queue machinery is generic enough for a future
-playlist front-end). The CLI mirrors this — see F11 / `macparakeet-cli
+playlist front-end). The CLI mirrors this — see F11 / `sotto-cli
 transcribe` and the CLI CHANGELOG (REQ-CLI-002).
 
 **Embedded audio tracks (issue #767):** Local file/folder ingestion probes the
@@ -554,12 +554,12 @@ title hints or latest (`PodcastEpisodeMatcher`, ported from the
 `podcast-transcribe` tool). The chosen enclosure is fetched with a native
 streaming downloader (`PodcastAudioDownloader`, no `yt-dlp` needed for
 podcasts) and transcribed locally. Exposed today via the CLI
-(`macparakeet-cli transcribe --podcast "<query>"`,
+(`sotto-cli transcribe --podcast "<query>"`,
 `TranscriptionService.transcribePodcastQuery`); the GUI surfaces URL paste.
 
 **Completion notification (v0.6 — REQ-UI-006):**
 
-When a file, YouTube, or batch transcription finishes, MacParakeet plays a
+When a file, YouTube, or batch transcription finishes, Sotto plays a
 chime and — only when it is in the background — posts a notification banner
 (a batch posts one summary banner on drain, not one per file). A single
 Settings toggle ("Notify when transcription finishes", default on) governs
@@ -607,7 +607,7 @@ The app lives primarily in the menu bar by default. Click the icon for quick act
 
 ```
 ┌────────────────────────────┐
-│ 🎙 MacParakeet              │
+│ 🎙 Sotto              │
 ├────────────────────────────┤
 │ Start Dictation  Hold/Tap Fn│
 │ Open Window            ⌘O   │
@@ -739,7 +739,7 @@ CREATE INDEX idx_dictations_created_at ON dictations(createdAt DESC);
 **Audio storage:**
 
 ```
-~/Library/Application Support/MacParakeet/dictations/
+~/Library/Application Support/Sotto/dictations/
 └── {uuid}.wav          # Audio file (metadata in database)
 ```
 
@@ -909,7 +909,7 @@ User-defined corrections for domain vocabulary and proper nouns that STT gets wr
 
 ```
 "kubernetes" → "Kubernetes"
-"mac parakeet" → "MacParakeet"
+"mac parakeet" → "Sotto"
 "jay son" → "JSON"
 "post gress" → "PostgreSQL"
 ```
@@ -959,7 +959,7 @@ be replaced in one transaction (issue #766). Replace-all removes manual words
 and snippets that aren't in the file, keeps unmatched learned recognition
 terms, rejects empty files and stale previews, and rolls back if any write
 fails. Surfaced from the Vocabulary panel and via
-`macparakeet-cli vocab {export,import,schema}`. The
+`sotto-cli vocab {export,import,schema}`. The
 `schema` subcommand prints an LLM-readable spec so a local coding agent can
 generate valid bundles from natural-language input.
 
@@ -1071,7 +1071,7 @@ Important constraints:
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  [x] "kubernetes"     →  "Kubernetes"              [Edit] [X]   │
-│  [x] "mac parakeet"   →  "MacParakeet"             [Edit] [X]   │
+│  [x] "mac parakeet"   →  "Sotto"             [Edit] [X]   │
 │  [x] "jay son"        →  "JSON"                    [Edit] [X]   │
 │  [ ] "post gress"     →  "PostgreSQL"   (disabled) [Edit] [X]   │
 │                                                                  │
@@ -1569,7 +1569,7 @@ are unaffected.
 - [x] Diarization failure is non-fatal (ASR result preserved)
 - [x] Progress shows "Identifying speakers..." headline
 - [x] Settings toggles for file/URL and meeting speaker detection (on by default where supported; explicit off is preserved)
-- [x] CLI: `macparakeet-cli transcribe` follows the saved file/URL speaker-detection preference; meeting retranscription follows the saved meeting speaker-detection preference when app-default; `--speaker-detection off` / `--no-diarize` force off per run, and speaker-count constraints force on
+- [x] CLI: `sotto-cli transcribe` follows the saved file/URL speaker-detection preference; meeting retranscription follows the saved meeting speaker-detection preference when app-default; `--speaker-detection off` / `--no-diarize` force off per run, and speaker-count constraints force on
 
 **Timed transcript corrections (shipping in stable 0.8.7):**
 
@@ -1728,9 +1728,9 @@ another, which is what keeps recurring-unknown detection (the literal ask in
 
 > Status: **IMPLEMENTED**
 
-**What:** Distribute MacParakeet as a notarized DMG via macparakeet.com. Auto-updates via Sparkle.
+**What:** Distribute Sotto as a notarized DMG via macparakeet.com. Auto-updates via Sparkle.
 
-**Why not App Store:** MacParakeet bundles FFmpeg and yt-dlp as standalone binaries and uses Accessibility APIs for global hotkeys. App Store sandboxing would block or complicate the core architecture.
+**Why not App Store:** Sotto bundles FFmpeg and yt-dlp as standalone binaries and uses Accessibility APIs for global hotkeys. App Store sandboxing would block or complicate the core architecture.
 
 **Distribution pipeline (implemented):**
 - Notarized DMG signed with Developer ID
@@ -1799,7 +1799,7 @@ Internal data model improvements, reliability fixes, and open-source release. No
 
 > Status: **IMPLEMENTED**
 
-**What:** Released MacParakeet as GPL-3.0 open source at github.com/moona3k/macparakeet. LemonSqueezy kept as $0 product. Community repo archived with redirect.
+**What:** Released Sotto as GPL-3.0 open source at github.com/moona3k/macparakeet. LemonSqueezy kept as $0 product. Community repo archived with redirect.
 
 ---
 
@@ -1849,7 +1849,7 @@ Embedded video/audio playback, split-pane detail view, synced transcript highlig
 - [x] Multi-select cleanup with `Select Many...`, `Select All`, clear/cancel, and contextual destructive confirmations
 - [x] Meeting cleanup supports both full deletion and `Remove Audio Only...`; optional notes, AI results, and chats are removed only by full meeting deletion
 
-Visible transcription titles are source-aware. Meeting rows use their meeting `fileName`. Local file rows use a non-empty user `titleOverride` when explicitly renamed, then the original media `fileName`; transcript-derived opening words never replace that source identity. URL rows retain the non-empty `titleOverride`, `derivedTitle`, then `fileName` fallback. Library cards, detail headers, title sort, agent-facing title fields, and GUI export filename suggestions use that effective title. Search still matches the override, original filename, derived title, and transcript content. `macparakeet-cli history rename --title` uses the same gates: meetings update `fileName`, local files update `titleOverride`, and URL/podcast rows are rejected. Public CLI exact-name lookup and export defaults remain tied to `fileName`.
+Visible transcription titles are source-aware. Meeting rows use their meeting `fileName`. Local file rows use a non-empty user `titleOverride` when explicitly renamed, then the original media `fileName`; transcript-derived opening words never replace that source identity. URL rows retain the non-empty `titleOverride`, `derivedTitle`, then `fileName` fallback. Library cards, detail headers, title sort, agent-facing title fields, and GUI export filename suggestions use that effective title. Search still matches the override, original filename, derived title, and transcript content. `sotto-cli history rename --title` uses the same gates: meetings update `fileName`, local files update `titleOverride`, and URL/podcast rows are rejected. Public CLI exact-name lookup and export defaults remain tied to `fileName`.
 
 ### F27: Home Page Redesign
 
@@ -1930,7 +1930,7 @@ final transcripts remain plain text without word timestamps or speaker labels.
 > the normal channel process.
 
 Meetings can import one existing local audio or video recording through a
-native picker or `macparakeet-cli meetings import`. MacParakeet makes a private
+native picker or `sotto-cli meetings import`. Sotto makes a private
 managed audio copy, leaves the external source unchanged, and runs the same
 final meeting transcription, configured speaker detection, indexing, artifacts,
 knowledge-card, and enabled prompt flow used by saved meetings. The chosen
@@ -2134,14 +2134,14 @@ authoritative transcript and is unchanged by this live-preview strategy.
 - [x] Pinning is unbounded; the after-response strip is a horizontal `ScrollView` with leading + trailing edge-fade gradient affordance for overflow
 - [x] Hidden rows cannot remain pinned: hiding a pinned row auto-unpins it, pinning a hidden row auto-shows it, and imports/saves normalize hidden+pinned rows to hidden+unpinned
 - [x] Live Ask strip reads `visiblePinned` from `QuickPromptsViewModel`; empty Ask state and sparkle popover read `visiblePromptGroups`, preserving group order by first occurrence with unpinned prompts before pinned-no-group cluster
-- [x] `macparakeet-cli quick-prompts` supports list/show/add/set/delete/pin/unpin/restore-defaults/export/import with JSON success/failure envelopes; `--pinned <true|false>` filters list and export
-- [x] Quick-prompt import/export uses stable `schema: "macparakeet.quick_prompts"` and `version: 1` with `isPinned: Bool`; duplicate ids and malformed bundles fail with `errorType: "import_schema"`
+- [x] `sotto-cli quick-prompts` supports list/show/add/set/delete/pin/unpin/restore-defaults/export/import with JSON success/failure envelopes; `--pinned <true|false>` filters list and export
+- [x] Quick-prompt import/export uses stable `schema: "sotto.quick_prompts"` and `version: 1` with `isPinned: Bool`; duplicate ids and malformed bundles fail with `errorType: "import_schema"`
 
 ### F43: Transforms
 
 > Status: **IMPLEMENTED ON MAIN** — Productized ADR-022 surface enabled by `AppFeatures.transformsEnabled = true`.
 
-**What:** System-wide selected-text rewrites through the user's configured LLM provider. The user selects text in any app, presses a bound Transform hotkey, and MacParakeet captures the selection, runs the saved prompt, and pastes the result into the currently focused target. Editable selections are replaced by normal `Cmd+V` semantics; read-only selections still produce a pasteable result and a local history row. The default built-ins are `Polish` (`Control-Option-1`), `Distill` (`Control-Option-2`), and `Decide` (`Control-Option-3`).
+**What:** System-wide selected-text rewrites through the user's configured LLM provider. The user selects text in any app, presses a bound Transform hotkey, and Sotto captures the selection, runs the saved prompt, and pastes the result into the currently focused target. Editable selections are replaced by normal `Cmd+V` semantics; read-only selections still produce a pasteable result and a local history row. The default built-ins are `Polish` (`Control-Option-1`), `Distill` (`Control-Option-2`), and `Decide` (`Control-Option-3`).
 
 **Implementation:**
 - Transforms are `Prompt` rows with `category == .transform`; they reuse Prompt Library persistence but have their own sidebar surface and never appear in summary prompt pickers.
@@ -2150,9 +2150,9 @@ authoritative transcript and is unchanged by this live-preview strategy.
 - Selection capture is AX-first with clipboard fallback; replacement uses clipboard paste with snapshot/restore guards so the output lands in the currently focused target rather than forcing activation back to the selection source.
 - `TransformExecutor` uses `LLMService.transformStream` in the GUI so the progress pill can react to streamed output; CLI JSON uses the detailed LLM path for provider/model/latency metadata where available.
 - `transform_history` stores local input/output/source-app/timing rows for completed Transform runs. This is deliberate local user data; telemetry records only privacy-safe `transform_executed`, `transform_failed`, and `transform_operation` metadata and does not duplicate the content.
-- The menu bar **Transforms** submenu snapshots the frontmost app on the status-button mouse-down, then reads its selection through AX when the menu opens. If the click was not observed or MacParakeet was frontmost, the action fails without using an earlier app. If AX cannot read the captured app, choosing a Transform reactivates that same app and uses the clipboard fallback only while it is frontmost; a focus change stops the run. Every visible Transform is listed by default, including ones with no hotkey, so the first click works; hide individual Transforms from that submenu via the card hover control or context menu. Missing preference shows every visible Transform. Bound hotkeys appear as a title suffix, not as live `keyEquivalent`s, so pressing the chord still uses the hotkey path instead of a menu action against MacParakeet itself.
+- The menu bar **Transforms** submenu snapshots the frontmost app on the status-button mouse-down, then reads its selection through AX when the menu opens. If the click was not observed or Sotto was frontmost, the action fails without using an earlier app. If AX cannot read the captured app, choosing a Transform reactivates that same app and uses the clipboard fallback only while it is frontmost; a focus change stops the run. Every visible Transform is listed by default, including ones with no hotkey, so the first click works; hide individual Transforms from that submenu via the card hover control or context menu. Missing preference shows every visible Transform. Bound hotkeys appear as a title suffix, not as live `keyEquivalent`s, so pressing the chord still uses the hotkey path instead of a menu action against Sotto itself.
 - The menu bar also supports pasting the latest Transform result and recent Transform results, mirroring the dictation paste history affordance.
-- `macparakeet-cli transforms` manages and runs saved Transforms headlessly; `macparakeet-cli transforms history` reads and manages local Transform history.
+- `sotto-cli transforms` manages and runs saved Transforms headlessly; `sotto-cli transforms history` reads and manages local Transform history.
 
 **Acceptance criteria:**
 - [x] Built-ins seed as `Polish`, `Distill`, and `Decide` with default `Control-Option-1`, `Control-Option-2`, and `Control-Option-3` shortcuts and resettable prompt bodies
@@ -2208,7 +2208,7 @@ AVAssetWriter or reporting success.
 
 Current development exposes segment FTS search, bounded transcript context,
 current knowledge-card reads/backfill, and saved meeting artifacts through
-`macparakeet-cli`. Cards are derived routing hints: verify candidate actions and
+`sotto-cli`. Cards are derived routing hints: verify candidate actions and
 decisions against cited transcript segments. Dictations retain their separate
 history search. Ask adds a separate explicit-source workspace and CLI family;
 it does not search the whole Library implicitly or add embeddings, a workflow
@@ -2239,7 +2239,7 @@ The existing completion handler reads the auto-open preference before presenting
 
 > Status: **IMPLEMENTED** — ADR-017 Phase 2b / [issue #609](https://github.com/moona3k/macparakeet/issues/609). Design accepted 2026-09-14, then corrected from independent review and implemented. Plan: [`plans/active/2026-09-14-issue-609-calendar-event-skip.md`](../plans/active/2026-09-14-issue-609-calendar-event-skip.md).
 
-**What:** Mute one calendar meeting so MacParakeet will not remind or auto-start for it, without turning calendar automation off or ignoring a whole calendar. Optional-invitee is the reason users want this, not an automatic filter. Skip persists across launches. Upcoming default is the whole meeting for one-off events (`eventKey` = `externalId ?? id`) and this occurrence for recurring events (`dedupeKey`). Toast ✕ is always this occurrence. Series skip is offered only when `isRecurring` (not merely when `externalId` is set). Skipped rows stay on Upcoming so undo is visible. Manual Record still works.
+**What:** Mute one calendar meeting so Sotto will not remind or auto-start for it, without turning calendar automation off or ignoring a whole calendar. Optional-invitee is the reason users want this, not an automatic filter. Skip persists across launches. Upcoming default is the whole meeting for one-off events (`eventKey` = `externalId ?? id`) and this occurrence for recurring events (`dedupeKey`). Toast ✕ is always this occurrence. Series skip is offered only when `isRecurring` (not merely when `externalId` is set). Skipped rows stay on Upcoming so undo is visible. Manual Record still works.
 
 **Acceptance criteria:**
 - [x] `MeetingMonitor.candidates` is the shared filter for Upcoming and the coordinator; skipped events are annotated, not dropped from the list
@@ -2351,7 +2351,7 @@ Read surrounding text from the active app via macOS Accessibility APIs (AXUIElem
 
 ## Privacy Requirements
 
-MacParakeet's brand is privacy. These are non-negotiable.
+Sotto's brand is privacy. These are non-negotiable.
 
 | Requirement | Detail |
 |-------------|--------|
@@ -2483,8 +2483,8 @@ FluidAudio model download → Audio capture (AVAudioEngine)
 
 | Feature | Why Excluded |
 |---------|--------------|
-| Cross-meeting memory / CRM-style enrichment | That's Oatmeal, not MacParakeet |
-| Full calendar assistant | MacParakeet only has lightweight local calendar auto-start/stop support |
+| Cross-meeting memory / CRM-style enrichment | That's Oatmeal, not Sotto |
+| Full calendar assistant | Sotto only has lightweight local calendar auto-start/stop support |
 | Entity extraction / memory | Meeting app territory |
 | Cloud processing | Privacy is the brand -- opt-in LLM providers only (ADR-011) |
 | Windows / Linux | macOS-only simplifies everything, Apple Silicon required |

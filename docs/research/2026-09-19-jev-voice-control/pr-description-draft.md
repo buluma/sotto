@@ -2,7 +2,7 @@
 
 ## Summary
 
-This PR adds a DEBUG-only Voice Control experiment to MacParakeet: ordinary speech or a typed inbox command drives the app already in front of you through native macOS Accessibility. Jev is the judge of competing landings. MacParakeet owns observation, legality, execution, and verification.
+This PR adds a DEBUG-only Voice Control experiment to Sotto: ordinary speech or a typed inbox command drives the app already in front of you through native macOS Accessibility. Jev is the judge of competing landings. Sotto owns observation, legality, execution, and verification.
 
 It is not a stable-release claim. Live Google Flights results and the integrated microphone are still unproven. Enable with `--enable-voice-control` in a DEBUG build.
 
@@ -35,7 +35,7 @@ What we refused to build: a seven-state universal Mac graph, Score-ranking every
 
 ---
 
-## How MacParakeet uses it
+## How Sotto uses it
 
 Voice Control is a deliberate mode, not always-on listening. Hold Control–Option–Space or type in the inbox. Ordinary dictation keeps its current meaning. Speech stays local. Jev is cloud text-only, explicit consent, BYO key in Keychain.
 

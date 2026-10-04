@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 struct StatsCommand: ParsableCommand {
     static let configuration = CommandConfiguration(

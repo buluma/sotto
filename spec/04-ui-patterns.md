@@ -1,10 +1,10 @@
-# MacParakeet UI Patterns
+# Sotto UI Patterns
 
 > Status: **ACTIVE**
 
 ## Overview
 
-MacParakeet has these primary UI surfaces:
+Sotto has these primary UI surfaces:
 1. **Main Window** -- Sidebar + content area; **Transcribe** is the unified capture hub for all three modes
 2. **Idle Pill** -- Persistent floating indicator, always visible when not dictating or meeting-recording
 3. **Dictation Overlay** -- Compact pill for recording state
@@ -44,7 +44,7 @@ Design philosophy: **Simple, native, stays out of the way.** No chrome, no clutt
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  MacParakeet                                          ─ □ ✕  │
+│  Sotto                                          ─ □ ✕  │
 ├──────────────────┬───────────────────────────────────────────┤
 │  Sidebar         │  Content                                  │
 │  ────────────    │  ───────────────────────────────────────  │
@@ -105,7 +105,7 @@ auto-record this time** for an occurrence skip on a collapsed series row,
 **Won't auto-record this series** for a recurring event-level skip, **Won't
 auto-record** for a one-off (occurrence or event-level). Undo is
 **Auto-record again**, or **Auto-record this repeating meeting again** for
-series. In notify-only mode the row caption states that MacParakeet won't
+series. In notify-only mode the row caption states that Sotto won't
 remind you or start recording. The auto-start toast ✕ is always this
 occurrence, not a session-only dismiss. Skip never lives as a Settings list
 of events; per-calendar include stays the coarse filter. Collapse plus the
@@ -501,7 +501,7 @@ Components:
 
 ## Idle Pill (v0.1)
 
-Persistent floating pill centered on the bottom (default) or top edge of the screen, always visible when the app is running and not actively dictating. Provides a visual anchor so users always know MacParakeet is ready.
+Persistent floating pill centered on the bottom (default) or top edge of the screen, always visible when the app is running and not actively dictating. Provides a visual anchor so users always know Sotto is ready.
 
 ### Dimensions
 
@@ -677,7 +677,7 @@ coexist.
     breathes until the formatter returns).
 - Pill size: same 46×46 as Processing — the state change is a
   hue/geometry evolution, not a resize.
-- Triggered by the `.macParakeetAIFormatterDidStart` notification
+- Triggered by the `.sottoAIFormatterDidStart` notification
   (posted from `DictationService.formatTranscriptIfNeeded`) which the
   `DictationFlowCoordinator` observes to promote the overlay state
   from `.processing` → `.formatting`. Terminal transitions
@@ -859,7 +859,7 @@ During concurrent dictation + meeting recording:
 
 ```
 ┌────────────────────────────────┐
-│  MacParakeet                   │
+│  Sotto                   │
 ├────────────────────────────────┤
 │  Start Dictation    (hotkey)  │
 │  Record Meeting     (hotkey)  │
@@ -871,7 +871,7 @@ During concurrent dictation + meeting recording:
 │  └─ lecture-notes.wav  (3d)   │
 ├────────────────────────────────┤
 │  Settings...           ⌘,     │
-│  Quit MacParakeet      ⌘Q     │
+│  Quit Sotto      ⌘Q     │
 └────────────────────────────────┘
 ```
 
@@ -1018,8 +1018,8 @@ update keeping it alive. Rules that follow from it:
   stays lazy while the detached cache builds, avoiding an eager long-transcript
   first-open. Speaker turns are split into cards of at most 24 segments so a
   long single-speaker turn cannot defeat laziness. DEBUG launches can flip
-  layout and row selection with `MACPARAKEET_DEBUG_TRANSCRIPT_LAZY` and
-  `MACPARAKEET_DEBUG_TRANSCRIPT_SELECTION` to bisect a recurrence.
+  layout and row selection with `SOTTO_DEBUG_TRANSCRIPT_LAZY` and
+  `SOTTO_DEBUG_TRANSCRIPT_SELECTION` to bisect a recurrence.
 - Find navigation uses Return / Shift-Return, the chevrons, or Command-G /
   Shift-Command-G. It jumps to the matched line without animation. In lazy
   speaker-card layouts it first realizes the owning card, then reveals a
@@ -1028,7 +1028,7 @@ update keeping it alive. Rules that follow from it:
   cancel a pending jump.
 - Do not put more AppKit platform views (representables, selectable text
   overlays) inside lazily measured rows than the row already has.
-- `Tests/MacParakeetTests/Views/TranscriptTimestampedLayoutSmokeTests.swift`
+- `Tests/SottoTests/Views/TranscriptTimestampedLayoutSmokeTests.swift`
   hosts the real view offscreen, scrolls it down and back, and fails if layout
   keeps re-running; hover itself cannot be simulated offscreen and stays a
   manual check.
@@ -1250,7 +1250,7 @@ The Transforms sidebar item is visible when `AppFeatures.transformsEnabled` is t
 - Built-ins are `Polish`, `Distill`, and `Decide` with default `Control-Option-1`, `Control-Option-2`, and `Control-Option-3` bindings.
 - A Transform is active when it has a shortcut; there is no second user-facing global enable toggle.
 - The editor validates shortcuts against dictation, meeting, duplicate Transform bindings, bare keys, and hostile Option-letter dead-key combos.
-- The floating Transform progress pill owns running/cancel/error state. The target app remains focused; MacParakeet does not show an inline preview before replacement.
+- The floating Transform progress pill owns running/cancel/error state. The target app remains focused; Sotto does not show an inline preview before replacement.
 - Local Transform history is user data. It may contain selected text and output; telemetry and `llm_runs` do not duplicate that content.
 
 ### Custom Words Management
@@ -1375,7 +1375,7 @@ included in an app release.
 - Cohere language picker is shown for the Cohere path. Cohere has no auto-detect; `nil` falls back to English and explicit choices store supported primary subtags such as `en`, `ja`, or `zh`.
 - Status pill states: `Unknown`, `Checking`, `Ready`, `Not Loaded`, `Not Downloaded`, `Downloading`, `Repairing`, `Failed`.
 - `Repair` retries Parakeet model download/initialization with bounded backoff.
-- `Download` explicitly downloads the configured Whisper model into `~/Library/Application Support/MacParakeet/models/stt/whisper/` or Cohere Transcribe into `~/Library/Application Support/MacParakeet/models/stt/cohere-transcribe/`.
+- `Download` explicitly downloads the configured Whisper model into `~/Library/Application Support/Sotto/models/stt/whisper/` or Cohere Transcribe into `~/Library/Application Support/Sotto/models/stt/cohere-transcribe/`.
 - Switching engines is disabled while STT work is queued/running or an active meeting recording holds a speech-engine lease.
 
 ### Permissions (v0.1)
@@ -1399,7 +1399,7 @@ Pill anatomy:
 
 Centered at the bottom of the settings form:
 - `SpinnerRingView(size: 16, revolutionDuration: 8.0, tintColor: .secondary)` at 50% opacity
-- "MacParakeet {version}" in caption, tertiary color
+- "Sotto {version}" in caption, tertiary color
 
 ### Onboarding
 
@@ -1595,10 +1595,10 @@ Users can submit suggestions via a text form at the bottom of the feed. Submissi
 |-----------|----------|------|
 | `DiscoverView` | `Views/Discover/` | Full content view (card list + thoughts form) |
 | `DiscoverSidebarCard` | `Views/Discover/` | Pinned sidebar preview card |
-| `DiscoverViewModel` | `MacParakeetViewModels/` | Feed state, sidebar rotation (30s timer), cache + refresh |
-| `DiscoverService` | `MacParakeetCore/Services/` | Feed loading: cache → bundled fallback → empty. Background refresh from remote. |
-| `DiscoverThoughtsService` | `MacParakeetCore/Services/` | POST user thoughts to private endpoint |
-| `DiscoverItem` / `DiscoverFeed` | `MacParakeetCore/Models/DiscoverContent.swift` | Data model (Codable, versioned feed with `featuredIndex`) |
+| `DiscoverViewModel` | `SottoViewModels/` | Feed state, sidebar rotation (30s timer), cache + refresh |
+| `DiscoverService` | `SottoCore/Services/` | Feed loading: cache → bundled fallback → empty. Background refresh from remote. |
+| `DiscoverThoughtsService` | `SottoCore/Services/` | POST user thoughts to private endpoint |
+| `DiscoverItem` / `DiscoverFeed` | `SottoCore/Models/DiscoverContent.swift` | Data model (Codable, versioned feed with `featuredIndex`) |
 
 ### Data Flow
 
@@ -1664,7 +1664,7 @@ All design tokens are centralized in `DesignSystem.swift` (`Views/Components/Des
 
 ### Buttons
 
-Buttons use the `parakeetAction(_:)` modifier (in `Views/Components/ParakeetActionStyle.swift`) to express *intent* at the callsite, not styling primitives. This replaced ad-hoc `.buttonStyle(.bordered) + .tint(...)` composition.
+Buttons use the `sottoAction(_:)` modifier (in `Views/Components/SottoActionStyle.swift`) to express *intent* at the callsite, not styling primitives. This replaced ad-hoc `.buttonStyle(.bordered) + .tint(...)` composition.
 
 | Role | Treatment | Usage |
 |------|-----------|-------|
@@ -1679,7 +1679,7 @@ Hard rules — coral is brand, not chrome:
 
 - One `.primary*` per surface. If you have two equally-weighted CTAs, both are `.secondary`.
 - Pair `.destructive*` with `Button(role: .destructive)` so VoiceOver carries the role too.
-- Never re-tint the SwiftUI environment with `.tint(coral)` at NSHostingView roots or sheet wrappers — `parakeetAction` is the only place coral cascades from. Cascading tint overrides destructive role styling and erases the hierarchy `parakeetAction` exists to provide.
+- Never re-tint the SwiftUI environment with `.tint(coral)` at NSHostingView roots or sheet wrappers — `sottoAction` is the only place coral cascades from. Cascading tint overrides destructive role styling and erases the hierarchy `sottoAction` exists to provide.
 
 ### Colors
 
@@ -1840,7 +1840,7 @@ Center and vertex glow are static (constants `centerGlow = 0.32`, `vertexGlow = 
 
 > Historical implementation snapshot. Current release status lives in
 > `spec/README.md`, and current feature exposure is controlled by
-> `Sources/MacParakeetCore/AppFeatures.swift`.
+> `Sources/SottoCore/AppFeatures.swift`.
 
 ### v0.1 (MVP)
 
@@ -1889,7 +1889,7 @@ All UI listed above is v0.1 except where noted:
 
 ## Platform Conventions
 
-MacParakeet follows standard macOS patterns:
+Sotto follows standard macOS patterns:
 
 - **Window management:** Standard traffic lights, resizable, remembers position
 - **Keyboard shortcuts:** Standard (Cmd+C copy, Cmd+Q quit, Cmd+, settings)

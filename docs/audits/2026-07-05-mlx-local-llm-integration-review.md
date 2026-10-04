@@ -20,16 +20,16 @@ how close it is to a nontechnical "download and click" setup experience.
 Primary areas reviewed:
 
 - Build gating and dependency resolution in `Package.swift`.
-- Runtime injection in `Sources/MacParakeet/App/AppEnvironment.swift`.
-- Feature visibility in `Sources/MacParakeetCore/AppFeatures.swift`.
-- Provider selection in `Sources/MacParakeetCore/Models/LLMProvider.swift`.
-- Settings setup UI in `Sources/MacParakeet/Views/Settings/LLMSettingsView.swift`.
-- Setup state in `Sources/MacParakeetViewModels/InProcessModelManagerViewModel.swift`.
-- Downloader hardening in `Sources/MacParakeetCore/Services/LLM/InProcessModelDownloader.swift`.
-- Client/routing in `Sources/MacParakeetCore/Services/LLM/InProcessLLMClient.swift`
+- Runtime injection in `Sources/Sotto/App/AppEnvironment.swift`.
+- Feature visibility in `Sources/SottoCore/AppFeatures.swift`.
+- Provider selection in `Sources/SottoCore/Models/LLMProvider.swift`.
+- Settings setup UI in `Sources/Sotto/Views/Settings/LLMSettingsView.swift`.
+- Setup state in `Sources/SottoViewModels/InProcessModelManagerViewModel.swift`.
+- Downloader hardening in `Sources/SottoCore/Services/LLM/InProcessModelDownloader.swift`.
+- Client/routing in `Sources/SottoCore/Services/LLM/InProcessLLMClient.swift`
   and `RoutingLLMClient.swift`.
-- MLX implementation in `Sources/MacParakeetLocalLLM/MLXLocalLLMRuntime.swift`.
-- Summary/chat context handling in `Sources/MacParakeetCore/Services/LLM/LLMService.swift`.
+- MLX implementation in `Sources/SottoLocalLLM/MLXLocalLLMRuntime.swift`.
+- Summary/chat context handling in `Sources/SottoCore/Services/LLM/LLMService.swift`.
 - Governing docs in `spec/11-llm-integration.md`,
   `spec/adr/011-llm-cloud-and-local-providers.md`, and
   `plans/active/2026-06-27-on-device-local-llm*.md`.
@@ -39,12 +39,12 @@ Primary areas reviewed:
 The MLX path is a credible dev-gated foundation. It is not vapor:
 
 - Normal builds do not resolve MLX dependencies.
-- Gated builds include `MacParakeetLocalLLM`.
+- Gated builds include `SottoLocalLLM`.
 - App runtime injection exists when the MLX compile flag is present.
 - The default model manifest is pinned and verified.
 - The Settings setup flow exists.
 - Focused tests pass.
-- The gated `MacParakeetLocalLLM` target compiles.
+- The gated `SottoLocalLLM` target compiles.
 
 It is not ready for a public nontechnical "download and click" promise. The
 remaining work is mostly productization and proof: capability gating, real
@@ -61,14 +61,14 @@ input Phase 0 and the chunking design need.
 
 ### Build and runtime seam
 
-`Package.swift` keeps MLX dependencies behind `MACPARAKEET_ENABLE_MLX_LOCAL_LLM`.
+`Package.swift` keeps MLX dependencies behind `SOTTO_ENABLE_MLX_LOCAL_LLM`.
 Normal package description did not list MLX or Swift Transformers dependencies.
-With the flag enabled, the package graph includes `MacParakeetLocalLLM`.
+With the flag enabled, the package graph includes `SottoLocalLLM`.
 
 `AppEnvironment` injects:
 
 - `RoutingLLMClient(inProcessClient: InProcessLLMClient(runtime: MLXLocalLLMRuntime()))`
-  when `MACPARAKEET_HAS_MLX_LOCAL_LLM` is defined.
+  when `SOTTO_HAS_MLX_LOCAL_LLM` is defined.
 - `RoutingLLMClient()` otherwise, which uses `UnavailableLocalLLMRuntime`.
 
 This is a reasonable compile-time seam for keeping public builds free of MLX
@@ -99,7 +99,7 @@ swift test --filter InProcessModelDownloaderTests
 swift test --filter InProcessModelManagerViewModelTests
 swift test --filter InProcessLLMClientTests
 swift test --filter LLMProviderDescriptorTests
-MACPARAKEET_ENABLE_MLX_LOCAL_LLM=1 MACPARAKEET_SKIP_WHISPERKIT=1 swift build --target MacParakeetLocalLLM
+SOTTO_ENABLE_MLX_LOCAL_LLM=1 SOTTO_SKIP_WHISPERKIT=1 swift build --target SottoLocalLLM
 ```
 
 All passed. The gated build emitted a non-blocking warning that dependency
@@ -141,10 +141,10 @@ Recommended fix:
 
 Key files:
 
-- `Sources/MacParakeetCore/AppFeatures.swift`
-- `Sources/MacParakeet/App/AppEnvironment.swift`
-- `Sources/MacParakeetViewModels/LLMSettingsViewModel.swift`
-- `Sources/MacParakeetCore/Services/LLM/LocalLLMRuntime.swift`
+- `Sources/SottoCore/AppFeatures.swift`
+- `Sources/Sotto/App/AppEnvironment.swift`
+- `Sources/SottoViewModels/LLMSettingsViewModel.swift`
+- `Sources/SottoCore/Services/LLM/LocalLLMRuntime.swift`
 
 ### 2. High (blocks dogfood): "test local AI" only loads the model; it does not test generation
 
@@ -174,9 +174,9 @@ Recommended fix:
 
 Key files:
 
-- `Sources/MacParakeetViewModels/InProcessModelManagerViewModel.swift`
-- `Sources/MacParakeetCore/Services/LLM/InProcessLLMClient.swift`
-- `Sources/MacParakeetLocalLLM/MLXLocalLLMRuntime.swift`
+- `Sources/SottoViewModels/InProcessModelManagerViewModel.swift`
+- `Sources/SottoCore/Services/LLM/InProcessLLMClient.swift`
+- `Sources/SottoLocalLLM/MLXLocalLLMRuntime.swift`
 
 ### 3. High (blocks public promise, not dogfood): long transcript summary/chat truncates before MLX chunking can help
 
@@ -221,8 +221,8 @@ Recommended direction:
 
 Key files:
 
-- `Sources/MacParakeetCore/Services/LLM/LLMService.swift`
-- `Sources/MacParakeetCore/Services/LLM/InProcessLLMClient.swift`
+- `Sources/SottoCore/Services/LLM/LLMService.swift`
+- `Sources/SottoCore/Services/LLM/InProcessLLMClient.swift`
 - `plans/active/2026-06-27-on-device-local-llm.md`
 
 ### 4. Medium: setup UX is still developer-facing
@@ -251,9 +251,9 @@ Recommended fix:
 
 Key files:
 
-- `Sources/MacParakeet/Views/Settings/LLMSettingsView.swift`
-- `Sources/MacParakeetCore/Models/LLMProvider.swift`
-- `Sources/MacParakeetViewModels/LLMSettingsViewModel.swift`
+- `Sources/Sotto/Views/Settings/LLMSettingsView.swift`
+- `Sources/SottoCore/Models/LLMProvider.swift`
+- `Sources/SottoViewModels/LLMSettingsViewModel.swift`
 
 ### 5. Medium: setup checks RAM but not disk space
 
@@ -275,9 +275,9 @@ Recommended fix:
 
 Key files:
 
-- `Sources/MacParakeetViewModels/InProcessModelManagerViewModel.swift`
-- `Sources/MacParakeetCore/Services/LLM/InProcessModelDownloader.swift`
-- `Sources/MacParakeetCore/Services/AppPaths.swift`
+- `Sources/SottoViewModels/InProcessModelManagerViewModel.swift`
+- `Sources/SottoCore/Services/LLM/InProcessModelDownloader.swift`
+- `Sources/SottoCore/Services/AppPaths.swift`
 
 ### 6. Medium: docs and plans have mixed status signals
 
@@ -323,7 +323,7 @@ Recommended fix:
 Key files:
 
 - `THIRD_PARTY_LICENSES.md`
-- `Sources/MacParakeetCore/Services/LLM/InProcessModelDownloader.swift`
+- `Sources/SottoCore/Services/LLM/InProcessModelDownloader.swift`
 
 ### 8. Medium: no model removal/reclaim path
 
@@ -343,9 +343,9 @@ Recommended fix:
 
 Key files:
 
-- `Sources/MacParakeetViewModels/InProcessModelManagerViewModel.swift`
-- `Sources/MacParakeetCore/Services/LLM/InProcessModelDownloader.swift`
-- `Sources/MacParakeet/Views/Settings/LLMSettingsView.swift`
+- `Sources/SottoViewModels/InProcessModelManagerViewModel.swift`
+- `Sources/SottoCore/Services/LLM/InProcessModelDownloader.swift`
+- `Sources/Sotto/Views/Settings/LLMSettingsView.swift`
 
 ### 9. Low: gated build warns about unused `mlx-swift`
 
@@ -418,7 +418,7 @@ swift test --filter InProcessModelManagerViewModelTests
 For real runtime changes:
 
 ```bash
-MACPARAKEET_ENABLE_MLX_LOCAL_LLM=1 MACPARAKEET_SKIP_WHISPERKIT=1 swift build --target MacParakeetLocalLLM
+SOTTO_ENABLE_MLX_LOCAL_LLM=1 SOTTO_SKIP_WHISPERKIT=1 swift build --target SottoLocalLLM
 ```
 
 Add an opt-in integration test or script that only runs when a verified model
@@ -437,18 +437,18 @@ as the final gate if the follow-up branch changes shared LLM behavior.
 ## Source Map
 
 - Build flags and target wiring: `Package.swift`
-- Feature gate: `Sources/MacParakeetCore/AppFeatures.swift`
-- Runtime injection: `Sources/MacParakeet/App/AppEnvironment.swift`
-- Provider descriptor: `Sources/MacParakeetCore/Models/LLMProvider.swift`
-- Settings card: `Sources/MacParakeet/Views/Settings/LLMSettingsView.swift`
-- Settings view model: `Sources/MacParakeetViewModels/LLMSettingsViewModel.swift`
-- Setup manager: `Sources/MacParakeetViewModels/InProcessModelManagerViewModel.swift`
-- Downloader: `Sources/MacParakeetCore/Services/LLM/InProcessModelDownloader.swift`
-- Runtime protocol: `Sources/MacParakeetCore/Services/LLM/LocalLLMRuntime.swift`
-- In-process client: `Sources/MacParakeetCore/Services/LLM/InProcessLLMClient.swift`
-- Routing client: `Sources/MacParakeetCore/Services/LLM/RoutingLLMClient.swift`
-- MLX runtime: `Sources/MacParakeetLocalLLM/MLXLocalLLMRuntime.swift`
-- Prompt/context policy: `Sources/MacParakeetCore/Services/LLM/LLMService.swift`
+- Feature gate: `Sources/SottoCore/AppFeatures.swift`
+- Runtime injection: `Sources/Sotto/App/AppEnvironment.swift`
+- Provider descriptor: `Sources/SottoCore/Models/LLMProvider.swift`
+- Settings card: `Sources/Sotto/Views/Settings/LLMSettingsView.swift`
+- Settings view model: `Sources/SottoViewModels/LLMSettingsViewModel.swift`
+- Setup manager: `Sources/SottoViewModels/InProcessModelManagerViewModel.swift`
+- Downloader: `Sources/SottoCore/Services/LLM/InProcessModelDownloader.swift`
+- Runtime protocol: `Sources/SottoCore/Services/LLM/LocalLLMRuntime.swift`
+- In-process client: `Sources/SottoCore/Services/LLM/InProcessLLMClient.swift`
+- Routing client: `Sources/SottoCore/Services/LLM/RoutingLLMClient.swift`
+- MLX runtime: `Sources/SottoLocalLLM/MLXLocalLLMRuntime.swift`
+- Prompt/context policy: `Sources/SottoCore/Services/LLM/LLMService.swift`
 - Public LLM spec: `spec/11-llm-integration.md`
 - LLM ADR: `spec/adr/011-llm-cloud-and-local-providers.md`
 - Local LLM plan: `plans/active/2026-06-27-on-device-local-llm.md`

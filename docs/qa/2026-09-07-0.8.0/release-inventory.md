@@ -5,7 +5,7 @@ Status: source inventory complete; runtime verdict belongs to the parent QA repo
 ## Exact scope and method
 
 - Candidate: `8548c099af5ee2ab0ed4dd9efe757d85c498cca0`, branch `release/0.8.0-qa`, owning QA checkout (`<QA_WORKTREE>`).
-- Stable comparison: Git tag `v0.7.3` at `d6321f87dccecf29bd4792113f522bb0c98d1f35`; its [GitHub release](https://github.com/moona3k/macparakeet/releases/tag/v0.7.3) was published 2026-07-17 with a 148,896,323-byte asset named `MacParakeet.dmg`. Its notes advertise embedded CLI 3.0. The live release API and the tag's CLI source agree.
+- Stable comparison: Git tag `v0.7.3` at `d6321f87dccecf29bd4792113f522bb0c98d1f35`; its [GitHub release](https://github.com/moona3k/macparakeet/releases/tag/v0.7.3) was published 2026-07-17 with a 148,896,323-byte asset named `Sotto.dmg`. Its notes advertise embedded CLI 3.0. The live release API and the tag's CLI source agree.
 - Inspected first-parent history, all changed source filenames, targeted source diffs, current CLI changelog, feature flags, governing specs, subsystem READMEs, the complete distribution guide, PR #970, and known open risks #933/#949/#952. No private diagnostic or transcript content was read.
 - This worker ran no builds, tests, app launches, recording, preference writes, database mutations, signing, publishing, or GitHub mutations. Source/test mappings below are verification instructions and evidence of available coverage, not executed passes.
 - Root owns GUI/audio work, all Swift builds/tests, and the single final full-suite invocation. Historical PR checks do not replace verification of this candidate.
@@ -17,11 +17,11 @@ Status: source inventory complete; runtime verdict belongs to the parent QA repo
 
 The original finding below applies to the baseline snapshot. `docs/human-qa-guide.md` now distinguishes the dev bundle identity from shared data paths and requires verified disposable state for destructive QA.
 
-Location: `docs/human-qa-guide.md:43–47`; source `Sources/MacParakeetCore/Services/AppPaths.swift:13–26,86–118`; launcher `scripts/dev/run_app.sh:238–245`.
+Location: `docs/human-qa-guide.md:43–47`; source `Sources/SottoCore/Services/AppPaths.swift:13–26,86–118`; launcher `scripts/dev/run_app.sh:238–245`.
 
 Trigger: follow the guide's advice to launch the dev app and test destructive flows believing it has a separate database because it has a separate bundle identifier.
 
-Observed source: the normal app-support path is always `~/Library/Application Support/MacParakeet`. A bundle identifier does not change it. Only a DEBUG build with an explicitly supplied `MACPARAKEET_DEBUG_APP_STATE_DIR` changes the database/audio/model paths. Release builds ignore that variable. The launcher does not automatically create an isolated state root. Preferences also have mixed ownership: ordinary `.standard` settings use the current process domain, while `AppPaths.appDefaults()` opens the production named suite when the bundle ID differs. Keychain isolation is not implied by either mechanism.
+Observed source: the normal app-support path is always `~/Library/Application Support/Sotto`. A bundle identifier does not change it. Only a DEBUG build with an explicitly supplied `SOTTO_DEBUG_APP_STATE_DIR` changes the database/audio/model paths. Release builds ignore that variable. The launcher does not automatically create an isolated state root. Preferences also have mixed ownership: ordinary `.standard` settings use the current process domain, while `AppPaths.appDefaults()` opens the production named suite when the bundle ID differs. Keychain isolation is not implied by either mechanism.
 
 Impact: a tester can delete or modify production recordings/vocabulary or affect shared settings while believing they are using disposable data. This is a concrete guide defect, not evidence that this QA run has damaged data.
 
@@ -33,7 +33,7 @@ Locations: `spec/README.md:26`, `spec/14-per-prompt-inference-settings.md:3–5`
 
 At the original snapshot, both called per-prompt inference settings an implementation candidate associated with PR #956 and awaiting integration validation. Both now identify the feature as implemented on development `main` through PR #968 and unreleased to the public app.
 
-The original development release-channel row in `spec/README.md` also advertised catalog/JSON-mutator coverage, segment search/context reads, and knowledge cards as development additions. That row has been corrected. `git show v0.7.3:Sources/CLI/MacParakeetCLI.swift` already includes `SearchCommand`, `SearchReindexCommand`, `TranscriptCommand`, `CardsCommand`, and `SpecCommand`; the corresponding search/segment/card infrastructure exists at that tag. Do not market those as new 0.8.0 features. Cards changes in this delta concern checked token accounting, not first introduction of cards.
+The original development release-channel row in `spec/README.md` also advertised catalog/JSON-mutator coverage, segment search/context reads, and knowledge cards as development additions. That row has been corrected. `git show v0.7.3:Sources/CLI/SottoCLI.swift` already includes `SearchCommand`, `SearchReindexCommand`, `TranscriptCommand`, `CardsCommand`, and `SpecCommand`; the corresponding search/segment/card infrastructure exists at that tag. Do not market those as new 0.8.0 features. Cards changes in this delta concern checked token accounting, not first introduction of cards.
 
 ### P3 stale distribution size example — corrected in this QA branch
 
@@ -41,7 +41,7 @@ The original final Notes bullet in `docs/distribution.md` said the DMG was 27 MB
 
 ## Changes grouped into testable workflows
 
-Priority means relative QA risk, not a confirmed defect. Every row is source-mapped and runtime-unverified by this worker. Paths are repository-relative. Test family names identify existing tests in `Tests/MacParakeetTests/` or `Tests/CLITests/`.
+Priority means relative QA risk, not a confirmed defect. Every row is source-mapped and runtime-unverified by this worker. Paths are repository-relative. Test family names identify existing tests in `Tests/SottoTests/` or `Tests/CLITests/`.
 
 | Workflow / change | Expected behavior and checks | Governing source / contract | Existing test coverage | Priority |
 |---|---|---|---|---|
@@ -79,7 +79,7 @@ Priority means relative QA risk, not a confirmed defect. Every row is source-map
 
 ## Optional and disabled surfaces
 
-Read directly from `Sources/MacParakeetCore/AppFeatures.swift` at the candidate; these are source defaults, not runtime preference observations.
+Read directly from `Sources/SottoCore/AppFeatures.swift` at the candidate; these are source defaults, not runtime preference observations.
 
 | Surface | Flag/default | Release scope |
 |---|---|---|
@@ -91,20 +91,20 @@ Read directly from `Sources/MacParakeetCore/AppFeatures.swift` at the candidate;
 | Routine meeting health chips | `meetingSourceHealthUIEnabled = false` | Hidden. Confirm actionable recovering/interrupted/unavailable warnings still appear. |
 | Automatic activity-based meeting detection | `meetingActivityDetectionEnabled = false` | Not a 0.8.0 product feature; no runtime coordinator/collectors expected. |
 | AI Formatter app/category profiles | `aiFormatterProfilesEnabled = false` | Hidden; global opt-in formatter remains. |
-| In-process local MLX provider | `inProcessLocalLLMEnabled = false`; runtime additionally requires `MACPARAKEET_ENABLE_MLX_LOCAL_LLM=1` build | Developer-only. Do not add it to release notes or require its model download for normal candidate QA. |
-| Swift 6 compatibility build | `MACPARAKEET_SKIP_WHISPERKIT=1` also omits the Markdown dependency | It verifies first-party compatibility only. Normal build/tests are needed to verify shipped Whisper/Markdown graph. |
+| In-process local MLX provider | `inProcessLocalLLMEnabled = false`; runtime additionally requires `SOTTO_ENABLE_MLX_LOCAL_LLM=1` build | Developer-only. Do not add it to release notes or require its model download for normal candidate QA. |
+| Swift 6 compatibility build | `SOTTO_SKIP_WHISPERKIT=1` also omits the Markdown dependency | It verifies first-party compatibility only. Normal build/tests are needed to verify shipped Whisper/Markdown graph. |
 
 ## Version and distribution readiness
 
-- App 0.8.0 has no checked-in global version field to bump. `scripts/dist/build_app_bundle.sh:52–56,651–654` takes explicit `VERSION=0.8.0`; default `0.0.0` deliberately marks local bundles. Build number is an increasing UTC timestamp. Preserve `MacParakeetGitCommit`, build date/source and matching dSYM provenance.
-- Embedded CLI source is `3.3.0` at `Sources/CLI/MacParakeetCLI.swift:11`, matching newest released header `Sources/CLI/CHANGELOG.md:92`. Unreleased is empty. [PR #970](https://github.com/moona3k/macparakeet/pull/970) is merged and already handled promotion. This does not publish a standalone CLI release or update Homebrew; those channels are independent.
+- App 0.8.0 has no checked-in global version field to bump. `scripts/dist/build_app_bundle.sh:52–56,651–654` takes explicit `VERSION=0.8.0`; default `0.0.0` deliberately marks local bundles. Build number is an increasing UTC timestamp. Preserve `SottoGitCommit`, build date/source and matching dSYM provenance.
+- Embedded CLI source is `3.3.0` at `Sources/CLI/SottoCLI.swift:11`, matching newest released header `Sources/CLI/CHANGELOG.md:92`. Unreleased is empty. [PR #970](https://github.com/moona3k/macparakeet/pull/970) is merged and already handled promotion. This does not publish a standalone CLI release or update Homebrew; those channels are independent.
 - Current delta adds no CLI command after the 3.3.0 promotion that demands another minor. The latest GUI bulk-delete and Markdown changes leave the CLI contract unchanged; #974 changes runtime/model behavior without changing public schema or flags.
 - Update after the `8548c099` inventory: PR #982 bumps the embedded CLI to `4.0.0` because the already-merged `export --stdout --format txt` change alters an existing default. The final artifact must report `4.0.0`; see [package-preflight.md](package-preflight.md) and [Sources/CLI/CHANGELOG.md](../../../Sources/CLI/CHANGELOG.md). JSON schema v1 is unchanged.
 - Package pins: FluidAudio exact 0.15.6; SwiftStreamingMarkdown fork revision `1f10d5286985349b63145e1193f4f6ad5f7fdfe1`; default MLX graph off. The immutable Markdown fork carries compiler/table-selection corrections and its legal notices are explicitly copied into the bundle. The normal Xcode build passes `-skipMacroValidation`.
 - `build_app_bundle.sh` owns Xcode Release app construction and separately builds the CLI with SwiftPM. It copies SwiftPM resource bundles, embeds Sparkle, validates update trust anchor/feed and bundles legal notices. Source support is present; actual portable artifact contents remain a separate check.
 - Release bundle checks from the distribution guide: built app and embedded CLI versions; arm64/minimum macOS 14.2 metadata; Sparkle/rpaths; app icon and brand assets; Markdown resources/notices; standalone portable FFmpeg; signed yt-dlp seed startup; privacy strings and signed microphone/calendar entitlements; matching dSYM UUID; LocalVQE library/model checksum with `REQUIRE_MEETING_ECHO_ASSETS=1` for an AEC-ready release. A dev build without those assets is passthrough and cannot certify release AEC.
 - A release artifact still requires Developer ID signing, notarization Accepted/stapling, `spctl` acceptance and installed-app smoke. Notary submission uses explicit polling, never `--wait`. A hung Apple submission is not success. No signing/notarization was performed by this worker.
-- Publishing is a later gate: same final DMG bytes for R2/GitHub/Sparkle; exact `MacParakeet.dmg` GitHub asset name; matching length/signature; cache-busted enclosure URL; increasing build number; standalone newest-item release notes; actual upgrade/relaunch from stable. Do not confuse dev-app launch with that evidence.
+- Publishing is a later gate: same final DMG bytes for R2/GitHub/Sparkle; exact `Sotto.dmg` GitHub asset name; matching length/signature; cache-busted enclosure URL; increasing build number; standalone newest-item release notes; actual upgrade/relaunch from stable. Do not confuse dev-app launch with that evidence.
 - New-user notes should summarize changes since public 0.7.3, not only the last PR: capture/recovery reliability, readable and rich output, Library layouts, bulk vocabulary cleanup, multi-track/DAPT export, quieter/background preferences, provider/inference controls and improved speaker processing. Avoid promising field reproduction of unresolved hardware defects.
 
 ## Known open release risks

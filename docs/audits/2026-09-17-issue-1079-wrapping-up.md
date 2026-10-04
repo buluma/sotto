@@ -2,7 +2,7 @@
 
 Date: 2026-09-17. Investigation of
 [issue #1079](https://github.com/moona3k/macparakeet/issues/1079). In-app
-feedback from MacParakeet 0.8.4 (`d232ab095df7`).
+feedback from Sotto 0.8.4 (`d232ab095df7`).
 
 ## Verdict
 

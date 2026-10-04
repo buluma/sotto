@@ -21,27 +21,27 @@
   },
   "sources": [
     {
-      "path": "Sources/MacParakeetCore/Services/Diarization/DiarizationService.swift",
+      "path": "Sources/SottoCore/Services/Diarization/DiarizationService.swift",
       "sha256": "68fc1abf119ea1ae3b3ff5f0638841a40231626e7ca0590bdd9d3febf413ff50"
     },
     {
-      "path": "Sources/MacParakeetCore/Services/Diarization/NemotronDiarizationService.swift",
+      "path": "Sources/SottoCore/Services/Diarization/NemotronDiarizationService.swift",
       "sha256": "23abef2b8647aab3c1665a2fe3493ead2a76943fca3f16fbfc7e209240e801aa"
     },
     {
-      "path": "Sources/MacParakeetCore/Services/TranscriptionService.swift",
+      "path": "Sources/SottoCore/Services/TranscriptionService.swift",
       "sha256": "5d7f69fe4889205bed09b3546e78f799494651cb8d5c21795ed670f4ada1d13e"
     },
     {
-      "path": "Tests/MacParakeetTests/Services/Diarization/DiarizationServiceTests.swift",
+      "path": "Tests/SottoTests/Services/Diarization/DiarizationServiceTests.swift",
       "sha256": "e45fdbda9016438145438e9efb9ebf275557a95f2000f4c9b03f3c49299c6c46"
     },
     {
-      "path": "Tests/MacParakeetTests/Services/Diarization/NemotronDiarizationServiceTests.swift",
+      "path": "Tests/SottoTests/Services/Diarization/NemotronDiarizationServiceTests.swift",
       "sha256": "516e25395ff94941d3c9d5962154b1c0f0ebabb6a402d5929a3b046b74d63a23"
     },
     {
-      "path": "Tests/MacParakeetTests/Services/TranscriptionServiceTests.swift",
+      "path": "Tests/SottoTests/Services/TranscriptionServiceTests.swift",
       "sha256": "8bb9b21e9e36533caf6dd7164b4feef42fd900340d642aad561ae33f006a58fd"
     }
   ],

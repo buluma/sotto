@@ -35,7 +35,7 @@ def download(url: str, destination: Path, expected_hash: str | None = None) -> N
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = destination.with_suffix(destination.suffix + ".part")
     try:
-        request = urllib.request.Request(url, headers={"User-Agent": "MacParakeet-diarization-comparison"})
+        request = urllib.request.Request(url, headers={"User-Agent": "Sotto-diarization-comparison"})
         with urllib.request.urlopen(request, timeout=120) as response, temporary.open("wb") as target:
             for chunk in iter(lambda: response.read(1024 * 1024), b""):
                 target.write(chunk)

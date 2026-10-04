@@ -1,6 +1,6 @@
 # Evidence: the three clustering defects fixed by FluidAudio PR #802 are present in the pinned 0.15.4 checkout
 
-Observed 2026-09-06 in /Users/dmoon/code/macparakeet/.build/checkouts/FluidAudio at
+Observed 2026-09-06 in /Users/dmoon/code/sotto/.build/checkouts/FluidAudio at
 b9d43724cbdb5a980e441fd54180964e94d470f7 (tag v0.15.4, 2026-06-16). PR #802 merged 2026-08-19
 (commit df1417ce, released in v0.15.6). PR body is in frontier-fluidaudio-prs.md.
 
@@ -66,8 +66,8 @@ Sources/FluidAudio/Diarizer/Offline/Clustering/KMeansClustering.swift:64
 and the VBx call above passes no seed and no n_init. PR #735 reports run-to-run speaker confusion of
 ~10.9% vs ~32.0% on the same 4-speaker clip depending only on the random seed.
 
-## MacParakeet call site
+## Sotto call site
 
-Sources/MacParakeetCore/Services/Diarization/DiarizationService.swift:205 starts from
+Sources/SottoCore/Services/Diarization/DiarizationService.swift:205 starts from
 `OfflineDiarizerConfig.default` and only applies the speaker-count constraint, so every default above
 (threshold 0.6 as mis-interpreted, stepRatio 0.2, minSegmentDurationSeconds 1.0) is what ships.

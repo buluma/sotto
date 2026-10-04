@@ -8,7 +8,7 @@
 
 ## 1. Outcome
 
-MacParakeet exposes two speech-recognition roles rather than two loosely grouped
+Sotto exposes two speech-recognition roles rather than two loosely grouped
 workflows:
 
 1. **Live speech** — dictation and best-effort meeting live preview. Latency and
@@ -355,7 +355,7 @@ Vertical red -> green slices:
 
 Update in the same PR:
 
-- `Sources/MacParakeetCore/STT/README.md`
+- `Sources/SottoCore/STT/README.md`
 - `spec/02-features.md`
 - `spec/03-architecture.md`
 - `spec/04-ui-patterns.md`

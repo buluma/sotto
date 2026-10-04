@@ -124,18 +124,18 @@ must stay green after the bump (verify before any feature code).
 
 Core engine + preference
 - [ ] `Package.swift` — bump FluidAudio to 0.15.4; `swift package resolve`.
-- [ ] `Sources/MacParakeetCore/STT/ParakeetUnifiedEngine.swift` (NEW) — actor
+- [ ] `Sources/SottoCore/STT/ParakeetUnifiedEngine.swift` (NEW) — actor
       wrapping `UnifiedAsrManager`; mirror `NemotronEnglishEngine` (two-lane
       interactive/background, `transcribe(audioPath:job:onProgress:)`, prepare/
       unload/isReady, static isModelCached/downloadModel/deleteModel/
       defaultCacheRoot, error mapping). `STTResult(engine: .parakeet,
       engineVariant: ParakeetModelVariant.unified.rawValue, words: [],
       language: "en")`.
-- [ ] `Sources/MacParakeetCore/SpeechEnginePreference.swift` — add
+- [ ] `Sources/SottoCore/SpeechEnginePreference.swift` — add
       `ParakeetModelVariant.unified` + displayName/modelName/coverageSummary/
       approximateDownloadSize/isEnglishOnly(=true)/alternative; add a
       `usesUnifiedEngine`/`isUnified` flag for routing.
-- [ ] `Sources/MacParakeetCore/STT/ParakeetModelVariant+ASR.swift` — make the
+- [ ] `Sources/SottoCore/STT/ParakeetModelVariant+ASR.swift` — make the
       `asrModelVersion` bridge safe for `.unified` (return optional / guard;
       `.unified` has no `AsrModelVersion`). Audit callers.
 
@@ -148,7 +148,7 @@ Runtime + scheduler
 - [ ] `STTScheduler.swift` — confirm variant-switch guards cover `.unified`
       (likely generic already; add a test).
 - [ ] `STTClient.swift` / `STTClientProtocol.swift` — CLI/test facade parity.
-- [ ] `Sources/MacParakeetCore/STT/README.md` — engine inventory.
+- [ ] `Sources/SottoCore/STT/README.md` — engine inventory.
 
 CLI (public contract — additive)
 - [ ] `TranscribeCommand.swift` — `--parakeet-model` accepts `unified`.
@@ -186,7 +186,7 @@ Tests
   --parakeet-variant parakeet-unified-offline-15s` (and `...-2080ms`, `v2`,
   `v3`) — identical normalizer to the reported numbers (built at
   `~/asr-bench/FluidAudio-0154`).
-- End-to-end proof: MacParakeet CLI `transcribe` with `--parakeet-model
+- End-to-end proof: Sotto CLI `transcribe` with `--parakeet-model
   unified` on a test-clean subset, scored by `~/asr-bench/score_wer.py`
   (dependency-free WER). Confirms our integration produces correct output in
   the right ballpark.

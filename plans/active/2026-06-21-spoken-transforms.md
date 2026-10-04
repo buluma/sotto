@@ -19,7 +19,7 @@ A **Spoken Transform** is a Transform whose instruction you *speak* instead of
 pre-saving. The user highlights text in any app, holds a dedicated hotkey, says
 what they want ("rewrite this as bullets", "make this more formal", "reply to
 this politely"), releases, and the result replaces the selection. It is the
-natural fusion of MacParakeet's two strongest pillars — dictation and
+natural fusion of Sotto's two strongest pillars — dictation and
 Transforms — and it is almost entirely a *composition* of code that already
 ships, not new subsystem work.
 
@@ -43,7 +43,7 @@ exploration.
    `transformStream(text:prompt:)` already accept an arbitrary `prompt: String`.
    Today the GUI feeds a saved `Prompt.content`; we feed the dictated
    instruction instead. The CLI already does exactly this
-   (`macparakeet-cli llm transform --prompt "<instruction>" -`), which means
+   (`sotto-cli llm transform --prompt "<instruction>" -`), which means
    agent-native parity holds on day one and the Core contract is proven.
 4. **The UI partly exists already.** `DictationOverlayViewModel.SessionKind`
    already has a dormant `.command` case with `commandSelectedText` /
@@ -169,7 +169,7 @@ Everything it calls already exists.
 
 ## CLI / agent-native parity
 
-Parity already exists: `macparakeet-cli llm transform --prompt "<instruction>" -`
+Parity already exists: `sotto-cli llm transform --prompt "<instruction>" -`
 runs a free-text instruction over stdin text through the same `LLMService`
 path. The GUI Spoken Transform is simply the voice front-end onto that proven
 Core primitive, so an agent can already reproduce the transform headlessly. No

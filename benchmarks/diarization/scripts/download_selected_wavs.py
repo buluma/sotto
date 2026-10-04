@@ -51,7 +51,7 @@ def duration_seconds(wav: Path) -> float | None:
 def download(url: str, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     tmp = dest.with_suffix(dest.suffix + ".part")
-    req = urllib.request.Request(url, headers={"User-Agent": "macparakeet-diarization-eval"})
+    req = urllib.request.Request(url, headers={"User-Agent": "sotto-diarization-eval"})
     with urllib.request.urlopen(req, timeout=120) as resp, tmp.open("wb") as out:
         while True:
             chunk = resp.read(1024 * 1024)

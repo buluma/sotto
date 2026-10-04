@@ -11,7 +11,7 @@
 
 ## Problem
 
-MacParakeet already has the right meeting foundation: microphone and system
+Sotto already has the right meeting foundation: microphone and system
 audio are retained as separate sources, final meeting transcription is
 source-aware, and speaker diarization only refines the isolated system track.
 The remaining quality gap is narrower:
@@ -27,7 +27,7 @@ The remaining quality gap is narrower:
   the model default or a user correction
 
 The goal is not to replace the local diarizer by default. The goal is to make
-MacParakeet use the best available local-first diarization path by adding
+Sotto use the best available local-first diarization path by adding
 constraints, conservative reconciliation, and honest diagnostics around the
 current FluidAudio offline pipeline.
 
@@ -185,7 +185,7 @@ public protocol DiarizationServiceProtocol: Sendable {
     func diarize(
         audioURL: URL,
         options: DiarizationOptions
-    ) async throws -> MacParakeetDiarizationResult
+    ) async throws -> SottoDiarizationResult
 
     func prepareModels(onProgress: (@Sendable (String) -> Void)?) async throws
     func isReady() async -> Bool
@@ -193,7 +193,7 @@ public protocol DiarizationServiceProtocol: Sendable {
 }
 
 public extension DiarizationServiceProtocol {
-    func diarize(audioURL: URL) async throws -> MacParakeetDiarizationResult {
+    func diarize(audioURL: URL) async throws -> SottoDiarizationResult {
         try await diarize(audioURL: audioURL, options: .default)
     }
 }
@@ -510,7 +510,7 @@ Define denominators explicitly:
 Start with:
 
 ```text
-macparakeet-cli transcribe ... --diarization-report <path>
+sotto-cli transcribe ... --diarization-report <path>
 ```
 
 This report is computed while the fresh raw diarizer output and assignment
@@ -519,7 +519,7 @@ summary are still in memory.
 Defer:
 
 ```text
-macparakeet-cli meetings diarization-report <id>
+sotto-cli meetings diarization-report <id>
 ```
 
 That command requires persistence changes first.
@@ -569,14 +569,14 @@ Behavior:
 - JSON output can expose raw IDs and label provenance
 
 `rawProviderSpeakerId` should preserve the actual upstream FluidAudio ID when
-available, for example `speaker_0`, not merely MacParakeet's stable display ID
+available, for example `speaker_0`, not merely Sotto's stable display ID
 `S1`. `DiarizationService` already sees the raw-to-stable mapping, so this
 metadata should be attached there before meeting code wraps IDs as `system:S1`.
 
 Meeting wrapping should be an explicit adapter, not incidental string assembly:
 
 ```swift
-static func systemDiarization(from result: MacParakeetDiarizationResult)
+static func systemDiarization(from result: SottoDiarizationResult)
     -> MeetingTranscriptFinalizer.SystemDiarization
 ```
 

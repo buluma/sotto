@@ -3,7 +3,7 @@ import CryptoKit
 import Darwin
 import Dispatch
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 /// CLI surface for Split and transcribe. One shared Core
 /// operation (`MeetingSplitService`) serves both this CLI and the

@@ -6,7 +6,7 @@ Validation runs locally in two layers: direct XML Schema validation against the 
 
 No transcript upload, real audio, GUI invocation or Swift build/test is involved. The owned fixtures also exercise Markdown, SRT and JSON export preservation. Fixture rows are inserted directly into a schema created by the candidate CLI; this is not an import or GUI-edit test.
 
-Runner: [`scripts/verify_dapt_exports.py`](scripts/verify_dapt_exports.py). Evidence directory: `/tmp/macparakeet-080-qa/dapt-runtime/`.
+Runner: [`scripts/verify_dapt_exports.py`](scripts/verify_dapt_exports.py). Evidence directory: `/tmp/sotto-080-qa/dapt-runtime/`.
 
 ## Exact tools and execution
 
@@ -19,11 +19,11 @@ Runner: [`scripts/verify_dapt_exports.py`](scripts/verify_dapt_exports.py). Evid
 The precreated virtualenv was completed with `.venv/bin/python -m pip install -e .` inside root's owned validator checkout. Exact resolved dependencies and install output are retained locally. The runner then executed:
 
 ```bash
-/tmp/macparakeet-080-qa/ttml-validator/.venv/bin/python \
+/tmp/sotto-080-qa/ttml-validator/.venv/bin/python \
   docs/qa/2026-09-07-0.8.0/scripts/verify_dapt_exports.py \
-  --cli .build/debug/macparakeet-cli \
-  --validator /tmp/macparakeet-080-qa/ttml-validator \
-  --output /tmp/macparakeet-080-qa/dapt-runtime/run-01 \
+  --cli .build/debug/sotto-cli \
+  --validator /tmp/sotto-080-qa/ttml-validator \
+  --output /tmp/sotto-080-qa/dapt-runtime/run-01 \
   --candidate 8548c099af5ee2ab0ed4dd9efe757d85c498cca0
 ```
 
@@ -48,6 +48,6 @@ All three fixtures also passed DAPT stdout/file parity and Markdown/SRT/JSON pre
 
 ## Evidence and limits
 
-`run-01/` retains the 12 exported files, each DAPT stdout output, three XSD reports, three BBC JSON reports, per-command stdout/stderr, fixture definitions, commands, metadata and final result. The validator setup log is `/tmp/macparakeet-080-qa/cli-contract-runtime/validator-install.log`.
+`run-01/` retains the 12 exported files, each DAPT stdout output, three XSD reports, three BBC JSON reports, per-command stdout/stderr, fixture definitions, commands, metadata and final result. The validator setup log is `/tmp/sotto-080-qa/cli-contract-runtime/validator-install.log`.
 
 No product or validator repair was needed. Direct XSD validation and the BBC DAPT rules are two validation layers using the same pinned schema snapshot and Python XML Schema dependency; they are not independent schema implementations. The BBC checkout's optional DAPT test-suite submodule was not initialized or run. These results establish structural validity and the asserted semantics for the three exported fixtures, not editor interoperability, actual audio alignment or every DAPT document the app could produce.

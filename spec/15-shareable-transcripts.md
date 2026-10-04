@@ -6,7 +6,7 @@
 
 ## Product promise
 
-MacParakeet may publish a user-reviewed selection of transcript-derived text as an encrypted, expiring page at `share.macparakeet.com`.
+Sotto may publish a user-reviewed selection of transcript-derived text as an encrypted, expiring page at `share.macparakeet.com`.
 The local Library remains authoritative; a share is a separate snapshot, not cloud sync.
 
 The clearest user-facing explanation is:
@@ -42,7 +42,7 @@ The product must be direct that anyone who receives the URL can read, copy, and 
 
 ## Ownership and recovery
 
-On first publication, MacParakeet silently creates a random sharing credential in a dedicated, non-synchronizing, device-only Keychain namespace.
+On first publication, Sotto silently creates a random sharing credential in a dedicated, non-synchronizing, device-only Keychain namespace.
 It is not derived from hardware, an IP address, telemetry, licensing, or user content, and normal operation does not request biometric or application-password access.
 
 An optional generated recovery code restores management authority after a reinstall or device loss.

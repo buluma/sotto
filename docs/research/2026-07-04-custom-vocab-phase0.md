@@ -6,7 +6,7 @@ Scope: investigation only. No app or CLI product code changed.
 
 ## Verdict
 
-FluidAudio 0.15.4 custom vocabulary boosting is useful for MacParakeet's
+FluidAudio 0.15.4 custom vocabulary boosting is useful for Sotto's
 Parakeet TDT path, but not as a standalone CTC transcription variant. The
 working mechanism is TDT transcription plus an auxiliary CTC 110M keyword
 spotter/rescorer pass over the same audio and TDT token timings. In the
@@ -22,7 +22,7 @@ Unified is not ready for the same feature through its public vocabulary API. The
 CTC sidecar can detect terms for Unified audio, but the Phase 0 probe had no
 Unified rescorer hook, so it could not apply corrections. On the 50-file OOV
 set, Unified no-vocab and vocab-requested output were byte-for-byte identical
-and recall stayed 13/50 (26%). MacParakeet later wired FluidAudio's Unified
+and recall stayed 13/50 (26%). Sotto later wired FluidAudio's Unified
 streaming token timings for exports and speaker alignment; that does not by
 itself create a recognition-time vocabulary boosting hook.
 
@@ -82,7 +82,7 @@ calls.
   the recommended approach is TDT transcription plus CTC vocabulary scoring
   (`CtcModels.swift`, lines 4-11).
 
-The MacParakeet constraints that matter for Phase 1:
+The Sotto constraints that matter for Phase 1:
 
 - Unified is currently a separate runtime selected before the shared TDT path
   (`STTRuntime.swift`, lines 455-468).
@@ -236,7 +236,7 @@ its pure-Python edit-distance fallback. No new Python dependency is committed.
 | Unified, vocab requested | 13/50 (26%) | 0 | 0 | 0 | Output identical to no-vocab; 50/50 rows marked unsupported. |
 
 Examples of useful TDT corrections at `minSimilarity=0.65`: `MAC Parakeet` ->
-`MacParakeet`, `Fluid Audio` -> `FluidAudio`, `Swiftly` -> `SwiftUI`, and
+`Sotto`, `Fluid Audio` -> `FluidAudio`, `Swiftly` -> `SwiftUI`, and
 `Core ML` -> `CoreML`. The single OOV false replacement at this stricter gate was
 `telemetry` -> `OpenTelemetry` in the sentence "Szymon reviewed the telemetry
 numbers."
@@ -244,7 +244,7 @@ numbers."
 Unified vocab-requested rows still had CTC detections in 50/50 rows, which means
 the CTC sidecar ran. The blocker is applying those detections: no token timings
 or public rescorer hook are exposed by the Unified batch API used by
-MacParakeet.
+Sotto.
 
 ### LibriSpeech WER Guard
 
@@ -289,7 +289,7 @@ false-positive curve controlled by FluidAudio's size-aware gates. The knobs that
 mattered here were `minSimilarity`, `cbw`, `marginSeconds`, `minCtcScore`,
 `minTermLength`, and `alpha`; in this corpus, the default 50-term gate
 (`minSimilarity=0.55`) was unsafe, while `minSimilarity=0.65` passed the WER
-guard. For MacParakeet, the lowest-risk seam is the existing TDT path with a CTC
+guard. For Sotto, the lowest-risk seam is the existing TDT path with a CTC
 sidecar after TDT finalization. It must run under the same `ANEInferenceGate` and
 must rescore audio equivalent to the audio TDT decoded. For dictation, that means
 the same padded samples used for issue 562; for file/meeting jobs, Phase 1 needs
@@ -304,9 +304,9 @@ Boosting works empirically on TDT v3 as a TDT-plus-CTC sidecar, not as a
 user-visible switch to CTC greedy transcription. TDT v3 OOV recall improved from
 22% without vocab to 84% with FluidAudio's default gate and 74% with the stricter
 gate, with result rows showing real replacements such as `MAC Parakeet` ->
-`MacParakeet`. This proves custom vocabulary can be a property of the default
+`Sotto`. This proves custom vocabulary can be a property of the default
 TDT engine path. It does not currently work on the Unified path available to
-MacParakeet: Unified no-vocab and vocab-requested hypotheses were identical
+Sotto: Unified no-vocab and vocab-requested hypotheses were identical
 for all 50 OOV rows, recall stayed 26%, and every vocab-requested row was marked
 unsupported because FluidAudio does not expose a Unified vocabulary-rescoring
 hook. The CTC-only kill switch is not triggered for TDT, and the
@@ -356,7 +356,7 @@ supports `minSimilarity=0.65` as the first Phase 1 candidate.
 
 Runner-up: adopt `SlidingWindowAsrManager` for live/streaming TDT and use its
 `configureVocabularyBoosting(...)` API. It is attractive because FluidAudio
-already owns the streaming integration, but it is the larger MacParakeet seam:
+already owns the streaming integration, but it is the larger Sotto seam:
 we would swap more runtime behavior at once, revalidate scheduler/progress/live
 partial semantics, preserve the ANE gate, and preserve dictation finalization
 behavior. The batch TDT sidecar gives the same mechanism with less product-code

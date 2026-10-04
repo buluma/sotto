@@ -10,7 +10,7 @@ Owner: Core
 - Local models tested:
   - `mlx-community/Qwen3-4B-4bit`
   - `mlx-community/Qwen3-8B-4bit`
-- Runtime: release `macparakeet-cli` via MLX-Swift-LM
+- Runtime: release `sotto-cli` via MLX-Swift-LM
 - Machine:
   - Apple M4 Pro
   - 48 GB RAM

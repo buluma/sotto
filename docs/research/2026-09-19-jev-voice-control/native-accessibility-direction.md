@@ -2,7 +2,7 @@
 
 Voice Control works with the app already in front of you, including the existing browser, through macOS Accessibility. Browser control must not require a Chrome (or other) extension.
 
-The intended experience: install MacParakeet, grant the relevant macOS permissions, enable Voice Control, and speak. An extension, developer mode, an extension ID, native-host registration, or tab pairing makes browser control feel like a separate product.
+The intended experience: install Sotto, grant the relevant macOS permissions, enable Voice Control, and speak. An extension, developer mode, an extension ID, native-host registration, or tab pairing makes browser control feel like a separate product.
 
 The browser is another application. Webpage content, browser chrome, and native Mac apps share one interaction model.
 
@@ -12,7 +12,7 @@ An extension can provide extra DOM detail. That has not been shown to be necessa
 
 - Supported visible interfaces are controlled through native Accessibility, including webpage content and native application controls.
 - Users stay in their existing browser and session. No required extension, automation browser, remote-debugging setup, or restart.
-- Speech becomes finalized command text through MacParakeet’s local speech infrastructure. Routing, Jev Choice when needed, local execution, and observed postconditions follow. Ordinary dictation remains ordinary dictation.
+- Speech becomes finalized command text through Sotto’s local speech infrastructure. Routing, Jev Choice when needed, local execution, and observed postconditions follow. Ordinary dictation remains ordinary dictation.
 - Cloud command context remains an explicit Voice Control choice. Native execution does not mean Jev inference is local.
 - Unsupported controls produce a clear limitation. Do not claim unrestricted control, and do not introduce an extension as the default answer to a gap.
 

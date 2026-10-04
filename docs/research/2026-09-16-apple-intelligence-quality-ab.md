@@ -10,7 +10,7 @@
 The earlier PR table that all three Foundation Models paths returned `PING` is a
 **path-correctness smoke test**. It is not an accuracy A/B.
 
-This note is the quality / latency bake-off on MacParakeet's actual LLM
+This note is the quality / latency bake-off on Sotto's actual LLM
 surfaces: dictation cleanup (`llm transform`), meeting summary (`llm
 summarize`), and grounded Ask (`llm chat`).
 
@@ -30,7 +30,7 @@ treat the scores as a public "recommend Apple Intelligence over cloud" gate.
 | Mac | Apple M4 Pro, 48 GB |
 | OS | macOS 26.6.2 (25G83) |
 | Apple Intelligence | `.available` after enable + model download |
-| Product path | `macparakeet-cli llm … --json` from `feat/issue-1062-apple-intelligence` |
+| Product path | `sotto-cli llm … --json` from `feat/issue-1062-apple-intelligence` |
 | Cloud arm | skipped — stored `OPENAI_API_KEY` rejected as invalid |
 
 ## Arms
@@ -38,7 +38,7 @@ treat the scores as a public "recommend Apple Intelligence over cloud" gate.
 | Arm | Why |
 |---|---|
 | Apple Intelligence (`--provider appleIntelligence`) | The new on-device provider |
-| Ollama `qwen3.5:4b` | MacParakeet's default local Ollama model (~3.4 GB) |
+| Ollama `qwen3.5:4b` | Sotto's default local Ollama model (~3.4 GB) |
 | Ollama `llama3.2:3b` | Size-matched ~3B local peer (~2.0 GB) |
 
 Ollama was started for this run (`ollama serve`). First call per model includes
@@ -136,11 +136,11 @@ From a Tahoe Mac with Apple Intelligence available and Ollama serving
 `qwen3.5:4b` / `llama3.2:3b`:
 
 ```bash
-macparakeet-cli llm transform --provider appleIntelligence dictation.txt \
+sotto-cli llm transform --provider appleIntelligence dictation.txt \
   --prompt 'Clean this dictation. Remove filler… Keep every name, number, date, URL, and identifier exactly.' \
   --json
-macparakeet-cli llm summarize --provider appleIntelligence meeting.txt --json
-macparakeet-cli llm chat --provider appleIntelligence meeting.txt \
+sotto-cli llm summarize --provider appleIntelligence meeting.txt --json
+sotto-cli llm chat --provider appleIntelligence meeting.txt \
   --question 'When is v0.8.0 supposed to ship? Answer with the date only.' --json
 ```
 

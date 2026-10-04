@@ -55,8 +55,8 @@ independent **Use for transcripts** (default on) and **Use for dictation**
 
 - Base: `origin/main` at `98b4aeef1` (the QA branch is cut from here).
 - Toolchain: `swift test` (XCTest) on Apple Silicon, macOS 14.2+ target.
-- Live app: dev bundle `com.macparakeet.dev` built via `scripts/dev/run_app.sh`,
-  reading the developer's real `macparakeet.db`.
+- Live app: dev bundle `com.sotto.dev` built via `scripts/dev/run_app.sh`,
+  reading the developer's real `sotto.db`.
 - LLM provider configured in the dev app: **Local CLI → Codex** (relevant only
   to the live UI; the automated routing/provenance tests mock the LLM).
 
@@ -103,7 +103,7 @@ before they can run, and turning the tier off restores fallback-prompt routing.
 ### Live database evidence
 
 ```
-$ sqlite3 macparakeet.db ".schema ai_formatter_profiles"
+$ sqlite3 sotto.db ".schema ai_formatter_profiles"
 CREATE TABLE ai_formatter_profiles ( id TEXT PRIMARY KEY, name TEXT NOT NULL,
   isEnabled BOOLEAN NOT NULL DEFAULT 1, targetKind TEXT NOT NULL,
   bundleIdentifier TEXT, appDisplayName TEXT, appCategory TEXT,
@@ -181,7 +181,7 @@ dictation; that path is covered by `DictationServiceTests` instead.
 
 ## 6. Live GUI walkthrough
 
-All shots are the dev app (`com.macparakeet.dev`), Settings → **AI** tab.
+All shots are the dev app (`com.sotto.dev`), Settings → **AI** tab.
 
 **Settings shell & tab bar** (Capture / Engine / AI / System):
 

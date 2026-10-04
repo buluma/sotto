@@ -7,7 +7,7 @@
 > `plans/active/2026-06-12-advisor-index.md`.
 >
 > **Drift check (run first)**:
-> `git diff --stat 3f9361005..HEAD -- Sources/MacParakeetCore/Services/Telemetry/TelemetryEvent.swift .github/workflows/ci.yml`
+> `git diff --stat 3f9361005..HEAD -- Sources/SottoCore/Services/Telemetry/TelemetryEvent.swift .github/workflows/ci.yml`
 > If either changed since `3f9361005`, compare the "Current state" excerpts
 > below against the live code before proceeding; on a mismatch, treat it as a
 > STOP condition.
@@ -25,7 +25,7 @@
 ## Why this matters
 
 Every `TelemetryEventName` case the app can emit must also appear in
-`ALLOWED_EVENTS` in the **separate** `macparakeet-website` repo
+`ALLOWED_EVENTS` in the **separate** `sotto-website` repo
 (`functions/api/telemetry.ts`). The Cloudflare Worker rejects an **entire
 telemetry batch** if it contains any event not on the allowlist — so a single
 missing entry silently destroys *all* co-batched events from every affected
@@ -44,7 +44,7 @@ unmerged branch (`chore/improve-audit-fixes`); this plan recovers it to
 
 ## Current state
 
-- `Sources/MacParakeetCore/Services/Telemetry/TelemetryEvent.swift` — declares
+- `Sources/SottoCore/Services/Telemetry/TelemetryEvent.swift` — declares
   `public enum TelemetryEventName` (the enum starts at line ~3 and closes at
   the first column-0 `}` around line ~132). Every case has an explicit raw
   value, e.g. `case snippetEdited = "snippet_edited"`. There are **97** cases
@@ -68,7 +68,7 @@ unmerged branch (`chore/improve-audit-fixes`); this plan recovers it to
 - `scripts/ci/` — **does not exist on `main`**. The script below lives on the
   branch `chore/improve-audit-fixes` at `scripts/ci/check-telemetry-allowlist.sh`
   and must be recovered.
-- A sibling checkout of the website repo exists at `../macparakeet-website`
+- A sibling checkout of the website repo exists at `../sotto-website`
   (relative to this repo root), so the script resolves the allowlist locally
   without network/auth — this is what makes Step 3's verification work.
 - Repo convention: shell scripts under `scripts/` are `#!/usr/bin/env bash`
@@ -91,9 +91,9 @@ unmerged branch (`chore/improve-audit-fixes`); this plan recovers it to
 - `.github/workflows/ci.yml` (add one step)
 
 **Out of scope** (do NOT touch):
-- `Sources/MacParakeetCore/Services/Telemetry/TelemetryEvent.swift` — do not
+- `Sources/SottoCore/Services/Telemetry/TelemetryEvent.swift` — do not
   add/rename/remove events. The guard is read-only over this file.
-- The `macparakeet-website` repo — this plan does not modify the website. (If
+- The `sotto-website` repo — this plan does not modify the website. (If
   the guard ever *fails*, the fix is a website-side allowlist add + deploy,
   which is a separate, human-driven action.)
 - Any other CI step or job.
@@ -178,7 +178,7 @@ OK), and `grep -c 'exit 9' scripts/ci/check-telemetry-allowlist.sh` → `1`.
 ./scripts/ci/check-telemetry-allowlist.sh
 ```
 
-It should resolve the allowlist via the sibling checkout `../macparakeet-website`
+It should resolve the allowlist via the sibling checkout `../sotto-website`
 and print a summary plus `OK: every Swift telemetry event is allowlisted.`
 
 **Verify**: command exits 0 and the final line is
@@ -197,19 +197,19 @@ website file):
 # pick any allowlisted event, e.g. snippet_edited, and comment it out.
 # NOTE: BSD/macOS sed needs -E + [[:space:]]; the GNU `\s` class silently
 # no-ops on macOS and would make this mutation check pass vacuously.
-sed -E -i.bak 's/^([[:space:]]*)"snippet_edited",/\1\/\/ "snippet_edited",/' ../macparakeet-website/functions/api/telemetry.ts
+sed -E -i.bak 's/^([[:space:]]*)"snippet_edited",/\1\/\/ "snippet_edited",/' ../sotto-website/functions/api/telemetry.ts
 # Guard against a no-op sed: confirm the edit actually applied before trusting the result.
-grep -q '// "snippet_edited"' ../macparakeet-website/functions/api/telemetry.ts \
+grep -q '// "snippet_edited"' ../sotto-website/functions/api/telemetry.ts \
     || echo "WARN: sed did not match — fix the pattern; do NOT trust this step's result"
 ./scripts/ci/check-telemetry-allowlist.sh ; echo "exit=$?"
 # restore:
-mv ../macparakeet-website/functions/api/telemetry.ts.bak ../macparakeet-website/functions/api/telemetry.ts
+mv ../sotto-website/functions/api/telemetry.ts.bak ../sotto-website/functions/api/telemetry.ts
 ```
 
 **Verify**: the `grep -q` guard prints nothing (the comment-out applied), then
 the guard prints a `FAIL:` block listing `snippet_edited` and `exit=1`; after
 restore, re-running the guard prints `OK` and exits 0. Confirm
-`git -C ../macparakeet-website status` is clean (no leftover edit/.bak). If the
+`git -C ../sotto-website status` is clean (no leftover edit/.bak). If the
 `WARN:` line appears, the `sed` did not match — fix it before relying on Step 4.
 
 ### Step 5: Wire the guard into CI
@@ -221,7 +221,7 @@ existing "Check Subsystem README References" step, matching its shape:
       - name: Check Telemetry Allowlist
         timeout-minutes: 2
         env:
-          # PAT with read access to the private macparakeet-website repo, so
+          # PAT with read access to the private sotto-website repo, so
           # the script's `gh api` fallback can fetch the allowlist in CI. If
           # this secret is unset the script SKIPS (exit 0) rather than failing
           # — see the maintenance note about enabling enforcement.
@@ -254,7 +254,7 @@ ALL must hold:
 - [ ] `scripts/ci/check-telemetry-allowlist.sh` exists on this branch and is executable
 - [ ] `bash -n scripts/ci/check-telemetry-allowlist.sh` exits 0 and the file contains exactly one `exit 9`
 - [ ] `./scripts/ci/check-telemetry-allowlist.sh` exits 0, final line `OK: every Swift telemetry event is allowlisted.`
-- [ ] Mutation check (Step 4) produced a `FAIL` + exit 1, and the website file is restored clean (`git -C ../macparakeet-website status` clean)
+- [ ] Mutation check (Step 4) produced a `FAIL` + exit 1, and the website file is restored clean (`git -C ../sotto-website status` clean)
 - [ ] `.github/workflows/ci.yml` has the "Check Telemetry Allowlist" step in the right place
 - [ ] `git status` shows only `scripts/ci/check-telemetry-allowlist.sh` and `.github/workflows/ci.yml` modified in this repo
 - [ ] Status row updated in `plans/active/2026-06-12-advisor-index.md`
@@ -267,7 +267,7 @@ Stop and report (do not improvise) if:
   contains `scripts/ci/check-telemetry-allowlist.sh` (recover from this plan's
   excerpts is not possible — the full script is not inlined here). Report so
   the advisor can re-supply it.
-- Step 3 prints `SKIPPED` because `../macparakeet-website` is not checked out.
+- Step 3 prints `SKIPPED` because `../sotto-website` is not checked out.
   Do **not** hardcode a path or disable the skip — report; the guard is
   designed to skip-not-fail when the allowlist is unreachable, and that is
   correct behavior.

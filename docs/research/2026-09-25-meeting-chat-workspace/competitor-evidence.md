@@ -8,7 +8,7 @@ Both products support an assistant that investigates meeting material. The stron
 
 Circleback's current public client shows structured context selection, meeting/transcript tool-action types, streamed sources/actions, and reconnectable conversations. Its actual reasoning and retrieval implementation is behind a hosted API. Neither inspection establishes that either meeting assistant uses OpenCode, an RLM, or a generated-code REPL.
 
-For MacParakeet, this supports owning the source/evidence contracts and comparing a small native tool loop with an existing runtime. A REPL remains an additional hypothesis to evaluate, not a prerequisite for an agentic meeting assistant. See the [workspace proposal](../../plans/2026-09-25-1308-feat-meeting-chat-workspace-plan.md).
+For Sotto, this supports owning the source/evidence contracts and comparing a small native tool loop with an existing runtime. A REPL remains an additional hypothesis to evaluate, not a prerequisite for an agentic meeting assistant. See the [workspace proposal](../../plans/2026-09-25-1308-feat-meeting-chat-workspace-plan.md).
 
 ## Scope and evidence quality
 
@@ -22,7 +22,7 @@ For MacParakeet, this supports owning the source/evidence contracts and comparin
 
 Its official assistant guide documents questions across meetings, citations, chat history, and `@` references to meetings, tags, people, and companies. That directly supports the proposed searchable source-reference UX: a user chooses an entity rather than typing a unique meeting identifier. [Ask Circleback guide](https://support.circleback.ai/en/articles/13615023-ask-circleback-assistant).
 
-Circleback also documents taking actions in connected apps through connectors/MCP, and updating derived person/company summaries as meetings accumulate. These extend beyond MacParakeet's proposed read-only meeting research; they demonstrate a wider product scope, not requirements we need to copy. [Connected-app actions](https://circleback.ai/releases/ask-circleback-to-do-things-in-your-apps), [person and company summaries](https://circleback.ai/releases/person-and-company-summaries).
+Circleback also documents taking actions in connected apps through connectors/MCP, and updating derived person/company summaries as meetings accumulate. These extend beyond Sotto's proposed read-only meeting research; they demonstrate a wider product scope, not requirements we need to copy. [Connected-app actions](https://circleback.ai/releases/ask-circleback-to-do-things-in-your-apps), [person and company summaries](https://circleback.ai/releases/person-and-company-summaries).
 
 Current public client evidence, using artifact IDs defined below:
 
@@ -75,13 +75,13 @@ The bundle also contains an extension agent manager. It spawns the external `cla
 
 This is concrete evidence of a shipped integration with an existing general agent. It is **not evidence that Notetaker Ask uses Claude CLI**: the inspected Ask path calls the hosted response endpoint and its own client tool loop. We did not verify extension availability, activation, or successful CLI execution. A detected-coding-CLI enum containing `opencode` is also not evidence that Flow embeds OpenCode as its meeting runtime.
 
-## Implication for MacParakeet and OpenCode
+## Implication for Sotto and OpenCode
 
 The earlier [OpenCode assessment](../../plans/2026-09-25-1308-feat-meeting-chat-workspace-plan.md#build-versus-reuse-opencode-assessment) remains a viable integration option. OpenCode documents a headless server and custom/MCP tools; its own security model says permissions are not a sandbox. [Server](https://opencode.ai/docs/server/), [custom tools](https://opencode.ai/docs/custom-tools/), [security model at reviewed revision](https://github.com/anomalyco/opencode/blob/adee738d1e4597a2d0d317ca61a1625eff289efa/SECURITY.md).
 
 The new competitor evidence sharpens the experiment: **implement the meeting operations once, then compare a small application-owned loop with a managed existing runtime over those same operations.** Wispr shows that a product-specific loop is concrete and appropriately scoped; its separate CLI integration shows why runtime reuse remains credible. Neither vendor settles the choice for our Swift app.
 
-MacParakeet must own selected-source enforcement, corrected transcript projection, stable passage citations, retained-data lifecycle, and cancellation. Runtime reuse can supply orchestration, but it cannot determine those product contracts for us. Our selection must remain authoritative even after a model has read a removed meeting into conversation history, compaction, or REPL variables.
+Sotto must own selected-source enforcement, corrected transcript projection, stable passage citations, retained-data lifecycle, and cancellation. Runtime reuse can supply orchestration, but it cannot determine those product contracts for us. Our selection must remain authoritative even after a model has read a removed meeting into conversation history, compaction, or REPL variables.
 
 Start with adaptive search/read/compare and inspectable evidence. Add a bounded REPL or model subcalls if the same evaluation questions show better coverage, useful computation, or lower context cost. Compare factual support, missed evidence, source-scope failures, cancellation/restart behavior, latency, provider usage, and packaging complexity. No competitor evidence justifies immediately committing to a generic coding runtime or a bespoke recursive framework.
 

@@ -1,7 +1,7 @@
 # PR #1041 review and real Zoom screen-share A/B
 
 **PASS.** Disabling live meeting transcription removed Parakeet inference
-bursts and reduced MacParakeet CPU use while preserving healthy microphone and
+bursts and reduced Sotto CPU use while preserving healthy microphone and
 system-audio capture, final transcription, and the shared workload's frame
 pacing. No actionable defect or merge blocker was found.
 
@@ -62,9 +62,9 @@ the next arm began.
 
 | Metric | Live on | Live off | Interpretation |
 | --- | ---: | ---: | --- |
-| MacParakeet CPU, median | 8.50% | 7.25% | 1.25 percentage points of median headroom when off |
-| MacParakeet CPU, mean | 12.26% | 7.38% | 4.88 points of mean headroom when off |
-| MacParakeet CPU, p95 | 43.2% | 9.0% | Live Parakeet inference produced the expected bursts |
+| Sotto CPU, median | 8.50% | 7.25% | 1.25 percentage points of median headroom when off |
+| Sotto CPU, mean | 12.26% | 7.38% | 4.88 points of mean headroom when off |
+| Sotto CPU, p95 | 43.2% | 9.0% | Live Parakeet inference produced the expected bursts |
 | Canvas render FPS, run range | 119.65 to 119.73 | 119.56 to 119.74 | No meaningful difference |
 | Canvas p95 frame time, run range | 9.2 to 9.9 ms | 9.8 ms | No live-preview penalty |
 | Frames over 25 ms, two runs total | 2 | 2 | No increase |

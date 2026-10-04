@@ -1,7 +1,7 @@
 [project]
-name = "macparakeet-video-hq"
+name = "sotto-video-hq"
 version = "0.1.0"
-description = "Premium TTS upgrade path for MacParakeet marketing video pipeline (Higgs Audio V2)."
+description = "Premium TTS upgrade path for Sotto marketing video pipeline (Higgs Audio V2)."
 requires-python = ">=3.10,<3.13"
 dependencies = [
   # Higgs Audio V2 — the SOTA open-weight TTS pulled directly from upstream.

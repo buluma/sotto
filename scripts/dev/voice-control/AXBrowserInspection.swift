@@ -17,7 +17,7 @@ guard AXIsProcessTrusted(), let app = NSWorkspace.shared.frontmostApplication,
 }
 let application = AXUIElementCreateApplication(app.processIdentifier)
 guard let window = element(attribute(application, kAXFocusedWindowAttribute)),
-      (attribute(window, kAXTitleAttribute) as? String)?.contains("MacParakeet native AX flight fixture") == true else {
+      (attribute(window, kAXTitleAttribute) as? String)?.contains("Sotto native AX flight fixture") == true else {
     print("Refusing inspection: disposable fixture must be the focused Chrome window."); exit(2)
 }
 if ProcessInfo.processInfo.environment["AX_BROWSER_ENABLE_ACCESSIBILITY"] == "1" {

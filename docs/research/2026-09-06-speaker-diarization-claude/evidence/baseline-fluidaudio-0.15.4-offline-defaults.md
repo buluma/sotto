@@ -1,6 +1,6 @@
 # Evidence: FluidAudio 0.15.4 offline diarizer defaults and pipeline order
 
-Checkout: /Users/dmoon/code/macparakeet/.build/checkouts/FluidAudio at
+Checkout: /Users/dmoon/code/sotto/.build/checkouts/FluidAudio at
 b9d43724cbdb5a980e441fd54180964e94d470f7 (tag v0.15.4, commit date 2026-06-16).
 Observed 2026-09-06 by reading the Swift source. Nothing was built or run.
 
@@ -64,7 +64,7 @@ formed by cutting the dendrogram at that distance (118-191).
    are dropped (403-411); with exclusiveSegments the later segment start is trimmed to the
    previous end and the trimmed remainder must still be >= 1.0 s (281-320).
 7. Segment speaker IDs are "S<cluster+1>" (322-351). `speakerDatabase` (per-speaker averaged
-   centroid, 222-279) and optional `chunkEmbeddings` (341-348) are returned but MacParakeet
+   centroid, 222-279) and optional `chunkEmbeddings` (341-348) are returned but Sotto
    ignores both.
 
 ## Errors
@@ -95,4 +95,4 @@ Whether these numbers were produced before or after fix #523 is not stated.
 
 `Sources/FluidAudio/Diarizer/DiarizationDER.swift` exposes `DiarizationDER.compute(ref:hyp:frameStep:collar:)`
 returning DER, confusion, false alarm, miss, and the Hungarian label mapping (26-57). It is usable
-from MacParakeet tests without a Python dependency.
+from Sotto tests without a Python dependency.

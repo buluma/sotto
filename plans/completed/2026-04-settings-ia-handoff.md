@@ -10,11 +10,11 @@
 
 ## 1. Read order (do this first, in order)
 
-1. `/Users/dmoon/code/macparakeet/CLAUDE.md` — project conventions, locked decisions, gotchas
-2. `~/.claude/projects/-Users-dmoon-code-macparakeet/memory/MEMORY.md` — auto-loaded user memory; pay attention to feedback entries
-3. `/Users/dmoon/code/macparakeet/plans/active/2026-04-settings-ia-overhaul.md` — the plan you'll execute (~470 lines, 13 sections). This is the source of truth.
-4. `/Users/dmoon/code/macparakeet/Sources/MacParakeet/Views/Settings/SettingsView.swift` — the current 1,411-line monolith you're decomposing
-5. `/Users/dmoon/code/macparakeet/Sources/MacParakeetViewModels/SettingsViewModel.swift` — the 1,265-line VM you're splitting
+1. `/Users/dmoon/code/sotto/CLAUDE.md` — project conventions, locked decisions, gotchas
+2. `~/.claude/projects/-Users-dmoon-code-sotto/memory/MEMORY.md` — auto-loaded user memory; pay attention to feedback entries
+3. `/Users/dmoon/code/sotto/plans/active/2026-04-settings-ia-overhaul.md` — the plan you'll execute (~470 lines, 13 sections). This is the source of truth.
+4. `/Users/dmoon/code/sotto/Sources/Sotto/Views/Settings/SettingsView.swift` — the current 1,411-line monolith you're decomposing
+5. `/Users/dmoon/code/sotto/Sources/SottoViewModels/SettingsViewModel.swift` — the 1,265-line VM you're splitting
 
 Do not skip these. Especially the plan — it contains all 9 PR specs, the 4 final tabs, the 7 sub-VMs, the 10 component primitives, the search architecture, and acceptance criteria. If something here conflicts with the plan, the plan wins.
 
@@ -29,7 +29,7 @@ Do not skip these. Especially the plan — it contains all 9 PR specs, the 4 fin
 
 ### What's on `feat/settings-ia`
 
-- **Foundation commit (`7ef48294`)** — 9 component primitives in `Sources/MacParakeet/Views/Settings/Components/`, `SettingsTab` enum, `SettingsRootViewModel` (with persistence), tabbed shell wrapping the existing 15 cards under the Modes tab. 1,853 XCTest + 13 Swift Testing pass (1846 baseline + 7 new). Zero functional UX change beyond the visible tab pill + search field.
+- **Foundation commit (`7ef48294`)** — 9 component primitives in `Sources/Sotto/Views/Settings/Components/`, `SettingsTab` enum, `SettingsRootViewModel` (with persistence), tabbed shell wrapping the existing 15 cards under the Modes tab. 1,853 XCTest + 13 Swift Testing pass (1846 baseline + 7 new). Zero functional UX change beyond the visible tab pill + search field.
 
 ### Verify before acting
 
@@ -121,7 +121,7 @@ Concretely:
 ## 7. PR 1 brief (Foundation) — when picker has merged
 
 Scope:
-1. Create directory `Sources/MacParakeet/Views/Settings/Components/`
+1. Create directory `Sources/Sotto/Views/Settings/Components/`
 2. Add new primitives:
    - `SettingsTabBar` (pill segmented control with status badges, ⌘1–⌘4 shortcuts)
    - `SettingsSearchField` (⌘F focus, x-clears, results-as-you-type)
@@ -132,14 +132,14 @@ Scope:
    - `SettingsErrorBanner` (inline error with retry CTA)
 3. Refactor existing inline helpers (`settingsCard` at `SettingsView.swift:1071`, `settingsToggleRow` at `:1080`) into real `SettingsCard<Content>` and `SettingsRow<Trailing>` components in `Components/`.
 4. Add `SettingsTab` enum (`.modes`, `.engine`, `.ai`, `.system`).
-5. Add `SettingsRootViewModel` skeleton in `Sources/MacParakeetViewModels/` — owns `activeTab` and `searchQuery` for now.
+5. Add `SettingsRootViewModel` skeleton in `Sources/SottoViewModels/` — owns `activeTab` and `searchQuery` for now.
 6. Wrap current `SettingsView` body in a tabbed shell — but show **ALL 15 cards under a single tab**. No reorganization yet. **Zero functional change to the user.**
 
 Acceptance for PR 1:
 - All 1,700 existing tests pass (`swift test`)
 - Settings looks indistinguishable to the user except for the (single) tab pill at the top
 - New components have `#Preview` blocks, light + dark
-- No bare `Color.*` literals introduced (verify via grep on `Sources/MacParakeet/Views/Settings/Components/`)
+- No bare `Color.*` literals introduced (verify via grep on `Sources/Sotto/Views/Settings/Components/`)
 
 PR 1 is intentionally boring. It exists so PRs 2–9 can move cards around without each reinventing primitives.
 

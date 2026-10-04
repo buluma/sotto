@@ -3,7 +3,7 @@ import Foundation
 import Darwin
 import XCTest
 @testable import CLI
-@testable import MacParakeetCore
+@testable import SottoCore
 
 final class LLMRoutesCommandTests: XCTestCase {
     private func fixture() -> (LLMConfigStore, LocalCLIConfigStore) {

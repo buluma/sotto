@@ -20,13 +20,13 @@ IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_.-]*$")
 
 
 def default_log_path():
-    override = os.environ.get("MACPARAKEET_AUDIO_DIAGNOSTICS_LOG_PATH", "")
+    override = os.environ.get("SOTTO_AUDIO_DIAGNOSTICS_LOG_PATH", "")
     if override.strip():
         return Path(override).expanduser()
-    debug_root = os.environ.get("MACPARAKEET_DEBUG_APP_STATE_DIR", "")
+    debug_root = os.environ.get("SOTTO_DEBUG_APP_STATE_DIR", "")
     if debug_root.strip():
         return Path(debug_root).expanduser() / "logs" / "dictation-audio.log"
-    return Path.home() / "Library" / "Logs" / "MacParakeet" / "dictation-audio.log"
+    return Path.home() / "Library" / "Logs" / "Sotto" / "dictation-audio.log"
 
 
 def parse_timestamp(value):

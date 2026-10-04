@@ -21,17 +21,17 @@ or infer that the most recent mention must be a final decision.
 
 ## What the repository already provides
 
-- [`AskSourceService`](../../Sources/MacParakeetCore/Services/Ask/AskSourceService.swift)
+- [`AskSourceService`](../../Sources/SottoCore/Services/Ask/AskSourceService.swift)
   validates selected UUIDs and canonical revisions before returning passages.
   At the baseline it matches every whitespace-delimited query substring,
   takes matches in transcript order, and interleaves sources. It derives the
   effective passages directly; it does not query the persistent FTS index.
-- [`SegmentRepository`](../../Sources/MacParakeetCore/Database/SegmentRepository.swift)
+- [`SegmentRepository`](../../Sources/SottoCore/Database/SegmentRepository.swift)
   already uses SQLite FTS5 and `bm25` for Library/CLI segment search, with
   substring fallback for certain scripts. Its public query does not provide
   Ask's source-ID whitelist or frozen-revision contract. Reusing it without
   adaptation would conflate two different access boundaries.
-- [`Database/README`](../../Sources/MacParakeetCore/Database/README.md)
+- [`Database/README`](../../Sources/SottoCore/Database/README.md)
   defines segments and their FTS index as rebuildable derived data, not the
   transcript authority. Citation indices depend on versioned segment derivation.
 - No text-embedding runtime or semantic passage index was found in first-party
@@ -71,7 +71,7 @@ For a later hybrid implementation, reciprocal rank fusion combines positions
 from separate result lists instead of treating BM25 and vector similarity as
 directly comparable scores. Azure's documented pipeline fuses results before
 semantic reranking. This is architectural precedent, not a proposal to send
-MacParakeet transcripts to Azure. [Microsoft RRF documentation](https://learn.microsoft.com/en-us/azure/search/hybrid-search-ranking)
+Sotto transcripts to Azure. [Microsoft RRF documentation](https://learn.microsoft.com/en-us/azure/search/hybrid-search-ranking)
 
 BEIR evaluated heterogeneous retrieval tasks and found BM25 a strong baseline,
 with reranking and late-interaction approaches performing well at higher
@@ -99,7 +99,7 @@ selects evidence rather than manufacturing it.
 The reviewed model/API docs describe a hosted endpoint and do not document
 downloadable local Jev weights or a local runtime. That is a bounded finding,
 not proof no private deployment exists. The repository's
-[`JevDecisionClient`](../../Sources/MacParakeetCore/Services/VoiceControl/JevDecisionClient.swift)
+[`JevDecisionClient`](../../Sources/SottoCore/Services/VoiceControl/JevDecisionClient.swift)
 calls `api.typesafe.ai` and requires Voice Control-specific cloud-context
 consent. That consent must not silently authorize sending Ask transcript
 passages to another service. No Jev inference was used for this research and
@@ -217,7 +217,7 @@ in this patch.
 Reproduce deliberately (excluded from normal tests):
 
 ```sh
-MACPARAKEET_ASK_BENCHMARK=1 swift test --filter AskRetrievalBenchmarkTests
+SOTTO_ASK_BENCHMARK=1 swift test --filter AskRetrievalBenchmarkTests
 ```
 
 Focused tests cover the reported partial-query/late-decision misses, lexical

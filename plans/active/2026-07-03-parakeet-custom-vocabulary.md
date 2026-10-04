@@ -22,7 +22,7 @@ Our pinned FluidAudio 0.15.4 already ships the API — no upgrade needed:
 `CustomVocabularyContext`/`CustomVocabularyTerm`, exposed via
 `SlidingWindowAsrManager.configureVocabularyBoosting(...)`. Note it is
 **not** a parameter on the plain `AsrManager` file/buffer transcribe
-calls MacParakeet uses today (those only carry `language`). Resolve,
+calls Sotto uses today (those only carry `language`). Resolve,
 with a throwaway harness (not app code):
 
 1. The mechanism in practice: load-time vs per-request boosting; list

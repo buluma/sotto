@@ -1,7 +1,7 @@
 import ArgumentParser
 import XCTest
 @testable import CLI
-@testable import MacParakeetCore
+@testable import SottoCore
 
 final class RetranscribeCommandTests: XCTestCase {
     func testRequiresExplicitUpdateConfirmation() {
@@ -405,7 +405,7 @@ final class RetranscribeCommandTests: XCTestCase {
 
     private func makeHarness() throws -> Harness {
         let dbURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-retranscribe-\(UUID().uuidString).db")
+            .appendingPathComponent("sotto-cli-retranscribe-\(UUID().uuidString).db")
         let manager = try DatabaseManager(path: dbURL.path)
         return Harness(
             dbURL: dbURL,

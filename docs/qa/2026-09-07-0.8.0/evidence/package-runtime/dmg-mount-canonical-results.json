@@ -4,7 +4,7 @@
     "argv": [
       "hdiutil",
       "attach",
-      "<REPO>/dist/MacParakeet.dmg",
+      "<REPO>/dist/Sotto.dmg",
       "-readonly",
       "-nobrowse",
       "-mountpoint",
@@ -24,7 +24,7 @@
       "--deep",
       "--strict",
       "--verbose=2",
-      "<QA>/package-runtime/dmg-readonly-v52tmqn4/MacParakeet.app"
+      "<QA>/package-runtime/dmg-readonly-v52tmqn4/Sotto.app"
     ],
     "started_at_utc": "2026-09-07T23:36:40.005495+00:00",
     "elapsed_seconds": 0.274,
@@ -37,7 +37,7 @@
       "xcrun",
       "stapler",
       "validate",
-      "<QA>/package-runtime/dmg-readonly-v52tmqn4/MacParakeet.app"
+      "<QA>/package-runtime/dmg-readonly-v52tmqn4/Sotto.app"
     ],
     "started_at_utc": "2026-09-07T23:36:40.279819+00:00",
     "elapsed_seconds": 0.225,

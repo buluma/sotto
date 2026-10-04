@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 struct HealthCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
@@ -39,7 +39,7 @@ struct HealthCommand: AsyncParsableCommand {
         var report = HealthReport()
 
         if !json {
-            print("MacParakeet Health Check")
+            print("Sotto Health Check")
             print("========================")
             print()
         }
@@ -88,7 +88,7 @@ struct HealthCommand: AsyncParsableCommand {
             case "missing":
                 print("  Status: Not created yet (will be created on first use)")
             case "schema_skew":
-                print("  Status: SCHEMA SKEW — \(database.error ?? "upgrade macparakeet-cli")")
+                print("  Status: SCHEMA SKEW — \(database.error ?? "upgrade sotto-cli")")
             default:
                 print("  Status: ERROR — \(database.error ?? "unknown")")
             }
@@ -110,7 +110,7 @@ struct HealthCommand: AsyncParsableCommand {
         }
 
         // 5. Local speech stack
-        let defaults = macParakeetAppDefaults()
+        let defaults = sottoAppDefaults()
         let sttClient = makeConfiguredSTTClient(defaults: defaults)
         var sttClientNeedsShutdown = true
         defer {
@@ -193,7 +193,7 @@ struct HealthCommand: AsyncParsableCommand {
             ytDlp = .init(
                 status: "missing",
                 path: nil,
-                error: "Run `macparakeet-cli health --repair-binaries` or transcribe a media URL to install yt-dlp."
+                error: "Run `sotto-cli health --repair-binaries` or transcribe a media URL to install yt-dlp."
             )
         }
         report.ytDlp = ytDlp
@@ -286,7 +286,7 @@ private func databaseSchemaSkewMessage(unknownMigrations: [String]) -> String {
     let migrationList = unknownMigrations.prefix(3).joined(separator: ", ")
     let suffix = unknownMigrations.count > 3 ? ", ..." : ""
     return
-        "This database has been migrated by a newer MacParakeet app than this macparakeet-cli build understands (\(migrationList)\(suffix)). Upgrade macparakeet-cli and retry."
+        "This database has been migrated by a newer Sotto app than this sotto-cli build understands (\(migrationList)\(suffix)). Upgrade sotto-cli and retry."
 }
 
 struct HealthDatabaseReport: Encodable, Equatable {

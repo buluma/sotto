@@ -14,7 +14,7 @@
 > 1. **Cohere is FluidAudio-native, not MLX.** This FluidAudio build ships
 >    `cohere-transcribe`/`cohere-benchmark` and a q8 CoreML repo
 >    (`FluidInference/cohere-transcribe-03-2026-coreml`). Cohere runs on-device
->    via the **same FluidAudio SDK MacParakeet already uses** — so it (and
+>    via the **same FluidAudio SDK Sotto already uses** — so it (and
 >    SenseVoice/Paraformer, which auto-download) need **no MLX runtime**. MLX is
 >    now only required for Qwen3-ASR and Moonshine.
 > 2. **Measured (M4 Pro, first-200, canonical normalizer): Cohere is the
@@ -46,7 +46,7 @@
 
 ## North Star tie-in
 
-MacParakeet is "a fast, local-first voice app for Mac." Every model decision
+Sotto is "a fast, local-first voice app for Mac." Every model decision
 is gated by one hard constraint: **it must run on-device on Apple Silicon**
 (CoreML/ANE via FluidAudio, WhisperKit, MLX, or whisper.cpp). Accuracy and
 speed only matter for models that clear that gate. The benchmark exists to pick
@@ -57,7 +57,7 @@ claims with reproducible numbers.
 
 **In scope**
 - A reusable benchmark harness that scores any engine reachable through
-  `macparakeet-cli` (and, for not-yet-integrated models, standalone runners)
+  `sotto-cli` (and, for not-yet-integrated models, standalone runners)
   on a multi-domain dataset suite, with the canonical Whisper/jiwer normalizer
   and a defensible on-device speed protocol.
 - A full accuracy + speed + memory comparison of the best on-device ASR models,
@@ -90,7 +90,7 @@ live-preview-vs-authoritative-paste separation). Two P2 follow-ups only:
    awaits (Nemotron uses one call). Verified benign; wants a one-line comment.
 2. No deterministic test drives a fake streaming session (cross-session reset,
    mid-stream cancel). Stale-token safety currently rests on reading FluidAudio's
-   `reset()`, not on a MacParakeet test. Suggest a stub streaming-manager seam.
+   `reset()`, not on a Sotto test. Suggest a stub streaming-manager seam.
 
 The `benchmarks/parakeet-unified/` harness is **mechanically correct and
 honestly documented**, but is a merge-readiness artifact, not a
@@ -147,7 +147,7 @@ Leaderboard macro-avg unless noted; verify all numbers in Phase 2.)
 **Tier 0 — already integrated (benchmark for the comparison table):**
 Parakeet v3 (default, multilingual), v2 (EN), Unified (EN, new), Nemotron
 multilingual + EN (Beta), WhisperKit large-v3-turbo. All reachable via
-`macparakeet-cli`.
+`sotto-cli`.
 
 **Tier 1 — on-device today via FluidAudio CoreML, near-zero integration:**
 - **SenseVoice-Small** — MIT, ~225 MB int8, already shipped in the FluidAudio

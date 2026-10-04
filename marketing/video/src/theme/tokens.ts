@@ -1,5 +1,5 @@
 /**
- * MacParakeet design tokens for video rendering.
+ * Sotto design tokens for video rendering.
  *
  * Authoritative source: brand-assets/palette/palette.json + docs/brand-identity.md.
  * Keep this file in sync when those change.

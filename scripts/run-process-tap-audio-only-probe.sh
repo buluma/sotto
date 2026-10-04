@@ -21,10 +21,10 @@ output_dir=$(cd "$output_dir" && pwd)
 binary="$output_dir/process-tap-audio-only-probe"
 result="$output_dir/result.json"
 tone="$output_dir/generated-997hz.wav"
-cycles=${MACPARAKEET_PROCESS_TAP_PROBE_CYCLES:-1}
-tone_duration_seconds=${MACPARAKEET_PROCESS_TAP_PROBE_TONE_SECONDS:-2}
-deadline_seconds=${MACPARAKEET_PROCESS_TAP_PROBE_DEADLINE_SECONDS:-20}
-if [[ -n "$observe_seconds" && -z "${MACPARAKEET_PROCESS_TAP_PROBE_DEADLINE_SECONDS:-}" ]]; then
+cycles=${SOTTO_PROCESS_TAP_PROBE_CYCLES:-1}
+tone_duration_seconds=${SOTTO_PROCESS_TAP_PROBE_TONE_SECONDS:-2}
+deadline_seconds=${SOTTO_PROCESS_TAP_PROBE_DEADLINE_SECONDS:-20}
+if [[ -n "$observe_seconds" && -z "${SOTTO_PROCESS_TAP_PROBE_DEADLINE_SECONDS:-}" ]]; then
   deadline_seconds=$(/usr/bin/awk -v n="$observe_seconds" 'BEGIN { print int(n) + 30 }')
 fi
 info_plist="$output_dir/Info.plist"
@@ -53,8 +53,8 @@ cat >"$info_plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleIdentifier</key><string>io.pocketstation.macparakeet-process-tap-probe</string>
-<key>CFBundleName</key><string>MacParakeet Audio Probe</string>
+<key>CFBundleIdentifier</key><string>io.pocketstation.sotto-process-tap-probe</string>
+<key>CFBundleName</key><string>Sotto Audio Probe</string>
 <key>NSAudioCaptureUsageDescription</key><string>Measure system audio locally to investigate missing call audio. No audio is saved or uploaded.</string>
 </dict></plist>
 PLIST
@@ -70,7 +70,7 @@ swiftc \
   -o "$binary"
 
 codesign --force --sign - \
-  --identifier io.pocketstation.macparakeet-process-tap-probe \
+  --identifier io.pocketstation.sotto-process-tap-probe \
   "$binary"
 
 {

@@ -11,7 +11,7 @@ bump, not a substitute for ADR-010 after numbers exist.
 
 On FluidAudio 0.15.6, Exact / `--speaker-count` / `maxSpeakers` can fail to bind
 (FluidAudio [#891](https://github.com/FluidInference/FluidAudio/pull/891), shipped
-in 0.15.7). MacParakeet maps GUI **Other speakers → Exact N** and CLI
+in 0.15.7). Sotto maps GUI **Other speakers → Exact N** and CLI
 `--speaker-count N` to `withSpeakers(exactly:)`.
 
 This is **not** [#944](https://github.com/moona3k/macparakeet/issues/944) (Auto
@@ -25,7 +25,7 @@ This is **not** [#944](https://github.com/moona3k/macparakeet/issues/944) (Auto
 | Speaker-count | VoxConverse v0.3 test slice in `selected_files.tsv` + `rttm/` | Public RTTM; unique speaker ids |
 | 1-speaker extra | LibriSpeech `test-clean` (already at `$HOME/asr-bench/LibriSpeech`) | Read speech, one talker |
 | ASR WER | Same LibriSpeech, `benchmarks/asr` scorers | Independent transcripts |
-| Not used | Local MacParakeet meeting folders | 1:1 rows lost audio; remaining long takes are 4–15 speakers and unlabeled |
+| Not used | Local Sotto meeting folders | 1:1 rows lost audio; remaining long takes are 4–15 speakers and unlabeled |
 
 Do not score Exact-1 runs with DER. The constraint is allowed to disagree with
 the oracle count.
@@ -37,14 +37,14 @@ Keep a 0.15.6 CLI **outside** `.build`, then rebuild 0.15.7 in place:
 ```sh
 WORK_DIR="${WORK_DIR:-$HOME/asr-bench/fluidaudio-0.15.7-ab}"
 mkdir -p "$WORK_DIR"
-swift build -c release --product macparakeet-cli
-cp .build/arm64-apple-macosx/release/macparakeet-cli "$WORK_DIR/cli-0.15.6"
+swift build -c release --product sotto-cli
+cp .build/arm64-apple-macosx/release/sotto-cli "$WORK_DIR/cli-0.15.6"
 export BASELINE_CLI="$WORK_DIR/cli-0.15.6"
 # after Package.swift → 0.15.7 and a rebuild:
-export CANDIDATE_CLI="$PWD/.build/arm64-apple-macosx/release/macparakeet-cli"
+export CANDIDATE_CLI="$PWD/.build/arm64-apple-macosx/release/sotto-cli"
 ```
 
-Never invoke a bare `macparakeet-cli`. Always `--no-history`.
+Never invoke a bare `sotto-cli`. Always `--no-history`.
 
 ## Diarization commands
 
@@ -79,7 +79,7 @@ Ship 0.15.7 only if all hold:
 5. ASR: a LibriSpeech slice (at least 200 `test-clean` utterances, Parakeet v3)
    does not worsen `avg_wer` by more than **+0.5** absolute vs the 0.15.6 CLI on
    the same machine. Use `BIN=...` with `scripts/dev/benchmark_stt_engines.sh`
-   or `benchmarks/asr/run_macparakeet.py --limit 200`.
+   or `benchmarks/asr/run_sotto.py --limit 200`.
 6. Focused tests: `DiarizationServiceTests`, `MeetingSpeakerPriorTests`,
    `CustomVocabularyBoostingTests`, `ModelDeletionTests`. Then one full
    `swift test`.
@@ -99,7 +99,7 @@ follow-up names an ASR override.
 
 ## Baseline observed (0.15.6 CLI, this slice)
 
-Work tree `macparakeet-fa0157-eval`, CLI copied to
+Work tree `sotto-fa0157-eval`, CLI copied to
 `$HOME/asr-bench/fluidaudio-0.15.7-ab/cli-0.15.6`. JSON under `results/baseline/`.
 
 | File | RTTM | Unconstrained roster | Constraint | Constrained roster |
@@ -143,7 +143,7 @@ in this worktree.
 
 ## Limits of this slice
 
-- VoxConverse is YouTube debate/news, not MacParakeet system-audio 1:1.
+- VoxConverse is YouTube debate/news, not Sotto system-audio 1:1.
 - Exact-1 on a 2-speaker clip tests the cap, not “this meeting had one other
   person.”
 - No live-dictation seam files here. That still needs short recorded utterances

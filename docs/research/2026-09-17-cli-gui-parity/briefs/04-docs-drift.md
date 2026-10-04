@@ -4,8 +4,8 @@ One concern: find documentation that is factually wrong about CLI/GUI parity or 
 
 ## Settled
 
-- Canonical CLI contract: `Sources/CLI/CHANGELOG.md`, `spec/contracts/cli-json-v1.md`, `macparakeet-cli spec --json` via `SpecCommand.swift`, `integrations/README.md`.
-- CLI version constant: `CLI.cliVersion` in `Sources/CLI/MacParakeetCLI.swift`.
+- Canonical CLI contract: `Sources/CLI/CHANGELOG.md`, `spec/contracts/cli-json-v1.md`, `sotto-cli spec --json` via `SpecCommand.swift`, `integrations/README.md`.
+- CLI version constant: `CLI.cliVersion` in `Sources/CLI/SottoCLI.swift`.
 - Do not rewrite history; propose precise edits.
 
 ## Investigate

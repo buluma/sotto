@@ -15,10 +15,10 @@
 > ```bash
 > git fetch origin
 > git diff --stat origin/main -- \
->   Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift \
->   Sources/MacParakeet/Views/Transcription/TranscriptTimestampedContentView.swift \
->   Sources/MacParakeet/Views/Components/AudioScrubberBar.swift \
->   Sources/MacParakeetViewModels/MediaPlayerViewModel.swift
+>   Sources/Sotto/Views/Transcription/TranscriptResultView.swift \
+>   Sources/Sotto/Views/Transcription/TranscriptTimestampedContentView.swift \
+>   Sources/Sotto/Views/Components/AudioScrubberBar.swift \
+>   Sources/SottoViewModels/MediaPlayerViewModel.swift
 > # Re-confirm the "already exists" claims below before building; if any have
 > # changed since 672ee1028 the scope below may already be partly done.
 > ```
@@ -47,7 +47,7 @@ verification is asserted here.
 - **Phase 1 — DONE** (commit `e91ca2699`): U1 per-segment hover actions + U4
   reading font-size. `swift build` + full `swift test` green.
 - **U2 in-transcript find — DONE** (this branch): testable `TranscriptFindModel`
-  (`MacParakeetViewModels`, 17 unit tests) + pinned `TranscriptFindBar` (modeled
+  (`SottoViewModels`, 17 unit tests) + pinned `TranscriptFindBar` (modeled
   on `SettingsSearchField`, ⌘F focus / ⌘G·⇧⌘G nav / Esc clear-then-close /
   "X of Y" counter) + shared `TranscriptFindHighlight` (`AttributedString`
   accent wash, current match bolded). Works in **both** Timed (per-segment rows,
@@ -117,7 +117,7 @@ extracts its slice out of the god-file behind a characterization test.
   manual-scroll pause + >2s seek re-sync, and `.textSelection(.enabled)` must
   all keep working unchanged.
 - **Segment timing is start-only.** `TranscriptSegment` has `startMs` and
-  **no `endMs`** (`Sources/MacParakeetCore/Utilities/TranscriptSegmenter.swift`).
+  **no `endMs`** (`Sources/SottoCore/Utilities/TranscriptSegmenter.swift`).
   Any "current word/segment range" or copy-with-timestamp derives the end from
   the *next* segment's `startMs` (or media duration for the last). Do not invent
   an `endMs` on the model for this feature.
@@ -130,10 +130,10 @@ extracts its slice out of the god-file behind a characterization test.
 - **Local-first**: search and all reading affordances are fully offline; no
   network calls added.
 - **Coral discipline**: never `.tint(coral)` at hosting roots/sheet wrappers;
-  coral cascades only through `parakeetAction`. Use `DesignSystem` tokens
+  coral cascades only through `sottoAction`. Use `DesignSystem` tokens
   (`accent`, `surfaceElevated`, `Animation.hoverTransition`, etc.).
 - **Swift 6 language-mode clean**; new view-logic that is testable lives in
-  `MacParakeetViewModels`, not the view.
+  `SottoViewModels`, not the view.
 
 ## Key technical decisions
 
@@ -143,7 +143,7 @@ extracts its slice out of the god-file behind a characterization test.
   `.video` mode too, rather than authoring a new control. Keep the video panel
   for the picture; move/duplicate transport into the rail.
 - **Find logic is a testable model, not view code.** Add an `@Observable`
-  `TranscriptFindModel` in `MacParakeetViewModels` that takes the segment array
+  `TranscriptFindModel` in `SottoViewModels` that takes the segment array
   (or flowing text) + query and produces an ordered match list
   (`segmentIndex`, `Range`), `current`, `next()`, `prev()`. The view only
   highlights (`AttributedString`) and `scrollTo`. This keeps the matcher unit-
@@ -168,7 +168,7 @@ TranscriptResultView (shrinking shell: header card + tabs + action bar + layout)
 │
 └─ TranscriptReadingPane  ◀── U5 extraction target
     ├─ TranscriptFindBar         ◀── U2 (⌘F)  ── highlights + scrollTo
-    │     observes TranscriptFindModel (MacParakeetViewModels)  ◀── U2 testable
+    │     observes TranscriptFindModel (SottoViewModels)  ◀── U2 testable
     ├─ density / font-size control ◀── U4
     └─ TranscriptTimestampedContentView
           └─ TranscriptSegmentRow  ◀── U5 extraction + U1 hover actions
@@ -191,7 +191,7 @@ view-only, low risk).
   audit's "play from here / copy text / copy with timestamp" line.
 - **Dependencies:** none (seek + formatter already exist).
 - **Files:** `TranscriptTimestampedContentView.swift` (segment + turn rows);
-  new `Sources/MacParakeet/Views/Transcription/TranscriptSegmentRow.swift`
+  new `Sources/Sotto/Views/Transcription/TranscriptSegmentRow.swift`
   (extract the per-segment row here — U5 slice); read pattern from
   `DictationHistoryView` hover rows.
 - **Approach:** Add `@State isHovering`; gate a trailing `HStack` of borderless
@@ -202,7 +202,7 @@ view-only, low risk).
   `"[\(formatTimestamp(ms: startMs))] \(segment.text)"`. Add `.help(...)`
   tooltips. Keep the existing tap-to-seek on the timestamp chip.
 - **Patterns to follow:** dictation-history hover actions (Play/Copy/Menu on
-  `.onHover`); `parakeetAction(.subtle)` or borderless icon buttons; coral only
+  `.onHover`); `sottoAction(.subtle)` or borderless icon buttons; coral only
   via tokens.
 - **Test scenarios:** copy-with-timestamp string format; play-from-here calls
   `seek(toMs:)` with the row's `startMs`; hover actions hidden at rest (opacity
@@ -236,9 +236,9 @@ view-only, low risk).
   into view. Works in both Text and Timed modes.
 - **Dependencies:** none functionally; cleaner *after* U5 extracts the reading
   pane so the find bar mounts on the pane, not the god-file.
-- **Files:** new `Sources/MacParakeetViewModels/TranscriptFindModel.swift`
+- **Files:** new `Sources/SottoViewModels/TranscriptFindModel.swift`
   (`@Observable`, testable matcher); new
-  `Sources/MacParakeet/Views/Transcription/TranscriptFindBar.swift` (capsule
+  `Sources/Sotto/Views/Transcription/TranscriptFindBar.swift` (capsule
   field modeled on `SettingsSearchField`); mount in the reading pane; highlight
   in `TranscriptTimestampedContentView` + the flowing-text path.
 - **Approach:** `TranscriptFindModel` takes `[TranscriptSegment]` (and the

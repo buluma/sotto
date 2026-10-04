@@ -1,4 +1,4 @@
-# MacParakeet Architecture Deep-Dive
+# Sotto Architecture Deep-Dive
 
 > Date: 2026-07-16
 >
@@ -11,7 +11,7 @@ Canonical consolidated record:
 
 ## Verdict
 
-MacParakeet's architecture is healthy. The codebase does not need a broad
+Sotto's architecture is healthy. The codebase does not need a broad
 reorganization, a new control plane, or a rewrite of its core capture and
 transcription flows. Its strongest modules have useful depth:
 
@@ -116,7 +116,7 @@ The current product has multiple search meanings:
 
 - The GUI Library calls `TranscriptionRepository.fetchLibraryPage`.
 - Dictation history calls `DictationRepository.search`.
-- `macparakeet-cli search` calls `SegmentRepository.search` and returns
+- `sotto-cli search` calls `SegmentRepository.search` and returns
   cited FTS segment hits.
 - CLI history also exposes separate transcription and dictation keyword paths.
 - Future agent work is split between two tentative plans:

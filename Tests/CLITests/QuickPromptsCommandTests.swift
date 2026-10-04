@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 @testable import CLI
-@testable import MacParakeetCore
+@testable import SottoCore
 
 final class QuickPromptsCommandTests: XCTestCase {
 
@@ -337,7 +337,7 @@ final class QuickPromptsCommandTests: XCTestCase {
 
     private func temporaryDatabaseURL() -> URL {
         FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-quick-prompts-\(UUID().uuidString).db")
+            .appendingPathComponent("sotto-quick-prompts-\(UUID().uuidString).db")
     }
 
     private func decodedJSONObject(_ output: String) throws -> [String: Any] {

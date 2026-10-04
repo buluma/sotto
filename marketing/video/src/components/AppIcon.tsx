@@ -16,7 +16,7 @@ interface AppIconProps {
 }
 
 /**
- * The MacParakeet macOS app icon — white calligraphic parakeet on near-black,
+ * The Sotto macOS app icon — white calligraphic parakeet on near-black,
  * padded into a transparent 1024×1024 icon source (`Assets/AppIcon-1024x1024.png`
  * in the main repo, mirrored into `public/brand/app-icon.png` here).
  *

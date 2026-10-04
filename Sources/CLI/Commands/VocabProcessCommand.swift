@@ -1,7 +1,7 @@
 import ArgumentParser
 import AppKit
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 struct VocabProcessCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
@@ -27,7 +27,7 @@ struct VocabProcessCommand: AsyncParsableCommand {
         let words = try wordRepo.fetchEnabled()
         let snippets = try snippetRepo.fetchEnabled()
         let removeUmFiller = UserDefaultsAppRuntimePreferences.removeUmFiller(
-            defaults: macParakeetAppDefaults()
+            defaults: sottoAppDefaults()
         )
 
         let pipeline = TextProcessingPipeline()
@@ -36,7 +36,7 @@ struct VocabProcessCommand: AsyncParsableCommand {
             customWords: words,
             snippets: snippets,
             spokenPunctuationEnabled: UserDefaultsAppRuntimePreferences.spokenPunctuationEnabled(
-                defaults: macParakeetAppDefaults()
+                defaults: sottoAppDefaults()
             ),
             removeUmFiller: removeUmFiller
         )

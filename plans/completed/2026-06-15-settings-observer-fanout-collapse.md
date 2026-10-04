@@ -9,7 +9,7 @@
 > When done, update the status row for this plan in `plans/README.md`.
 >
 > **Drift check (run first)**:
-> `git diff --stat 16e3f865f..HEAD -- Sources/MacParakeet/App/AppSettingsObserverCoordinator.swift Tests/MacParakeetTests/App/AppSettingsObserverCoordinatorTests.swift Sources/MacParakeetCore/AppNotifications.swift`
+> `git diff --stat 16e3f865f..HEAD -- Sources/Sotto/App/AppSettingsObserverCoordinator.swift Tests/SottoTests/App/AppSettingsObserverCoordinatorTests.swift Sources/SottoCore/AppNotifications.swift`
 > If any changed since this plan was written, compare the "Current state"
 > excerpts against the live code; on a mismatch, treat it as a STOP condition.
 
@@ -41,7 +41,7 @@ keyed channel is a higher-risk follow-up noted at the end.
 
 ## Current state
 
-`Sources/MacParakeet/App/AppSettingsObserverCoordinator.swift` (247 lines).
+`Sources/Sotto/App/AppSettingsObserverCoordinator.swift` (247 lines).
 Structure today:
 
 - 12 injected `@escaping` closures stored as `let` (lines 9–20): `onOpenOnboarding`,
@@ -55,7 +55,7 @@ Structure today:
   blocks. 10 of them are identical except for the name + callback:
   ```swift
   hotkeyTriggerObserver = notificationCenter.addObserver(
-      forName: .macParakeetHotkeyTriggerDidChange, object: nil, queue: .main
+      forName: .sottoHotkeyTriggerDidChange, object: nil, queue: .main
   ) { [weak self] _ in
       Task { @MainActor in self?.onHotkeyTriggerChanged() }
   }
@@ -68,29 +68,29 @@ Structure today:
   `nonisolated private static func settingsTab(from:)` (lines 190–195) — keep both.
 
 The 10 "plain" channels (each `{ [weak self] _ in Task { @MainActor in self?.onX() } }`):
-`macParakeetHotkeyTriggerDidChange`, `…PushToTalkHotkeyTriggerDidChange`,
+`sottoHotkeyTriggerDidChange`, `…PushToTalkHotkeyTriggerDidChange`,
 `…MeetingHotkeyTriggerDidChange`, `…FileTranscriptionHotkeyTriggerDidChange`,
 `…YouTubeTranscriptionHotkeyTriggerDidChange`, `…AppearanceModeDidChange`,
 `…MenuBarOnlyModeDidChange`, `…ShowIdlePillDidChange`, `…InstantDictationDidChange`,
 `…MicrophoneSelectionDidChange`.
 
-The notification names live in `Sources/MacParakeetCore/AppNotifications.swift`
+The notification names live in `Sources/SottoCore/AppNotifications.swift`
 (do not change them).
 
-Existing test: `Tests/MacParakeetTests/App/AppSettingsObserverCoordinatorTests.swift`
+Existing test: `Tests/SottoTests/App/AppSettingsObserverCoordinatorTests.swift`
 — this is your safety net and your structural pattern. **Read it fully before
 editing**; it constructs the coordinator with stub callbacks and posts
 notifications to assert each fires.
 
 The init signature (12 labeled closures) is called from
-`Sources/MacParakeet/App/AppEnvironmentConfigurer.swift`. **The init signature
+`Sources/Sotto/App/AppEnvironmentConfigurer.swift`. **The init signature
 must not change** so that caller is untouched.
 
 ## Commands you will need
 
 | Purpose            | Command                                                                                  | Expected           |
 |--------------------|------------------------------------------------------------------------------------------|--------------------|
-| Confirm single-observer ownership | `grep -rn "macParakeetHotkeyTriggerDidChange\|macParakeetMicrophoneSelectionDidChange\|macParakeetShowIdlePillDidChange\|macParakeetInstantDictationDidChange\|macParakeetAppearanceModeDidChange\|macParakeetMenuBarOnlyModeDidChange\|macParakeetMeetingHotkeyTriggerDidChange\|macParakeetFileTranscriptionHotkeyTriggerDidChange\|macParakeetYouTubeTranscriptionHotkeyTriggerDidChange\|macParakeetPushToTalkHotkeyTriggerDidChange" Sources --include=*.swift \| grep addObserver` | only matches inside `AppSettingsObserverCoordinator.swift` |
+| Confirm single-observer ownership | `grep -rn "sottoHotkeyTriggerDidChange\|sottoMicrophoneSelectionDidChange\|sottoShowIdlePillDidChange\|sottoInstantDictationDidChange\|sottoAppearanceModeDidChange\|sottoMenuBarOnlyModeDidChange\|sottoMeetingHotkeyTriggerDidChange\|sottoFileTranscriptionHotkeyTriggerDidChange\|sottoYouTubeTranscriptionHotkeyTriggerDidChange\|sottoPushToTalkHotkeyTriggerDidChange" Sources --include=*.swift \| grep addObserver` | only matches inside `AppSettingsObserverCoordinator.swift` |
 | Focused test       | `swift test --filter AppSettingsObserverCoordinator`                                     | all pass           |
 | Build              | `swift build`                                                                            | exit 0             |
 | Full tests         | `swift test`                                                                             | all pass           |
@@ -98,16 +98,16 @@ must not change** so that caller is untouched.
 ## Scope
 
 **In scope** (the only files you should modify):
-- `Sources/MacParakeet/App/AppSettingsObserverCoordinator.swift`
-- `Tests/MacParakeetTests/App/AppSettingsObserverCoordinatorTests.swift` (only to
+- `Sources/Sotto/App/AppSettingsObserverCoordinator.swift`
+- `Tests/SottoTests/App/AppSettingsObserverCoordinatorTests.swift` (only to
   add coverage if a channel is currently untested — do not weaken existing assertions)
 - `plans/README.md` (status row)
 
 **Out of scope** (do NOT touch):
-- `Sources/MacParakeetCore/AppNotifications.swift` — names stay as-is.
-- `Sources/MacParakeetViewModels/SettingsViewModel.swift` — the poster side is a
+- `Sources/SottoCore/AppNotifications.swift` — names stay as-is.
+- `Sources/SottoViewModels/SettingsViewModel.swift` — the poster side is a
   separate follow-up.
-- `Sources/MacParakeet/App/AppEnvironmentConfigurer.swift` — the init signature
+- `Sources/Sotto/App/AppEnvironmentConfigurer.swift` — the init signature
   must remain identical, so this caller does not change.
 - The two payload-carrying observers (`onboarding`, `settings`) — keep them as
   explicit blocks; only the 10 plain channels become table-driven.
@@ -123,7 +123,7 @@ must not change** so that caller is untouched.
 
 ### Step 1: Read the existing test and confirm channel coverage
 
-Read `Tests/MacParakeetTests/App/AppSettingsObserverCoordinatorTests.swift` in
+Read `Tests/SottoTests/App/AppSettingsObserverCoordinatorTests.swift` in
 full. List which of the 12 channels it already asserts fire. If any of the 10
 plain channels has no test, note it — you will add one in Step 4.
 
@@ -152,12 +152,12 @@ func startObserving() {
 
     // Payload-carrying intents stay explicit.
     observerTokens.append(notificationCenter.addObserver(
-        forName: .macParakeetOpenOnboarding, object: nil, queue: .main
+        forName: .sottoOpenOnboarding, object: nil, queue: .main
     ) { [weak self] _ in
         Task { @MainActor in self?.onOpenOnboarding() }
     })
     observerTokens.append(notificationCenter.addObserver(
-        forName: .macParakeetOpenSettings, object: nil, queue: .main
+        forName: .sottoOpenSettings, object: nil, queue: .main
     ) { [weak self] notification in
         let tab = Self.settingsTab(from: notification)
         Task { @MainActor in self?.onOpenSettings(tab) }
@@ -165,16 +165,16 @@ func startObserving() {
 
     // Plain "setting changed -> re-read" channels.
     let plainChannels: [(Notification.Name, () -> Void)] = [
-        (.macParakeetHotkeyTriggerDidChange, onHotkeyTriggerChanged),
-        (.macParakeetPushToTalkHotkeyTriggerDidChange, onPushToTalkHotkeyTriggerChanged),
-        (.macParakeetMeetingHotkeyTriggerDidChange, onMeetingHotkeyTriggerChanged),
-        (.macParakeetFileTranscriptionHotkeyTriggerDidChange, onFileTranscriptionHotkeyTriggerChanged),
-        (.macParakeetYouTubeTranscriptionHotkeyTriggerDidChange, onYouTubeTranscriptionHotkeyTriggerChanged),
-        (.macParakeetAppearanceModeDidChange, onAppearanceModeChanged),
-        (.macParakeetMenuBarOnlyModeDidChange, onMenuBarOnlyModeChanged),
-        (.macParakeetShowIdlePillDidChange, onShowIdlePillChanged),
-        (.macParakeetInstantDictationDidChange, onInstantDictationChanged),
-        (.macParakeetMicrophoneSelectionDidChange, onMicrophoneSelectionChanged),
+        (.sottoHotkeyTriggerDidChange, onHotkeyTriggerChanged),
+        (.sottoPushToTalkHotkeyTriggerDidChange, onPushToTalkHotkeyTriggerChanged),
+        (.sottoMeetingHotkeyTriggerDidChange, onMeetingHotkeyTriggerChanged),
+        (.sottoFileTranscriptionHotkeyTriggerDidChange, onFileTranscriptionHotkeyTriggerChanged),
+        (.sottoYouTubeTranscriptionHotkeyTriggerDidChange, onYouTubeTranscriptionHotkeyTriggerChanged),
+        (.sottoAppearanceModeDidChange, onAppearanceModeChanged),
+        (.sottoMenuBarOnlyModeDidChange, onMenuBarOnlyModeChanged),
+        (.sottoShowIdlePillDidChange, onShowIdlePillChanged),
+        (.sottoInstantDictationDidChange, onInstantDictationChanged),
+        (.sottoMicrophoneSelectionDidChange, onMicrophoneSelectionChanged),
     ]
     for (name, handler) in plainChannels {
         let token = notificationCenter.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
@@ -218,9 +218,9 @@ including any channel you added.
 ### Step 5: Confirm line-count reduction and no stray properties
 
 **Verify**:
-- `grep -c "Observer: Any?" Sources/MacParakeet/App/AppSettingsObserverCoordinator.swift` → `0`
-- `grep -c "addObserver" Sources/MacParakeet/App/AppSettingsObserverCoordinator.swift` → `3` (onboarding, settings, the one in the loop)
-- `grep -c "removeObserver" Sources/MacParakeet/App/AppSettingsObserverCoordinator.swift` → `1`
+- `grep -c "Observer: Any?" Sources/Sotto/App/AppSettingsObserverCoordinator.swift` → `0`
+- `grep -c "addObserver" Sources/Sotto/App/AppSettingsObserverCoordinator.swift` → `3` (onboarding, settings, the one in the loop)
+- `grep -c "removeObserver" Sources/Sotto/App/AppSettingsObserverCoordinator.swift` → `1`
 - The file is well under 247 lines (`wc -l` should be ~90–110).
 
 ## Test plan
@@ -265,7 +265,7 @@ Stop and report back (do not improvise) if:
 - **Deferred higher-risk follow-up:** unify the *poster* side — the
   `SettingsViewModel` `didSet` blocks that triple up `defaults.set` + `post` +
   `Telemetry.send`, and the 10 distinct names in `AppNotifications.swift` — into
-  a single `.macParakeetSettingDidChange` notification carrying a `SettingChange`
+  a single `.sottoSettingDidChange` notification carrying a `SettingChange`
   enum in `userInfo`. That touches the poster side and is MED risk; do it only
   with characterization tests and as its own plan. This plan intentionally stops
   at the consumer side.

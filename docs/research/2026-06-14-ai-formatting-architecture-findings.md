@@ -199,16 +199,16 @@ speaker-attributed input. It's the *cleanup formatter* and the *default display
 
 | Concern | Location |
 |---|---|
-| Default prompt + 20k cap | `Sources/MacParakeetCore/TextProcessing/AIFormatter.swift` |
-| Formatter gate + meeting branch + `formatTranscriptIfNeeded` | `Sources/MacParakeetCore/Services/TranscriptionService.swift` (meeting branch ~`:1033`, formatter ~`:1548`, cap ~`:1648`) |
-| Prompt/resolver wiring (transcription vs dictation) | `Sources/MacParakeet/App/AppEnvironment.swift:227–331` |
-| Toggles + defaults + provider gate | `Sources/MacParakeetViewModels/LLMSettingsViewModel.swift` |
-| Settings UI ("AI Formatter", toggles, Customize prompt) | `Sources/MacParakeet/Views/Settings/LLMSettingsView.swift:390+` |
-| Display modes + speaker turns + revert | `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift` (modes `:45/:99/:1040/:1136/:2576`) |
-| Raw/clean models | `Sources/MacParakeetCore/Models/{Dictation,Transcription}.swift` |
-| Meeting finalize → raw/words/speakers/diarization | `Sources/MacParakeetCore/Services/MeetingRecording/MeetingTranscriptFinalizer.swift` |
-| Speaker-aware LLM context | `Sources/MacParakeetCore/TextProcessing/TranscriptAIContextFormatter.swift` |
-| Feature flag | `Sources/MacParakeetCore/AppFeatures.swift` (`aiFormatterProfilesEnabled`) |
+| Default prompt + 20k cap | `Sources/SottoCore/TextProcessing/AIFormatter.swift` |
+| Formatter gate + meeting branch + `formatTranscriptIfNeeded` | `Sources/SottoCore/Services/TranscriptionService.swift` (meeting branch ~`:1033`, formatter ~`:1548`, cap ~`:1648`) |
+| Prompt/resolver wiring (transcription vs dictation) | `Sources/Sotto/App/AppEnvironment.swift:227–331` |
+| Toggles + defaults + provider gate | `Sources/SottoViewModels/LLMSettingsViewModel.swift` |
+| Settings UI ("AI Formatter", toggles, Customize prompt) | `Sources/Sotto/Views/Settings/LLMSettingsView.swift:390+` |
+| Display modes + speaker turns + revert | `Sources/Sotto/Views/Transcription/TranscriptResultView.swift` (modes `:45/:99/:1040/:1136/:2576`) |
+| Raw/clean models | `Sources/SottoCore/Models/{Dictation,Transcription}.swift` |
+| Meeting finalize → raw/words/speakers/diarization | `Sources/SottoCore/Services/MeetingRecording/MeetingTranscriptFinalizer.swift` |
+| Speaker-aware LLM context | `Sources/SottoCore/TextProcessing/TranscriptAIContextFormatter.swift` |
+| Feature flag | `Sources/SottoCore/AppFeatures.swift` (`aiFormatterProfilesEnabled`) |
 
 ---
 

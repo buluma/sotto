@@ -8,7 +8,7 @@
 
 ## Context
 
-MacParakeet currently has two correction paths for completed transcriptions.
+Sotto currently has two correction paths for completed transcriptions.
 The Text view can replace the whole transcript, but that edit has no safe map
 back to the recognized words. The Timed view can correct speaker attribution
 and split a displayed segment at an existing word boundary, but it cannot
@@ -56,7 +56,7 @@ V1 adds two commands:
   text. Reassigning a line before merging is explicit and undoable.
 
 Existing between-word splits remain valid only where no text override crosses
-the requested boundary. MacParakeet does not guess how a rewritten sentence
+the requested boundary. Sotto does not guess how a rewritten sentence
 should be divided between words. Undo the text edit, split, and edit the
 resulting lines when a different boundary is needed.
 
@@ -155,7 +155,7 @@ gain timestamps merely because the source still has an automatic word array.
   problem and is not required for honest segment-timed editing.
 - **Arbitrary substring and drag-based cue editing:** deferred. Whole-line text
   replacement and adjacent same-speaker merge satisfy issue #893 without
-  turning MacParakeet into a subtitle editor.
+  turning Sotto into a subtitle editor.
 
 ## Amendment (2026-09-21): reading-view edit
 

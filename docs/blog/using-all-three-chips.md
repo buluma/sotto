@@ -1,12 +1,12 @@
-# Using All Three Chips: How We Rebuilt MacParakeet's Speech Engine for Apple Silicon
+# Using All Three Chips: How We Rebuilt Sotto's Speech Engine for Apple Silicon
 
 > Status: **HISTORICAL** - The old on-device Qwen3-8B / mlx-swift-lm path was removed 2026-02-23. GPU-local LLM content below is outdated; current LLM features use external providers or local CLI, while core speech remains a two-chip architecture (CPU + ANE). The `155x` / `~66 MB` numbers below are migration-era measurements, not current release claims; current M4 Pro results are ~81–93x steady realtime and 115–131 MB peak RSS by Parakeet build (see `spec/06-stt-engine.md`).
 
-*MacParakeet Engineering*
+*Sotto Engineering*
 
 ---
 
-Your Mac has a chip inside it that most apps never touch. Not the CPU. Not the GPU. A third one — purpose-built for exactly the kind of work MacParakeet does.
+Your Mac has a chip inside it that most apps never touch. Not the CPU. Not the GPU. A third one — purpose-built for exactly the kind of work Sotto does.
 
 This is the story of how we found it, why it matters, and what it means for running two AI models on your Mac without breaking a sweat.
 
@@ -14,7 +14,7 @@ This is the story of how we found it, why it matters, and what it means for runn
 
 ## The Challenge: Two Models, One App
 
-MacParakeet does two things with AI:
+Sotto does two things with AI:
 
 1. **Speech-to-text** — We use NVIDIA's Parakeet TDT, a 600-million-parameter model that turns your voice into text. When you press your hotkey and speak, Parakeet transcribes your speech at over 150x real-time speed.
 
@@ -51,7 +51,7 @@ We weren't using it either.
 
 ## Our Original Architecture
 
-When we first built MacParakeet, we needed to get Parakeet TDT running on Apple Silicon. NVIDIA trains their models for NVIDIA GPUs — there's no official "run this on a Mac" path. The fastest route was **parakeet-mlx**, a Python package that runs Parakeet using Apple's MLX framework.
+When we first built Sotto, we needed to get Parakeet TDT running on Apple Silicon. NVIDIA trains their models for NVIDIA GPUs — there's no official "run this on a Mac" path. The fastest route was **parakeet-mlx**, a Python package that runs Parakeet using Apple's MLX framework.
 
 MLX is Apple's machine learning framework, and it's fast — the fastest way to run many models on a Mac. It works by running computations on the GPU via Metal, Apple's graphics API. For our speech-to-text model, this meant:
 
@@ -64,7 +64,7 @@ For the LLM (Qwen3-8B), we use **MLX-Swift** — the native Swift version of the
 Here's what that architecture looked like:
 
 ```
-CPU:  MacParakeet app (UI, hotkeys, clipboard, history)
+CPU:  Sotto app (UI, hotkeys, clipboard, history)
 GPU:  Parakeet STT (via Python/MLX) + Qwen3-8B LLM (via MLX-Swift)
 ANE:  [idle]
 ```
@@ -77,7 +77,7 @@ This worked. We shipped it. Users could dictate, transcribe files, and get their
 
 ## The Problem with Sharing
 
-When you dictate in MacParakeet with AI refinement enabled, the pipeline looks like this:
+When you dictate in Sotto with AI refinement enabled, the pipeline looks like this:
 
 ```
 You speak → Parakeet transcribes (GPU) → Qwen3 refines (GPU) → polished text
@@ -94,7 +94,7 @@ Parakeet via MLX occupies roughly 2GB of GPU memory. Qwen3-8B at 4-bit quantizat
 | macOS + app overhead | ~2-3GB |
 | **Total** | **~9-10GB** |
 
-On an 8GB machine, that's well over budget and actively swapping. And this is before the user opens a browser or Slack alongside MacParakeet.
+On an 8GB machine, that's well over budget and actively swapping. And this is before the user opens a browser or Slack alongside Sotto.
 
 Meanwhile, the Neural Engine — a chip Apple designed specifically for running neural networks efficiently — is doing absolutely nothing.
 
@@ -128,7 +128,7 @@ FluidAudio isn't new or unproven — over 20 production apps ship with it, inclu
 With FluidAudio, we can put each workload on the chip it belongs on:
 
 ```
-CPU:  MacParakeet app (UI, hotkeys, clipboard, history)
+CPU:  Sotto app (UI, hotkeys, clipboard, history)
 GPU:  Qwen3-8B LLM (via MLX-Swift)  — full GPU, no sharing
 ANE:  Parakeet STT (via FluidAudio/CoreML) — dedicated ML chip, finally used
 ```
@@ -156,7 +156,7 @@ The GPU is faster in raw throughput. MLX on the GPU processes audio at roughly 3
 | A meeting recording (30 minutes) | 6s | 12s |
 | A full lecture (1 hour) | 12s | 23s |
 
-For dictation — which is what MacParakeet users do most — both feel instant. The difference between 0.2 and 0.4 seconds is not something a human perceives.
+For dictation — which is what Sotto users do most — both feel instant. The difference between 0.2 and 0.4 seconds is not something a human perceives.
 
 For long file transcription, the ANE is still remarkably fast. Twenty-three seconds for an hour of audio. We'll take that trade-off gladly in exchange for better memory efficiency and zero GPU contention.
 
@@ -201,7 +201,7 @@ These aren't the reason we're making this change — the architecture is. But th
 
 ## Why Parakeet, Not Whisper
 
-> Update: MacParakeet now includes optional local WhisperKit recognition for languages Parakeet does not cover. This section explains why Parakeet remains the default engine.
+> Update: Sotto now includes optional local WhisperKit recognition for languages Parakeet does not cover. This section explains why Parakeet remains the default engine.
 
 A natural question: why not use OpenAI's Whisper? It's the most well-known open-source speech model.
 
@@ -238,4 +238,4 @@ That's what we're building.
 
 ---
 
-*MacParakeet is a fast, private, local-first voice app for macOS with system-wide dictation and file transcription. Core speech runs locally with no cloud STT subscription required. Learn more at [macparakeet.com](https://macparakeet.com).*
+*Sotto is a fast, private, local-first voice app for macOS with system-wide dictation and file transcription. Core speech runs locally with no cloud STT subscription required. Learn more at [macparakeet.com](https://macparakeet.com).*

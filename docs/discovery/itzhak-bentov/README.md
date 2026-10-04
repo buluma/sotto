@@ -1,7 +1,7 @@
 # Discovery — Itzhak Bentov
 
 > Private, exploratory research (gitignored under `journal/`). Not part of the
-> MacParakeet product. Open-minded but source-honest: mark what is documented,
+> Sotto product. Open-minded but source-honest: mark what is documented,
 > what is contested, and what is speculation — never launder speculation as fact.
 
 Itzhak "Ben" Bentov (Aug 9, 1923 – May 25, 1979): self-taught mechanical

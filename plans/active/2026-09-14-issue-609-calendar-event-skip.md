@@ -62,7 +62,7 @@ include, RSVP). The per-meeting veto almost exists and then evaporates:
 Copy:
 
 - **Don't auto-record this meeting** — one-off: whole meeting; recurring: this
-  occurrence. Caption in notify mode: MacParakeet won't remind you or start
+  occurrence. Caption in notify mode: Sotto won't remind you or start
   recording.
 - **Don't auto-record this repeating meeting** — recurring only.
 - **Auto-record again** — occurrence or one-off undo.
@@ -72,7 +72,7 @@ Internal name: skip. Do not say Exclude (that already means calendars).
 
 ## Architecture
 
-One question: **which meetings should MacParakeet automate right now?**
+One question: **which meetings should Sotto automate right now?**
 
 Skip is another eligibility input, same as declined or an excluded calendar.
 Policy stays in `MeetingMonitor`. The coordinator only performs effects.
@@ -132,7 +132,7 @@ CalendarAutoStart.skippedEvents        // [eventKey]  // one-off meeting or recu
 ```
 
 Empty by default. Opt out, not in. Posted through the existing
-`.macParakeetCalendarSettingsDidChange` so the coordinator re-evaluates
+`.sottoCalendarSettingsDidChange` so the coordinator re-evaluates
 immediately. `SettingsViewModel` re-resolves these sets on that notification
 the same way it already re-resolves other calendar keys (multi-instance).
 
@@ -147,7 +147,7 @@ Telemetry may send counts and scope (`occurrence` / `event`), never titles,
 attendees, or URLs. Add a `TelemetrySettingName` case; it is a value of the
 existing `setting_changed` event (no website allowlist change).
 
-### Policy types (`MacParakeetCore`)
+### Policy types (`SottoCore`)
 
 Keep `MeetingMonitor` as the deep module. Grow `Config` so skip sets sit
 beside the fields `evaluate` already uses. Do **not** drop
@@ -278,7 +278,7 @@ Mirror `calendarExcludedIdentifiers`:
 - `calendarSkippedEvents: Set<String>`
 - `skipOccurrence(_:)`, `skipEvent(_:)`, `unskipOccurrence(_:)`,
   `unskipEvent(_:)`
-- Persist + post `.macParakeetCalendarSettingsDidChange` +
+- Persist + post `.sottoCalendarSettingsDidChange` +
   `.settingChanged` telemetry
 - Re-resolve from defaults when that notification arrives (same as other
   calendar keys)
@@ -299,7 +299,7 @@ disclosure is allowed if undo from Upcoming proves insufficient).
 For #609, preserve existing `calendar upcoming` membership, `--filter`
 semantics, defaults, and the flat event-array JSON shape. Reuse the existing
 local trigger predicate and `CalendarSkip.matches` for annotations only.
-Read skip sets through `macParakeetAppDefaults()` (`CLIHelpers.swift`).
+Read skip sets through `sottoAppDefaults()` (`CLIHelpers.swift`).
 Do **not** encode `CalendarCandidate` (that would nest fields under `event`).
 Do **not** newly drop declined or excluded-calendar events in this feature.
 (Declined events are already absent from `CalendarService` fetch when
@@ -354,7 +354,7 @@ persistent Skip button on every row.
   an occurrence skip on a collapsed recurring row; **Won't auto-record this
   series** for a **recurring** event-level skip; **Won't auto-record** for a
   one-off (occurrence or event-level). In notify-only mode the caption
-  states that MacParakeet won't remind you or start recording.
+  states that Sotto won't remind you or start recording.
 - Recurring preview still collapses to the soonest occurrence
   (`collapseRecurringOccurrences`). Event-level skip applies to that row and
   future occurrences sharing `eventKey`. Collapse plus the Upcoming cap means
@@ -494,19 +494,19 @@ user scopes verification differently.
 
 Core:
 
-- `Sources/MacParakeetCore/Calendar/MeetingMonitor.swift`
-- `Sources/MacParakeetCore/Calendar/CalendarEvent.swift` (`eventKey` helper,
+- `Sources/SottoCore/Calendar/MeetingMonitor.swift`
+- `Sources/SottoCore/Calendar/CalendarEvent.swift` (`eventKey` helper,
   `isRecurring`)
-- `Sources/MacParakeetCore/Calendar/CalendarService.swift` (set `isRecurring`)
-- `Sources/MacParakeetCore/AppPreferences.swift` (`CalendarAutoStartPreferences`)
-- `Sources/MacParakeetCore/Calendar/README.md`
+- `Sources/SottoCore/Calendar/CalendarService.swift` (set `isRecurring`)
+- `Sources/SottoCore/AppPreferences.swift` (`CalendarAutoStartPreferences`)
+- `Sources/SottoCore/Calendar/README.md`
 
 View models / app:
 
-- `Sources/MacParakeetViewModels/SettingsViewModel.swift`
-- `Sources/MacParakeetViewModels/MeetingsWorkspaceViewModel.swift`
-- `Sources/MacParakeet/App/MeetingAutoStartCoordinator.swift`
-- `Sources/MacParakeet/Views/Meetings/MeetingsView.swift` (`CalendarEventRow`)
+- `Sources/SottoViewModels/SettingsViewModel.swift`
+- `Sources/SottoViewModels/MeetingsWorkspaceViewModel.swift`
+- `Sources/Sotto/App/MeetingAutoStartCoordinator.swift`
+- `Sources/Sotto/Views/Meetings/MeetingsView.swift` (`CalendarEventRow`)
 - `Sources/CLI/Commands/CalendarCommand.swift`
 - `Sources/CLI/CHANGELOG.md`
 - `spec/contracts/cli-json-v1.md` (add `calendar upcoming --json` entry)

@@ -2,7 +2,7 @@
 
 > Status: **HISTORICAL / REFERENCE** - The specific $49 plan was superseded by the free/GPL-3.0 public release in v0.5.
 > Date: 2026-02-08
-> Amended: 2026-03-24 — MacParakeet went free and open-source (GPL-3.0). LemonSqueezy kept as $0 product for download tracking. The $49 pricing model below is historical context, but GPL-compatible paid official distribution, support, hosted services, or future paid builds remain valid monetization options.
+> Amended: 2026-03-24 — Sotto went free and open-source (GPL-3.0). LemonSqueezy kept as $0 product for download tracking. The $49 pricing model below is historical context, but GPL-compatible paid official distribution, support, hosted services, or future paid builds remain valid monetization options.
 > Guardrail: Do not delete purchase activation / entitlement code as dead code solely because current public builds are free and unlocked.
 > Note: References to the old local "command mode" / Qwen3-8B LLM modes in the pricing rationale are historical — that on-device path was removed 2026-02-23. Current provider-based LLM features are documented separately.
 
@@ -55,7 +55,7 @@ Community sentiment -- particularly on Reddit, Hacker News, and Mac-focused foru
 
 ### Market positioning
 
-MacParakeet's positioning is: **"WisprFlow quality, local privacy, one-time price."**
+Sotto's positioning is: **"WisprFlow quality, local privacy, one-time price."**
 
 The pricing model is a key part of this positioning. When a user searches "WisprFlow alternative" or "local dictation app Mac," the one-time price is immediately differentiating. It signals:
 
@@ -102,7 +102,7 @@ Revenue is front-loaded (one-time purchases spike at launch and after marketing 
 ### Mitigations
 
 - **Steady content marketing and SEO** to maintain organic acquisition
-- **Major version upgrades** (e.g., MacParakeet 2.0) can be separate paid products if needed
+- **Major version upgrades** (e.g., Sotto 2.0) can be separate paid products if needed
 - **Referral incentives** to drive word-of-mouth acquisition
 - **App Store featuring** through quality and good metadata
 
@@ -118,7 +118,7 @@ Rejected. Low monthly price still triggers subscription aversion. Users would wa
 Rejected. Superwhisper's $250 lifetime / $5.41/mo model confuses users and signals that the subscription is the "real" price. Simplicity wins.
 
 ### Higher one-time ($69-79)
-Rejected. MacWhisper has dropped to $30 for Pro. At $49, MacParakeet is already priced above competitors -- the premium is justified by unlimited usage, export formats, custom words, text snippets, and dictation-first design, but going higher would reduce the impulse purchase appeal.
+Rejected. MacWhisper has dropped to $30 for Pro. At $49, Sotto is already priced above competitors -- the premium is justified by unlimited usage, export formats, custom words, text snippets, and dictation-first design, but going higher would reduce the impulse purchase appeal.
 
 ## References
 

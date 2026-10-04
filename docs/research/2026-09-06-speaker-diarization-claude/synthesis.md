@@ -1,7 +1,7 @@
-# Speaker attribution for MacParakeet: synthesis and recommendation
+# Speaker attribution for Sotto: synthesis and recommendation
 
 Date: 2026-09-06. Orchestrator synthesis of four delegated reports (Anarlog and peers,
-MacParakeet baseline, frontier models, production practices). Research only; no code changed.
+Sotto baseline, frontier models, production practices). Research only; no code changed.
 
 ## Verdict
 
@@ -11,7 +11,7 @@ surrounds it. The highest recommendation, in order:
 1. **Upgrade FluidAudio from 0.15.4 to 0.15.6 or later and run the async path at the
    high-accuracy settings.** The pinned 0.15.4 clustering stage has three porting defects and
    one source of non-determinism, all fixed upstream in 0.15.5 (2026-07-07) and 0.15.6
-   (2026-08-19). MacParakeet ships every one of them today. Verified in the pinned checkout:
+   (2026-08-19). Sotto ships every one of them today. Verified in the pinned checkout:
    - The AHC threshold is converted with `sqrt(2 - 2t)` although the config documents it as a
      distance, so the community-1 default 0.6 runs as a dendrogram cut of 0.894
      (`AHCClustering.swift:107-115`). Raising the knob splits more instead of merging more.
@@ -26,7 +26,7 @@ surrounds it. The highest recommendation, in order:
    `stepRatio 0.1`, `minSegmentDurationSeconds 0`, zero-vote re-embed on. FluidAudio measures
    that at 1.2 DER points better (VoxConverse, collar 0.25, overlap ignored) for half the
    throughput, which the async path can afford.
-2. **Feed the priors MacParakeet already holds into clustering.** Today the meeting finalizer
+2. **Feed the priors Sotto already holds into clustering.** Today the meeting finalizer
    diarizes the raw system track with no count, and the calendar attendee snapshot never reaches
    the diarizer. Copy Anarlog's `plan_channel` rules: system track gets bounds derived from the
    participant count minus the user (as a range, never an exact count), a 1:1 call skips
@@ -70,7 +70,7 @@ comparable or older model, almost all of it landed between 2026-08-11 and 2026-0
   under ten minutes per channel. Otherwise Anarlog's own `pyannote-local` Rust crate, which
   re-implements the pyannote 3.1 recipe (segmentation-3.0 plus WeSpeaker ResNet34 via ONNX
   Runtime with a CoreML provider, agglomerative clustering cut at 0.7045, 12 s minimum cluster).
-  That is an older recipe than MacParakeet's community-1 plus VBx.
+  That is an older recipe than Sotto's community-1 plus VBx.
 - Its reported numbers (DER 1.8% to 4.7%) are agreement with pyannote.ai precision-2 on two
   in-repo clips, not accuracy against human references.
 - What it does well: channel layout as a speaker prior with in-person detection, participant
@@ -83,9 +83,9 @@ comparable or older model, almost all of it landed between 2026-08-11 and 2026-0
 Peers: Muesli runs FluidAudio's legacy streaming diarizer on system audio only. Vibe runs
 Sortformer with a hard four-speaker limit. Meetily has no diarization despite marketing it.
 OpenWhispr and Minutes ship sherpa-onnx or pyannote-rs with segmentation-3.0 and CAM++
-embeddings plus voice profiles. None runs a newer open model than MacParakeet.
+embeddings plus voice profiles. None runs a newer open model than Sotto.
 
-## What MacParakeet does today
+## What Sotto does today
 
 One diarizer configuration and no post-processing. `DiarizationService` starts from
 `OfflineDiarizerConfig.default` and applies only an optional speaker-count constraint that the
@@ -117,7 +117,7 @@ re-runs, and there is no accuracy harness.
 Every reliable product combines a non-acoustic identity source (channel or participant stream),
 a caller-supplied speaker-count prior as bounds, word-level assignment against an exclusive
 timeline with a nearest fallback, per-turn confidence that drives review, and explicit,
-revocable enrollment. MacParakeet already has the first. Anti-patterns to avoid: mixing mic and
+revocable enrollment. Sotto already has the first. Anti-patterns to avoid: mixing mic and
 system audio before diarization, forcing an exact count, per-paragraph renames that do not
 propagate, silent enrollment, and live labels the final pass contradicts.
 
@@ -132,7 +132,7 @@ propagate, silent enrollment, and live labels the final pass contradicts.
 
 ## Risks and uncertainty
 
-- The DER gain from the upgrade on MacParakeet's own meeting audio is unmeasured. FluidAudio has
+- The DER gain from the upgrade on Sotto's own meeting audio is unmeasured. FluidAudio has
   not republished its AMI table under the new semantics.
 - FluidAudio also owns the STT engines, so the upgrade needs the STT regression pass, and the
   `exact:` pin in Package.swift was deliberate. Issue #878 reports a deterministic offline
@@ -148,6 +148,6 @@ propagate, silent enrollment, and live labels the final pass contradicts.
 ## Reports
 
 - [anarlog-and-peers.md](anarlog-and-peers.md): Anarlog's speaker path traced from source, peer matrix.
-- [macparakeet-baseline.md](macparakeet-baseline.md): current pipeline, ranked losses, insertion seams, evaluation needs.
+- [sotto-baseline.md](sotto-baseline.md): current pipeline, ranked losses, insertion seams, evaluation needs.
 - [frontier.md](frontier.md): models, Apple Silicon ports, benchmark table, FluidAudio defect evidence, A/B design.
 - [production-practices.md](production-practices.md): documented vendor mechanisms, patterns, anti-patterns.

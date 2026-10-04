@@ -1,8 +1,8 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
-/// `macparakeet-cli quick-prompts` — manage the live meeting Ask tab quick
+/// `sotto-cli quick-prompts` — manage the live meeting Ask tab quick
 /// prompts. Mirrors `prompts` shape for familiarity, adds `export` / `import`
 /// for portable JSON round-tripping (versioned wire format; see
 /// `QuickPromptBundle`).

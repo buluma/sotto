@@ -1,10 +1,10 @@
-# MacParakeet Data Model
+# Sotto Data Model
 
 > Status: **ACTIVE**
 
 ## Overview
 
-MacParakeet uses **SQLite via GRDB** for its canonical local library and derived retrieval data. The default database is `~/Library/Application Support/MacParakeet/macparakeet.db`; it has no cloud sync. Preferences use UserDefaults, provider credentials use Keychain, and retained audio, meeting artifacts, and downloaded models live in separate local files. The database alone is not a complete backup of those files.
+Sotto uses **SQLite via GRDB** for its canonical local library and derived retrieval data. The default database is `~/Library/Application Support/Sotto/sotto.db`; it has no cloud sync. Preferences use UserDefaults, provider credentials use Keychain, and retained audio, meeting artifacts, and downloaded models live in separate local files. The database alone is not a complete backup of those files.
 
 Version prefixes below identify database migrations, not product releases. `DatabaseManager.swift` is authoritative for the executable schema; the SQL and Swift excerpts here explain its shape rather than provide a standalone schema or complete API listing.
 
@@ -352,7 +352,7 @@ CREATE INDEX idx_transcriptions_status_created_at ON transcriptions(status, crea
   audio streams when the user or CLI explicitly selected one. `NULL` preserves
   legacy/automatic selection and is expected for single-track, URL, podcast,
   dictation, and meeting rows. Retranscription reuses a stored ordinal.
-- For meeting recordings, `filePath` points to the mixed `meeting-playback.m4a` artifact used for playback/export while retained. `meetingArtifactFolderPath` points to the durable session folder, so artifact actions and CLI output survive audio deletion or retention. The selected-source `microphone-raw.m4a` and/or `system-raw.m4a`, plus the `meeting-recording-metadata.json` sidecar, remain inside that same session folder while retained. The sidecar may include additive `echoSuppression` provenance (`reasonCode` plus optional model, render-timing, delay, and probe-correlation fields) after the cleaned-mic readiness gate resolves, so shared folders identify whether final STT used cleaned or raw mic and why. `meetingStartContext` stores the one-shot local-only start snapshot for meeting rows: trigger kind, configured source mode, and the frontmost app bundle id/name read at recording start. `calendarEventSnapshot` stores local EventKit context captured at start time for confirmed or probable calendar meetings. The folder is the first-class local artifact contract for the session, including the deterministic `meeting.md` Markdown view; the canonical filename/schema contract lives in [`spec/contracts/meeting-artifacts-v1.md`](contracts/meeting-artifacts-v1.md). The DB row remains canonical; the folder is refreshed after meeting finalization, `macparakeet-cli meetings artifact`, meeting-note writes, and prompt-result writes.
+- For meeting recordings, `filePath` points to the mixed `meeting-playback.m4a` artifact used for playback/export while retained. `meetingArtifactFolderPath` points to the durable session folder, so artifact actions and CLI output survive audio deletion or retention. The selected-source `microphone-raw.m4a` and/or `system-raw.m4a`, plus the `meeting-recording-metadata.json` sidecar, remain inside that same session folder while retained. The sidecar may include additive `echoSuppression` provenance (`reasonCode` plus optional model, render-timing, delay, and probe-correlation fields) after the cleaned-mic readiness gate resolves, so shared folders identify whether final STT used cleaned or raw mic and why. `meetingStartContext` stores the one-shot local-only start snapshot for meeting rows: trigger kind, configured source mode, and the frontmost app bundle id/name read at recording start. `calendarEventSnapshot` stores local EventKit context captured at start time for confirmed or probable calendar meetings. The folder is the first-class local artifact contract for the session, including the deterministic `meeting.md` Markdown view; the canonical filename/schema contract lives in [`spec/contracts/meeting-artifacts-v1.md`](contracts/meeting-artifacts-v1.md). The DB row remains canonical; the folder is refreshed after meeting finalization, `sotto-cli meetings artifact`, meeting-note writes, and prompt-result writes.
 - `meetingCaptureReport` is an optional v0.30 JSON blob for meeting rows. It
   records frame-derived `healthy`/`partial` quality, selected source mode,
   pause-adjusted elapsed duration, playable captured duration, per-source
@@ -363,7 +363,7 @@ CREATE INDEX idx_transcriptions_status_created_at ON transcriptions(status, crea
   playable captured duration; elapsed session time stays in this report. Capture
   quality is orthogonal to `status`, so a partial recording can still have
   `status = 'completed'` when transcription itself succeeds.
-- The meeting artifact root defaults to `~/Library/Application Support/MacParakeet/meeting-recordings`, and can be changed for future sessions through `macparakeet-cli config set meeting-artifacts-folder <absolute-path>`. Existing sessions keep their own folder path through `transcriptions.meetingArtifactFolderPath`, falling back to the parent of `transcriptions.filePath` for legacy rows.
+- The meeting artifact root defaults to `~/Library/Application Support/Sotto/meeting-recordings`, and can be changed for future sessions through `sotto-cli config set meeting-artifacts-folder <absolute-path>`. Existing sessions keep their own folder path through `transcriptions.meetingArtifactFolderPath`, falling back to the parent of `transcriptions.filePath` for legacy rows.
 - Saved meeting retranscribes reconstruct the archived meeting from that folder when the sidecar exists, so the library path can reuse the same aligned dual-source finalization flow as the immediate post-stop path.
 - `sourceURL` distinguishes URL-sourced transcriptions (YouTube) from local file transcriptions. Added in v0.3.
 - `thumbnailURL`, `channelName`, `videoDescription` store YouTube metadata fetched during download. Local file imports also reuse `channelName` / `videoDescription` for embedded author / description metadata when present. Added in v0.5.
@@ -378,7 +378,7 @@ CREATE INDEX idx_transcriptions_status_created_at ON transcriptions(status, crea
 - `engine` / `engineVariant` record the STT engine attribution for Parakeet, Nemotron Beta, Cohere, and optional WhisperKit paths. Added in v0.8; legacy rows keep `NULL`.
 - `calendarEventSnapshot` is a JSON blob for meeting rows only. It stores `confidence` (`confirmed` for calendar auto-start, `probable` for manual starts matched against the current poll cache), EventKit `eventIdentifier`, optional `externalId`, event title, scheduled start/end, attendee names/emails, organizer name/email, meeting URL/service, and capture timestamp. This is local user data and must not be sent in telemetry, including attendee counts. Added in v0.25.
 - `titleOverride` stores a user-authored display title for file transcriptions and durable explicit-title intent for meetings. File titles do not rename or move the external source or replace its original `fileName`. Meetings still display `fileName`; a meeting rename or explicit import title also sets the normalized override, preventing automatic title generation from replacing it on completion or Retry. Default/generated meeting names leave the override `NULL`. Blank overrides normalize to `NULL`. Added in v0.26; meeting intent applies with external import.
-- `audioRetentionStartedAt` is the nullable v0.43 managed-audio retention clock. Imports set it when the managed copy enters MacParakeet. Retention selection, policy decisions, and split eligibility use `audioRetentionStartedAt ?? createdAt`; existing rows retain their original behavior without backfill. `createdAt` remains the historical chronology for ordering, grouping, retrieval, and attribution. Completion merges preserve the current retention clock and explicit-title marker in the same transaction as other user metadata. See [the import contract](contracts/meeting-import-v1.md).
+- `audioRetentionStartedAt` is the nullable v0.43 managed-audio retention clock. Imports set it when the managed copy enters Sotto. Retention selection, policy decisions, and split eligibility use `audioRetentionStartedAt ?? createdAt`; existing rows retain their original behavior without backfill. `createdAt` remains the historical chronology for ordering, grouping, retrieval, and attribution. Completion merges preserve the current retention clock and explicit-title marker in the same transaction as other user metadata. See [the import contract](contracts/meeting-import-v1.md).
 - `derivedTitle` / `derivedSnippet` cache semantic display copy derived from the completed transcript. Local file rows retain the original `fileName` as their default visible title, but the derived copy remains available for search and preview-related behavior. Added in v0.9 so Library surfaces do not need to recompute derived text on every render.
 - `splitProvenance` is a v0.42 JSON blob set only on child rows created by Split and transcribe (see the dedicated section above and `contracts/meeting-splitting.md`). `NULL` for the source row and every non-split transcription.
 - Missing columns in older read-only schemas and SQL `NULL` decode as absent provenance. Malformed non-NULL provenance fails the row read; it must not silently turn a split child into an ordinary recording or be overwritten as `NULL`.
@@ -518,7 +518,7 @@ INSERT/UPDATE/DELETE triggers keep the external-content index synchronized.
 `KnowledgeSegmenter.currentVersion` freezes deterministic derivation rules;
 legacy/no-timing pseudo-segmentation uses explicit Unicode-scalar boundaries
 without locale or NaturalLanguage dependencies. Dictations are not populated.
-`macparakeet-cli search-reindex` rebuilds both layers outside migrations.
+`sotto-cli search-reindex` rebuilds both layers outside migrations.
 Version 2 fixed mixed word-token whitespace and punctuation joining. Version 3
 added effective-speaker run boundaries so one durable citation segment can yield
 multiple corrected retrieval rows without reminting its durable UUID;
@@ -697,7 +697,7 @@ CREATE TABLE prompts (
     keyboardShortcut TEXT,                                -- v0.13 Transform shortcut (encoded KeyboardShortcut)
     runningLabel TEXT,                                    -- v0.13 Transform progress label override
     appliesToSources TEXT,                                -- v0.20 JSON Set<SourceType> for auto-run scoping; NULL = all sources
-    inferenceSettings TEXT,                               -- v0.31 JSON PromptInferenceSettings; NULL = MacParakeet defaults
+    inferenceSettings TEXT,                               -- v0.31 JSON PromptInferenceSettings; NULL = Sotto defaults
     includeMeetingNotes INTEGER NOT NULL DEFAULT 0         -- v0.33-prompt-meeting-notes-context
 );
 
@@ -718,7 +718,7 @@ CREATE UNIQUE INDEX idx_prompts_name ON prompts(name COLLATE NOCASE);
   `low`, `medium`, `high`, and `xhigh`; normalization clears the field unless
   `thinkingMode` is `enabled`. The original v0.31 contract applied only to custom result prompts; current versioned settings apply to all result and Transform prompts. `NULL`
   and an all-default object are normalized to the same meaning: inherit the
-  prompt-result operation's current MacParakeet and adapter defaults. They do
+  prompt-result operation's current Sotto and adapter defaults. They do
   not mean "force the upstream provider to omit every parameter." The original column is migrated into `prompt_versions.inferenceSettings` and dropped by v0.36.
   JSON decoding and repository writes independently reject invalid numeric
   values with the settings validation error. Current Transform execution also uses its active version settings.
@@ -833,7 +833,7 @@ CREATE INDEX idx_quick_prompts_pinned_sort ON quick_prompts(isPinned, sortOrder)
 - Custom rows can be created, edited, reordered, hidden, deleted, exported, and imported.
 - `isPinned` controls the after-response strip; the strip is a horizontal `ScrollView` with edge-fade affordance and renders all visible pinned rows by `sortOrder` — pinning is unbounded.
 - Hidden rows are never pinned. Repository writes normalize hidden+pinned rows to hidden+unpinned; hiding a pinned row auto-unpins it, and pinning a hidden row auto-shows it.
-- The CLI backup/share format is `QuickPromptBundle` with `schema: "macparakeet.quick_prompts"` and `version: 1`; each prompt carries `isPinned: Bool`.
+- The CLI backup/share format is `QuickPromptBundle` with `schema: "sotto.quick_prompts"` and `version: 1`; each prompt carries `isPinned: Bool`.
 
 ---
 
@@ -1424,7 +1424,7 @@ struct Prompt: Codable, Identifiable, Sendable {
     var keyboardShortcut: String?
     var runningLabel: String?
     var appliesToSources: Set<Transcription.SourceType>?  // v0.20 auto-run scoping; nil = all sources
-    var inferenceSettings: PromptInferenceSettings?       // v0.31; nil = MacParakeet defaults
+    var inferenceSettings: PromptInferenceSettings?       // v0.31; nil = Sotto defaults
     var includeMeetingNotes: Bool                         // v0.33; result-only opt-in, defaults false
     var createdAt: Date
     var updatedAt: Date
@@ -1877,7 +1877,7 @@ migrator.registerMigration("v0.7-prompts-and-summaries") { db in
 | `text_snippets.action` | v0.7 | Keystroke action type for snippet |
 | `prompts` | v0.7 | Reusable prompt templates (built-in + custom) |
 | `summaries` | v0.7 | Prompt results per transcription (FK → transcriptions, cascade delete; Swift model `PromptResult`) |
-| `prompts.inferenceSettings` | v0.31 | Nullable JSON requested settings for custom result prompts; `NULL` inherits MacParakeet defaults |
+| `prompts.inferenceSettings` | v0.31 | Nullable JSON requested settings for custom result prompts; `NULL` inherits Sotto defaults |
 | `summaries.inferenceSettingsSnapshot` | v0.31 | Nullable JSON receipt of effective settings sent after provider/model filtering |
 | `speaker_corrections` / `speaker_correction_states` | v0.32-speaker-corrections; extended by v0.44-timed-transcript-corrections | Append-only speaker and timed-text correction journal, replay index and persistent transcript-scoped undo/redo cursor |
 | `speaker_profiles` / `speaker_profile_exemplars` / `speaker_profile_links` | v0.39-speaker-voiceprints | Experimental local identity memory, samples and fingerprint-scoped decisions; release flag off |
@@ -1931,7 +1931,7 @@ Audio saved to temp dir
     ▼
 STT processes audio
     │
-    ├── Storage = ON  ──► Move to ~/Library/Application Support/MacParakeet/dictations/{id}.wav
+    ├── Storage = ON  ──► Move to ~/Library/Application Support/Sotto/dictations/{id}.wav
     │                     Set audioPath on dictation record
     │
     └── Storage = OFF ──► Delete temp file immediately

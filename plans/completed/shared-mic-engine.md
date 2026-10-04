@@ -21,11 +21,11 @@
 
 The committed work delivers the architecture described below as the only microphone-capture path:
 
-- `Sources/MacParakeetCore/Audio/SharedMicrophoneStream.swift` — one mic engine per process, fan-out to N subscribers, sticky VPIO with deferred engagement, `onEngineDeath` callback for promotion failures that invalidates dead-engine subscriptions, and bounded render-thread fan-out.
-- `Sources/MacParakeetCore/Audio/MicrophoneEnginePlatform.swift` — `AVAudioEngineMicrophonePlatform` adapter with optional `DeviceAttemptsBuilder` (selected→default→builtIn fallback chain, recreates engine per failed attempt, same shape as the legacy code).
-- `Sources/MacParakeetCore/Audio/MicrophoneCapture.swift` — requires `sharedStream:` + `permissionProvider:`. `start()` subscribes with `wantsVPIO` derived from processing mode; vpioPreferred→raw fallback is retried at this layer. Sync `stop()` does fire-and-forget unsubscribe so deinit cleanup still works.
-- `Sources/MacParakeetCore/Audio/AudioRecorder.swift` — requires `sharedStream:`, copies tap buffers for async processing, runs `extractChannelZero(from:)` off the shared tap so dictation always reads the post-AEC mono regardless of VPIO state, and keeps file writes off the render thread. Actor-reentrancy guard cleans up orphan tokens if `stop()` runs during the subscribe await.
-- `Sources/MacParakeet/App/AppEnvironment.swift` — constructs the singleton and threads it through to both `AudioProcessor` (dictation) and `MeetingAudioCaptureService` (meeting mic). The `AppFeatures.useSharedMicEngine` flag and legacy private-engine paths are deleted.
+- `Sources/SottoCore/Audio/SharedMicrophoneStream.swift` — one mic engine per process, fan-out to N subscribers, sticky VPIO with deferred engagement, `onEngineDeath` callback for promotion failures that invalidates dead-engine subscriptions, and bounded render-thread fan-out.
+- `Sources/SottoCore/Audio/MicrophoneEnginePlatform.swift` — `AVAudioEngineMicrophonePlatform` adapter with optional `DeviceAttemptsBuilder` (selected→default→builtIn fallback chain, recreates engine per failed attempt, same shape as the legacy code).
+- `Sources/SottoCore/Audio/MicrophoneCapture.swift` — requires `sharedStream:` + `permissionProvider:`. `start()` subscribes with `wantsVPIO` derived from processing mode; vpioPreferred→raw fallback is retried at this layer. Sync `stop()` does fire-and-forget unsubscribe so deinit cleanup still works.
+- `Sources/SottoCore/Audio/AudioRecorder.swift` — requires `sharedStream:`, copies tap buffers for async processing, runs `extractChannelZero(from:)` off the shared tap so dictation always reads the post-AEC mono regardless of VPIO state, and keeps file writes off the render thread. Actor-reentrancy guard cleans up orphan tokens if `stop()` runs during the subscribe await.
+- `Sources/Sotto/App/AppEnvironment.swift` — constructs the singleton and threads it through to both `AudioProcessor` (dictation) and `MeetingAudioCaptureService` (meeting mic). The `AppFeatures.useSharedMicEngine` flag and legacy private-engine paths are deleted.
 
 Test totals after merge-readiness review: 2052 XCTest pass, 0 failures, 16 Swift Testing pass.
 
@@ -92,7 +92,7 @@ This plan addresses only the last case.
                   │ MicrophoneCapture  │                                        ▼
                   │  (meeting mic)     │                          ┌────────────────────────────┐
                   │                    │                          │  SharedMicrophoneStream    │
-                  │  ┌──────────────┐  │                          │  (actor, MacParakeetCore)  │
+                  │  ┌──────────────┐  │                          │  (actor, SottoCore)  │
                   │  │AVAudioEngine │  │                          │                            │
                   │  │  + VPIO + tap│  │                          │  ┌──────────────────────┐  │
                   │  └──────────────┘  │                          │  │   AVAudioEngine      │  │

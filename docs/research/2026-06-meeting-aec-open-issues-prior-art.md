@@ -3,7 +3,7 @@
 > Status: research and implementation recommendation
 > Date: 2026-06-27 America/Los_Angeles
 > Baseline: `origin/main` at `81aa755f1`
-> Inputs: live GitHub issues and PRs, current MacParakeet code, and primary-source
+> Inputs: live GitHub issues and PRs, current Sotto code, and primary-source
 > open-source meeting-recorder / AEC repositories.
 
 ## Executive recommendation
@@ -57,9 +57,9 @@ Live state at review time: 49 open issues and 3 open PRs
 | P3 | UX polish, integrations, and setup | #612, #604, #595, #533, #455, #310, #294, #473 | Useful quality work, but not release-blocking relative to capture correctness. |
 | P4 | Feedback / acknowledgement | #611, #548, #449 | Product signal rather than implementation blockers. |
 
-## Current MacParakeet implementation
+## Current Sotto implementation
 
-MacParakeet already has the right foundation for AEC:
+Sotto already has the right foundation for AEC:
 
 - Meeting capture preserves microphone and system audio as separate selected
   source files.
@@ -121,8 +121,8 @@ Relevant implementation details:
 - The AEC path also applies residual linear echo cancellation after the neural
   processor.
 
-Applicability to MacParakeet: high. The raw-plus-cleaned model matches the
-trust contract MacParakeet should keep: never delete raw source truth, but feed
+Applicability to Sotto: high. The raw-plus-cleaned model matches the
+trust contract Sotto should keep: never delete raw source truth, but feed
 meeting transcription from a cleaned near-end candidate when it passes gates.
 
 ### Prismical WebRTC AEC3
@@ -139,16 +139,16 @@ Prismical is the strongest WebRTC AEC3 implementation reference found:
 - It has render holdback / timeout logic so mic frames can wait for the
   matching render reference without deadlocking forever.
 
-Applicability to MacParakeet: high as a benchmark and possible implementation
+Applicability to Sotto: high as a benchmark and possible implementation
 path. The downside is vendoring and maintaining WebRTC AEC3 native artifacts.
-The upside is maturity and the exact far-end/reference API that MacParakeet's
+The upside is maturity and the exact far-end/reference API that Sotto's
 paired mic/system pipeline already approximates.
 
 ### Muesli LocalVQE / DTLN
 
 Primary source: [Muesli-HQ/muesli](https://github.com/Muesli-HQ/muesli)
 
-Muesli is the closest Swift/macOS comparison point for MacParakeet's current
+Muesli is the closest Swift/macOS comparison point for Sotto's current
 LocalVQE direction:
 
 - The README says meeting echo cancellation uses bundled LocalVQE
@@ -161,7 +161,7 @@ LocalVQE direction:
 - `LocalVQEProcessor.swift` resolves a model, verifies optional SHA256, loads a
   dynamic library, and uses frame-size/sample-rate checks.
 
-Applicability to MacParakeet: very high. MacParakeet already has much of this
+Applicability to Sotto: very high. Sotto already has much of this
 shape in `MeetingEchoSuppressionRuntime` and `StreamingMeetingEchoSuppressor`;
 the missing part is packaging, validation, and deciding whether the cleaned
 track becomes an inspectable retained artifact.
@@ -185,9 +185,9 @@ Corti is a useful non-neural baseline:
 - Its config exposes filter length, step size, double-talk gating, delay
   search, and residual suppression.
 
-Applicability to MacParakeet: medium-high. The Rust implementation is not a
+Applicability to Sotto: medium-high. The Rust implementation is not a
 drop-in, but the verification discipline is valuable. A classical baseline can
-also reveal whether LocalVQE/WebRTC is actually doing better on MacParakeet
+also reveal whether LocalVQE/WebRTC is actually doing better on Sotto
 recordings.
 
 ### Meeting Transcriber and Recap
@@ -204,7 +204,7 @@ These are useful capture references rather than AEC solutions:
 - Recap is a minimal process-tap plus optional mic example. Its transcription
   service combines separate system/mic transcripts, but no AEC path was found.
 
-Applicability to MacParakeet: low for #605 itself, but useful for crash/restart,
+Applicability to Sotto: low for #605 itself, but useful for crash/restart,
 timeline, and process-tap reference material.
 
 ### LocalVQE
@@ -223,7 +223,7 @@ Most relevant options:
 - The C API supports whole-clip and per-frame processing with mic and reference
   buffers.
 
-Applicability to MacParakeet: high. The current MacParakeet runtime expects a
+Applicability to Sotto: high. The current Sotto runtime expects a
 LocalVQE-compatible dynamic library and model, so this is the shortest path to
 turning the scaffold into a testable implementation.
 
@@ -255,16 +255,16 @@ Primary sources:
 - AudioCap is valuable process-tap sample code for macOS 14.4+ system audio,
   but it does not solve microphone bleed.
 - AECAudioStream demonstrates `kAudioUnitSubType_VoiceProcessingIO`. It is a
-  useful VPIO reference, but MacParakeet should not use VPIO by default for
+  useful VPIO reference, but Sotto should not use VPIO by default for
   speaker-mode meetings.
 - Vexa Desktop is a Granola-style recorder that captures mic/system audio and
   uses transcript-layer echo dedupe. It is useful product signal, but it is not
   a true AEC reference for a cleaned microphone signal.
 - `dtln-aec-coreml` is an archived Swift/CoreML AEC package. It is useful as
   fallback/cautionary prior art, but Muesli's current LocalVQE-first direction
-  is a better match for MacParakeet.
+  is a better match for Sotto.
 - SpeexDSP's echo API is simple and well-known, with 10-20 ms frames and
-  100-500 ms filters. If MacParakeet adds a classical baseline, Corti's
+  100-500 ms filters. If Sotto adds a classical baseline, Corti's
   FDAF/NLMS implementation is more directly product-shaped for long meeting
   recordings.
 - The official WebRTC AudioProcessing API confirms the shape Prismical uses:
@@ -297,7 +297,7 @@ Cons: new binary/model packaging and quality risk on double-talk.
 
 Work:
 
-- Prototype a Swift wrapper with MacParakeet's paired mic/system samples.
+- Prototype a Swift wrapper with Sotto's paired mic/system samples.
 - Resample to 48 kHz mono and feed 480-sample frames.
 - Preserve raw and processed mic outputs.
 - Compare against LocalVQE on the same fixtures.
@@ -311,7 +311,7 @@ sample-rate/timing glue than the current LocalVQE scaffold.
 
 Work:
 
-- Evaluate its ONNX AEC models on MacParakeet recordings.
+- Evaluate its ONNX AEC models on Sotto recordings.
 - Determine whether ONNX Runtime packaging is acceptable for the app.
 - Port the reference-alignment and residual cancellation ideas even if not the
   exact model.
@@ -332,7 +332,7 @@ Work:
 
 Pros: platform AEC can be useful in narrow conditions.
 
-Cons: previous MacParakeet testing found unacceptable outgoing-mic risk.
+Cons: previous Sotto testing found unacceptable outgoing-mic risk.
 
 ### Option E - transcript-layer cleanup only
 

@@ -4,7 +4,7 @@
 
 Reported in [#124](https://github.com/moona3k/macparakeet/issues/124): user cleared their dictation history and watched their voice stats reset from "thousands of words" to "2 minutes spoken." Privacy housekeeping should not double as a stats reset.
 
-Root cause: `DictationRepository.stats()` (`Sources/MacParakeetCore/Database/DictationRepository.swift:181`) is pure SQL aggregation over the `dictations` table — totals are *derived from rows that the user just deleted*. There is no persistent counter.
+Root cause: `DictationRepository.stats()` (`Sources/SottoCore/Database/DictationRepository.swift:181`) is pure SQL aggregation over the `dictations` table — totals are *derived from rows that the user just deleted*. There is no persistent counter.
 
 ## Design Goals
 
@@ -136,7 +136,7 @@ Computed properties (`averageWPM`, `timeSavedMs`, `booksEquivalent`, `emailsEqui
 
 ## UI Impact
 
-`Sources/MacParakeet/Views/History/DictationHistoryView.swift:128`:
+`Sources/Sotto/Views/History/DictationHistoryView.swift:128`:
 ```swift
 subtitle: "\(stats.totalCount) dictation\(stats.totalCount == 1 ? "" : "s")"
 ```
@@ -160,7 +160,7 @@ The recompute helper uses `INSERT OR REPLACE` (not `UPDATE`) so it is **bulletpr
 
 Three callers, one source of truth: (a) migration calls it for backfill, (b) test 13 calls it directly to cross-check incremental accumulation, (c) the documented recovery recipe is "call `recomputeLifetimeStats`."
 
-New file: `Tests/MacParakeetTests/Database/LifetimeDictationStatsTests.swift`
+New file: `Tests/SottoTests/Database/LifetimeDictationStatsTests.swift`
 
 Cases:
 1. **`testLifetimeStatsPersistAfterDeleteAll`** — save 3, deleteAll, expect lifetime totals intact, visibleCount 0.
@@ -188,9 +188,9 @@ Run focused database tests during implementation, then full `swift test` before 
 
 ## Files Touched
 
-- `Sources/MacParakeetCore/Database/DatabaseManager.swift` — add `v0.7.4-lifetime-dictation-stats` migration. Migration calls the shared `recomputeLifetimeStats()` helper for backfill (same code path as the rollback recipe).
-- `Sources/MacParakeetCore/Database/DictationRepository.swift` — modify `save()` (transition + delta logic), modify `stats()` (read from new table), add private `incrementLifetimeStats(db:durationMs:wordCount:)` and `applyLifetimeDelta(db:durationDelta:wordDelta:newDurationMs:)` helpers, add internal `recomputeLifetimeStats(in:)` shared with migration, add `LifetimeStatsError` enum (`.singletonMissing`), update `DictationStats` doc comments to clarify lifetime vs. visible semantics.
-- `Tests/MacParakeetTests/Database/LifetimeDictationStatsTests.swift` — new.
+- `Sources/SottoCore/Database/DatabaseManager.swift` — add `v0.7.4-lifetime-dictation-stats` migration. Migration calls the shared `recomputeLifetimeStats()` helper for backfill (same code path as the rollback recipe).
+- `Sources/SottoCore/Database/DictationRepository.swift` — modify `save()` (transition + delta logic), modify `stats()` (read from new table), add private `incrementLifetimeStats(db:durationMs:wordCount:)` and `applyLifetimeDelta(db:durationDelta:wordDelta:newDurationMs:)` helpers, add internal `recomputeLifetimeStats(in:)` shared with migration, add `LifetimeStatsError` enum (`.singletonMissing`), update `DictationStats` doc comments to clarify lifetime vs. visible semantics.
+- `Tests/SottoTests/Database/LifetimeDictationStatsTests.swift` — new.
 - `spec/01-data-model.md` — document the new table.
 - `CLAUDE.md` — one-line note in Database section.
 

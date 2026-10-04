@@ -9,7 +9,7 @@
 > When done, update the status row for this plan in `plans/README.md`.
 >
 > **Drift check (run first)**:
-> `git diff --stat 16e3f865f..HEAD -- Sources/MacParakeetViewModels/SettingsViewModel.swift Tests/MacParakeetTests/ViewModels/SettingsViewModelTests.swift`
+> `git diff --stat 16e3f865f..HEAD -- Sources/SottoViewModels/SettingsViewModel.swift Tests/SottoTests/ViewModels/SettingsViewModelTests.swift`
 > If either changed since this plan was written, compare the "Current state"
 > excerpts against the live code; on a mismatch, treat it as a STOP condition.
 
@@ -41,7 +41,7 @@ change them.
 
 ## Current state
 
-`Sources/MacParakeetViewModels/SettingsViewModel.swift` — `@MainActor @Observable`.
+`Sources/SottoViewModels/SettingsViewModel.swift` — `@MainActor @Observable`.
 Constructed with closure injection (defaults shown):
 
 ```swift
@@ -78,10 +78,10 @@ The engine/model members to characterize (declared in `SettingsViewModel.swift`)
   `refreshModelStatus()` (:1315).
 
 Existing test file (use as the construction + assertion pattern):
-`Tests/MacParakeetTests/ViewModels/SettingsViewModelTests.swift`. Its `setUp()`:
+`Tests/SottoTests/ViewModels/SettingsViewModelTests.swift`. Its `setUp()`:
 
 ```swift
-testDefaultsSuiteName = "com.macparakeet.tests.\(UUID().uuidString)"
+testDefaultsSuiteName = "com.sotto.tests.\(UUID().uuidString)"
 testDefaults = UserDefaults(suiteName: testDefaultsSuiteName)!
 viewModel = SettingsViewModel(
     defaults: testDefaults,
@@ -93,7 +93,7 @@ viewModel = SettingsViewModel(
 It uses a per-test isolated `UserDefaults` suite (cleaned in `tearDown` via
 `removePersistentDomain`), a `SettingsTelemetrySpy: TelemetryServiceProtocol`, and
 a `waitUntil(timeout:pollInterval:_:)` async helper (already defined in the file,
-lines 50–66) for any async assertion. `@MainActor`, `@testable import MacParakeetViewModels`.
+lines 50–66) for any async assertion. `@MainActor`, `@testable import SottoViewModels`.
 
 The `parakeetModelVariantCached` / `nemotronModelVariantCached` closures are
 **injectable** — pass a deterministic stub to test downloaded-variant detection
@@ -110,11 +110,11 @@ without touching disk or real models.
 ## Scope
 
 **In scope** (create only):
-- `Tests/MacParakeetTests/ViewModels/SettingsEngineCharacterizationTests.swift` (new)
+- `Tests/SottoTests/ViewModels/SettingsEngineCharacterizationTests.swift` (new)
 - `plans/README.md` (status row)
 
 **Out of scope** (do NOT touch):
-- `Sources/MacParakeetViewModels/SettingsViewModel.swift` — no production change
+- `Sources/SottoViewModels/SettingsViewModel.swift` — no production change
   in this plan; you are only pinning current behavior.
 - Real model downloads / network. Do not call paths that hit the FluidAudio
   cache or the network. Only inject deterministic `*Cached` stubs.
@@ -131,9 +131,9 @@ without touching disk or real models.
 
 ### Step 1: Create the test file with the established harness
 
-Create `Tests/MacParakeetTests/ViewModels/SettingsEngineCharacterizationTests.swift`.
+Create `Tests/SottoTests/ViewModels/SettingsEngineCharacterizationTests.swift`.
 Mirror `SettingsViewModelTests.swift`'s setup: `@MainActor final class … : XCTestCase`,
-`@testable import MacParakeetCore` + `@testable import MacParakeetViewModels`, a
+`@testable import SottoCore` + `@testable import SottoViewModels`, a
 per-test isolated `UserDefaults(suiteName:)` cleaned in `tearDown`, and a helper
 to build a VM with injectable engine stubs:
 
@@ -220,7 +220,7 @@ from the stubs and note the rest is out of scope.
 ## Test plan
 
 This plan *is* a test plan. New file:
-`Tests/MacParakeetTests/ViewModels/SettingsEngineCharacterizationTests.swift`,
+`Tests/SottoTests/ViewModels/SettingsEngineCharacterizationTests.swift`,
 modeled structurally on `SettingsViewModelTests.swift`. Cases: selection defaults
 + persistence round-trip (Step 2), switch-confirmation state machine (Step 3),
 static unavailable-message strings (Step 4), downloaded-variant detection via
@@ -232,7 +232,7 @@ it in a code comment; do not "fix" production code here.
 
 Machine-checkable. ALL must hold:
 
-- [ ] `Tests/MacParakeetTests/ViewModels/SettingsEngineCharacterizationTests.swift` exists.
+- [ ] `Tests/SottoTests/ViewModels/SettingsEngineCharacterizationTests.swift` exists.
 - [ ] `swift test --filter SettingsEngineCharacterizationTests` passes with ≥ 10 tests.
 - [ ] `swift test --filter SettingsViewModelTests` still passes (untouched).
 - [ ] `swift test` exits 0 (full suite).

@@ -2,7 +2,7 @@
 
 > Status: **ACTIVE** - Authoritative, current
 
-The audio pipeline handles all audio input for MacParakeet: microphone recording for dictation, file input for transcription, and meeting recording with microphone + system audio by default plus microphone-only or system-audio-only source modes.
+The audio pipeline handles all audio input for Sotto: microphone recording for dictation, file input for transcription, and meeting recording with microphone + system audio by default plus microphone-only or system-audio-only source modes.
 
 ---
 
@@ -30,7 +30,7 @@ Mic Input → SharedMicrophoneStream tap → temp WAV → selected local STT eng
 ### Storage
 
 ```
-~/Library/Application Support/MacParakeet/dictations/{uuid}.wav
+~/Library/Application Support/Sotto/dictations/{uuid}.wav
 ```
 
 - Each dictation gets a UUID-named WAV file
@@ -145,7 +145,7 @@ YouTube URL → yt-dlp (audio only) → downloaded audio file → FFmpeg → 16k
 - Downloaded files are written to:
 
 ```
-~/Library/Application Support/MacParakeet/youtube-downloads/
+~/Library/Application Support/Sotto/youtube-downloads/
 ```
 
 ### Retention Policy
@@ -240,7 +240,7 @@ Mic Input    → SharedMicrophoneStream (+ Voice Processing I/O when active)┘ 
   when the source mode includes microphone audio, with a typed policy
   (`MeetingMicProcessingMode`): `raw` (default), `vpioPreferred`, or
   `vpioRequired`.
-- MacParakeet ships meeting capture with raw mic capture and ScreenCaptureKit
+- Sotto ships meeting capture with raw mic capture and ScreenCaptureKit
   for system audio when both sources are selected. VPIO remains available for
   explicit experiments, but it is not the shipped default because live-call
   testing showed that engaging it can muffle the user's outgoing mic in
@@ -420,7 +420,7 @@ the stopped meeting waits for that job to finish; once the slot is free,
 ### Storage
 
 ```text
-~/Library/Application Support/MacParakeet/meeting-recordings/{uuid}/
+~/Library/Application Support/Sotto/meeting-recordings/{uuid}/
     ├── microphone-raw.m4a    # Raw mic audio when captured (AAC, 48kHz mono) — source of truth
     ├── system-raw.m4a        # System audio when captured (AAC, 48kHz mono)
     ├── microphone-cleaned.m4a  # Optional derived echo-cancelled mic (16kHz mono); STT input for the "Me" track only after readiness/decodability gates pass

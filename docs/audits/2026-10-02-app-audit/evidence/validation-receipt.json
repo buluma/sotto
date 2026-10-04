@@ -10,7 +10,7 @@
     "swiftTestingPassed": 30,
     "exitCode": 1,
     "wallSeconds": 164.58,
-    "cause": "Audit set MACPARAKEET_DEBUG_APP_STATE_DIR globally; five default-path assertions plus opt-in fixture safety guard rejected this environment. No other failing cases."
+    "cause": "Audit set SOTTO_DEBUG_APP_STATE_DIR globally; five default-path assertions plus opt-in fixture safety guard rejected this environment. No other failing cases."
   },
   "correctedFocusedRun": {
     "cases": 216,

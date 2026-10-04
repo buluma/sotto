@@ -1,8 +1,8 @@
 # Open Source Models Landscape (February 2026)
 
-> Status: **HISTORICAL** — Research snapshot as of February 12, 2026. The local Qwen3-8B / MLX-Swift path discussed here was removed from MacParakeet on 2026-02-23. Current LLM support uses external providers or local CLI; Parakeet STT via FluidAudio CoreML remains the default speech family, with v3 default and v2 English-only available as an opt-in build.
+> Status: **HISTORICAL** — Research snapshot as of February 12, 2026. The local Qwen3-8B / MLX-Swift path discussed here was removed from Sotto on 2026-02-23. Current LLM support uses external providers or local CLI; Parakeet STT via FluidAudio CoreML remains the default speech family, with v3 default and v2 English-only available as an opt-in build.
 
-Deep dive into the current state of open source models relevant to MacParakeet: STT, small LLMs, and the Apple MLX ecosystem.
+Deep dive into the current state of open source models relevant to Sotto: STT, small LLMs, and the Apple MLX ecosystem.
 
 ---
 
@@ -14,7 +14,7 @@ Deep dive into the current state of open source models relevant to MacParakeet: 
 4. [MLX Ecosystem & Inference](#mlx-ecosystem--inference)
 5. [Hardware Trends](#hardware-trends)
 6. [Competitive Landscape Update](#competitive-landscape-update)
-7. [Recommendations for MacParakeet](#recommendations-for-macparakeet)
+7. [Recommendations for Sotto](#recommendations-for-sotto)
 8. [Sources](#sources)
 
 ---
@@ -35,7 +35,7 @@ Deep dive into the current state of open source models relevant to MacParakeet: 
 
 ### Parakeet Family (NVIDIA)
 
-At snapshot time, MacParakeet used Parakeet TDT 0.6B-v2 via parakeet-mlx (Python daemon, JSON-RPC). Current migration docs supersede this with FluidAudio + v3.
+At snapshot time, Sotto used Parakeet TDT 0.6B-v2 via parakeet-mlx (Python daemon, JSON-RPC). Current migration docs supersede this with FluidAudio + v3.
 
 | Model | Params | Avg WER | RTFx | Languages | Release | License |
 |-------|--------|---------|------|-----------|---------|---------|
@@ -48,7 +48,7 @@ At snapshot time, MacParakeet used Parakeet TDT 0.6B-v2 via parakeet-mlx (Python
 
 **Key findings:**
 
-- **v3 adds multilingual** with a minor English accuracy trade-off (6.34% vs 6.05%). Same architecture, same parameter count. If MacParakeet ever needs multilingual, v3 is a drop-in upgrade.
+- **v3 adds multilingual** with a minor English accuracy trade-off (6.34% vs 6.05%). Same architecture, same parameter count. If Sotto ever needs multilingual, v3 is a drop-in upgrade.
 - **No larger Parakeet TDT** (2B, 3B) exists. NVIDIA's larger models are in the Canary family, which use LLM decoders and are significantly slower.
 - **Canary Qwen 2.5B** is the new accuracy leader (#1 on Open ASR Leaderboard) — a hybrid FastConformer + Qwen3-1.7B decoder. But it's 8x slower than Parakeet TDT and needs ~8-10GB RAM. Not suitable for real-time dictation.
 
@@ -78,12 +78,12 @@ Apple introduced native on-device STT at WWDC 2025:
 - **~8% WER** in tests (3% CER). Between Whisper and Parakeet in accuracy.
 - **55% faster than Whisper** — 34-min video processed in 45 seconds.
 - Built by the Argmax/WhisperKit team.
-- **Requires macOS 26 (Tahoe)**. Not usable on MacParakeet's macOS 14.2+ target.
+- **Requires macOS 26 (Tahoe)**. Not usable on Sotto's macOS 14.2+ target.
 - Worth monitoring for future minimum OS version bumps.
 
 ### FluidAudio (CoreML Parakeet)
 
-**The most interesting new development for MacParakeet's architecture:**
+**The most interesting new development for Sotto's architecture:**
 
 - Swift package running Parakeet TDT v3 via **CoreML on the ANE** (not Python/MLX).
 - **~110x RTF** on M4 Pro (1 hour audio in ~19 seconds).
@@ -118,7 +118,7 @@ Apple introduced native on-device STT at WWDC 2025:
 
 ## Small LLMs (Sub-8B)
 
-MacParakeet uses Qwen3-8B via MLX-Swift for command mode, AI text refinement, and chat-with-transcript features.
+Sotto uses Qwen3-8B via MLX-Swift for command mode, AI text refinement, and chat-with-transcript features.
 
 ### Qwen3 Family (Alibaba)
 
@@ -158,7 +158,7 @@ The most active player in the small model space.
 
 ### Task-Specific Assessment
 
-For MacParakeet's use cases (text cleanup/rewriting + command mode editing + chat-with-transcript):
+For Sotto's use cases (text cleanup/rewriting + command mode editing + chat-with-transcript):
 
 1. **Qwen3-8B** — Primary choice. Most consistent model across all benchmarks at ~5 GB RAM (4-bit). Handles text refinement, command mode, and longer-context tasks (chat with transcript) better than smaller models. Dual-mode (thinking for complex edits, non-thinking for quick cleanup). Apache 2.0.
 
@@ -199,7 +199,7 @@ Major developments since mid-2025:
 
 ### MLX-Swift Breaking Changes
 
-**Important for MacParakeet's MLX-Swift integration:**
+**Important for Sotto's MLX-Swift integration:**
 
 | Old API | New API |
 |---------|---------|
@@ -213,8 +213,8 @@ The high-level package is now **[mlx-swift-lm](https://github.com/ml-explore/mlx
 
 ### mlx-community on HuggingFace
 
-Thousands of pre-converted, quantized models. Key for MacParakeet:
-- `mlx-community/Qwen3-8B-4bit` — Primary LLM for MacParakeet
+Thousands of pre-converted, quantized models. Key for Sotto:
+- `mlx-community/Qwen3-8B-4bit` — Primary LLM for Sotto
 - `Qwen/Qwen3-30B-A3B-MLX-4bit` — MoE option (if RAM allows)
 - Qwen3 collection, Qwen3-Next collection, Qwen3-VL collection all available
 
@@ -239,7 +239,7 @@ Introduced at WWDC 2025 — access to Apple's on-device ~3B LLM powering Apple I
 - Free inference, Swift-native, offline capable.
 - Good for: summarization, entity extraction, text refinement, short dialog.
 - **Limitations:** Requires macOS 26, not a general chatbot, no fine-tuning, text-only, no control over model behavior.
-- **Not a replacement for Qwen3-8B** — MacParakeet targets macOS 14.2+, and the Foundation model can't handle command mode editing. Could be a supplementary option for simple cleanup on macOS 26+ users.
+- **Not a replacement for Qwen3-8B** — Sotto targets macOS 14.2+, and the Foundation model can't handle command mode editing. Could be a supplementary option for simple cleanup on macOS 26+ users.
 
 ### Emerging Inference Engines
 
@@ -247,7 +247,7 @@ Introduced at WWDC 2025 — access to Apple's on-device ~3B LLM powering Apple I
 |--------|-------------|
 | MLX | Core framework, Apple-endorsed standard |
 | mlx-lm | High-level Python CLI for MLX inference |
-| mlx-swift-lm | Swift LLM/VLM package (MacParakeet uses this) |
+| mlx-swift-lm | Swift LLM/VLM package (Sotto uses this) |
 | vllm-mlx | OpenAI-compatible server, 400-525 tok/s, continuous batching |
 | MLX Engine | LM Studio's MLX backend with speculative decoding |
 | Exo | Distributed inference across multiple Macs |
@@ -310,7 +310,7 @@ Apple Silicon's unified memory = zero-copy for MLX operations. A $2,000 Mac Stud
 
 ---
 
-## Recommendations for MacParakeet
+## Recommendations for Sotto
 
 > Note: This section reflects pre-migration recommendations from the February 12, 2026 snapshot. Current implementation docs and ADR-007 supersede STT/runtime recommendations.
 
@@ -328,7 +328,7 @@ Apple Silicon's unified memory = zero-copy for MLX operations. A $2,000 Mac Stud
    - Eliminate the Python dependency entirely (no uv, no venv, no daemon).
    - Run on the ANE instead of GPU (lower power, doesn't compete with LLM inference).
    - Match or exceed current performance (~110x RTF vs ~65x RTF).
-   - Support macOS 14.0+ (matches MacParakeet's target).
+   - Support macOS 14.0+ (matches Sotto's target).
    - Add speaker diarization, VAD, and streaming ASR for free.
    - This is a significant architectural change but would simplify distribution and improve the user experience.
 
@@ -336,13 +336,13 @@ Apple Silicon's unified memory = zero-copy for MLX operations. A $2,000 Mac Stud
 
 ### Long-Term (Track for Future)
 
-6. **Apple SpeechAnalyzer** — Native API, excellent speed. But requires macOS 26+. Worth considering when MacParakeet's minimum OS version reaches Tahoe.
+6. **Apple SpeechAnalyzer** — Native API, excellent speed. But requires macOS 26+. Worth considering when Sotto's minimum OS version reaches Tahoe.
 
 7. **Apple Foundation Models** — Free on-device LLM via macOS 26+ API. Not a replacement for Qwen3-8B (too limited), but could supplement simple text cleanup at zero cost.
 
 8. **Gemma 3n E4B** — 8B params with only ~3GB effective memory via Per-Layer Embedding. Interesting efficiency play, but newer and less tested.
 
-9. **M5 Neural Accelerators** — 4x TTFT improvement. As M5 adoption grows, MacParakeet gets faster "for free" via MLX.
+9. **M5 Neural Accelerators** — 4x TTFT improvement. As M5 adoption grows, Sotto gets faster "for free" via MLX.
 
 ---
 

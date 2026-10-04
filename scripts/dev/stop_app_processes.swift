@@ -43,7 +43,7 @@ struct AppExecutableMatcher {
     }
 
     var executableNames: Set<String> {
-        Set(paths.map { URL(fileURLWithPath: $0).lastPathComponent }).union(["MacParakeet"])
+        Set(paths.map { URL(fileURLWithPath: $0).lastPathComponent }).union(["Sotto"])
     }
 
     func matches(_ executablePath: String) -> Bool {
@@ -83,18 +83,18 @@ func quitNormally(
     let deadline = now() + timeout
     for target in targets where !target.hasExited() {
         guard target.requestQuit() || target.hasExited() else {
-            throw ShutdownError("Normal quit request failed for PID \(target.pid). Quit MacParakeet manually, then retry.")
+            throw ShutdownError("Normal quit request failed for PID \(target.pid). Quit Sotto manually, then retry.")
         }
     }
     while targets.contains(where: { !$0.hasExited() }) {
         guard now() < deadline else {
-            throw ShutdownError("MacParakeet is still open after \(timeout)s. Complete or cancel its quit dialog, then retry. No process was force-terminated.")
+            throw ShutdownError("Sotto is still open after \(timeout)s. Complete or cancel its quit dialog, then retry. No process was force-terminated.")
         }
         pause()
     }
 }
 
-func processSnapshot(executableNames: Set<String> = ["MacParakeet"]) throws -> [AppProcess] {
+func processSnapshot(executableNames: Set<String> = ["Sotto"]) throws -> [AppProcess] {
     // libproc returns executable paths independently of argv, including raw
     // unbundled processes that NSWorkspace.runningApplications can omit.
     for _ in 0..<3 {
@@ -145,7 +145,7 @@ func prepareQuitTargets(
 ) throws -> [QuitTarget] {
     try processes.filter { matcher.matches($0.executablePath) }.map { process in
         guard let target = application(process) else {
-            throw ShutdownError("MacParakeet PID \(process.pid) has no normal app-quit interface (\(process.executablePath)). Quit it manually before rebuilding.")
+            throw ShutdownError("Sotto PID \(process.pid) has no normal app-quit interface (\(process.executablePath)). Quit it manually before rebuilding.")
         }
         return target
     }
@@ -163,7 +163,7 @@ func registeredApplication(_ process: AppProcess) -> QuitTarget? {
 
 #if !LAUNCHER_TESTS
 @main
-struct StopMacParakeet {
+struct StopSotto {
     static func main() {
         do {
             let request = try ShutdownRequest(arguments: Array(CommandLine.arguments.dropFirst()))
@@ -173,7 +173,7 @@ struct StopMacParakeet {
             // A new app may have launched during the quit dialog or finalization.
             // Refuse to build rather than silently miss it or interrupt it again.
             guard try !processSnapshot(executableNames: matcher.executableNames).contains(where: { matcher.matches($0.executablePath) }) else {
-                throw ShutdownError("A MacParakeet executable is still running or restarted; quit it and retry.")
+                throw ShutdownError("A Sotto executable is still running or restarted; quit it and retry.")
             }
         } catch {
             FileHandle.standardError.write(Data("\(error) Build aborted before modifying the bundle.\n".utf8))

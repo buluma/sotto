@@ -74,7 +74,7 @@ function compactMessages(messages) {
   });
 }
 function piMessage(content, stopReason) {
-  return { role: 'assistant', content, api: 'openai-completions', provider: 'macparakeet', model: 'configured', usage: zeroUsage(), stopReason, timestamp: Date.now() };
+  return { role: 'assistant', content, api: 'openai-completions', provider: 'sotto', model: 'configured', usage: zeroUsage(), stopReason, timestamp: Date.now() };
 }
 function emitPi(stream, message) {
   stream.push({ type: 'start', partial: message });
@@ -140,7 +140,7 @@ async function run(start) {
     },
   }));
   const prompt = messages.map((m) => m.role === 'assistant' ? piMessage([{ type: 'text', text: m.content }], 'stop') : { ...m, timestamp: Date.now() });
-  const model = { id: 'configured', name: 'Configured MacParakeet model', api: 'openai-completions', provider: 'macparakeet', baseUrl: 'local-bridge', reasoning: false, input: ['text'], cost, contextWindow: 65536, maxTokens: 4096 };
+  const model = { id: 'configured', name: 'Configured Sotto model', api: 'openai-completions', provider: 'sotto', baseUrl: 'local-bridge', reasoning: false, input: ['text'], cost, contextWindow: 65536, maxTokens: 4096 };
   const timeout = setTimeout(() => state.abort.abort(new Error('Ask deadline exceeded')), DEADLINE_MS);
   try {
     const emitted = await runAgentLoop(prompt, { messages: [], tools }, { model, convertToLlm: (m) => m, toolExecution: 'sequential' }, async (event) => {

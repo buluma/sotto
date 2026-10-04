@@ -92,9 +92,9 @@ class XcodeConsumerProbeTests(unittest.TestCase):
         self.assertEqual(env["BUILD_SYSTEM"], "xcodebuild")
         marker = json.loads(self.resource.read_text())["items"][0]["title"]
         self.assertIn(marker, self.source.read_text())
-        app = root / "dist/MacParakeet.app/Contents"
-        binary = app / "MacOS/MacParakeet"
-        resource = app / "Resources/MacParakeet_MacParakeet.bundle/Contents/Resources/discover-fallback.json"
+        app = root / "dist/Sotto.app/Contents"
+        binary = app / "MacOS/Sotto"
+        resource = app / "Resources/Sotto_Sotto.bundle/Contents/Resources/discover-fallback.json"
         binary.parent.mkdir(parents=True, exist_ok=True)
         resource.parent.mkdir(parents=True, exist_ok=True)
         binary.write_text("stale" if stale == "binary" else marker)

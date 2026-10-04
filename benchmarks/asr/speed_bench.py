@@ -9,7 +9,7 @@ speed/memory profile, **one engine at a time, nothing else running**:
   - **cold start** = wall to the first transcript from a cold process
     (dominated by CoreML/ANE model load + first-run compile).
   - **steady RTFx** = audio_seconds / wall, with the one-time load removed.
-    For macparakeet-cli engines we run the same prefix at two sizes (1 file vs
+    For sotto-cli engines we run the same prefix at two sizes (1 file vs
     N files) in fresh processes; the difference cancels the fixed load:
         steady = (audio_N - audio_1) / (wall_N - wall_1)
     For the legacy Cohere reference result (FluidAudio CLI) we read its per-file
@@ -17,14 +17,14 @@ speed/memory profile, **one engine at a time, nothing else running**:
   - **peak RSS** = `/usr/bin/time -l` "maximum resident set size" of the
     isolated child process (the whole CLI: Swift runtime + the loaded model).
 
-Backends: macparakeet-cli (parakeet-v2/v3/unified, nemotron-en/multi, whisper,
+Backends: sotto-cli (parakeet-v2/v3/unified, nemotron-en/multi, whisper,
 cohere) and an explicit FluidAudio CLI reference mode
 (`cohere-fa-reference`) for legacy comparisons.
 
 Usage:
-    speed_bench.py --engine parakeet-v3 --cli /path/to/macparakeet-cli \
+    speed_bench.py --engine parakeet-v3 --cli /path/to/sotto-cli \
         --dataset-dir ~/asr-bench/LibriSpeech/test-clean --n 24 --out speed.jsonl
-    speed_bench.py --engine cohere --cli /path/to/macparakeet-cli \
+    speed_bench.py --engine cohere --cli /path/to/sotto-cli \
         --dataset-dir ~/asr-bench/LibriSpeech/test-clean --n 12 --out speed.jsonl
     speed_bench.py --engine cohere-fa-reference --fa /path/to/fluidaudiocli \
         --cohere-model ~/asr-bench/cohere-coreml/q8 --n 12 --out speed.jsonl
@@ -70,7 +70,7 @@ def time_l(cmd: list[str], env_extra: dict | None = None) -> tuple[float, str, i
     """Run under /usr/bin/time -l; return (wall_seconds, stderr, returncode)."""
     import os
     env = dict(os.environ)
-    env["MACPARAKEET_TELEMETRY"] = "0"  # no network from the CLI under test
+    env["SOTTO_TELEMETRY"] = "0"  # no network from the CLI under test
     if env_extra:
         env.update(env_extra)
     t0 = time.monotonic()
@@ -88,11 +88,11 @@ def run_mp(cli: Path, flags: list[str], files: list[Path], out_dir: Path):
            *flags, "--speaker-detection", "off", "--no-history"]
     wall, stderr, rc = time_l(cmd)
     if rc != 0:
-        raise SystemExit(f"macparakeet-cli exit {rc}\n{stderr[-800:]}")
+        raise SystemExit(f"sotto-cli exit {rc}\n{stderr[-800:]}")
     return wall, peak_rss_mb(stderr)
 
 
-def measure_macparakeet(engine: str, cli: Path, files: list[Path], n: int) -> dict:
+def measure_sotto(engine: str, cli: Path, files: list[Path], n: int) -> dict:
     flags = MP_ENGINES[engine]
     work = Path(tempfile.mkdtemp(prefix=f"speed-{engine}-"))
     try:
@@ -146,11 +146,11 @@ def measure_cohere_reference(fa: Path, model_dir: Path, n: int) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--engine", required=True, choices=ALL_ENGINES,
-                    help="engine to measure; 'all' runs shipping macparakeet-cli engines")
-    ap.add_argument("--cli", type=Path, help="macparakeet-cli (for integrated engines)")
+                    help="engine to measure; 'all' runs shipping sotto-cli engines")
+    ap.add_argument("--cli", type=Path, help="sotto-cli (for integrated engines)")
     ap.add_argument("--fa", type=Path, help="fluidaudiocli (for cohere-fa-reference)")
     ap.add_argument("--cohere-model", type=Path, help="cohere q8 model dir (reference mode)")
-    ap.add_argument("--dataset-dir", type=Path, help="LibriSpeech test-clean dir (macparakeet-cli engines)")
+    ap.add_argument("--dataset-dir", type=Path, help="LibriSpeech test-clean dir (sotto-cli engines)")
     ap.add_argument("--n", type=int, default=24, help="warm-batch size")
     ap.add_argument("--out", type=Path, help="append the result JSON line here")
     args = ap.parse_args()
@@ -170,11 +170,11 @@ def main() -> int:
                                            args.cohere_model.expanduser().resolve(), args.n)
         else:
             if not args.cli:
-                raise SystemExit("--cli required for macparakeet-cli engines")
+                raise SystemExit("--cli required for sotto-cli engines")
             if not files:
-                raise SystemExit("--dataset-dir required for macparakeet-cli engines")
+                raise SystemExit("--dataset-dir required for sotto-cli engines")
             print(f">>> measuring {eng} ...", flush=True)
-            rec = measure_macparakeet(eng, args.cli.expanduser().resolve(), files, args.n)
+            rec = measure_sotto(eng, args.cli.expanduser().resolve(), files, args.n)
         print("   " + json.dumps(rec))
         out_records.append(rec)
         if args.out:

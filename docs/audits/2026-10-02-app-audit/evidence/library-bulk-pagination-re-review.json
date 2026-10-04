@@ -20,7 +20,7 @@
   "review": "Independent adversarial review found no blockers; original finding reviewer authored tests, root authored bounded production fix.",
   "hostedCI": "See exact-head run on fix/library-bulk-pagination-rereview PR; no result inferred from local tests.",
   "sourceHashes": {
-    "Sources/MacParakeetViewModels/TranscriptionLibraryViewModel.swift": "ba5a950bb3f25480101aedffd2930e193e298f8ee928c90de4e640cb933591d9",
-    "Tests/MacParakeetTests/ViewModels/TranscriptionLibraryViewModelTests.swift": "657905ef69187530f15a60eca5ad78d162b6dba9dc30e5558c4975ac587f6bfe"
+    "Sources/SottoViewModels/TranscriptionLibraryViewModel.swift": "ba5a950bb3f25480101aedffd2930e193e298f8ee928c90de4e640cb933591d9",
+    "Tests/SottoTests/ViewModels/TranscriptionLibraryViewModelTests.swift": "657905ef69187530f15a60eca5ad78d162b6dba9dc30e5558c4975ac587f6bfe"
   }
 }

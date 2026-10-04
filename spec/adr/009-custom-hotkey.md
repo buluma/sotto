@@ -4,7 +4,7 @@
 
 ## Context
 
-MacParakeet's hotkey system used a `TriggerKey` enum that only supported 5 modifier keys (Fn, Control, Option, Shift, Command) via a dropdown picker. The architecture monitored `flagsChanged` events exclusively, making regular keys like End, F13, Home, etc. undetectable.
+Sotto's hotkey system used a `TriggerKey` enum that only supported 5 modifier keys (Fn, Control, Option, Shift, Command) via a dropdown picker. The architecture monitored `flagsChanged` events exclusively, making regular keys like End, F13, Home, etc. undetectable.
 
 A customer with a mechanical keyboard requested mapping dictation to the "End" key, which was impossible with the enum-based design.
 
@@ -91,7 +91,7 @@ and shortcut recording keeps production listeners suspended until it finishes.
 Permission status refreshes on application activation as well as the existing
 Settings polling. While Accessibility is denied, the app additionally re-checks
 only that permission on the Settings polling interval, so granting access while
-MacParakeet stays in the background with Settings closed still restores the
+Sotto stays in the background with Settings closed still restores the
 shortcuts. The watch stops once access is granted and restarts if it is revoked.
 
 ## Amendment: Optional Escape cancel (2026-09-21)
@@ -101,7 +101,7 @@ Escape stays blocked as a dictation hotkey. Cancel-on-Escape remains the default
 ## Amendment: Event taps off the main run loop (2026-09-24)
 
 macOS holds each keyboard event until a filtering tap's callback returns. With
-taps on the main run loop, a MacParakeet UI stall delayed typing in every other
+taps on the main run loop, a Sotto UI stall delayed typing in every other
 app (#1142). All `CGEvent` taps now run on one dedicated thread
 (`EventTapThread`, via `BackgroundEventTap`), which never waits on the main
 thread.

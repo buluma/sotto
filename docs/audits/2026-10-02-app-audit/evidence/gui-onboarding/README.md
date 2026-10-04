@@ -35,11 +35,11 @@ a repeatable layout gate, rather than rewriting its historical provenance.
 The audit-only probe is archived as `OnboardingAuditRenderTests.swift.txt`,
 rather than leaving a skipped audit test in the permanent suite. To reproduce
 in a dedicated checkout, temporarily copy it to
-`Tests/MacParakeetTests/Views/Onboarding/OnboardingAuditRenderTests.swift`, then
+`Tests/SottoTests/Views/Onboarding/OnboardingAuditRenderTests.swift`, then
 run:
 
 ```bash
-MACPARAKEET_AUDIT_RENDER_DIR="$PWD/.build/onboarding-audit-capture" \
+SOTTO_AUDIT_RENDER_DIR="$PWD/.build/onboarding-audit-capture" \
   swift test --filter OnboardingAuditRenderTests
 ```
 

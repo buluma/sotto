@@ -5,7 +5,7 @@ Date: 2026-09-27. Status: investigation; call-capture fix not yet qualified.
 ## Verdict
 
 The Phone/FaceTime report most strongly points to a macOS call-audio path that
-MacParakeet's ScreenCaptureKit stream does not receive on the reporter's setup.
+Sotto's ScreenCaptureKit stream does not receive on the reporter's setup.
 The supplied system recording contains two short signal bursts and long runs
 of exact zeros. The microphone, source-file writer, and finalization keep
 working. Missing speech is already absent from the saved system source, before
@@ -101,7 +101,7 @@ silent buffers. The log identifies **Bluetooth input**, not the exact output
 device or a Bluetooth output-profile transition.
 
 The microphone startup failure recovered. Whether starting or retrying
-Bluetooth input changed the call's audio route remains untested. MacParakeet's
+Bluetooth input changed the call's audio route remains untested. Sotto's
 native VPIO was disabled; the log does not identify other apps' audio processing.
 Software LocalVQE processed the microphone; it does not erase `system-raw.m4a`.
 The offline mic-cleaning pass subsequently skipped for lack of reference energy.
@@ -124,7 +124,7 @@ between the reporter's 0.8.3 commit and the reviewed development revision.
 1. **No Phone/FaceTime exclusion in our filter.**
    [SystemAudioStream](https://github.com/moona3k/macparakeet/blob/1340d0b476650ec5dc99c2160ed809ea6f60df45/Sources/MacParakeetCore/Audio/SystemAudioStream.swift#L385-L404)
    captures a display with no excluded windows, enables audio, and excludes only
-   MacParakeet's own process. Apple's
+   Sotto's own process. Apple's
    [property documentation](https://developer.apple.com/documentation/screencapturekit/scstreamconfiguration/excludescurrentprocessaudio)
    describes that self-exclusion. Turning it off is not a justified call fix.
 2. **Buffer liveness cannot establish audibility.** The first-buffer and
@@ -192,7 +192,7 @@ The existing `MeetingSystemAudioCapturing` protocol and
 that seam. A qualified implementation can use it without adding another
 capture coordinator or changing the meeting workflow.
 
-MacParakeet already has a
+Sotto already has a
 [Core Audio feasibility probe](issue-924-audio-only-process-tap-probe.md), but
 its generated-tone success proves only that narrow no-microphone/no-VPIO
 topology. [ADR-014](../../spec/adr/014-meeting-recording.md) adopted SCK after
@@ -250,7 +250,7 @@ scripts/run-process-tap-audio-only-probe.sh /tmp/issue-912-call-01 --observe-sec
 The runner builds and signs the probe, then prints `Observing external system
 audio` when startup returns. Permission interaction may be needed. A run has
 the requested observation period plus a 30-second runner allowance by default;
-`MACPARAKEET_PROCESS_TAP_PROBE_DEADLINE_SECONDS` can override that deadline.
+`SOTTO_PROCESS_TAP_PROBE_DEADLINE_SECONDS` can override that deadline.
 Compilation happens before the capture deadline starts.
 
 For a meaningful comparison:
@@ -260,7 +260,7 @@ For a meaningful comparison:
    macOS default output, and the microphone selection. Record whether a
    permission prompt appeared and its response; a successful tap API call does
    not prove permission was granted.
-2. Record the same call in MacParakeet while the observer runs. Keep other media
+2. Record the same call in Sotto while the observer runs. Keep other media
    stopped during a marked remote-speech interval and record its UTC start/end.
    Repeat with microphone capture off, then on. Use a consented test call; the
    observer does not dial or contact anyone.
@@ -268,7 +268,7 @@ For a meaningful comparison:
    mode plays a two-second generated tone and can provide a separate control:
    `scripts/run-process-tap-audio-only-probe.sh /tmp/issue-912-tone-01`.
    Never run that tone inside the remote-speech interval.
-4. Compare the per-channel `result.json` windows with the saved MacParakeet
+4. Compare the per-channel `result.json` windows with the saved Sotto
    system source using the file analyzer below. Repeat with each capture alone,
    then with built-in/wired and Bluetooth routes, to identify observer interference.
 

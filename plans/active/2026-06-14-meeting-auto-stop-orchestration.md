@@ -38,8 +38,8 @@ finalize/transcribe/save path as manual stop.
 Use this prompt to resume or hand off the goal:
 
 ```text
-Implement MacParakeet ADR-023 activity-based meeting auto-stop in
-/Users/dmoon/code/macparakeet-worktrees/feat-meeting-auto-stop-phase-a.
+Implement Sotto ADR-023 activity-based meeting auto-stop in
+/Users/dmoon/code/sotto-worktrees/feat-meeting-auto-stop-phase-a.
 
 Source of truth order:
 1. CLAUDE.md
@@ -56,7 +56,7 @@ Owner decisions:
 Implement Phase A, then Phase B, then Phase C only if ADR-024 attribution is
 available or can be cleanly added without implementing all of ADR-024. Keep the
 feature opt-in/default-off behind AppFeatures.meetingAutoStopEnabled. Pure
-policy belongs in MacParakeetCore; AppKit/CoreAudio/SwiftUI side effects stay
+policy belongs in SottoCore; AppKit/CoreAudio/SwiftUI side effects stay
 in the app/viewmodel layer. Auto-stop must call the normal meeting stop
 finalize/transcribe/save path and must never discard or truncate data.
 

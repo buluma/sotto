@@ -1,4 +1,4 @@
-# MacParakeet ASR Benchmark
+# Sotto ASR Benchmark
 
 A reusable, **apples-to-apples** benchmark for choosing on-device ASR engines on
 Apple Silicon. Every engine's hypotheses are scored through **one canonical
@@ -7,11 +7,11 @@ Open ASR Leaderboard standard), so cross-engine numbers are directly comparable 
 the single most important property a multi-model benchmark must have. It measures
 three axes: **accuracy** (English + multilingual), **speed**, and **memory**.
 
-Engines are the four families MacParakeet ships and evaluates: **Parakeet**
+Engines are the four families Sotto ships and evaluates: **Parakeet**
 (v2 / v3 / unified), **Nemotron** (English / multilingual, Beta), **WhisperKit**
 (large-v3-turbo), and **Cohere** Transcribe (`cohere-transcribe-03-2026`, q8) —
 the model flagged after #520 / #552 / #554 and now available as a batch-only
-MacParakeet engine through the same FluidAudio CoreML SDK.
+Sotto engine through the same FluidAudio CoreML SDK.
 
 > Supersedes the LibriSpeech-`test-clean`-only `benchmarks/parakeet-unified/`
 > evidence. English numbers below are the **full** test sets; multilingual is a
@@ -23,7 +23,7 @@ This directory is the source of truth for ASR evidence. It is intentionally
 small: a manifest, deterministic scorers, runners for the shipping CLI path, and
 committed result fixtures that can be re-scored without downloading models.
 
-| Industry practice | MacParakeet implementation |
+| Industry practice | Sotto implementation |
 |-------------------|----------------------------|
 | Open ASR Leaderboard-style normalization: one text-normalization path before WER/CER | `score.py` and `score_multi.py` apply the same Whisper normalizers to every engine. |
 | NIST/SCTK-style explicit scoring contract | JSONL records carry stable utterance IDs, references, hypotheses, dataset, engine, language, and optional timing. |
@@ -41,7 +41,7 @@ committed result fixtures that can be re-scored without downloading models.
 | Performance | Local speed/memory micro-bench | Committed reference results | Cold start, steady RTFx, peak RSS | Hardware-specific; rerun for release claims. |
 | Meeting public | AMI Meeting Corpus | Planned | Multi-speaker meeting final transcript quality | Needed before meeting-specific engine claims. |
 | Accented/wild English | Earnings-22 | Planned | Real-world accents, long-form speech | Needed before broad noisy/accented claims. |
-| Product regression | Consented MacParakeet fixtures | Planned private | Dictation, meeting, file/media edge cases | Internal gate; do not commit private audio/transcripts. |
+| Product regression | Consented Sotto fixtures | Planned private | Dictation, meeting, file/media edge cases | Internal gate; do not commit private audio/transcripts. |
 
 `manifest.json` is validated by `manifest_tool.py` and `test_manifest.py` during
 `./run_all.sh verify`. Treat the manifest as the benchmark API: adding a dataset,
@@ -61,7 +61,7 @@ own metric surface). Dataset choices are intentionally layered:
 [FLEURS](https://arxiv.org/abs/2205.12446) for multilingual coverage,
 [AMI](https://groups.inf.ed.ac.uk/ami/corpus/) for meetings,
 [Earnings-22](https://arxiv.org/abs/2203.15591) for accented long-form English,
-and a private MacParakeet fixture tier for product regressions.
+and a private Sotto fixture tier for product regressions.
 
 ## TL;DR (what the evidence says)
 
@@ -138,12 +138,12 @@ harness conventions.
 | `score.py` | English scorer — canonical normalizer + jiwer → corpus WER, macro-avg, p90, failure-rate, RTFx. `--ci N` adds a bootstrap 95% CI; `--simple` fallback. |
 | `score_multi.py` | Multilingual scorer — WER (en/EU) or CER (ko/ja/zh) via `BasicTextNormalizer`; `--ci N`. |
 | `paired_delta.py` | Paired bootstrap CI on the WER/CER *difference* between two engines (the significance test). |
-| `speed_bench.py` | Speed/memory — steady RTFx, cold-start, peak RSS, one engine at a time. Uses `macparakeet-cli` for shipping engines, including Cohere; `cohere-fa-reference` is legacy-only. |
+| `speed_bench.py` | Speed/memory — steady RTFx, cold-start, peak RSS, one engine at a time. Uses `sotto-cli` for shipping engines, including Cohere; `cohere-fa-reference` is legacy-only. |
 | `test_scorers.py` | Scorer correctness tests (run: `python3 test_scorers.py`). |
 | `manifest.json` | Benchmark contract — engines, datasets, metrics, tasks, product surfaces, and quality gates. |
 | `manifest_tool.py` / `test_manifest.py` | Repo-only contract validation and summary rendering. |
-| `run_macparakeet.py` | Drives `macparakeet-cli transcribe` for integrated engines on LibriSpeech (the real shipping path). |
-| `run_macparakeet_fleurs.py` | Same, over a FLEURS language subset (multilingual). |
+| `run_sotto.py` | Drives `sotto-cli transcribe` for integrated engines on LibriSpeech (the real shipping path). |
+| `run_sotto_fleurs.py` | Same, over a FLEURS language subset (multilingual). |
 | `fa_json_to_jsonl.py` | Converts a FluidAudio CLI benchmark JSON → the same JSONL for legacy/reference imports. |
 | `run_all.sh` | Driver: `verify` (repo-only: tests + re-score committed evidence with CIs), `speed`, `transcribe`. |
 | `requirements.txt` | Pinned scorer dependencies. |
@@ -213,10 +213,10 @@ a larger set before shipping per-language engine routing.
 | **cohere-transcribe-03-2026** | **73 s** | **~11×** | **~11.6 GB** |
 
 **Method note:** the committed Cohere speed/memory row is still the older
-FluidAudio CLI reference measurement; the other six rows use `macparakeet-cli`.
-`speed_bench.py --engine cohere` now measures MacParakeet's shipping Cohere CLI
+FluidAudio CLI reference measurement; the other six rows use `sotto-cli`.
+`speed_bench.py --engine cohere` now measures Sotto's shipping Cohere CLI
 path; use `cohere-fa-reference` only to compare the old FluidAudio reference row.
-Rerun Cohere through `macparakeet-cli` before making in-app cold-start or memory
+Rerun Cohere through `sotto-cli` before making in-app cold-start or memory
 claims. Treat the current RAM floor as a lower bound.
 
 The Cohere peak RSS is **constant at 2 / 8 / 12 files** → it's the model's
@@ -262,7 +262,7 @@ punctuation/capitalization. So unified is the better English Parakeet build.
   *contract and scorer* are deterministic — it re-scores fixed text, it does not
   re-transcribe.
 - **Spot pipeline reproduction.** Separately, re-transcribing through a clean
-  `macparakeet-cli` and scoring on *identical utterance IDs* gives **Δ = 0.00 pt**
+  `sotto-cli` and scoring on *identical utterance IDs* gives **Δ = 0.00 pt**
   vs the committed data on a stride-60 `test-clean` subset (six integrated
   engines) and first-40 LibriSpeech (Cohere) — a spot check that the committed
   hypotheses are faithful, not a full-set re-transcription.
@@ -277,7 +277,7 @@ punctuation/capitalization. So unified is the better English Parakeet build.
 - **Determinism:** the scorers are deterministic; the bootstrap uses a fixed seed
   (1234). Same inputs → same numbers.
 
-**Provenance.** macparakeet-cli **2.11.0**; FluidAudio **v0.15.4**; CPython
+**Provenance.** sotto-cli **2.11.0**; FluidAudio **v0.15.4**; CPython
 **3.14.5** with pinned deps; LibriSpeech test-clean/test-other (OpenSLR SLR12);
 FLEURS via `FluidInference/fleurs-full` (HF); Cohere model
 `FluidInference/cohere-transcribe-03-2026-coreml` (q8); Apple M4 Pro / 48 GB /
@@ -290,7 +290,7 @@ rerun of full LibriSpeech `test-clean` and `test-other`, sixteen FLEURS
 languages at n=150, and the speed micro-bench is written up in
 [`docs/research/2026-09-21-orukeet-asr-benchmark.md`](../../docs/research/2026-09-21-orukeet-asr-benchmark.md).
 
-That run used this branch's `macparakeet-cli` on an Apple M4 Pro / 48 GB /
+That run used this branch's `sotto-cli` on an Apple M4 Pro / 48 GB /
 macOS 26.6.2. It does not replace the macOS 15 table above, and it does not
 re-rank Cohere, Unified, v2, WhisperKit, or Nemotron. Against a fresh Parakeet
 v3 run on the same CLI, Orukeet was significantly better on both English
@@ -307,7 +307,7 @@ CJK remains a failure for both models.
   full-set English run. `results/{*.jsonl, stride200/}` keep the first-200 +
   stride-200 evidence that motivated it.
 - **Cohere speed/memory** in the committed results is measured via the legacy
-  FluidAudio CLI reference harness. The runner now supports MacParakeet's Cohere
+  FluidAudio CLI reference harness. The runner now supports Sotto's Cohere
   CLI runtime, so confirm that path before making release or Settings claims.
 - **Not benchmarked:** Qwen3-ASR and Moonshine (need an MLX runtime — deferred).
   Changing defaults or automatic engine routing is a separate ADR/spec-gated

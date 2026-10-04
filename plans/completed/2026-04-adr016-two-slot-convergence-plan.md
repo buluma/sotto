@@ -129,20 +129,20 @@ STTRuntime
 
 ### Must change
 
-1. `Sources/MacParakeetCore/STT/STTRuntime.swift`
-2. `Sources/MacParakeetCore/STT/STTScheduler.swift`
-3. `Sources/MacParakeetViewModels/OnboardingViewModel.swift`
-4. `Sources/MacParakeetCore/Services/DiarizationService.swift`
-5. `Tests/MacParakeetTests/STT/STTSchedulerTests.swift`
-6. `Tests/MacParakeetTests/ViewModels/OnboardingViewModelTests.swift`
+1. `Sources/SottoCore/STT/STTRuntime.swift`
+2. `Sources/SottoCore/STT/STTScheduler.swift`
+3. `Sources/SottoViewModels/OnboardingViewModel.swift`
+4. `Sources/SottoCore/Services/DiarizationService.swift`
+5. `Tests/SottoTests/STT/STTSchedulerTests.swift`
+6. `Tests/SottoTests/ViewModels/OnboardingViewModelTests.swift`
 
 ### Likely to inspect but not necessarily change much
 
-1. `Sources/MacParakeet/App/AppEnvironment.swift`
-2. `Sources/MacParakeetCore/STT/STTClient.swift`
-3. `Sources/MacParakeetCore/Services/MeetingRecordingService.swift`
-4. `Sources/MacParakeetCore/Services/TranscriptionService.swift`
-5. `Tests/MacParakeetTests/ViewModels/MeetingRecordingPanelViewModelTests.swift`
+1. `Sources/Sotto/App/AppEnvironment.swift`
+2. `Sources/SottoCore/STT/STTClient.swift`
+3. `Sources/SottoCore/Services/MeetingRecordingService.swift`
+4. `Sources/SottoCore/Services/TranscriptionService.swift`
+5. `Tests/SottoTests/ViewModels/MeetingRecordingPanelViewModelTests.swift`
 
 ## Recommended Delivery Order
 

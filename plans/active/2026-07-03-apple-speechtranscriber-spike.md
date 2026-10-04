@@ -23,7 +23,7 @@ a docs PR.** No engine card, no settings surface, no product wiring.
    locales — determine why: missing assets, entitlement, or API misuse.)
 2. **Quality.** Build a small macOS-26-only runner binary/script the
    harness can shell out to (the existing FLEURS runner drives
-   `macparakeet-cli`, which cannot name this engine — so this is new
+   `sotto-cli`, which cannot name this engine — so this is new
    harness-side code, not a manifest entry; still zero app code) and run
    LibriSpeech clean/other + FLEURS en/ko/ja/zh. Compare against the ADR-001 amendment table (Parakeet
    2.38-3.22 WER, Whisper 3.00). This produces the first real

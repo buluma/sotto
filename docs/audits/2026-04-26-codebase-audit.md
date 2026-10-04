@@ -1,6 +1,6 @@
 # Codebase Audit — 2026-04-26
 
-> **Status:** IMPLEMENTED. Two-pass independent audit of the `macparakeet`
+> **Status:** IMPLEMENTED. Two-pass independent audit of the `sotto`
 > codebase at the time of branch `feat/cli-llm-json-output` (HEAD `702ce37e`).
 > 70 findings catalogued. Fixes landed across #149, #154, and follow-up
 > hygiene PRs. Refuted findings retained with rationale. Deferred items list
@@ -69,7 +69,7 @@ Status legend: **FIXED** (commit referenced) · **REFUTED** (with reason) ·
 | AUDIT-025 | DictationService temp audio leak on paste failure | DEFERRED | P2 polish; rare path. |
 | AUDIT-029 | Lock-file recovery clock-skew | FIXED | `25260010`. Duration fallback clamped non-negative — guards against NTP correction or manual time change putting `lock.startedAt` in the future. |
 | AUDIT-031 | `VideoStreamService` DispatchQueue continuation leak | FIXED | `8ed94de8`. Drains pipes synchronously after process exit instead of concurrently on a global queue thread that TaskGroup cancellation couldn't interrupt. SIGKILL fallback after 2s SIGTERM grace. |
-| AUDIT-032 | `$TMPDIR/macparakeet/` cleanup ownership | DEFERRED | P2 polish. |
+| AUDIT-032 | `$TMPDIR/sotto/` cleanup ownership | DEFERRED | P2 polish. |
 
 ### LLM provider layer
 
@@ -82,7 +82,7 @@ Status legend: **FIXED** (commit referenced) · **REFUTED** (with reason) ·
 | AUDIT-040 | Provider error messages echo API-key fragments | FIXED | `1699c2aa` (#154). New `LLMClient.scrubAPIKeyArtifacts(from:)` runs every provider error message through it before propagating into Swift `LLMError` values, telemetry, logs, UI. Patterns: `sk-…`, `Bearer …`, `x-api-key: …`, `key=…`, `api[_-]?key=…`. Idempotent + conservative (false negatives over false positives). |
 | AUDIT-041 | URLSession not cancelled on stream Task cancel | REFUTED | `URLSession.AsyncBytes` on macOS 12+ propagates Task cancellation to the underlying `URLSessionDataTask` per Apple's contract. Existing `task.cancel()` in `continuation.onTermination` is sufficient. |
 | AUDIT-042 | 30s/120s timeouts + no exponential backoff | DEFERRED | P1; needs telemetry on actual long-meeting summary durations before tuning. |
-| AUDIT-043 | Anthropic `thinking` blocks silently dropped (Claude 3.7+) | DEFERRED | Only triggers if MacParakeet uses Claude 3.7+ models. |
+| AUDIT-043 | Anthropic `thinking` blocks silently dropped (Claude 3.7+) | DEFERRED | Only triggers if Sotto uses Claude 3.7+ models. |
 | AUDIT-044 | `try?` on JSONDecoder swallows decode errors | DEFERRED | P2; current `LLMError.invalidResponse` is informative enough. |
 | AUDIT-045 | Silent transcript truncation when over context budget | DEFERRED | P2; UI signal + telemetry event would be valuable but not urgent. |
 

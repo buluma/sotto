@@ -3,9 +3,9 @@
 > Status: **ACTIVE** · Last verified 2026-05-03
 
 Reference for integrating Apple's `FoundationModels` framework as an LLM provider
-in MacParakeet. Captures what we verified about the framework, its constraints,
+in Sotto. Captures what we verified about the framework, its constraints,
 and how it slots into our existing provider abstraction
-(`Sources/MacParakeetCore/Models/LLMProvider.swift`).
+(`Sources/SottoCore/Models/LLMProvider.swift`).
 
 ## TL;DR
 
@@ -48,7 +48,7 @@ A user can run `LanguageModelSession` if and only if **all** of these are true:
    availability check. Older-OS users see no option.)
 3. **8 GB RAM minimum**, 16 GB strongly recommended for comfortable use.
 4. **Apple Intelligence enabled** in System Settings → Apple Intelligence & Siri.
-   This is a **one-time, OS-level** ~3–7 GB download. **MacParakeet ships no
+   This is a **one-time, OS-level** ~3–7 GB download. **Sotto ships no
    weights and manages no download UI** — the OS handles it.
 5. **Region not mainland-China-purchased.**
 
@@ -70,7 +70,7 @@ This is the constraint that shapes integration:
   - `SystemLanguageModel.contextSize` — capacity for the current model
   - `SystemLanguageModel.tokenCount(for:)` — measure a prompt before sending
 
-### What that means for MacParakeet's LLM workloads
+### What that means for Sotto's LLM workloads
 
 | Workload | Typical token cost | Apple FM verdict |
 |---|---|---|
@@ -232,7 +232,7 @@ managed by the OS and runs on the ANE rather than CPU/GPU.
 
 ## How the user-side download works
 
-| User state | What MacParakeet does | What the user sees |
+| User state | What Sotto does | What the user sees |
 |---|---|---|
 | Apple Intelligence already enabled | Calls `availability`, gets `.available`, model is ready | Nothing — it just works |
 | Compatible Mac, AI not enabled | Tile shows "Enable Apple Intelligence in System Settings" with a deep link (`x-apple.systempreferences:com.apple.preference.appleintelligence`) | One settings flip, OS downloads model in background |
@@ -244,13 +244,13 @@ managed by the OS and runs on the ANE rather than CPU/GPU.
 download progress, or version-pin the model. The OS pushes updates as part of
 macOS point releases. This is meaningfully better friction than our
 Parakeet-CoreML (~465 MB fetched components per selected build in current
-MacParakeet usage) or WhisperKit model paths.
+Sotto usage) or WhisperKit model paths.
 
-## Where it fits in MacParakeet
+## Where it fits in Sotto
 
 ### Provider model
 
-`Sources/MacParakeetCore/Models/LLMProvider.swift:5` defines `LLMProviderID`.
+`Sources/SottoCore/Models/LLMProvider.swift:5` defines `LLMProviderID`.
 Add a case:
 
 ```swift
@@ -262,7 +262,7 @@ Properties: `requiresAPIKey = false`, `isLocal = true`,
 
 ### Implementation
 
-New file: `Sources/MacParakeetCore/Services/AppleFoundationLLMClient.swift`,
+New file: `Sources/SottoCore/Services/AppleFoundationLLMClient.swift`,
 conforming to `LLMClient`. The non-streaming path wraps `respond(to:)`; the
 streaming path wraps `streamResponse(to:)`. Both must handle:
 
@@ -300,7 +300,7 @@ new onboardings only.
 
 ### Settings tile
 
-`Sources/MacParakeet/Views/Settings/LLMSettingsView.swift` — a tile that:
+`Sources/Sotto/Views/Settings/LLMSettingsView.swift` — a tile that:
 
 - Shows the current `availability` state with a clear status pill.
 - For `.appleIntelligenceNotEnabled`, links to System Settings.
@@ -325,7 +325,7 @@ new onboardings only.
 
 Per `feedback_telemetry_allowlist.md`: adding `llm_provider_appleFoundation`
 to `TelemetryEventName` requires a paired commit on
-`macparakeet-website/functions/api/telemetry.ts` adding it to
+`sotto-website/functions/api/telemetry.ts` adding it to
 `ALLOWED_EVENTS`. Without that, the Worker drops the entire batch. Deploy the
 website change **before** merging the Swift change.
 
@@ -339,7 +339,7 @@ website change **before** merging the Swift change.
 
 | Risk | Mitigation |
 |---|---|
-| **macOS 26 adoption skew** — some MacParakeet users are on 14.x/15.x and won't see the option | Graceful: existing providers remain primary; Apple FM is additive. |
+| **macOS 26 adoption skew** — some Sotto users are on 14.x/15.x and won't see the option | Graceful: existing providers remain primary; Apple FM is additive. |
 | **8 GB Macs may report `.available` but perform poorly** | Apple's reason cases don't distinguish "available but slow." Accept this; users who notice can switch providers. |
 | **4096-token ceiling pushes power users back to cloud anyway** | Reframe: this is the *zero-config starter*, cloud is the upgrade path. The funnel is healthier for it. |
 | **China-purchased devices excluded** | Surface gracefully via `.deviceNotEligible`. Don't hardcode region checks. |
@@ -352,7 +352,7 @@ website change **before** merging the Swift change.
 
 - [ ] Verify exact `LLMError.contextTooLong` mapping with a 5000-token test
       prompt against a real device.
-- [ ] Decide whether to expose Apple FM in CLI (`macparakeet-cli`). The CLI is
+- [ ] Decide whether to expose Apple FM in CLI (`sotto-cli`). The CLI is
       a public contract — if we add it there, it becomes a downstream
       compatibility concern. Defer until GUI ships.
 - [ ] Measure first-call warm-up latency. If >1.5s, prefetch with an empty

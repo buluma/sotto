@@ -1,4 +1,4 @@
-# MacParakeet UI/UX Design Overhaul
+# Sotto UI/UX Design Overhaul
 
 > Status: **HISTORICAL** — Design proposal from pre-v0.6. Some elements were implemented; others (trial UI, licensing) are no longer applicable. Kept for design reference.
 > Current brand source of truth: `docs/brand-identity.md` for runtime mark/color
@@ -24,7 +24,7 @@ These were discussed and finalized. Don't revisit.
 
 ## The Problem
 
-MacParakeet currently has a **Pro/Technical** aesthetic: dark-only theme, low-opacity text (`.tertiary`, `.quaternary`), dense layouts, small type, dashed borders, sacred geometry as cold mathematical ornament. This is the visual language of Xcode, Logic Pro, and Terminal.
+Sotto currently has a **Pro/Technical** aesthetic: dark-only theme, low-opacity text (`.tertiary`, `.quaternary`), dense layouts, small type, dashed borders, sacred geometry as cold mathematical ornament. This is the visual language of Xcode, Logic Pro, and Terminal.
 
 Our customer is a **journalist, student, podcaster, content creator, or knowledge worker**. The current UI says "this is a tool for engineers" when it should say "this is magic, and anyone can use it."
 
@@ -57,7 +57,7 @@ Our customer is a **journalist, student, podcaster, content creator, or knowledg
 Pro/Technical ←———→ Apple Native ←———→ Warm Minimal ←——→ Bold Consumer
 (Xcode, Logic)    (Notes, Finder)   (Things 3, Bear)   (Arc, CleanShot)
                                            ↑
-                                   MacParakeet lands here
+                                   Sotto lands here
                                    with Bold personality →
 ```
 
@@ -196,7 +196,7 @@ enum Layout {
 
 ## Sonic Mandala — The Signature Feature
 
-Every transcription and dictation generates a **unique circular waveform pattern** — a sonic mandala. This is MacParakeet's visual signature. No other transcription app does this.
+Every transcription and dictation generates a **unique circular waveform pattern** — a sonic mandala. This is Sotto's visual signature. No other transcription app does this.
 
 ### What It Is
 
@@ -336,7 +336,7 @@ Subtle particle effects for the merkaba in hero contexts:
 
 ## Sound Design
 
-MacParakeet ships with custom audio feedback. No other transcription app has crafted sound design — this is pure edge.
+Sotto ships with custom audio feedback. No other transcription app has crafted sound design — this is pure edge.
 
 ### Sound Palette
 
@@ -355,7 +355,7 @@ The overall tone is **warm, organic, slightly mystical**. Think singing bowls, s
 
 - **Always optional** — Respect macOS "Play sound effects" system setting
 - **Never startling** — Max volume is 30-40% of system alert volume
-- **Unique to MacParakeet** — These sounds should be recognizable as ours
+- **Unique to Sotto** — These sounds should be recognizable as ours
 - **Short** — Longest sound is 600ms. This is feedback, not music.
 - **High quality** — 48kHz, clean recordings. No cheap synth.
 
@@ -623,7 +623,7 @@ Same flow, warmer personality:
 - `IdlePillController.swift` — Zero changes
 - `WaveformView.swift` — Zero changes (only used in pill)
 - All ViewModels — This is view-layer only
-- `MacParakeetCore/` — Zero changes
+- `SottoCore/` — Zero changes
 - All tests — Still pass (they test logic, not UI)
 
 ### New Files

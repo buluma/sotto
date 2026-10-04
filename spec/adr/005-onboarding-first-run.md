@@ -13,7 +13,7 @@ Date: 2026-02-10
 
 ## Context
 
-MacParakeet is a menu bar app with a configurable global hotkey (default: Fn) and paste automation. To deliver a premium first-run experience, we need to:
+Sotto is a menu bar app with a configurable global hotkey (default: Fn) and paste automation. To deliver a premium first-run experience, we need to:
 
 - Explain the core interaction model (hotkey, stop/paste, cancel).
 - Acquire the core Microphone and Accessibility permissions. Optional Meeting Recording and Calendar permissions are requested later, in context.

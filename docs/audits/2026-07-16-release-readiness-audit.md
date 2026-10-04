@@ -1,4 +1,4 @@
-# MacParakeet v0.7.3 Release-Readiness Audit
+# Sotto v0.7.3 Release-Readiness Audit
 
 > Date: 2026-07-16
 >
@@ -54,7 +54,7 @@ archive checkout was not changed. Review covered:
 ### 1. FluidAudio could resolve to a known breaking patch
 
 `Package.swift` allowed `0.15.4..<0.16.0`, while FluidAudio 0.15.5 removes the
-`DownloadUtils` API still used throughout MacParakeet. The lockfile currently
+`DownloadUtils` API still used throughout Sotto. The lockfile currently
 masked the risk. The dependency is now exact-pinned to 0.15.4 until a deliberate
 `ModelHub` migration is implemented and tested.
 
@@ -172,7 +172,7 @@ Run from a notarized app copied to `/Applications`, not from the DMG volume:
    microphone, system audio, playback, cleaned microphone, and final transcript.
 5. **Installed CLI:** verify the bundled executable, record Terminal PATH
    resolution separately, and run the release demo smoke against
-   `/Applications/MacParakeet.app/Contents/MacOS/macparakeet-cli`. Do not modify
+   `/Applications/Sotto.app/Contents/MacOS/sotto-cli`. Do not modify
    Homebrew-owned links as part of app QA.
 
 ## Non-blocking follow-ups

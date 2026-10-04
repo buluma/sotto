@@ -24,7 +24,7 @@ Add speaker diarization to file transcription and YouTube transcription using Fl
 
 #### 1.1 Update data model
 
-**File:** `Sources/MacParakeetCore/Models/Transcription.swift`
+**File:** `Sources/SottoCore/Models/Transcription.swift`
 
 Add `speakerId: String?` to `WordTimestamp` storing **stable raw IDs** from the diarization pipeline (`"S1"`, `"S2"`), not display labels. This means rename only touches the `speakers` mapping, not every word.
 
@@ -67,7 +67,7 @@ public struct DiarizationSegmentRecord: Codable, Sendable {
 
 #### 1.2 Create DiarizationService
 
-**File:** `Sources/MacParakeetCore/Services/DiarizationService.swift`
+**File:** `Sources/SottoCore/Services/DiarizationService.swift`
 
 New service that wraps FluidAudio's `OfflineDiarizerManager`:
 
@@ -105,7 +105,7 @@ Implementation:
 
 #### 1.3 Create timestamp merger
 
-**File:** `Sources/MacParakeetCore/Services/SpeakerMerger.swift`
+**File:** `Sources/SottoCore/Services/SpeakerMerger.swift`
 
 Pure function that merges ASR word timestamps with diarization speaker segments:
 
@@ -132,7 +132,7 @@ This is a pure function — easy to test with fixture data.
 
 #### 1.4 Integrate into TranscriptionService
 
-**File:** `Sources/MacParakeetCore/Services/TranscriptionService.swift`
+**File:** `Sources/SottoCore/Services/TranscriptionService.swift`
 
 After ASR completes, run diarization and merge. **Diarization is non-fatal** — ASR result is always persisted.
 
@@ -173,7 +173,7 @@ do {
 
 #### 2.1 Download diarization models during onboarding
 
-**File:** `Sources/MacParakeetViewModels/OnboardingViewModel.swift`
+**File:** `Sources/SottoViewModels/OnboardingViewModel.swift`
 
 Add diarization model download step after ASR model download:
 
@@ -224,7 +224,7 @@ Implementation:
 
 #### 3.1 Speaker labels in transcript view
 
-**File:** `Sources/MacParakeet/Views/Transcription/TranscriptTextView.swift` (or equivalent)
+**File:** `Sources/Sotto/Views/Transcription/TranscriptTextView.swift` (or equivalent)
 
 Display speaker labels as colored headers before each speaker turn:
 
@@ -266,7 +266,7 @@ Show per-speaker analytics at the top of the transcript:
 
 #### 4.1 Update all export formats
 
-**File:** `Sources/MacParakeetCore/Services/ExportService.swift`
+**File:** `Sources/SottoCore/Services/ExportService.swift`
 
 When `speakerCount > 0`, include speaker labels. Resolve display labels from `speakers` mapping.
 
@@ -311,18 +311,18 @@ if isLast || endsWithPunctuation || hasLongGap || tooManyWords || tooLong || spe
 
 | Action | File | Notes |
 |--------|------|-------|
-| Edit | `Sources/MacParakeetCore/Models/Transcription.swift` | Add `speakerId` to `WordTimestamp`, `SpeakerInfo` struct, `DiarizationSegmentRecord`, update `speakers` type |
-| Add | `Sources/MacParakeetCore/Services/DiarizationService.swift` | New service wrapping FluidAudio |
-| Add | `Sources/MacParakeetCore/Services/SpeakerMerger.swift` | Pure merge function |
-| Edit | `Sources/MacParakeetCore/Services/TranscriptionService.swift` | Integrate diarization after ASR |
-| Edit | `Sources/MacParakeetCore/Services/ExportService.swift` | Speaker labels in all formats |
-| Edit | `Sources/MacParakeetViewModels/OnboardingViewModel.swift` | Diarization model download step |
-| Edit | `Sources/MacParakeetViewModels/TranscriptionViewModel.swift` | Speaker rename, analytics |
-| Edit | `Sources/MacParakeet/Views/Transcription/` | Speaker UI (labels, colors, rename) |
-| Add | `Tests/MacParakeetTests/Services/SpeakerMergerTests.swift` | Merge algorithm tests |
-| Add | `Tests/MacParakeetTests/Services/DiarizationServiceTests.swift` | Service protocol tests |
-| Edit | `Tests/MacParakeetTests/Services/ExportServiceTests.swift` | Speaker export tests |
-| Edit | `Tests/MacParakeetTests/Models/TranscriptionModelTests.swift` | speakerId encoding tests |
+| Edit | `Sources/SottoCore/Models/Transcription.swift` | Add `speakerId` to `WordTimestamp`, `SpeakerInfo` struct, `DiarizationSegmentRecord`, update `speakers` type |
+| Add | `Sources/SottoCore/Services/DiarizationService.swift` | New service wrapping FluidAudio |
+| Add | `Sources/SottoCore/Services/SpeakerMerger.swift` | Pure merge function |
+| Edit | `Sources/SottoCore/Services/TranscriptionService.swift` | Integrate diarization after ASR |
+| Edit | `Sources/SottoCore/Services/ExportService.swift` | Speaker labels in all formats |
+| Edit | `Sources/SottoViewModels/OnboardingViewModel.swift` | Diarization model download step |
+| Edit | `Sources/SottoViewModels/TranscriptionViewModel.swift` | Speaker rename, analytics |
+| Edit | `Sources/Sotto/Views/Transcription/` | Speaker UI (labels, colors, rename) |
+| Add | `Tests/SottoTests/Services/SpeakerMergerTests.swift` | Merge algorithm tests |
+| Add | `Tests/SottoTests/Services/DiarizationServiceTests.swift` | Service protocol tests |
+| Edit | `Tests/SottoTests/Services/ExportServiceTests.swift` | Speaker export tests |
+| Edit | `Tests/SottoTests/Models/TranscriptionModelTests.swift` | speakerId encoding tests |
 
 ## Dependencies
 

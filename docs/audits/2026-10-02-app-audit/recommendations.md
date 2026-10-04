@@ -62,7 +62,7 @@ is not the same as first launch with TCC, focus, hotkeys, downloads, clipboard
 insertion or relaunch. A dedicated console account is needed because AppPaths
 overrides do not isolate UserDefaults/Keychain/TCC.
 
-Create the documented disposable `macparakeet-e2e` account/host through an
+Create the documented disposable `sotto-e2e` account/host through an
 explicit owner setup step. Use intended signed candidate and preprovisioned
 model hashes. Execute and retain evidence for:
 

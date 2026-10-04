@@ -74,7 +74,7 @@ class NativeRunnerBoundaryTests(unittest.TestCase):
 
     def test_wait_for_notes_returns_once_persisted(self):
         with tempfile.TemporaryDirectory() as directory:
-            database = Path(directory) / "state" / "macparakeet.db"
+            database = Path(directory) / "state" / "sotto.db"
             database.parent.mkdir(parents=True)
             seed = sqlite3.connect(database)
             seed.execute("CREATE TABLE transcriptions (id TEXT PRIMARY KEY, userNotes TEXT)")
@@ -98,7 +98,7 @@ class NativeRunnerBoundaryTests(unittest.TestCase):
 
     def test_wait_for_notes_times_out_when_never_persisted(self):
         with tempfile.TemporaryDirectory() as directory:
-            database = Path(directory) / "state" / "macparakeet.db"
+            database = Path(directory) / "state" / "sotto.db"
             database.parent.mkdir(parents=True)
             seed = sqlite3.connect(database)
             seed.execute("CREATE TABLE transcriptions (id TEXT PRIMARY KEY, userNotes TEXT)")

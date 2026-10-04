@@ -3,22 +3,22 @@
 > Status: **Accepted**
 > Date: 2026-02-08
 > Current LLM scope (2026-09-07): removal of the original Qwen3-8B baseline remains historical fact. ADR-011 now governs a separate developer-gated Local MLX implementation; external providers/local CLI remain the public/default path.
-> Benchmark note (2026-07-16): the `155x` / `~66 MB` figures retained in the historical decision narrative are earlier FluidAudio measurements, not the current MacParakeet reference benchmark. Current M4 Pro results are ~81–93x steady realtime and 115–131 MB peak RSS by Parakeet build; use [`benchmarks/asr/`](../../benchmarks/asr/) and `spec/06-stt-engine.md` for current comparisons.
+> Benchmark note (2026-07-16): the `155x` / `~66 MB` figures retained in the historical decision narrative are earlier FluidAudio measurements, not the current Sotto reference benchmark. Current M4 Pro results are ~81–93x steady realtime and 115–131 MB peak RSS by Parakeet build; use [`benchmarks/asr/`](../../benchmarks/asr/) and `spec/06-stt-engine.md` for current comparisons.
 > Runtime Note (2026-02-13): Runtime/mechanism details in this ADR are historical and superseded by ADR-007. ADR-001 remains authoritative for STT model choice.
 > Note: GPU/LLM references (Qwen3-8B, "three-chip") are historical — the old on-device mlx-swift-lm path was removed 2026-02-23. Current LLM features use external providers or local CLI, while the speech runtime remains a two-chip architecture (CPU + ANE).
 > Amendment (2026-04-28): Parakeet remains the **primary/default** STT engine. It is no longer the only engine. ADR-021 adds WhisperKit as an optional local multilingual engine for languages outside Parakeet's coverage.
 > Amendment (2026-05-30): The Parakeet family now exposes both FluidAudio builds. Multilingual v3 remains the default/primary model chosen by this ADR; English-only v2 is an opt-in Parakeet model for users who want a faster no-auto-detect English path.
-> Amendment (2026-06-08): Nemotron 3.5 is added as an opt-in Beta local multilingual engine through FluidAudio/CoreML. Parakeet v3 remains the primary/default STT engine; Nemotron is not a default replacement until real MacParakeet corpus benchmarks justify promotion.
-> Amendment (2026-06-11): Nemotron Speech Streaming EN 0.6B (`english-1120ms`) is added as a second opt-in Beta build under the Nemotron engine, a peer of the multilingual build the way Parakeet v2 is a peer of v3. Parakeet v3 remains the primary/default STT engine; promotion of either Nemotron build still requires real MacParakeet corpus benchmarks.
+> Amendment (2026-06-08): Nemotron 3.5 is added as an opt-in Beta local multilingual engine through FluidAudio/CoreML. Parakeet v3 remains the primary/default STT engine; Nemotron is not a default replacement until real Sotto corpus benchmarks justify promotion.
+> Amendment (2026-06-11): Nemotron Speech Streaming EN 0.6B (`english-1120ms`) is added as a second opt-in Beta build under the Nemotron engine, a peer of the multilingual build the way Parakeet v2 is a peer of v3. Parakeet v3 remains the primary/default STT engine; promotion of either Nemotron build still requires real Sotto corpus benchmarks.
 > Amendment (2026-06-17): NVIDIA Parakeet Unified EN 0.6B (`unified`) is added as a third opt-in Parakeet build (English-only). Unlike the v2/v3 TDT builds it is a separate FluidAudio runtime (`UnifiedAsrManager`, no `AsrModelVersion`) served by a dedicated `ParakeetUnifiedEngine`, but it is presented to users as a Parakeet model. Parakeet v3 remains the primary/default; Unified provides strong English offline accuracy with punctuation/capitalization (FluidAudio v0.15.4 CoreML benchmark: 2.15% average / 1.68% aggregate WER on LibriSpeech test-clean; NVIDIA upstream card: 1.63% offline WER). Phase 1 shipped offline-only; the 2026-07-06 amendment below supersedes that initial runtime shape with FluidAudio's native low-latency streaming build (`parakeet-unified-2080ms`). Issue #520.
-> Amendment (2026-07-06): Parakeet Unified now uses FluidAudio's native `StreamingUnifiedAsrManager` (`parakeet-unified-2080ms`) for final file transcription, meeting finalization, recorded-file dictation, and live dictation preview. FluidAudio v0.15.4 exposes token timings from that manager, so MacParakeet converts them into word timestamps for exports and speaker alignment. Unified remains English-only, opt-in, and non-default.
+> Amendment (2026-07-06): Parakeet Unified now uses FluidAudio's native `StreamingUnifiedAsrManager` (`parakeet-unified-2080ms`) for final file transcription, meeting finalization, recorded-file dictation, and live dictation preview. FluidAudio v0.15.4 exposes token timings from that manager, so Sotto converts them into word timestamps for exports and speaker alignment. Unified remains English-only, opt-in, and non-default.
 > Amendment (2026-06-19, integrated 2026-06-27): Cohere Transcribe (`cohere-transcribe-03-2026`, 2B, Apache-2.0) is added as an opt-in local accuracy engine. It runs fully on-device through the FluidAudio CoreML SDK already vendored here (FluidAudio >= 0.15.4 exposes a public `CoherePipeline`/`CohereAsrConfig` and a q8 CoreML repo); no MLX runtime or other new dependency is required, unlike the MLX-only candidates (Qwen3-ASR, Moonshine), which stay deferred. The gold-standard benchmark (`benchmarks/asr/`, hardened + independently verified in PR #568) found Cohere the most accurate on-device engine (full-LibriSpeech macro WER 2.07% vs 2.38% Parakeet-unified; best Japanese), but with a decisive cost: high resident memory, heavier cold-start/model prep, and ~2.1 GB download. Decision: Parakeet v3 remains the primary/default; Cohere is explicit opt-in, batch-only, user-downloaded, warned in Settings for model size/memory, and routed through `STTRuntime` by `CohereTranscribeEngine`. It has no live dictation preview, no meeting live chunks, and no word timestamps.
 > Clarification (2026-07-16): "primary/default" describes the standard engine-family path. Locale-aware first-run setup selects WhisperKit when preferred languages contain no English and include Korean, Japanese, Chinese, or Cantonese; this does not overturn Parakeet's primary status for supported languages.
-> Amendment (2026-09-21): Orukeet (`orukeet`) is an optional Parakeet preview variant. ADR-026 keeps new FluidAudio-family models on an existing engine card; Orukeet rides the shared Parakeet TDT managers from its own pinned Core ML cache and must not fall back to NVIDIA v3. Parakeet v3 remains the primary/default. Native streaming, tail preview, and custom vocabulary stay off. Weights are CC BY-SA 4.0, user-downloaded, and not bundled. Vendor NeMo scores are not a MacParakeet accuracy claim. See the addendum below.
+> Amendment (2026-09-21): Orukeet (`orukeet`) is an optional Parakeet preview variant. ADR-026 keeps new FluidAudio-family models on an existing engine card; Orukeet rides the shared Parakeet TDT managers from its own pinned Core ML cache and must not fall back to NVIDIA v3. Parakeet v3 remains the primary/default. Native streaming, tail preview, and custom vocabulary stay off. Weights are CC BY-SA 4.0, user-downloaded, and not bundled. Vendor NeMo scores are not a Sotto accuracy claim. See the addendum below.
 
 ## Context
 
-MacParakeet needs a fast, accurate, local speech-to-text engine for macOS on Apple Silicon. The STT engine is the core of the product -- it must be fast enough for real-time dictation, accurate enough for professional use, and run entirely on-device to honor our local-only commitment (see ADR-002).
+Sotto needs a fast, accurate, local speech-to-text engine for macOS on Apple Silicon. The STT engine is the core of the product -- it must be fast enough for real-time dictation, accurate enough for professional use, and run entirely on-device to honor our local-only commitment (see ADR-002).
 
 The two leading local STT options are:
 
@@ -112,7 +112,7 @@ At 0.6B parameters (quantized to ~600MB on disk, ~1.5GB downloaded with tokenize
 
 ### Consequences Update
 
-The "Requires Python daemon" negative consequence from the original ADR is resolved. The pre-implementation concern about a very large full CoreML repo download is mitigated in current FluidAudio usage: MacParakeet fetches only the loaded components, roughly ~465 MB per Parakeet build.
+The "Requires Python daemon" negative consequence from the original ADR is resolved. The pre-implementation concern about a very large full CoreML repo download is mitigated in current FluidAudio usage: Sotto fetches only the loaded components, roughly ~465 MB per Parakeet build.
 
 See `docs/research/fluidaudio-stt-migration.md` for the full evaluation.
 
@@ -130,9 +130,9 @@ See ADR-021 for the full decision.
 
 Parakeet remains the default engine for dictation, file transcription, and meeting recording. Nemotron 3.5 ASR Streaming 0.6B is available as an explicit Beta local engine through FluidAudio/CoreML. It can be selected in Settings or per CLI invocation, and active meeting recordings capture the engine/language at start so live preview, final transcription, and crash recovery stay deterministic.
 
-Nemotron is labeled Beta because the first MacParakeet smoke benchmark showed strong warm-path speed but weaker English-heavy transcript quality than Parakeet on the synthetic corpus. It should not replace Parakeet as the default without a larger real-world dictation/meeting benchmark.
+Nemotron is labeled Beta because the first Sotto smoke benchmark showed strong warm-path speed but weaker English-heavy transcript quality than Parakeet on the synthetic corpus. It should not replace Parakeet as the default without a larger real-world dictation/meeting benchmark.
 
-> Amendment (2026-06-20): MacParakeet now preserves FluidAudio's Nemotron token
+> Amendment (2026-06-20): Sotto now preserves FluidAudio's Nemotron token
 > timings through `finishWithTokenTimings()` and maps them into `STTResult.words`
 > for both Nemotron builds. Timed transcript views, subtitle exports, and
 > meeting speaker-turn assembly can therefore use Nemotron timestamps when the
@@ -159,7 +159,7 @@ Nemotron model preference (Settings build picker, `config set nemotron-model`,
   `research/stt-models-voice-personalization` branch pending merge).
 
 Scope notes: file and meeting jobs run batch-at-stop through the streaming
-manager; MacParakeet maps FluidAudio token timings into word-level timestamps
+manager; Sotto maps FluidAudio token timings into word-level timestamps
 when the EN build reports them, and only the 1120 ms tier is surfaced. Build
 swaps follow the same scheduler guards as
 Parakeet v2/v3 swaps (ADR-016). License posture: FluidAudio and its CoreML
@@ -175,7 +175,7 @@ verifiable, so the model stays a user-triggered download — never bundled.
 
 Both Nemotron builds remain Beta; standard-path fresh installs default to
 Parakeet v3, with the locale-aware WhisperKit onboarding exception above.
-Promotion criteria are unchanged: real MacParakeet corpus benchmarks
+Promotion criteria are unchanged: real Sotto corpus benchmarks
 (dictation + meeting audio with corrected transcripts), not vendor numbers.
 
 ## Addendum: Parakeet Unified English Build (June 2026)
@@ -205,13 +205,13 @@ LibriSpeech test-clean set (2620 files) puts the **offline** build at **2.15%
 average WER / 1.68% aggregate WER** with punctuation/capitalization, while
 NVIDIA's own model card reports 1.63% offline test-clean WER. It is a
 competitive English opt-in, not a v3 replacement. Unlike v2/v3 it was also
-trained for streaming; MacParakeet now uses the native streaming path for final
+trained for streaming; Sotto now uses the native streaming path for final
 transcripts because FluidAudio v0.15.4 exposes token timings there.
 
 Scope notes: file, meeting, final dictation-paste jobs, and live dictation
 preview use FluidAudio's native low-latency streaming build
 (`parakeet-unified-2080ms`, `StreamingUnifiedAsrManager`, ~2.08 s partials).
-The build exposes token-derived word-level timestamps through MacParakeet, so
+The build exposes token-derived word-level timestamps through Sotto, so
 exports and speaker alignment work the same way they do for other timestamped
 engines. Build swaps follow the same scheduler guards as v2/v3 swaps (ADR-016).
 License posture: FluidAudio's conversion is Apache-2.0 and the
@@ -231,7 +231,7 @@ Leaderboard) as a candidate on-device engine. PR #602 integrates it as an
 explicit opt-in engine for accuracy-critical record-then-transcribe work.
 
 **It is FluidAudio CoreML, not MLX.** FluidAudio ≥ 0.15.4 — the exact SDK
-MacParakeet already depends on — ships a public `CoherePipeline` actor and a q8
+Sotto already depends on — ships a public `CoherePipeline` actor and a q8
 CoreML model repo (`FluidInference/cohere-transcribe-03-2026-coreml`). So Cohere
 needs **no new runtime**: `CohereTranscribeEngine` wraps the FluidAudio pipeline,
 routes inside `STTRuntime`, and uses a user-triggered `cohere-transcribe` model
@@ -270,11 +270,11 @@ candidate landscape.
 
 The Parakeet model picker exposes Orukeet next to v3, v2, and Unified. It is selected through the same persisted Parakeet preference (Settings build picker, `config set parakeet-model orukeet`, `models select parakeet-orukeet`, or `transcribe --parakeet-model orukeet`).
 
-Orukeet is Oruk's adaptation of Parakeet v3, published as a portable Core ML archive at [oruk/orukeet](https://huggingface.co/oruk/orukeet) revision `43142dd1897f9ddadcd70173fcb5ff45c08aa951`. MacParakeet verifies that archive against a pinned size and SHA-256, compiles it on the destination Mac, and keeps the cache separate from NVIDIA v3. `ParakeetModelVariant.orukeet` has no `AsrModelVersion`. The shared TDT `AsrManager` pair loads those local components explicitly, so a missing Orukeet cache cannot silently download stock v3 weights. Transcription results record `engine=parakeet` and `engineVariant=orukeet`.
+Orukeet is Oruk's adaptation of Parakeet v3, published as a portable Core ML archive at [oruk/orukeet](https://huggingface.co/oruk/orukeet) revision `43142dd1897f9ddadcd70173fcb5ff45c08aa951`. Sotto verifies that archive against a pinned size and SHA-256, compiles it on the destination Mac, and keeps the cache separate from NVIDIA v3. `ParakeetModelVariant.orukeet` has no `AsrModelVersion`. The shared TDT `AsrManager` pair loads those local components explicitly, so a missing Orukeet cache cannot silently download stock v3 weights. Transcription results record `engine=parakeet` and `engineVariant=orukeet`.
 
 It earns a variant slot, not an engine card. Callers already choose a Parakeet build for this shape of model, and ADR-026 says new models join an existing family. Batch dictation, imported files, and existing meeting chunks use that path. Native live dictation, tail-window preview, and recognition-time vocabulary boosting stay disabled.
 
-The published NeMo evaluation on the model card is not a MacParakeet corpus result and does not promote Orukeet over v3. Standard-path installs still default to Parakeet v3. The weights are CC BY-SA 4.0 and are never bundled.
+The published NeMo evaluation on the model card is not a Sotto corpus result and does not promote Orukeet over v3. Standard-path installs still default to Parakeet v3. The weights are CC BY-SA 4.0 and are never bundled.
 
 ## References
 

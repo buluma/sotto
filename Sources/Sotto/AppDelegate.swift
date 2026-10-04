@@ -1,0 +1,1308 @@
+import AppKit
+import SottoCore
+import SottoViewModels
+
+@MainActor
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    // MARK: - Runtime Services
+
+    private var appEnvironment: AppEnvironment?
+    private var shareStopObserver: NSObjectProtocol?
+    private let shareManagementViewModel: ShareManagementViewModel? =
+        AppFeatures.isShareLinksAvailable() ? ShareManagementViewModel() : nil
+    private var hotkeyCoordinator: AppHotkeyCoordinator?
+    private var dictationFlowCoordinator: DictationFlowCoordinator?
+    private var meetingRecordingFlowCoordinator: MeetingRecordingFlowCoordinator?
+    private var meetingAutoStartCoordinator: MeetingAutoStartCoordinator?
+    private var meetingAutoStopCoordinator: MeetingAutoStopCoordinator?
+    /// Productized Transforms coordinator (ADR-022). Owns the process-wide
+    /// `TransformsHotkeyRegistry` + dispatch from registered hotkeys to the
+    /// `TransformExecutor` pipeline. Gated on `AppFeatures.transformsEnabled`.
+    private var transformsCoordinator: TransformsCoordinator?
+    private var voiceControlCoordinator: VoiceControlCoordinator?
+    private var hasPresentedHotkeyUnavailableAlert = false
+    private var hasPresentedHotkeyConflictAlert = false
+    private var environmentSetupTask: Task<Void, Never>?
+    private var meetingQuitTask: Task<Void, Never>?
+    private let savedMeetingNotesCoordinator = SavedMeetingNotesCoordinator.shared
+    private var isPresentingQuitAlert = false
+    private var speechPreWarmTask: Task<Void, Never>?
+    private var instantDictationPreferenceTask: Task<Void, Never>?
+    #if DEBUG
+    private var debugDictationPreviewQA: DebugDictationPreviewQA?
+    #endif
+    private var instantDictationPreferenceGeneration = 0
+    private var activeHotkeyRecorderSessions = 0
+    private var isHotkeyRecorderActive: Bool { activeHotkeyRecorderSessions > 0 }
+    // Let first paint and onboarding routing settle before starting CoreML cache work.
+    private let preWarmDeferralMs: Int = 1500
+
+    // MARK: - View Models
+
+    private let transcriptionViewModel = TranscriptionViewModel()
+    private let historyViewModel = DictationHistoryViewModel()
+    private let settingsViewModel = SettingsViewModel()
+    private let customWordsViewModel = CustomWordsViewModel()
+    private let textSnippetsViewModel = TextSnippetsViewModel()
+    private let vocabularyBackupViewModel = VocabularyBackupViewModel()
+    private let feedbackViewModel = FeedbackViewModel()
+    private let discoverViewModel = DiscoverViewModel()
+    private let libraryViewModel = TranscriptionLibraryViewModel()
+    private let askWorkspaceViewModel = AskWorkspaceViewModel()
+    /// One shared app-owned handle for native Split and transcribe: created
+    /// eagerly (before `AppEnvironment` exists) and `configure`d once it does,
+    /// so a single running batch survives the sheet closing and is reachable
+    /// from every entry point (`TranscriptResultView`, `TranscriptionLibraryView`,
+    /// `MeetingsView`) without duplicating state per view.
+    private let meetingSplitViewModel = MeetingSplitViewModel()
+    private let meetingImportViewModel = MeetingImportViewModel()
+    private let meetingsLibraryViewModel = TranscriptionLibraryViewModel(scope: .meetings)
+    private let llmSettingsViewModel = LLMSettingsViewModel()
+    /// Its service arrives from `setupEnvironment`: building it with one here
+    /// would capture whatever `appEnvironment` held at first access, which can
+    /// be nil, leaving a screen that silently reads and deletes nothing.
+    private let voiceProfilesViewModel = VoiceProfilesViewModel()
+    private let chatViewModel = TranscriptChatViewModel()
+    private let promptResultsViewModel = PromptResultsViewModel()
+    private let promptsViewModel = PromptsViewModel()
+    private let transformsViewModel = TransformsViewModel()
+    private let mainWindowState = MainWindowState()
+    /// Long-lived companion for the meeting recording pill + Transcribe-tab tile.
+    /// `MeetingRecordingFlowCoordinator` writes state into it; both the floating
+    /// pill and the tile bind to the same instance.
+    private let meetingPillViewModel = MeetingRecordingPillViewModel()
+    private lazy var meetingsWorkspaceViewModel = MeetingsWorkspaceViewModel(
+        recentMeetingsViewModel: meetingsLibraryViewModel,
+        meetingPillViewModel: meetingPillViewModel,
+        settingsViewModel: settingsViewModel,
+        llmSettingsViewModel: llmSettingsViewModel
+    )
+    private let onboardingWindowController = OnboardingWindowController()
+
+    private lazy var youtubeInputController = YouTubeInputPanelController(
+        transcriptionViewModel: transcriptionViewModel
+    )
+
+    // MARK: - Coordinators
+
+    private let startupBootstrapper = AppStartupBootstrapper()
+    private let meetingAudioRetentionSweepCoordinator = MeetingAudioRetentionSweepCoordinator()
+
+    private lazy var environmentConfigurer = AppEnvironmentConfigurer(
+        transcriptionViewModel: transcriptionViewModel,
+        historyViewModel: historyViewModel,
+        settingsViewModel: settingsViewModel,
+        customWordsViewModel: customWordsViewModel,
+        textSnippetsViewModel: textSnippetsViewModel,
+        vocabularyBackupViewModel: vocabularyBackupViewModel,
+        libraryViewModel: libraryViewModel,
+        askWorkspaceViewModel: askWorkspaceViewModel,
+        meetingsWorkspaceViewModel: meetingsWorkspaceViewModel,
+        llmSettingsViewModel: llmSettingsViewModel,
+        chatViewModel: chatViewModel,
+        promptResultsViewModel: promptResultsViewModel,
+        promptsViewModel: promptsViewModel,
+        transformsViewModel: transformsViewModel,
+        mainWindowState: mainWindowState,
+        meetingPillViewModel: meetingPillViewModel
+    )
+
+    /// Drives the no-STT key rehearsal on the onboarding Try It card. Reads the
+    /// user's configured hands-free and push-to-talk triggers at arm time,
+    /// since the environment is set asynchronously after launch. The AI-polish
+    /// and clipboard extras are left out so they cannot light the wrong cap.
+    private lazy var onboardingHotkeyPreviewController: OnboardingHotkeyPreviewController = {
+        let controller = OnboardingHotkeyPreviewController(
+            planProvider: { [weak self] in
+                guard let self else { return .init(specs: [], conflict: nil) }
+                return AppHotkeyCoordinator.dictationHotkeyPlan(
+                    handsFree: self.settingsViewModel.hotkeyTrigger,
+                    pushToTalk: self.settingsViewModel.pushToTalkHotkeyTrigger
+                )
+            },
+            suspendProductionHotkeys: { [weak self] in self?.hotkeyCoordinator?.suspend() },
+            resumeProductionHotkeys: { [weak self] in self?.hotkeyCoordinator?.resume() }
+        )
+        controller.onKeyStateChanged = { [weak self] key in
+            self?.onboardingWindowController.currentViewModel?.hotkeyRehearsalChanged(key)
+        }
+        return controller
+    }()
+
+    private lazy var onboardingCoordinator = OnboardingCoordinator(
+        onboardingWindowController: onboardingWindowController,
+        settingsViewModel: settingsViewModel,
+        transformsViewModel: transformsViewModel,
+        onRefreshHotkeys: { [weak self] in
+            self?.hotkeyCoordinator?.refreshAllHotkeys()
+            self?.menuBarCoordinator.refreshHotkeyTitle()
+            self?.menuBarCoordinator.refreshMeetingHotkeyShortcut()
+            self?.menuBarCoordinator.refreshTranscriptionHotkeyShortcuts()
+            self?.transformsCoordinator?.reloadBindings()
+        },
+        onOpenSettings: { [weak self] in
+            self?.windowCoordinator.openMainWindowToSettings()
+        },
+        onCompleted: { [weak self] in
+            guard let self, let env = self.appEnvironment else { return }
+            self.scheduleDeferredSpeechPreWarm(environment: env)
+        },
+        onHotkeyPreviewArm: { [weak self] in
+            self?.onboardingHotkeyPreviewController.arm()
+        },
+        onHotkeyPreviewDisarm: { [weak self] in
+            self?.onboardingHotkeyPreviewController.disarm()
+        },
+        onShortcutRecordingChanged: { [weak self] isRecording in
+            self?.setGlobalHotkeysSuspendedForRecorder(isRecording)
+        },
+        onShortcutBindingsChanged: { [weak self] in
+            self?.onboardingHotkeyPreviewController.refreshBindings()
+            self?.menuBarCoordinator.refreshHotkeyTitle()
+        }
+    )
+
+    private lazy var meetingRecoveryCoordinator = MeetingRecoveryCoordinator(
+        environmentProvider: { [weak self] in
+            self?.appEnvironment
+        },
+        settingsViewModel: settingsViewModel,
+        libraryViewModel: libraryViewModel,
+        onRecoveredTranscriptionsChanged: { [weak self] in
+            self?.meetingsWorkspaceViewModel.refreshRecentMeetings()
+        },
+        onPresentRecoveredTranscription: { [weak self] transcription in
+            guard let self else { return }
+            // Keep recovery input intact while it is turned back into a
+            // transcript; the scheduled retention sweep can apply after the
+            // lock is gone.
+            self.transcriptionViewModel.presentCompletedTranscription(
+                transcription,
+                autoSave: true,
+                runAutoPrompts: true,
+                applyMeetingRetention: false
+            )
+            self.mainWindowState.navigateToTranscription(from: .library)
+            self.windowCoordinator.openMainWindow()
+        }
+    )
+
+    private lazy var windowCoordinator = AppWindowCoordinator(
+        mainWindowState: mainWindowState,
+        transcriptionViewModel: transcriptionViewModel,
+        historyViewModel: historyViewModel,
+        settingsViewModel: settingsViewModel,
+        llmSettingsViewModel: llmSettingsViewModel,
+        voiceProfilesViewModel: voiceProfilesViewModel,
+        chatViewModel: chatViewModel,
+        promptResultsViewModel: promptResultsViewModel,
+        promptsViewModel: promptsViewModel,
+        transformsViewModel: transformsViewModel,
+        customWordsViewModel: customWordsViewModel,
+        textSnippetsViewModel: textSnippetsViewModel,
+        vocabularyBackupViewModel: vocabularyBackupViewModel,
+        feedbackViewModel: feedbackViewModel,
+        discoverViewModel: discoverViewModel,
+        libraryViewModel: libraryViewModel,
+        askWorkspaceViewModel: askWorkspaceViewModel,
+        meetingsWorkspaceViewModel: meetingsWorkspaceViewModel,
+        meetingPillViewModel: meetingPillViewModel,
+        meetingSplitViewModel: meetingSplitViewModel,
+        meetingImportViewModel: meetingImportViewModel,
+        shareManagementViewModel: shareManagementViewModel,
+        onRecordMeeting: { [weak self] in
+            self?.toggleMeetingRecording(originatesFromWindow: true)
+        },
+        onOpenAskSource: { [weak self] id in
+            guard let self, let repository = self.appEnvironment?.transcriptionRepo else { return }
+            Task { @MainActor [weak self] in
+                let transcription = try? await Task.detached(priority: .userInitiated) {
+                    try repository.fetch(id: id)
+                }.value
+                guard let self, self.mainWindowState.selectedItem == .ask,
+                      let transcription else { return }
+                self.transcriptionViewModel.currentTranscription = transcription
+                self.mainWindowState.navigateToTranscription(from: .ask)
+            }
+        },
+        onRecordMeetingFromWorkspace: { [weak self] in
+            self?.startMeetingRecordingFromWorkspace()
+        },
+        onPauseToggleMeeting: { [weak self] in
+            self?.meetingRecordingFlowCoordinator?.togglePause()
+        },
+        onHotkeyRecordingStateChanged: { [weak self] isRecording in
+            self?.setGlobalHotkeysSuspendedForRecorder(isRecording)
+        },
+        onQuit: { [weak self] in
+            self?.quitApp()
+        },
+        isOnboardingVisible: { [weak self] in
+            self?.onboardingWindowController.isVisible ?? false
+        }
+    )
+
+    private lazy var menuBarCoordinator = MenuBarCoordinator(
+        transcriptionViewModel: transcriptionViewModel,
+        youtubeInputController: youtubeInputController,
+        environmentProvider: { [weak self] in
+            self?.appEnvironment
+        },
+        hotkeyMenuTitleProvider: { [weak self] in
+            self?.hotkeyMenuTitle
+                ?? AppHotkeyCoordinator.menuTitle(handsFree: .defaultDictation, pushToTalk: .defaultPushToTalk)
+        },
+        meetingHotkeyTriggerProvider: { [weak self] in
+            self?.settingsViewModel.meetingHotkeyTrigger ?? .defaultMeetingRecording
+        },
+        fileTranscriptionHotkeyTriggerProvider: { [weak self] in
+            self?.settingsViewModel.fileTranscriptionHotkeyTrigger ?? .disabled
+        },
+        youtubeTranscriptionHotkeyTriggerProvider: { [weak self] in
+            self?.settingsViewModel.youtubeTranscriptionHotkeyTrigger ?? .disabled
+        },
+        meetingRecordingActiveProvider: { [weak self] in
+            self?.meetingRecordingFlowCoordinator?.isMeetingRecordingActive == true
+        },
+        liveMeetingPanelAvailableProvider: { [weak self] in
+            self?.meetingRecordingFlowCoordinator?.canPresentLiveMeetingPanel == true
+        },
+        dictationCaptureActiveProvider: { [weak self] in
+            self?.dictationFlowCoordinator?.isCapturingAudio == true
+        },
+        onOpenMainWindow: { [weak self] in
+            self?.windowCoordinator.openMainWindow()
+        },
+        onOpenSettings: { [weak self] in
+            self?.windowCoordinator.openMainWindowToSettings()
+        },
+        onNavigate: { [weak self] item in
+            self?.mainWindowState.navigate(to: item)
+        },
+        onNewTranscription: { [weak self] in
+            self?.transcriptionViewModel.showInputPortal()
+            self?.mainWindowState.startNewTranscription()
+        },
+        onStartDictation: { [weak self] in
+            self?.dictationFlowCoordinator?.startDictation(mode: .persistent, trigger: .menuBar)
+        },
+        onToggleMeetingRecording: { [weak self] in
+            self?.toggleMeetingRecording(originatesFromWindow: false)
+        },
+        onOpenLiveMeetingPanel: { [weak self] in
+            self?.meetingRecordingFlowCoordinator?.presentLiveMeetingPanel()
+        },
+        onCreateTransform: { [weak self] in
+            self?.mainWindowState.beginCreatingTransform()
+        },
+        onQuit: { [weak self] in
+            self?.quitApp()
+        },
+        onShowAboutPanel: { [weak self] in
+            self?.showAboutPanel()
+        }
+    )
+
+    private lazy var settingsObserverCoordinator = AppSettingsObserverCoordinator(
+        onOpenOnboarding: { [weak self] in
+            guard let self else { return }
+            self.onboardingCoordinator.show(environment: self.appEnvironment)
+        },
+        onOpenSettings: { [weak self] tab in
+            self?.windowCoordinator.openMainWindowToSettings(tab: tab)
+        },
+        onHotkeyTriggerChanged: { [weak self] in
+            self?.handleHotkeyTriggerChange()
+        },
+        onPushToTalkHotkeyTriggerChanged: { [weak self] in
+            self?.handleHotkeyTriggerChange()
+        },
+        onMeetingHotkeyTriggerChanged: { [weak self] in
+            self?.handleMeetingHotkeyTriggerChange()
+        },
+        onFileTranscriptionHotkeyTriggerChanged: { [weak self] in
+            self?.handleFileTranscriptionHotkeyTriggerChange()
+        },
+        onYouTubeTranscriptionHotkeyTriggerChanged: { [weak self] in
+            self?.handleYouTubeTranscriptionHotkeyTriggerChange()
+        },
+        onDictationAIPolishHotkeyTriggerChanged: { [weak self] in
+            self?.handleHotkeyTriggerChange()
+        },
+        onAppearanceModeChanged: { [weak self] in
+            self?.applyAppAppearance()
+        },
+        onMenuBarOnlyModeChanged: { [weak self] in
+            self?.windowCoordinator.applyActivationPolicyFromSettings()
+        },
+        onMenuBarIconVisibilityChanged: { [weak self] in
+            guard let self else { return }
+            self.menuBarCoordinator.setMenuBarIconVisible(self.settingsViewModel.showMenuBarIcon)
+        },
+        onShowIdlePillChanged: { [weak self] in
+            self?.handleShowIdlePillChange()
+        },
+        onShowDiscoverChanged: { [weak self] in
+            self?.setupDiscoverContent()
+        },
+        onShowMeetingRecordingPillChanged: { [weak self] in
+            self?.handleShowMeetingRecordingPillChange()
+        },
+        onInstantDictationChanged: { [weak self] in
+            self?.applyInstantDictationPreference(refreshWarmCapture: false)
+        },
+        onMicrophoneSelectionChanged: { [weak self] in
+            self?.applyInstantDictationPreference(refreshWarmCapture: true)
+        },
+        onMeetingAudioRetentionChanged: { [weak self] in
+            self?.scheduleMeetingAudioRetentionSweepForPreferenceChange()
+        }
+    )
+
+    // MARK: - App Lifecycle
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        // Process boot marker for the audio diagnostics log. The dev app and
+        // `swift test` write into the same on-disk file
+        // (`~/Library/Logs/Sotto/dictation-audio.log`); without this
+        // marker, splitting transitions across processes/relaunches has to be
+        // inferred. See journal/2026-05-03-dictation-silent-stall.md.
+        let identity = BuildIdentity.current
+        AudioCaptureDiagnostics.append(
+            "dictation_diagnostics_session_start pid=\(getpid()) version=\(identity.version) build=\(identity.buildNumber) source=\(identity.buildSource) commit=\(identity.gitCommit)"
+        )
+
+        if isRunningFromDiskImage() {
+            showMoveToApplicationsAlert()
+            return
+        }
+
+        applyAppAppearance()
+        startEnvironmentSetup()
+        menuBarCoordinator.setupMainMenu()
+        menuBarCoordinator.setMenuBarIconVisible(settingsViewModel.showMenuBarIcon)
+        settingsObserverCoordinator.startObserving()
+        windowCoordinator.applyActivationPolicyFromSettings()
+        setupDiscoverContent()
+        #if DEBUG
+        showDebugDictationPreviewQAIfRequested()
+        DebugMainThreadStall.startIfRequested()
+        #endif
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        if let shareStopObserver {
+            DistributedNotificationCenter.default().removeObserver(shareStopObserver)
+            self.shareStopObserver = nil
+        }
+        // Telemetry.flushForTermination() is handled by TelemetryService's own
+        // NSApplicationWillTerminateNotification observer — calling it here too
+        // would send duplicate appQuit events and double the termination delay.
+        dictationFlowCoordinator?.releaseMediaPauseForTermination()
+        dictationFlowCoordinator?.hideIdlePill()
+        // Tear down the floating meeting pill so it can't outlive the app as a
+        // draggable-but-dead window during the final moments of termination.
+        meetingRecordingFlowCoordinator?.dismissFloatingPillForQuit()
+        hotkeyCoordinator?.stopAll()
+        meetingAutoStartCoordinator?.stop()
+        meetingAutoStopCoordinator?.stop()
+        transformsCoordinator?.stop()
+        voiceControlCoordinator?.shutdown()
+        settingsObserverCoordinator.stopObserving()
+        environmentSetupTask?.cancel()
+        speechPreWarmTask?.cancel()
+
+        // Bound the wait so termination does not hang, while still giving shutdown
+        // a brief window to release resources cleanly.
+        if let sttScheduler = appEnvironment?.sttScheduler {
+            let done = DispatchSemaphore(value: 0)
+            Task.detached(priority: .utility) {
+                await sttScheduler.shutdown()
+                done.signal()
+            }
+            _ = done.wait(timeout: .now() + 0.35)
+        }
+    }
+
+    #if DEBUG
+    private func showDebugDictationPreviewQAIfRequested() {
+        let arguments = CommandLine.arguments
+        guard DebugDictationPreviewQA.isRequested(arguments: arguments) else { return }
+        let fixture = DebugDictationPreviewQA(arguments: arguments)
+        fixture.show()
+        debugDictationPreviewQA = fixture
+    }
+    #endif
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        // Don't quit when window closes — dictation/menu bar features stay available.
+        false
+    }
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        // Repeated Quit commands share the original deferred decision. Do not
+        // replace its completion or cancel it while notes are being saved.
+        if savedMeetingNotesCoordinator.isPreparingToQuit { return .terminateLater }
+        guard !isPresentingQuitAlert else { return .terminateCancel }
+        if savedMeetingNotesCoordinator.prepareToQuit(completion: { [weak self, weak sender] saved in
+            guard let sender else { return }
+            guard let self else {
+                sender.reply(toApplicationShouldTerminate: false)
+                return
+            }
+            if !saved {
+                sender.reply(toApplicationShouldTerminate: false)
+                self.presentMeetingNotesQuitFailure(sender)
+            } else if self.meetingRecordingFlowCoordinator?.quitState != nil {
+                // Resume the existing recording-specific confirmation only
+                // after saved-meeting drafts are durable. Its completion calls
+                // terminate again after recording finalization.
+                sender.reply(toApplicationShouldTerminate: false)
+                _ = self.presentActiveMeetingQuitAlert()
+            } else {
+                sender.reply(toApplicationShouldTerminate: true)
+            }
+        }) {
+            return .terminateLater
+        }
+
+        guard meetingRecordingFlowCoordinator?.quitState != nil else {
+            return .terminateNow
+        }
+
+        guard meetingQuitTask == nil else {
+            return .terminateCancel
+        }
+
+        return presentActiveMeetingQuitAlert()
+    }
+
+    private func presentMeetingNotesQuitFailure(_ sender: NSApplication) {
+        guard !isPresentingQuitAlert else { return }
+        isPresentingQuitAlert = true
+        sender.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Meeting Notes Could Not Be Saved"
+        alert.informativeText =
+            "Sotto is staying open to preserve your notes. Retry saving before quitting, or keep the app open and return to the meeting."
+        alert.addButton(withTitle: "Retry & Quit")
+        alert.addButton(withTitle: "Keep Open")
+        let response = alert.runModal()
+        isPresentingQuitAlert = false
+        if response == .alertFirstButtonReturn {
+            sender.terminate(nil)
+        }
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows _: Bool) -> Bool {
+        windowCoordinator.handleAppReopen()
+    }
+
+    func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
+        windowCoordinator.makeDockMenu()
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) {
+        settingsViewModel.refreshPermissions()
+        onboardingCoordinator.handleApplicationDidBecomeActive(environment: appEnvironment)
+        if let appEnvironment {
+            meetingAudioRetentionSweepCoordinator.scheduleForegroundSweepIfDue(environment: appEnvironment)
+        }
+        if let sharing = shareManagementViewModel { Task { await sharing.refresh() } }
+    }
+
+    // MARK: - Startup
+
+    private func startEnvironmentSetup() {
+        environmentSetupTask?.cancel()
+        environmentSetupTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let env = try await startupBootstrapper.bootstrapEnvironment()
+                guard !Task.isCancelled else { return }
+                setupEnvironment(env)
+            } catch is CancellationError {
+                return
+            } catch {
+                presentEnvironmentSetupError(error)
+            }
+        }
+    }
+
+    private func setupEnvironment(_ env: AppEnvironment) {
+        appEnvironment = env
+        if let shareStopObserver {
+            DistributedNotificationCenter.default().removeObserver(shareStopObserver)
+            self.shareStopObserver = nil
+        }
+        if let coordinator = env.shareCoordinator, let sharing = shareManagementViewModel {
+            shareStopObserver = DistributedNotificationCenter.default().addObserver(
+                forName: .sottoShareStopQueued, object: nil, queue: .main
+            ) { _ in
+                Task { await coordinator.resumePendingWork() }
+            }
+            let reader = env.speakerAttributionReader
+            let results = env.promptResultRepo
+            sharing.configure(service: coordinator) { id in
+                try await Task.detached(priority: .userInitiated) {
+                    guard let projection = try reader.resolve(transcriptionId: id) else {
+                        return nil as ShareDraftSource?
+                    }
+                    let source = projection.effectiveTranscription
+                    let summaries = try results.fetchAll(transcriptionId: id).map {
+                        ShareDraftSource.Summary(id: $0.id, title: $0.promptName, markdown: $0.content)
+                    }
+                    return ShareDraftSource(
+                        transcription: source, title: source.effectiveDisplayTitle, summaries: summaries)
+                }.value
+            }
+            Task { await sharing.refresh() }
+        }
+        voiceProfilesViewModel.configure(
+            // Always wired: the management screen must be able to delete
+            // voices that an earlier run stored, whatever this build allows.
+            service: env.speakerVoiceprintService
+        )
+        settingsViewModel.onAccessibilityGranted = { [weak self] in
+            self?.handleAccessibilityGrant()
+        }
+        meetingSplitViewModel.configure(
+            service: env.meetingSplitService,
+            recordingLookup: { [repository = env.transcriptionRepo] id in try repository.fetch(id: id) },
+            onChildrenPublished: { [weak self] in
+                self?.libraryViewModel.loadTranscriptions()
+                self?.meetingsWorkspaceViewModel.refreshRecentMeetings()
+            }
+        )
+        meetingImportViewModel.configure(
+            service: env.meetingImportService,
+            onMeetingPublished: { [weak self] _ in
+                self?.libraryViewModel.loadTranscriptions()
+                self?.meetingsWorkspaceViewModel.refreshRecentMeetings()
+            }
+        )
+
+        let runtime = environmentConfigurer.configure(
+            environment: env,
+            callbacks: .init(
+                onMenuBarIconUpdate: { [weak self] in
+                    self?.resolveAndUpdateMenuBarIcon()
+                },
+                onPresentEntitlementsAlert: { [weak self] error in
+                    self?.presentEntitlementsAlert(error)
+                },
+                onOpenMainWindow: { [weak self] in
+                    self?.windowCoordinator.openMainWindow()
+                },
+                onToggleMeetingRecordingFromHotkey: { [weak self] in
+                    guard let self, !self.onboardingWindowController.isVisible else { return }
+                    self.toggleMeetingRecording(originatesFromWindow: false, trigger: .hotkey)
+                },
+                onTriggerFileTranscriptionFromHotkey: { [weak self] in
+                    guard let self, !self.onboardingWindowController.isVisible else { return }
+                    self.triggerFileTranscriptionFromHotkey()
+                },
+                onTriggerYouTubeTranscriptionFromHotkey: { [weak self] in
+                    guard let self, !self.onboardingWindowController.isVisible else { return }
+                    self.triggerYouTubeTranscriptionFromHotkey()
+                },
+                onHotkeyBecameAvailable: { [weak self] in
+                    self?.hasPresentedHotkeyUnavailableAlert = false
+                    self?.hasPresentedHotkeyConflictAlert = false
+                },
+                onHotkeyUnavailable: { [weak self] in
+                    self?.presentHotkeyUnavailableAlertIfNeeded()
+                },
+                onHotkeyConflict: { [weak self] trigger, conflicts in
+                    self?.presentHotkeyConflictAlertIfNeeded(trigger: trigger, conflicts: conflicts)
+                },
+                onRecoverPendingMeetingRecordings: { [weak self] in
+                    self?.meetingRecoveryCoordinator.presentPendingMeetingRecoveryDialog()
+                },
+                isHotkeyRecordingActive: { [weak self] in
+                    self?.isHotkeyRecorderActive == true
+                },
+                isOnboardingBlockingDictation: { [weak self] in
+                    self?.onboardingWindowController.isBlockingDictation ?? false
+                }
+            )
+        )
+
+        dictationFlowCoordinator = runtime.dictationFlowCoordinator
+        dictationFlowCoordinator?.isPracticeTarget = { [weak self] in
+            self?.onboardingWindowController.isVisible == true
+                && self?.onboardingWindowController.currentViewModel?.isPracticeListening == true
+        }
+        onboardingWindowController.onPracticeExit = { [weak self] in
+            self?.dictationFlowCoordinator?.dismissPracticeDictation()
+        }
+        // Onboarding's practice box is a real dictation target. It lights the
+        // key while recording and confirms the words that arrived.
+        dictationFlowCoordinator?.onFlowStateChanged = { [weak self] state in
+            self?.onboardingWindowController.handleDictationFlowState(state)
+        }
+        dictationFlowCoordinator?.onDictationDelivered = { [weak self] text in
+            self?.onboardingWindowController.handleDictationDelivered(text)
+        }
+        meetingRecordingFlowCoordinator = runtime.meetingRecordingFlowCoordinator
+        hotkeyCoordinator = runtime.hotkeyCoordinator
+        meetingAutoStartCoordinator = runtime.meetingAutoStartCoordinator
+        meetingAutoStopCoordinator = runtime.meetingAutoStopCoordinator
+        applyInstantDictationPreference(refreshWarmCapture: false)
+
+        // Shared resolver for the user's LLM provider — returns the live
+        // service when a provider is configured, nil otherwise. Consumed by
+        // the Transforms coordinator below.
+        let configStore = env.llmConfigStore
+        let llmService = env.llmService
+        let llmServiceProvider: () -> LLMServiceProtocol? = { [weak configStore, llmService] in
+            guard let configStore else { return nil }
+            return (try? configStore.loadConfig()) != nil ? llmService : nil
+        }
+
+        // Productized Transforms coordinator (ADR-022). Reads `.transform`
+        // prompts from the shared `PromptRepository` and dispatches their
+        // bound hotkeys through `TransformsHotkeyRegistry`. No-op when the
+        // feature flag is off.
+        let transforms = TransformsCoordinator(
+            llmServiceProvider: llmServiceProvider,
+            promptRepository: env.promptRepo,
+            historyRepository: env.transformHistoryRepo,
+            activeModelNameProvider: { [weak configStore] in
+                try? configStore?.loadConfig()?.modelName
+            },
+            reservedHotkeysProvider: { [weak self] in
+                self?.transformReservedHotkeysForTransforms() ?? []
+            },
+            onLLMProviderRequired: { [weak self] in
+                self?.windowCoordinator.openMainWindowToSettings(tab: .ai)
+            }
+        )
+        transforms.start()
+        transformsCoordinator = transforms
+        menuBarCoordinator.onPrepareMenuBarTransforms = { [weak transforms] frontmost in
+            transforms?.prepareMenuBarCapture(frontmostApplication: frontmost)
+        }
+        menuBarCoordinator.onRunMenuBarTransform = { [weak transforms] id in
+            transforms?.runFromMenuBar(promptID: id)
+        }
+        menuBarCoordinator.menuBarTransformsProvider = { [weak transforms] in
+            transforms?.menuBarListings() ?? []
+        }
+
+        if AppFeatures.isVoiceControlAvailable() {
+            let control = VoiceControlCoordinator(
+                sharedMicStream: env.sharedMicStream,
+                scheduler: env.sttScheduler,
+                adapter: NativeVoiceControlAdapter(
+                    screenText: UserDefaults.standard.bool(forKey: AppFeatures.voiceControlScreenTextDefaultsKey)
+                        ? VisionScreenTextReader() : nil),
+                rewrite: { [llmService = env.llmService] text, instruction in
+                    guard UserDefaults.standard.bool(forKey: "voiceControl.writingConsent.v1") else {
+                        throw VoiceControlWritingConsentRequired()
+                    }
+                    return try await llmService.transform(text: text, prompt: instruction)
+                },
+                onShortcutRecording: { [weak self] recording in
+                    if recording {
+                        self?.hotkeyCoordinator?.suspend()
+                        self?.transformsCoordinator?.suspendHotkeys()
+                    } else {
+                        self?.hotkeyCoordinator?.resume()
+                        self?.transformsCoordinator?.resumeHotkeys()
+                    }
+                },
+                onShortcutChanged: { [weak self] in self?.transformsCoordinator?.reloadBindings() },
+                isStartSuppressed: { [weak self] in self?.onboardingWindowController.isVisible ?? true },
+                conflictingHotkeys: { [weak self] in
+                    guard let self else { return [] }
+                    let transforms = (try? env.promptRepo.fetchVisible(category: .transform)) ?? []
+                    return [self.settingsViewModel.hotkeyTrigger, self.settingsViewModel.pushToTalkHotkeyTrigger,
+                            self.settingsViewModel.meetingHotkeyTrigger, self.settingsViewModel.fileTranscriptionHotkeyTrigger,
+                            self.settingsViewModel.youtubeTranscriptionHotkeyTrigger]
+                        + transforms.compactMap { $0.shortcut?.hotkeyTrigger }
+                }
+            )
+            voiceControlCoordinator = control
+            menuBarCoordinator.onVoiceControl = { [weak control] in control?.show() }
+            menuBarCoordinator.onInteractionBusy = { [weak control] in control?.explainInteractionBusy() }
+            dictationFlowCoordinator?.onInteractionBusy = { [weak control] in control?.explainInteractionBusy() }
+            control.installHotkey()
+        }
+
+        menuBarCoordinator.refreshHotkeyTitle()
+        menuBarCoordinator.refreshMeetingHotkeyShortcut()
+        menuBarCoordinator.refreshTranscriptionHotkeyShortcuts()
+        onboardingCoordinator.maybeShow(environment: env)
+        scheduleDeferredSpeechPreWarm(environment: env)
+        let recoveryTask = meetingRecoveryCoordinator.scheduleLaunchRecoveryScanIfReady(environment: env)
+        meetingAudioRetentionSweepCoordinator.scheduleLaunchSweep(environment: env, after: recoveryTask)
+    }
+
+    private func scheduleMeetingAudioRetentionSweepForPreferenceChange() {
+        guard let appEnvironment else { return }
+        meetingAudioRetentionSweepCoordinator.schedulePreferenceChangeSweep(environment: appEnvironment)
+    }
+
+    private func scheduleDeferredSpeechPreWarm(environment env: AppEnvironment) {
+        guard speechPreWarmTask == nil else { return }
+        let sttRuntime = env.sttRuntime
+        let vadModelPreparer = env.meetingVADModelPreparer
+        let deferralMs = preWarmDeferralMs
+        let onboardingCompletedKey = OnboardingViewModel.onboardingCompletedKey
+
+        speechPreWarmTask = Task(priority: .utility) { @MainActor [weak self, sttRuntime, vadModelPreparer] in
+            defer {
+                self?.speechPreWarmTask = nil
+            }
+
+            let onboardingDone = UserDefaults.standard.string(forKey: onboardingCompletedKey) != nil
+            guard onboardingDone else { return }
+
+            // Queue microphone preparation immediately. It runs off the main
+            // actor and independently of the slower speech-model warm-up, so an
+            // early first dictation does not wait for model initialization.
+            if await env.permissionService.checkMicrophonePermission() == .granted {
+                env.sharedMicStream.prewarmDictation()
+            }
+
+            try? await Task.sleep(for: .milliseconds(deferralMs))
+            guard !Task.isCancelled else { return }
+            await sttRuntime.backgroundWarmUp()
+
+            // Universal VAD model availability (Phase 4.5,
+            // plans/completed/2026-05-meeting-vad-guided-live-chunking.md §6).
+            // Runs every launch for every user so flipping the live-chunking
+            // flag reaches the installed base, not just fresh installs. Kept
+            // independent of the speech warm-up above: idempotent, silent-fail,
+            // and the meeting path falls back to fixed chunking if it never
+            // succeeds. No-op when the flag is off.
+            guard !Task.isCancelled else { return }
+            let prepOutcome = await MeetingVADLaunchPrep.run(
+                featureEnabled: AppFeatures.meetingVadLiveChunkingEnabled,
+                preparer: vadModelPreparer
+            )
+            // Only surface the transitions worth seeing. `alreadyCached`
+            // (steady state) and `disabled` are silent to avoid per-launch
+            // telemetry spam; `cancelled` (app quit mid-download) is dropped
+            // because `run` already treats cancellation as non-failure. No
+            // post-call `Task.isCancelled` guard here: once `run` has returned
+            // a terminal outcome the work genuinely completed, so a late
+            // cancellation shouldn't drop the one event we care about
+            // (`prepared` — proof the installed base acquired the model).
+            switch prepOutcome {
+            case .prepared:
+                Telemetry.send(.vadModelPrep(outcome: .prepared))
+            case .failed:
+                Telemetry.send(.vadModelPrep(outcome: .failed))
+            case .alreadyCached, .disabled, .cancelled:
+                break
+            }
+        }
+    }
+
+    private func presentEnvironmentSetupError(_ error: Error) {
+        // Don't silently fail. Without a valid environment, the app can't function.
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+
+        let alert = NSAlert()
+        alert.alertStyle = .critical
+        alert.messageText = "Sotto Failed to Start"
+        alert.informativeText = error.localizedDescription
+        alert.addButton(withTitle: "Quit")
+        _ = alert.runModal()
+
+        NSApp.terminate(nil)
+    }
+
+    private func setupDiscoverContent() {
+        // Respect the user preference before touching the network. When
+        // Discover is hidden the feed is neither loaded nor fetched, so the
+        // app makes no request to the Discover endpoint at launch.
+        guard settingsViewModel.showDiscover else {
+            discoverViewModel.cancelDiscover()
+            if mainWindowState.selectedItem == .discover {
+                mainWindowState.selectedItem = .transcribe
+            }
+            return
+        }
+        guard let fallbackURL = Bundle.module.url(forResource: "discover-fallback", withExtension: "json"),
+            let data = try? Data(contentsOf: fallbackURL)
+        else { return }
+
+        let service = DiscoverService(fallbackData: data)
+        discoverViewModel.configure(service: service)
+        discoverViewModel.loadCached()
+        discoverViewModel.refreshInBackground()
+    }
+
+    // MARK: - Disk Image Guard
+
+    private func isRunningFromDiskImage() -> Bool {
+        Bundle.main.bundlePath.hasPrefix("/Volumes/")
+    }
+
+    private func showMoveToApplicationsAlert() {
+        let alert = NSAlert()
+        alert.messageText = "Move to Applications"
+        alert.informativeText =
+            "Sotto must be in your Applications folder to work correctly. "
+            + "Running from a disk image prevents macOS from granting microphone and accessibility permissions.\n\n"
+            + "Drag Sotto to the Applications folder in the DMG window, then launch it from there."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Quit")
+        alert.runModal()
+
+        NSApp.terminate(nil)
+    }
+
+    // MARK: - Event Handlers
+
+    private func handleAccessibilityGrant() {
+        // Startup may have discarded every event tap before access was granted.
+        // Reuse the normal refresh path, which preserves recorder suspension.
+        hotkeyCoordinator?.refreshAllHotkeys()
+        if !isHotkeyRecorderActive {
+            transformsCoordinator?.resumeHotkeys()
+        }
+    }
+
+    private func handleHotkeyTriggerChange() {
+        hotkeyCoordinator?.refreshAllHotkeys()
+        menuBarCoordinator.refreshHotkeyTitle()
+        menuBarCoordinator.refreshMeetingHotkeyShortcut()
+        transformsCoordinator?.reloadBindings()
+        voiceControlCoordinator?.installHotkey()
+    }
+
+    /// Any auxiliary hotkey change refreshes all three auxiliary hotkeys so a
+    /// newly-claimed trigger can disable a now-colliding peer without waiting
+    /// for the user to visit Settings again.
+    private func handleMeetingHotkeyTriggerChange() {
+        refreshAuxiliaryHotkeys()
+    }
+
+    private func handleFileTranscriptionHotkeyTriggerChange() {
+        refreshAuxiliaryHotkeys()
+    }
+
+    private func handleYouTubeTranscriptionHotkeyTriggerChange() {
+        refreshAuxiliaryHotkeys()
+    }
+
+    private func applyAppAppearance() {
+        AppAppearanceController.apply(settingsViewModel.appAppearanceMode)
+    }
+
+    private func refreshAuxiliaryHotkeys() {
+        hotkeyCoordinator?.refreshMeetingHotkey()
+        hotkeyCoordinator?.refreshFileTranscriptionHotkey()
+        hotkeyCoordinator?.refreshYouTubeTranscriptionHotkey()
+        menuBarCoordinator.refreshMeetingHotkeyShortcut()
+        menuBarCoordinator.refreshTranscriptionHotkeyShortcuts()
+        transformsCoordinator?.reloadBindings()
+        voiceControlCoordinator?.installHotkey()
+    }
+
+    private func transformReservedHotkeysForTransforms() -> [TransformShortcutReservedHotkey] {
+        var reserved: [TransformShortcutReservedHotkey] = [
+            TransformShortcutReservedHotkey(
+                name: "hands-free dictation",
+                trigger: settingsViewModel.hotkeyTrigger,
+                conflictMode: .bareModifierDictation
+            ),
+            TransformShortcutReservedHotkey(
+                name: "push to talk",
+                trigger: settingsViewModel.pushToTalkHotkeyTrigger,
+                conflictMode: .bareModifierDictation
+            ),
+            TransformShortcutReservedHotkey(
+                name: "file transcription", trigger: settingsViewModel.fileTranscriptionHotkeyTrigger),
+            TransformShortcutReservedHotkey(
+                name: "video URL transcription", trigger: settingsViewModel.youtubeTranscriptionHotkeyTrigger),
+            TransformShortcutReservedHotkey(
+                name: "AI-polished dictation",
+                trigger: settingsViewModel.dictationAIPolishHotkeyTrigger,
+                conflictMode: .bareModifierDictation
+            ),
+        ]
+        if AppFeatures.meetingRecordingEnabled {
+            reserved.append(
+                TransformShortcutReservedHotkey(
+                    name: "meeting recording", trigger: settingsViewModel.meetingHotkeyTrigger))
+        }
+        if AppFeatures.isVoiceControlAvailable() {
+            reserved.append(TransformShortcutReservedHotkey(name: "Voice Control", trigger: VoiceControlCoordinator.configuredHoldTrigger))
+        }
+        return reserved.filter { !$0.trigger.isDisabled }
+    }
+
+    private func triggerFileTranscriptionFromHotkey() {
+        guard appEnvironment != nil else { return }
+        menuBarCoordinator.invokeTranscribeFileFlow()
+    }
+
+    private func triggerYouTubeTranscriptionFromHotkey() {
+        guard appEnvironment != nil else { return }
+        menuBarCoordinator.invokeTranscribeYouTubeFlow()
+    }
+
+    private func handleShowIdlePillChange() {
+        if settingsViewModel.showIdlePill {
+            dictationFlowCoordinator?.showIdlePill()
+        } else {
+            dictationFlowCoordinator?.hideIdlePill()
+        }
+    }
+
+    private func handleShowMeetingRecordingPillChange() {
+        meetingRecordingFlowCoordinator?.refreshFloatingPillVisibility()
+    }
+
+    private func applyInstantDictationPreference(refreshWarmCapture: Bool) {
+        guard let env = appEnvironment else { return }
+        instantDictationPreferenceGeneration += 1
+        let generation = instantDictationPreferenceGeneration
+        instantDictationPreferenceTask?.cancel()
+        instantDictationPreferenceTask = Task { [weak self, env] in
+            guard !Task.isCancelled else { return }
+            let enabled = env.runtimePreferences.instantDictationEnabled
+            let isCurrent = await MainActor.run {
+                self?.instantDictationPreferenceGeneration == generation
+            }
+            guard isCurrent, !Task.isCancelled else { return }
+            await env.audioProcessor.setInstantDictationEnabled(enabled)
+            let shouldRefresh = await MainActor.run {
+                self?.instantDictationPreferenceGeneration == generation
+            }
+            guard shouldRefresh, !Task.isCancelled else { return }
+            if refreshWarmCapture {
+                if enabled {
+                    await env.audioProcessor.refreshInstantDictationWarmCapture()
+                } else {
+                    env.sharedMicStream.refreshIdlePrewarm()
+                }
+            }
+        }
+    }
+
+    private var hotkeyMenuTitle: String {
+        hotkeyCoordinator?.hotkeyMenuTitle
+            ?? AppHotkeyCoordinator.menuTitle(
+                handsFree: settingsViewModel.hotkeyTrigger,
+                pushToTalk: settingsViewModel.pushToTalkHotkeyTrigger,
+                aiPolish: settingsViewModel.dictationAIPolishHotkeyTrigger
+            )
+    }
+
+    // MARK: - Menu Bar Icon State
+
+    /// Priority-based menu bar icon resolver (ADR-015).
+    /// Meeting recording > dictation menu-bar preference > file transcription > idle.
+    ///
+    /// Uses `menuBarPreference` from the dictation flow (state-machine-aware) so
+    /// `.processing` can render correctly and terminal states do not linger red.
+    /// While a shortcut recorder (Settings or onboarding) captures a new
+    /// hotkey, stand the global CGEvent taps down so they can't swallow the
+    /// user's keyDown and silently fire their own actions (e.g. start a
+    /// meeting recording from inside Settings).
+    private func setGlobalHotkeysSuspendedForRecorder(_ isRecording: Bool) {
+        if isRecording {
+            activeHotkeyRecorderSessions += 1
+            guard activeHotkeyRecorderSessions == 1 else { return }
+            // Every recorder, including Settings, pauses onboarding rehearsal
+            // before its local key monitor starts.
+            onboardingHotkeyPreviewController.setCapturePaused(true)
+            hotkeyCoordinator?.suspend()
+            transformsCoordinator?.suspendHotkeys()
+            voiceControlCoordinator?.suspendHotkey()
+        } else {
+            guard activeHotkeyRecorderSessions > 0 else { return }
+            activeHotkeyRecorderSessions -= 1
+            guard activeHotkeyRecorderSessions == 0 else { return }
+            hotkeyCoordinator?.resume()
+            transformsCoordinator?.resumeHotkeys()
+            voiceControlCoordinator?.installHotkey()
+            onboardingHotkeyPreviewController.setCapturePaused(false)
+        }
+    }
+
+    private func resolveAndUpdateMenuBarIcon() {
+        let state = Self.resolveMenuBarState(
+            isMeetingRecordingActive: meetingRecordingFlowCoordinator?.isMeetingRecordingActive == true,
+            dictationMenuBarPreference: dictationFlowCoordinator?.menuBarPreference,
+            isTranscribing: transcriptionViewModel.isTranscribing
+        )
+        menuBarCoordinator.updateIcon(state: state)
+    }
+
+    static func resolveMenuBarState(
+        isMeetingRecordingActive: Bool,
+        dictationMenuBarPreference: SottoIcon.MenuBarState?,
+        isTranscribing: Bool
+    ) -> SottoIcon.MenuBarState {
+        if isMeetingRecordingActive {
+            return .recording
+        }
+        if let dictationMenuBarPreference, dictationMenuBarPreference != .idle {
+            return dictationMenuBarPreference
+        }
+        if isTranscribing {
+            return .processing
+        }
+        return .idle
+    }
+
+    // MARK: - Meeting Recording
+
+    private func toggleMeetingRecording(
+        originatesFromWindow: Bool,
+        trigger: TelemetryMeetingRecordingTrigger = .manual
+    ) {
+        guard appEnvironment != nil else { return }
+
+        if meetingRecordingFlowCoordinator?.isMeetingRecordingActive == true {
+            meetingRecordingFlowCoordinator?.toggleRecording()
+            return
+        }
+
+        if originatesFromWindow {
+            // The Transcribe tab hosts the Meeting Recording tile, which
+            // reflects live recording state. Show the user that surface so
+            // they see the start/recording transition.
+            mainWindowState.selectedItem = .transcribe
+            windowCoordinator.openMainWindow()
+        }
+
+        meetingRecordingFlowCoordinator?.toggleRecording(trigger: trigger)
+    }
+
+    private func startMeetingRecordingFromWorkspace() {
+        guard appEnvironment != nil else { return }
+
+        if meetingRecordingFlowCoordinator?.isMeetingRecordingActive == true {
+            meetingRecordingFlowCoordinator?.toggleRecording()
+            return
+        }
+
+        meetingRecordingFlowCoordinator?.startRecording(
+            trigger: .manual,
+            presentLivePanelWhenReady: true
+        )
+    }
+
+    private func presentActiveMeetingQuitAlert() -> NSApplication.TerminateReply {
+        guard meetingQuitTask == nil, !isPresentingQuitAlert else {
+            return .terminateCancel
+        }
+        guard let quitState = meetingRecordingFlowCoordinator?.quitState else {
+            return .terminateNow
+        }
+        isPresentingQuitAlert = true
+        defer { isPresentingQuitAlert = false }
+
+        NSApp.activate(ignoringOtherApps: true)
+
+        // Hide the floating pill while the quit alert is up. It joins all
+        // Spaces, so during this app-modal alert it would otherwise linger as a
+        // draggable, non-interactive window — and if the alert lands on another
+        // Space the pill is all the user sees, reading as a frozen ghost.
+        // Restored below if the user keeps the app open.
+        meetingRecordingFlowCoordinator?.dismissFloatingPillForQuit()
+        var committedToQuit = false
+
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+
+        switch quitState {
+        case .starting:
+            alert.messageText = "Meeting Recording Is Starting"
+            alert.informativeText = "Cancel the pending recording before quitting, or keep Sotto open."
+            alert.addButton(withTitle: "Cancel Recording & Quit")
+            alert.addButton(withTitle: "Cancel Quit")
+            if alert.buttons.indices.contains(0) {
+                alert.buttons[0].hasDestructiveAction = true
+            }
+            if alert.runModal() == .alertFirstButtonReturn {
+                committedToQuit = true
+                finishMeetingThenQuit(discard: true)
+            }
+
+        case .capturing:
+            alert.messageText = "Meeting Recording Is Starting"
+            alert.informativeText =
+                "Audio may already be saving. End and save any captured audio, discard the recording, or keep Sotto open."
+            alert.addButton(withTitle: "End & Transcribe")
+            alert.addButton(withTitle: "Discard Recording")
+            alert.addButton(withTitle: "Cancel Quit")
+            if alert.buttons.indices.contains(1) {
+                alert.buttons[1].hasDestructiveAction = true
+            }
+            switch alert.runModal() {
+            case .alertFirstButtonReturn:
+                committedToQuit = true
+                finishMeetingThenQuit(discard: false)
+            case .alertSecondButtonReturn:
+                committedToQuit = true
+                finishMeetingThenQuit(discard: true)
+            default:
+                break
+            }
+
+        case .recording:
+            alert.messageText = "Meeting Recording in Progress"
+            alert.informativeText =
+                "End and transcribe the meeting before quitting, discard the recording, or keep Sotto open."
+            alert.addButton(withTitle: "End & Transcribe")
+            alert.addButton(withTitle: "Discard Recording")
+            alert.addButton(withTitle: "Cancel Quit")
+            if alert.buttons.indices.contains(1) {
+                alert.buttons[1].hasDestructiveAction = true
+            }
+            switch alert.runModal() {
+            case .alertFirstButtonReturn:
+                committedToQuit = true
+                finishMeetingThenQuit(discard: false)
+            case .alertSecondButtonReturn:
+                committedToQuit = true
+                finishMeetingThenQuit(discard: true)
+            default:
+                break
+            }
+
+        case .finishing:
+            alert.messageText = "Meeting Transcription in Progress"
+            alert.informativeText =
+                "Sotto is saving the meeting. Finish transcription before quitting, or keep the app open."
+            alert.addButton(withTitle: "Finish & Quit")
+            alert.addButton(withTitle: "Cancel Quit")
+            if alert.runModal() == .alertFirstButtonReturn {
+                committedToQuit = true
+                finishMeetingThenQuit(discard: false)
+            }
+        }
+
+        if !committedToQuit {
+            meetingRecordingFlowCoordinator?.restoreFloatingPillIfRecording()
+        }
+
+        return .terminateCancel
+    }
+
+    private func finishMeetingThenQuit(discard: Bool) {
+        guard let coordinator = meetingRecordingFlowCoordinator else { return }
+
+        // The user committed to quitting — tear the floating pill down now so it
+        // doesn't sit on screen as a non-interactive window while the final
+        // transcription finishes in the background ahead of `NSApp.terminate`.
+        coordinator.dismissFloatingPillForQuit()
+
+        meetingQuitTask?.cancel()
+        meetingQuitTask = Task { @MainActor [weak self, coordinator] in
+            if discard {
+                await coordinator.discardRecordingAndWaitForCompletion()
+            } else {
+                await coordinator.stopRecordingAndWaitForCompletion()
+            }
+            guard !Task.isCancelled else { return }
+            self?.meetingQuitTask = nil
+            NSApp.terminate(nil)
+        }
+    }
+
+    // MARK: - Alerts
+
+    private func presentEntitlementsAlert(_ error: Error) {
+        NSApp.activate(ignoringOtherApps: true)
+
+        let alert = NSAlert()
+        alert.alertStyle = .informational
+        alert.messageText = "Unlock Required"
+        alert.informativeText = error.localizedDescription
+        alert.addButton(withTitle: "Open Settings")
+        alert.addButton(withTitle: "Not Now")
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            windowCoordinator.openMainWindowToSettings()
+        }
+    }
+
+    private func presentHotkeyUnavailableAlertIfNeeded() {
+        #if !DEBUG
+        guard !hasPresentedHotkeyUnavailableAlert else { return }
+        guard settingsViewModel.accessibilityGranted == false else { return }
+
+        hasPresentedHotkeyUnavailableAlert = true
+        NSApp.activate(ignoringOtherApps: true)
+
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Global Hotkey Unavailable"
+        alert.informativeText =
+            "Sotto couldn’t enable the system-wide hotkey because Accessibility access is missing. "
+            + "You can still open the app manually, but dictation shortcuts won’t work until this is enabled."
+        alert.addButton(withTitle: "Open Settings")
+        alert.addButton(withTitle: "Not Now")
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            windowCoordinator.openMainWindowToSettings()
+        }
+        #endif
+    }
+
+    private func presentHotkeyConflictAlertIfNeeded(trigger: HotkeyTrigger, conflicts: [HotkeyTrigger]) {
+        #if !DEBUG
+        guard !hasPresentedHotkeyConflictAlert else { return }
+        hasPresentedHotkeyConflictAlert = true
+        NSApp.activate(ignoringOtherApps: true)
+
+        let conflictNames = conflicts.map(\.displayName).joined(separator: ", ")
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Hotkey Conflict"
+        alert.informativeText =
+            "\(trigger.displayName) overlaps with \(conflictNames), so one of these shortcuts was not enabled. "
+            + "Open Settings to choose distinct shortcuts."
+        alert.addButton(withTitle: "Open Settings")
+        alert.addButton(withTitle: "Not Now")
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            windowCoordinator.openMainWindowToSettings()
+        }
+        #endif
+    }
+
+    private func showAboutPanel() {
+        let repoLink = "https://github.com/moona3k/macparakeet"
+        guard let repoURL = URL(string: repoLink) else { return }
+        let credits = NSMutableAttributedString()
+
+        let style = NSMutableParagraphStyle()
+        style.alignment = .center
+
+        let normalAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 11),
+            .paragraphStyle: style,
+        ]
+        let linkAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 11),
+            .link: repoURL,
+            .paragraphStyle: style,
+        ]
+
+        credits.append(NSAttributedString(string: "Personal Sotto build (GPL-3.0)\nBased on MacParakeet by Daniel Moon\n", attributes: normalAttributes))
+        credits.append(NSAttributedString(string: repoLink, attributes: linkAttributes))
+
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.orderFrontStandardAboutPanel(options: [.credits: credits])
+    }
+
+    private func quitApp() {
+        NSApp.terminate(nil)
+    }
+}

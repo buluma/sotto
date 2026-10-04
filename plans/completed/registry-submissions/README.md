@@ -3,7 +3,7 @@
 > **Historical snapshot (archived 2026-07-16).** This folder records the
 > 2026-04/05 registry campaign; it is not an active submission checklist.
 
-Drafts of the content + submission bodies for placing `macparakeet-cli`
+Drafts of the content + submission bodies for placing `sotto-cli`
 in the relevant agent skill registries. The Hermes and OpenClaw
 awesome-list issues have been submitted; the ClawHub path is deferred
 until its CLI and SKILL.md schema are verified.
@@ -12,14 +12,14 @@ until its CLI and SKILL.md schema are verified.
 
 The submitted issue drafts date from 2026-04-25. The Brew install path was
 re-verified on 2026-05-19, so install instructions
-(`brew install moona3k/tap/macparakeet-cli`) are now valid in any follow-up
+(`brew install moona3k/tap/sotto-cli`) are now valid in any follow-up
 submission. Reconnaissance against each target's `CONTRIBUTING.md` sharpened
 the picture significantly — see per-target notes below.
 
-Current release note (2026-05-19): `macparakeet-cli 2.3.1` is published at
+Current release note (2026-05-19): `sotto-cli 2.3.1` is published at
 [`cli-v2.3.1`](https://github.com/moona3k/macparakeet/releases/tag/cli-v2.3.1)
 and the tap formula has been verified with `brew test
-moona3k/tap/macparakeet-cli`.
+moona3k/tap/sotto-cli`.
 
 | # | Registry | Repo | Submission flow | Status (2026-04-25) |
 |---|---|---|---|---|
@@ -62,7 +62,7 @@ The previous "submit all four" plan was incorrect. Updated:
 Once the registry placements have landed, cross-post to:
 
 - **r/LocalLLaMA** — *"Local Whisper alternative for Mac mini AI agents (Parakeet on the Neural Engine)"*
-- **Hacker News** — *"Show HN: macparakeet-cli — canonical Parakeet CLI for Apple Silicon agents"*
+- **Hacker News** — *"Show HN: sotto-cli — canonical Parakeet CLI for Apple Silicon agents"*
 - **OpenClaw Discord** — `#showcase` or equivalent
 - **Nous Research Discord** — `#hermes-agent` or equivalent
 

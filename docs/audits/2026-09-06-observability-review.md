@@ -6,12 +6,12 @@ telemetry producer and outcome call sites, local audio diagnostics, and the
 website ingestion, aggregation, rollup and deterministic agent-review code.
 
 App baseline: `1159dfca8ae53a15ffcc1562b1efb9220f95cd88`.
-Website baseline: `80be9eb` in the separate `macparakeet-website` repository.
+Website baseline: `80be9eb` in the separate `sotto-website` repository.
 Both changes use isolated worktrees; existing working-copy edits were preserved.
 
 ## Assessment
 
-The operation-wide-event model already fits MacParakeet. An operation outcome,
+The operation-wide-event model already fits Sotto. An operation outcome,
 safe dimensions and short-lived correlation let agents answer useful questions
 without collecting speech content. The article's recommendation to enrich
 outcomes is useful; its user-identifying examples do not fit this product's

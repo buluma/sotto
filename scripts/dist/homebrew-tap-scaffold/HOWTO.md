@@ -1,6 +1,6 @@
-# How to release `macparakeet-cli` through Homebrew
+# How to release `sotto-cli` through Homebrew
 
-This file lives in the macparakeet repo for reference. The tap repo
+This file lives in the sotto repo for reference. The tap repo
 itself is a separate GitHub repository at
 <https://github.com/moona3k/homebrew-tap>. The usual local clone is
 `~/code/homebrew-tap`.
@@ -14,7 +14,7 @@ creating a new tap from scratch.
 
 ```bash
 gh repo create moona3k/homebrew-tap --public \
-  --description "Homebrew tap for moona3k packages (macparakeet-cli, ...)"
+  --description "Homebrew tap for moona3k packages (sotto-cli, ...)"
 ```
 
 Local clone + initial commit:
@@ -23,8 +23,8 @@ Local clone + initial commit:
 git clone https://github.com/moona3k/homebrew-tap ~/code/homebrew-tap
 cd ~/code/homebrew-tap
 mkdir -p Formula
-cp ~/code/macparakeet/scripts/dist/homebrew-tap-scaffold/README.md .
-cp ~/code/macparakeet/scripts/dist/homebrew-tap-scaffold/macparakeet-cli.rb Formula/
+cp ~/code/sotto/scripts/dist/homebrew-tap-scaffold/README.md .
+cp ~/code/sotto/scripts/dist/homebrew-tap-scaffold/sotto-cli.rb Formula/
 ```
 
 During first-time setup, don't push the tap until the formula points at a
@@ -42,23 +42,23 @@ export VERSION=4.8.0
 Before building, make sure the source repo is on the commit you intend to
 release and the CLI version/docs are already updated:
 
-1. Bump `Sources/CLI/MacParakeetCLI.swift`.
+1. Bump `Sources/CLI/SottoCLI.swift`.
 2. Add a semver entry to `Sources/CLI/CHANGELOG.md`.
 3. Refresh versioned examples in `README.md`, `integrations/`, and this
    scaffold if user-facing output changes.
 
 ### 2. Build the standalone CLI package
 
-In the macparakeet repo, from the commit you intend to tag:
+In the sotto repo, from the commit you intend to tag:
 
 ```bash
 VERSION="$VERSION" scripts/dist/build_cli_archive.sh
-mkdir -p "dist/macparakeet-cli-${VERSION}-darwin-arm64"
-tar -xzf "dist/macparakeet-cli-${VERSION}-darwin-arm64.tar.gz" \
-    -C "dist/macparakeet-cli-${VERSION}-darwin-arm64"
+mkdir -p "dist/sotto-cli-${VERSION}-darwin-arm64"
+tar -xzf "dist/sotto-cli-${VERSION}-darwin-arm64.tar.gz" \
+    -C "dist/sotto-cli-${VERSION}-darwin-arm64"
 ```
 
-The package contains the executable and `libexec/macparakeet-cli/`, including
+The package contains the executable and `libexec/sotto-cli/`, including
 the pinned Node runtime, Ask helper, and notices. Keep them together. The
 builder needs Node/npm; the installed CLI does not. Use a fresh staging
 directory for each candidate.
@@ -73,22 +73,22 @@ codesign --force --sign "Developer ID Application: <YOUR NAME> (<TEAMID>)" \
          --options runtime \
          --timestamp \
          --entitlements scripts/dist/NodeRuntime.entitlements \
-         "dist/macparakeet-cli-${VERSION}-darwin-arm64/libexec/macparakeet-cli/node"
+         "dist/sotto-cli-${VERSION}-darwin-arm64/libexec/sotto-cli/node"
 
 codesign --force --sign "Developer ID Application: <YOUR NAME> (<TEAMID>)" \
          --options runtime \
          --timestamp \
-         "dist/macparakeet-cli-${VERSION}-darwin-arm64/macparakeet-cli"
+         "dist/sotto-cli-${VERSION}-darwin-arm64/sotto-cli"
 
 # Pack for notarization
-ditto -c -k --keepParent "dist/macparakeet-cli-${VERSION}-darwin-arm64" \
-      "dist/macparakeet-cli-${VERSION}-darwin-arm64.zip"
-shasum -a 256 "dist/macparakeet-cli-${VERSION}-darwin-arm64.zip" \
-  | tee "dist/macparakeet-cli-${VERSION}-darwin-arm64.zip.sha256"
+ditto -c -k --keepParent "dist/sotto-cli-${VERSION}-darwin-arm64" \
+      "dist/sotto-cli-${VERSION}-darwin-arm64.zip"
+shasum -a 256 "dist/sotto-cli-${VERSION}-darwin-arm64.zip" \
+  | tee "dist/sotto-cli-${VERSION}-darwin-arm64.zip.sha256"
 
 # Submit. The notarytool keychain profile name is whatever was set up
 # previously (search scripts/dist/ for the actual name).
-xcrun notarytool submit "dist/macparakeet-cli-${VERSION}-darwin-arm64.zip" \
+xcrun notarytool submit "dist/sotto-cli-${VERSION}-darwin-arm64.zip" \
     --keychain-profile <profile-name> \
     --no-wait --no-progress --no-s3-acceleration \
     --output-format json
@@ -103,10 +103,10 @@ release pipeline uses `--no-progress --no-s3-acceleration` for the same reason.
 ### 4. Tar + checksum
 
 ```bash
-COPYFILE_DISABLE=1 tar -czf "dist/macparakeet-cli-${VERSION}-darwin-arm64.tar.gz" \
-        -C "dist/macparakeet-cli-${VERSION}-darwin-arm64" macparakeet-cli libexec
-shasum -a 256 "dist/macparakeet-cli-${VERSION}-darwin-arm64.tar.gz" \
-  | tee "dist/macparakeet-cli-${VERSION}-darwin-arm64.tar.gz.sha256"
+COPYFILE_DISABLE=1 tar -czf "dist/sotto-cli-${VERSION}-darwin-arm64.tar.gz" \
+        -C "dist/sotto-cli-${VERSION}-darwin-arm64" sotto-cli libexec
+shasum -a 256 "dist/sotto-cli-${VERSION}-darwin-arm64.tar.gz" \
+  | tee "dist/sotto-cli-${VERSION}-darwin-arm64.tar.gz.sha256"
 # Copy the SHA256 hex into the formula's `sha256` field.
 ```
 
@@ -114,11 +114,11 @@ shasum -a 256 "dist/macparakeet-cli-${VERSION}-darwin-arm64.tar.gz" \
 
 ```bash
 gh release create "cli-v${VERSION}" \
-  "dist/macparakeet-cli-${VERSION}-darwin-arm64.tar.gz" \
-  "dist/macparakeet-cli-${VERSION}-darwin-arm64.tar.gz.sha256" \
-  "dist/macparakeet-cli-${VERSION}-darwin-arm64.zip" \
-  "dist/macparakeet-cli-${VERSION}-darwin-arm64.zip.sha256" \
-  --title "macparakeet-cli ${VERSION}" \
+  "dist/sotto-cli-${VERSION}-darwin-arm64.tar.gz" \
+  "dist/sotto-cli-${VERSION}-darwin-arm64.tar.gz.sha256" \
+  "dist/sotto-cli-${VERSION}-darwin-arm64.zip" \
+  "dist/sotto-cli-${VERSION}-darwin-arm64.zip.sha256" \
+  --title "sotto-cli ${VERSION}" \
   --notes-file <release-notes.md>
 ```
 
@@ -129,9 +129,9 @@ from the app's release tags.
 
 ```bash
 cd ~/code/homebrew-tap
-# Update Formula/macparakeet-cli.rb's version, url, and sha256 values.
-git add Formula/macparakeet-cli.rb
-git commit -m "macparakeet-cli ${VERSION}"
+# Update Formula/sotto-cli.rb's version, url, and sha256 values.
+git add Formula/sotto-cli.rb
+git commit -m "sotto-cli ${VERSION}"
 git push
 ```
 
@@ -142,21 +142,21 @@ release commit.
 
 ```bash
 brew update
-brew reinstall moona3k/tap/macparakeet-cli
+brew reinstall moona3k/tap/sotto-cli
 
-macparakeet-cli --version    # should print ${VERSION}
-macparakeet-cli health --json
-brew test moona3k/tap/macparakeet-cli
+sotto-cli --version    # should print ${VERSION}
+sotto-cli health --json
+brew test moona3k/tap/sotto-cli
 ```
 
 For a fully fresh install check, uninstall the formula first and then run
-`brew install moona3k/tap/macparakeet-cli`.
+`brew install moona3k/tap/sotto-cli`.
 
 ## Recurring maintenance
 
 For each subsequent CLI release:
 
-1. Bump `version` in `Sources/CLI/MacParakeetCLI.swift`.
+1. Bump `version` in `Sources/CLI/SottoCLI.swift`.
 2. Add an entry to `Sources/CLI/CHANGELOG.md` per semver discipline.
 3. Repeat steps 2–7 above with the new version number.
 
@@ -171,7 +171,7 @@ see `brew tap-new --pull-label` and the Homebrew bottles docs.
   Xcode CLT, simpler caveats. Recommended in the canonical plan at
   `plans/completed/cli-as-canonical-parakeet-surface.md`.
 - **Tap separate from main repo:** keeps Homebrew's expected layout
-  (`Formula/<name>.rb`), allows future formulae (`macparakeet-cli`,
+  (`Formula/<name>.rb`), allows future formulae (`sotto-cli`,
   potentially other tools) to share infrastructure.
 - **Keeping FFmpeg + yt-dlp as `depends_on`** rather than bundling:
   smaller release tarball, lets users keep one canonical FFmpeg, lets

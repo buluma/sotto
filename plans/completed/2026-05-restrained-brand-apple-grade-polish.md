@@ -16,9 +16,9 @@ PR #205 merged the unified Ask quick prompts (`af23a55d`). During review the use
 
 Root cause: there's no semantic button-role abstraction. Every callsite reaches for `.buttonStyle(.bordered) + .tint(...)` directly. The "App-wide brand-accent sweep" (commit `044f6a74`) was a band-aid for this missing layer.
 
-This plan introduces button roles, pulls the cascading tint, and uses that cleanliness as the foundation for an Apple-grade polish pass *calibrated to MacParakeet*. Not a theming system. Not customizable accent. Discipline at the chrome layer.
+This plan introduces button roles, pulls the cascading tint, and uses that cleanliness as the foundation for an Apple-grade polish pass *calibrated to Sotto*. Not a theming system. Not customizable accent. Discipline at the chrome layer.
 
-## Calibrated principles ("Apple-grade for MacParakeet")
+## Calibrated principles ("Apple-grade for Sotto")
 
 Reference points: macOS Voice Memos, Reminders, Stocks. We are a menu-bar utility — restraint over expression.
 
@@ -44,15 +44,15 @@ Reference points: macOS Voice Memos, Reminders, Stocks. We are a menu-bar utilit
 ### New API
 
 ```swift
-// Sources/MacParakeet/Views/Components/DesignSystem.swift
+// Sources/Sotto/Views/Components/DesignSystem.swift
 extension DesignSystem.Colors {
     /// Neutral label tint — for `.bordered` buttons that should NOT carry brand.
     /// Resolves to system label color (white in dark, near-black in light).
     static let tintNeutral = Color.primary
 }
 
-// Sources/MacParakeet/Views/Components/ParakeetActionStyle.swift (new)
-enum ParakeetActionRole {
+// Sources/Sotto/Views/Components/SottoActionStyle.swift (new)
+enum SottoActionRole {
     case primary               // brand coral, .bordered
     case primaryProminent      // brand coral, .borderedProminent
     case secondary             // neutral — system label color, .bordered
@@ -63,7 +63,7 @@ enum ParakeetActionRole {
 
 extension View {
     /// Apply a semantic action role. Replaces ad-hoc `.buttonStyle + .tint`.
-    func parakeetAction(_ role: ParakeetActionRole) -> some View
+    func sottoAction(_ role: SottoActionRole) -> some View
 }
 ```
 
@@ -72,13 +72,13 @@ an ignored prominence flag.
 
 ### Tint cascade removed from
 
-- `Sources/MacParakeet/App/AppWindowCoordinator.swift:197`
-- `Sources/MacParakeet/Onboarding/OnboardingWindowController.swift`
-- `Sources/MacParakeet/Views/MeetingRecording/MeetingCountdownToastController.swift`
-- `Sources/MacParakeet/Views/MeetingRecording/MeetingRecordingPanelController.swift`
-- `Sources/MacParakeet/Views/MeetingRecording/MeetingRecordingPillController.swift`
-- `Sources/MacParakeet/Views/Transcription/YouTubeInputPanelController.swift`
-- `Sources/MacParakeet/Views/MainWindowView.swift` sidebar list selection tint
+- `Sources/Sotto/App/AppWindowCoordinator.swift:197`
+- `Sources/Sotto/Onboarding/OnboardingWindowController.swift`
+- `Sources/Sotto/Views/MeetingRecording/MeetingCountdownToastController.swift`
+- `Sources/Sotto/Views/MeetingRecording/MeetingRecordingPanelController.swift`
+- `Sources/Sotto/Views/MeetingRecording/MeetingRecordingPillController.swift`
+- `Sources/Sotto/Views/Transcription/YouTubeInputPanelController.swift`
+- `Sources/Sotto/Views/MainWindowView.swift` sidebar list selection tint
 - Cross-window sheet patches: `TranscriptResultView` L219, `PromptLibraryView` L146/L238, `VocabularyView`, `VocabularyBackupSection`, `AskPromptsSheet` L138/L282/L533/L706
 
 ### Role mapping (representative; full sweep in PR)

@@ -1,9 +1,9 @@
-# typesafe-computer-use vs. MacParakeet Voice Control (PR #1104)
+# typesafe-computer-use vs. Sotto Voice Control (PR #1104)
 
 **Date:** 2026-09-20. **Kind:** source review and design comparison. No reference code was executed; no production code was changed.
 
 - Reference: [awlevin/typesafe-computer-use](https://github.com/awlevin/typesafe-computer-use), local checkout `references/typesafe-computer-use/` (gitignored), commit `cc7b5066ae1a07b5e3182e8f87a9b5b6dfdcffc1` (2026-09-18), MIT, Python 3.12, ~2,450 source lines, 139 tests.
-- Ours: [PR #1104 "Add experimental Voice Control: Jev judges landings, MacParakeet acts"](https://github.com/moona3k/macparakeet/pull/1104), reviewed at pushed head `1ebe572b` on `feat/jev-voice-control`. ~4,600 Swift lines in `Sources/MacParakeetCore/Services/VoiceControl/` + `VoiceControlCoordinator.swift`, 136 focused tests (PR description). Hosted `swift-test` passed on the head (51m47s); CodeRabbit passed. The local worktree `macparakeet-jev-voice-control` is two commits ahead (`bfee6d6c` numbered picks, `1cc0aeb8` local tools) with an uncommitted docs consolidation that removes ~4,600 lines of research notes. Those unpushed changes are noted where they matter but were not the review target.
+- Ours: [PR #1104 "Add experimental Voice Control: Jev judges landings, Sotto acts"](https://github.com/moona3k/macparakeet/pull/1104), reviewed at pushed head `1ebe572b` on `feat/jev-voice-control`. ~4,600 Swift lines in `Sources/SottoCore/Services/VoiceControl/` + `VoiceControlCoordinator.swift`, 136 focused tests (PR description). Hosted `swift-test` passed on the head (51m47s); CodeRabbit passed. The local worktree `sotto-jev-voice-control` is two commits ahead (`bfee6d6c` numbered picks, `1cc0aeb8` local tools) with an uncommitted docs consolidation that removes ~4,600 lines of research notes. Those unpushed changes are noted where they matter but were not the review target.
 
 ## Verdict
 
@@ -99,7 +99,7 @@ Strengths TCU does not have, with anchors at the pushed head:
 7. Keep labelled, `AXPress`-able nodes that failed 1–2 in a separate `offscreen` list (cap 120). `AXPress` does not need visibility; Notes rows, Dock items and scrolled-out links accept it.
 8. Stop at node or time cap and say so.
 
-**Adopt.** Extract an `AXTreeWalk` (pure struct or free function) in `MacParakeetCore` over an injectable source:
+**Adopt.** Extract an `AXTreeWalk` (pure struct or free function) in `SottoCore` over an injectable source:
 
 ```swift
 struct AXNodeFacts { let role: String; let label: String; let frame: CGRect?; let actions: Set<String> }
@@ -156,7 +156,7 @@ Ours records `VoiceControlTraceRecord`s with stage, outcome, duration, candidate
 
 1. Record the full `probabilities` map per head and the offered criteria keys in the local session log. This is what turns "Jev picked London, Ontario" into a diagnosable event.
 2. Persist a redacted snapshot fixture per observation in the session folder: `id`, `contextID`, `applicationName`, `targets[]` with `id/role/label/operations/isFocused/valueIsComplete/isNavigation` and value **omitted**, `summary` clipped. `latest.json` already carries labels, so this widens nothing.
-3. `swift run macparakeet-cli voice-control replay <snapshot.json> --goal "<text>" [--history …]` runs `VoiceControlCommandRouter` + `JevDecisionClient` and prints the compiled action or Jev distribution. This is the offline repro path for the Flights overlay stall, and the eval workbench `later.md` wants without shelling a key into a Unix filter.
+3. `swift run sotto-cli voice-control replay <snapshot.json> --goal "<text>" [--history …]` runs `VoiceControlCommandRouter` + `JevDecisionClient` and prints the compiled action or Jev distribution. This is the offline repro path for the Flights overlay stall, and the eval workbench `later.md` wants without shelling a key into a Unix filter.
 4. `--dry-run` on the inbox `command.json` and the panel: observe, route, decide, report "would do: press 'Search flights'" with actor and route, execute nothing. Same code path with a `NoopAdapter.execute`.
 5. Per-turn timing line in `latest.md`: `observe 0.41s  route 0.00s  jev 0.24s  execute 0.13s  verify 0.36s  total 1.14s`, plus mean/max over the session. Stage durations already exist; only the summary is missing.
 

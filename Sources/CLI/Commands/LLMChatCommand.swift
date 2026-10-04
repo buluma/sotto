@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 struct LLMChatCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(

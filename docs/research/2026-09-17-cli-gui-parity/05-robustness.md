@@ -2,11 +2,11 @@
 
 Investigated against HEAD `fb186349` (`feat/cli-gui-parity`, based on
 `origin/main`). Ground truth: `CLI.cliVersion = "4.3.0"`
-(`Sources/CLI/MacParakeetCLI.swift:11`), `Sources/CLI/CHANGELOG.md`,
+(`Sources/CLI/SottoCLI.swift:11`), `Sources/CLI/CHANGELOG.md`,
 `Sources/CLI/Commands/SpecCommand.swift` (read in full, both halves),
 `Sources/CLI/Commands/*.swift`, `Tests/CLITests/SpecCommandTests.swift`, and
 `integrations/README.md`. No build product existed
-(`.build/*/release|debug/macparakeet-cli` absent), so the catalog was read
+(`.build/*/release|debug/sotto-cli` absent), so the catalog was read
 directly from source per the brief's fallback, not from a live `spec --json`.
 
 ## Method
@@ -32,17 +32,17 @@ turned out to be wrong (see Ruled out).
   `transcription.sourceType == .meeting` — a file/URL transcription's UUID or
   title cannot resolve here at all (`ValidationError`/`notFound`).
 - The underlying data model is **not** meeting-scoped: `SpeakerCorrectionRepository`
-  (`Sources/MacParakeetCore/Database/SpeakerCorrectionRepository.swift:5-7`)
+  (`Sources/SottoCore/Database/SpeakerCorrectionRepository.swift:5-7`)
   is keyed purely by `transcriptionId`, and `SpeakerCorrectionService.swift`
   has zero references to "meeting" anywhere in the file (`grep -n "meeting"`
   returns nothing). ADR-031 (`spec/adr/031-timed-transcript-corrections.md:29`)
   describes it as "the existing **transcript-scoped** correction journal."
 - The GUI does not gate this by source type either: `TranscriptionViewModel
   .applySpeakerCorrection` / `beginSpeakerCorrectionSubmission`
-  (`Sources/MacParakeetViewModels/TranscriptionViewModel.swift:2073-2113`)
+  (`Sources/SottoViewModels/TranscriptionViewModel.swift:2073-2113`)
   key off `currentTranscription?.id` with no `sourceType == .meeting` guard,
   and the sheet call sites in
-  `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift:740-759`
+  `Sources/Sotto/Views/Transcription/TranscriptResultView.swift:740-759`
   (`TimedTranscriptTextEditSheet`, `SpeakerSplitSheet`) are likewise
   unconditional. `transcribe --speaker-detection on` already runs diarization
   on file/URL/podcast input (`SpecCommand.swift:234-235`), so those
@@ -170,7 +170,7 @@ turned out to be wrong (see Ruled out).
   to the chosen database file.
 - But `SpecCommand.swift`'s `CLISpecConventions` struct (lines 69-76) has no
   isolation field, and the shared `databaseOption` definition (lines
-  146-150) says only "Use a specific MacParakeet SQLite database instead of
+  146-150) says only "Use a specific Sotto SQLite database instead of
   the app default." — no caveat. `integrations/README.md`'s own recommended
   agent workflow (`integrations/README.md:178`) is "Start with `--version`,
   `spec --json`, then the health report" — an agent following that literal
@@ -186,8 +186,8 @@ turned out to be wrong (see Ruled out).
 
 ### 6. [LOW] Brief's own framing of issue #883 is wrong — not an app+brew install conflict; kill that hypothesis
 
-- `gh issue view 883`: title "I installed both the MacParakeet app and the
-  macparakeet-cli. Each time I transc..." — but the actual repro and error
+- `gh issue view 883`: title "I installed both the Sotto app and the
+  sotto-cli. Each time I transc..." — but the actual repro and error
   are about a **CoreML/E5RT runtime message** ("E5RT encountered an STL
   exception... zero shape error") printed after a **successful** `transcribe
   --output-dir ... --format transcript --engine parakeet --parakeet-model
@@ -290,7 +290,7 @@ turned out to be wrong (see Ruled out).
 
 - **Item 1 (catalog path drift):** the ArgumentParser tree was enumerated in
   full (every `CommandConfiguration`/`subcommands:` declaration across
-  `Sources/CLI/Commands/*.swift` and `MacParakeetCLI.swift`) and diffed
+  `Sources/CLI/Commands/*.swift` and `SottoCLI.swift`) and diffed
   against every path in `CLISpecCommand.catalog`. Every real, non-hidden
   command path is present in the catalog and vice versa. The only tree nodes
   absent from the catalog are the two that are explicitly

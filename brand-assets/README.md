@@ -1,4 +1,4 @@
-# MacParakeet · Brand Asset Library
+# Sotto · Brand Asset Library
 
 > Status: **ACTIVE**
 >
@@ -7,7 +7,7 @@
 
 ## Philosophy
 
-The MacParakeet mark is a single-stroke calligraphic parakeet rooted in
+The Sotto mark is a single-stroke calligraphic parakeet rooted in
 **calligraphic warmth and Daoist simplicity** (see `docs/brand-identity.md`).
 The whole bird reads as one continuous gesture, like signing your name.
 
@@ -29,7 +29,7 @@ betraying it. Two principles govern every artifact in here:
 brand-assets/
 ├── README.md                       you are here
 ├── marks/                          the bird, as vector source
-│   ├── parakeet-line.svg           the canonical brand mark — used everywhere
+│   ├── sotto-line.svg           the canonical brand mark — used everywhere
 │   └── AppIcon.icon/               Icon Composer source for the macOS app icon
 ├── palette/                        the colors
 │   ├── palette.json                machine-readable hex + role + guidance
@@ -57,7 +57,7 @@ brand-assets/
 
 ## The mark
 
-There's one canonical reusable mark: `marks/parakeet-line.svg`. It's a
+There's one canonical reusable mark: `marks/sotto-line.svg`. It's a
 calligraphic single-stroke parakeet — head, beak, eye dot, body curve, looped
 tail — traced from the original white-on-near-black parakeet artwork. It carries
 the brand voice (calm, confident, minimal) at every size: legible at 18 pt,
@@ -132,7 +132,7 @@ type, ground color, and figure color.
 
 ### CSS / web (inline SVG)
 
-The cleanest path: paste the contents of `marks/parakeet-line.svg` directly into your HTML, then drive `currentColor` from CSS.
+The cleanest path: paste the contents of `marks/sotto-line.svg` directly into your HTML, then drive `currentColor` from CSS.
 
 ```html
 <link rel="stylesheet" href="brand-assets/palette/palette.css"/>
@@ -145,7 +145,7 @@ The cleanest path: paste the contents of `marks/parakeet-line.svg` directly into
 </style>
 
 <div class="brand-tile">
-  <!-- inline the contents of marks/parakeet-line.svg here -->
+  <!-- inline the contents of marks/sotto-line.svg here -->
   <svg viewBox="0 0 1024 1024" width="100%" height="100%">…</svg>
 </div>
 ```
@@ -162,7 +162,7 @@ Swap those two attributes to recompose. No other surgery needed.
 
 ```bash
 # Render the line mark in aqua at 2048px on a paper background:
-sed 's|currentColor|#3FC5C2|g' brand-assets/marks/parakeet-line.svg \
+sed 's|currentColor|#3FC5C2|g' brand-assets/marks/sotto-line.svg \
   | rsvg-convert -w 2048 -h 2048 -b "#F8F4EC" -o aqua-on-paper.png
 ```
 
@@ -179,13 +179,13 @@ SVG sources. Requires `librsvg` (`brew install librsvg`).
 
 ## Provenance
 
-The line mark (`parakeet-line.svg`) was traced from the original canonical
+The line mark (`sotto-line.svg`) was traced from the original canonical
 1024×1024 white-on-near-black parakeet artwork using `potrace` after a
 luminance threshold isolated the bird, then re-coordinated into a clean 0..1024
 viewBox. Four paths: compound body with eye-hole (fill-rule evenodd), iris dot,
 beak, and the small cheek/tail-curve flourish.
 
-The SVG is independent of `Sources/MacParakeet/Resources/parakeet-mark.png`;
+The SVG is independent of `Sources/Sotto/Resources/parakeet-mark.png`;
 that PNG remains the app runtime asset for inline mark rendering. The vector
 source lives here for design work that PNG can't do (infinite scaling,
 recoloring, vector-native composition).
@@ -194,8 +194,8 @@ The macOS app icon is a separate pipeline. `marks/AppIcon.icon/` is the Icon
 Composer source bundle, `../Assets/AppIcon-1024x1024.png` is the transparent
 padded 1024 px app-icon export, and `../Assets/AppIcon.icns` is the shipping
 multi-size icon. Icon Composer requires the SVG inside the bundle, so
-`marks/AppIcon.icon/Assets/parakeet-line.svg` is a vendored copy of
-`marks/parakeet-line.svg`; keep those two files byte-for-byte in sync.
+`marks/AppIcon.icon/Assets/sotto-line.svg` is a vendored copy of
+`marks/sotto-line.svg`; keep those two files byte-for-byte in sync.
 
 ## Don'ts (these match `docs/brand-identity.md`)
 

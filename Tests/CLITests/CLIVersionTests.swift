@@ -20,7 +20,7 @@ final class CLIVersionTests: XCTestCase {
             """
             CLI.cliVersion (\(CLI.cliVersion)) must equal the latest released \
             CHANGELOG header ([\(latestReleased)]). Bump \
-            `MacParakeetCLI.cliVersion` in lockstep with Sources/CLI/CHANGELOG.md.
+            `SottoCLI.cliVersion` in lockstep with Sources/CLI/CHANGELOG.md.
             """
         )
     }

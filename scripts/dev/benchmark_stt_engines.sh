@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-BIN_DEFAULT="$ROOT_DIR/.build/arm64-apple-macosx/release/macparakeet-cli"
+BIN_DEFAULT="$ROOT_DIR/.build/arm64-apple-macosx/release/sotto-cli"
 BIN="${BIN:-$BIN_DEFAULT}"
 OUT_DIR="${OUT_DIR:-$ROOT_DIR/output/benchmarks/stt}"
 STAMP="${STAMP:-$(date +%Y%m%d-%H%M%S)}"
@@ -20,7 +20,7 @@ CORPUS_TSV columns:
 language may be "auto". reference_path may be empty or "-".
 
 Environment:
-  BIN      release macparakeet-cli path
+  BIN      release sotto-cli path
   OUT_DIR  output directory, default output/benchmarks/stt
   REPS     repetitions per engine/sample, default 1
   ENGINES  space-separated selectors, default "parakeet-v3 nemotron whisper"
@@ -33,7 +33,7 @@ CORPUS_TSV="$1"
 
 if [[ ! -x "$BIN" ]]; then
   echo "error: binary not found or not executable: $BIN" >&2
-  echo "hint: swift build -c release --product macparakeet-cli" >&2
+  echo "hint: swift build -c release --product sotto-cli" >&2
   exit 1
 fi
 
@@ -243,7 +243,7 @@ run_case() {
   local start_s
   start_s="$(now_seconds)"
   set +e
-  MACPARAKEET_TELEMETRY=0 DO_NOT_TRACK=1 \
+  SOTTO_TELEMETRY=0 DO_NOT_TRACK=1 \
     /usr/bin/time -lp "$BIN" transcribe "$sample_path" \
       --format json \
       --no-history \

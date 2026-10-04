@@ -8,10 +8,10 @@ Verdict: one actionable P2 stale-presentation defect identified and repaired in 
 
 Reviewed the delta and current implementation of:
 
-- `Sources/MacParakeet/Views/Components/MarkdownContentView.swift`
-- `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift`
-- `Sources/MacParakeet/Views/Transcription/TranscriptTimestampedContentView.swift`
-- `Sources/MacParakeet/Views/Transcription/TranscriptBodyLayout.swift`
+- `Sources/Sotto/Views/Components/MarkdownContentView.swift`
+- `Sources/Sotto/Views/Transcription/TranscriptResultView.swift`
+- `Sources/Sotto/Views/Transcription/TranscriptTimestampedContentView.swift`
+- `Sources/Sotto/Views/Transcription/TranscriptBodyLayout.swift`
 - Relevant MainWindow/meeting-completion call sites, TranscriptResultActions and existing Markdown/context/layout/identity tests.
 
 Read the governing transcript/Markdown sections of `spec/04-ui-patterns.md` and `spec/12-processing-layer.md`. Inspected the pinned local SwiftStreamingMarkdown checkout only to resolve native link interception, table selection, parser execution and resource/accessibility assumptions; no dependency changes or network installs.
@@ -80,7 +80,7 @@ The approved repair is now being implemented in the QA worktree. The initial che
 
 ## Observed red and implemented correction
 
-Root executed the combined focused gate at 2026-09-07 15:18 local time; this worker read its log at `/tmp/macparakeet-080-qa/evidence/cache-red-recovery-green.log`. Build completed successfully. Of 89 selected tests, all 85 recovery tests passed. The cache family ran four tests: the two A→B tests failed six behavioral assertions showing A's snapshot/count exposed for B, while same-record refresh ordering and untimed clearing passed. This was an executed behavioral red, not a missing-symbol compilation failure.
+Root executed the combined focused gate at 2026-09-07 15:18 local time; this worker read its log at `/tmp/sotto-080-qa/evidence/cache-red-recovery-green.log`. Build completed successfully. Of 89 selected tests, all 85 recovery tests passed. The cache family ran four tests: the two A→B tests failed six behavioral assertions showing A's snapshot/count exposed for B, while same-record refresh ordering and untimed clearing passed. This was an executed behavioral red, not a missing-symbol compilation failure.
 
 The correction now clears the published snapshot when a different transcription starts preparation and guards snapshot/row-count reads by the caller's active transcription ID. That read guard also covers the render before SwiftUI runs `onChange`. Unknown/pending row counts remain nil; same-record refresh may retain its own rows until replacement, and both active-record and latest-request publication checks remain. All cached row text, speaker cards, labels, stats, colors and seek anchors come from the same guarded snapshot.
 

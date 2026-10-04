@@ -144,9 +144,9 @@ timing instead of ignoring it.
 - `vocab` process/words/snippets command parsing and JSON output
 - `MeetingCLIProcessTests`: seed a completed meeting through production GRDB APIs in a disposable root, then launch separate CLI processes for show, notes set/get, Markdown export, and a missing-ID error. Check persisted notes, manifest paths, and actual Markdown/notes/transcript artifacts. This is synthetic persistence coverage, not audio or model qualification.
 
-The process test uses `MACPARAKEET_CLI_TEST_EXECUTABLE` when provided; otherwise it uses `macparakeet-cli` beside the XCTest bundle in the SwiftPM build directory. A missing executable fails the test. Build the debug CLI first when running XCTest directly. The CI behavior lane passes an absolute debug executable path after its build step. Each child has a 30-second timeout, telemetry disabled, explicit temporary database/state paths, and file-backed output. The test never runs preference, model, capture, or playback commands.
+The process test uses `SOTTO_CLI_TEST_EXECUTABLE` when provided; otherwise it uses `sotto-cli` beside the XCTest bundle in the SwiftPM build directory. A missing executable fails the test. Build the debug CLI first when running XCTest directly. The CI behavior lane passes an absolute debug executable path after its build step. Each child has a 30-second timeout, telemetry disabled, explicit temporary database/state paths, and file-backed output. The test never runs preference, model, capture, or playback commands.
 
-**Tip:** For runtime smoke runs, use a throwaway database path (e.g. `--database /tmp/macparakeet-cli-test.db`) to avoid polluting the real app database. `scripts/dev/run_app.sh` uses an isolated Dev state root by default; set `MACPARAKEET_DEBUG_APP_STATE_DIR` to an absolute throwaway directory when a unique app-level smoke state is required. The override scopes the database, meeting artifacts, AppPaths-managed helper caches, the FluidAudio speech/speaker model cache, and logs away from real user state — including destructive `models delete`/`models clear` runs.
+**Tip:** For runtime smoke runs, use a throwaway database path (e.g. `--database /tmp/sotto-cli-test.db`) to avoid polluting the real app database. `scripts/dev/run_app.sh` uses an isolated Dev state root by default; set `SOTTO_DEBUG_APP_STATE_DIR` to an absolute throwaway directory when a unique app-level smoke state is required. The override scopes the database, meeting artifacts, AppPaths-managed helper caches, the FluidAudio speech/speaker model cache, and logs away from real user state — including destructive `models delete`/`models clear` runs.
 
 ### LLM Metadata + Transforms Tests
 
@@ -174,7 +174,7 @@ The process test uses `MACPARAKEET_CLI_TEST_EXECUTABLE` when provided; otherwise
 
 ## Running Tests
 
-Keep `MACPARAKEET_DEBUG_APP_STATE_DIR` scoped to the specific runtime/model or
+Keep `SOTTO_DEBUG_APP_STATE_DIR` scoped to the specific runtime/model or
 fixture command that needs it. Do not export it across the full test suite:
 default-path tests intentionally assert ordinary path/preference resolution,
 and the manual Split QA fixture treats its presence as an explicit seeding
@@ -272,7 +272,7 @@ change preferences or invoke models/providers. This proves executable/persistenc
 composition, not audio, GUI, or model behavior. Run it explicitly with:
 
 ```bash
-python3 scripts/ci/cli-persistence-smoke.py "$PWD/.build/debug/macparakeet-cli"
+python3 scripts/ci/cli-persistence-smoke.py "$PWD/.build/debug/sotto-cli"
 ```
 
 ### Timing baseline and follow-up decisions
@@ -385,7 +385,7 @@ media and persistence; do not assume a shared `Tests/Fixtures/` directory exists
 
 ```
 Tests/
-  MacParakeetTests/      # Core + ViewModel tests
+  SottoTests/      # Core + ViewModel tests
     Models/
     Database/
     Services/

@@ -7,7 +7,7 @@
 
 ## Goal
 
-Add a local metadata ledger for LLM operations so MacParakeet can answer
+Add a local metadata ledger for LLM operations so Sotto can answer
 questions such as which provider/model ran, how often, how long it took, token
 usage when available, failure rate, and which product feature triggered the
 call.

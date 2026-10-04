@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-SMOKE_DIR="${TMPDIR:-/tmp}/macparakeet-whisper-language-smoke"
+SMOKE_DIR="${TMPDIR:-/tmp}/sotto-whisper-language-smoke"
 
 require_command() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -32,7 +32,7 @@ run_clip() {
   local output="${SMOKE_DIR}/${language}.json"
   local log="${SMOKE_DIR}/${language}.log"
 
-  MACPARAKEET_TELEMETRY=0 swift run --package-path "$ROOT_DIR" macparakeet-cli \
+  SOTTO_TELEMETRY=0 swift run --package-path "$ROOT_DIR" sotto-cli \
     transcribe "${SMOKE_DIR}/${language}.wav" \
     --engine whisper \
     --language "$language" \

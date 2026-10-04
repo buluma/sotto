@@ -1,7 +1,7 @@
 # Settings IA Overhaul — Premium Enterprise-Grade UX
 
 > **Status:** Partially implemented on `main`; still active only for remaining polish and decomposition. The tabbed `Modes / Engine / AI / System` shell, search index, tab persistence, and major card moves are in source. Remaining work should be scoped to follow-up polish, doc sync, and any still-worthwhile view-model decomposition.
-> **Scope:** Refactor MacParakeet Settings from the old single-scroll card stack into a tabbed, searchable, status-aware Settings surface that feels Linear-grade. The original sub-VM split remains a follow-up goal, not a prerequisite for v0.6.
+> **Scope:** Refactor Sotto Settings from the old single-scroll card stack into a tabbed, searchable, status-aware Settings surface that feels Linear-grade. The original sub-VM split remains a follow-up goal, not a prerequisite for v0.6.
 > **Owner:** Daniel.
 > **Branch:** Current work is on `main`; the original `feat/settings-ia` handoff is archived in `plans/completed/2026-04-settings-ia-handoff.md`.
 
@@ -11,8 +11,8 @@
 
 ### Original baseline
 
-- `Sources/MacParakeet/Views/Settings/SettingsView.swift` — 1,411 lines, 15 cards in one vertical `ScrollView`, ordered by implementation history rather than user intent.
-- `Sources/MacParakeetViewModels/SettingsViewModel.swift` — 1,265 lines, ~80 fields, six mutually exclusive `Task { }` blocks fired from `.onAppear`.
+- `Sources/Sotto/Views/Settings/SettingsView.swift` — 1,411 lines, 15 cards in one vertical `ScrollView`, ordered by implementation history rather than user intent.
+- `Sources/SottoViewModels/SettingsViewModel.swift` — 1,265 lines, ~80 fields, six mutually exclusive `Task { }` blocks fired from `.onAppear`.
 - 28+ user-facing toggles/actions, no search, no findability beyond manual scroll.
 - Storage card mixes read-only configuration (audio retention) with three catastrophic destructive actions (Clear All Dictations, Reset Lifetime Stats, Clear YouTube Audio).
 - Permissions live in their own card *and* are duplicated implicitly in per-mode cards (no consolidated dashboard mental model, no contextual chip pattern).
@@ -130,13 +130,13 @@ Search transcends tabs. When the search field is non-empty, the 4-tab layout col
 - **Composition over inheritance for Modes.** `ModesSettingsViewModel` owns three `@Observable` child VMs as properties. The Modes view passes the right child VM to each card. Resists re-becoming a god object.
 - **No bare `Task { }` in new code.** All async work is invoked from `@MainActor` contexts via `await`, with errors surfaced as state (`.idle / .loading / .error(message)`). Closes the pattern flagged in the architecture review (recent fixes in `5c67d638` / `89d82fff` were point patches; this generalizes).
 - **Sub-VMs do not import each other.** Cross-VM coordination happens at `SettingsRootViewModel`. Prevents implicit coupling.
-- **VMs do not import SwiftUI.** They live in `MacParakeetViewModels`, depend only on `MacParakeetCore`. Same as today; preserved.
+- **VMs do not import SwiftUI.** They live in `SottoViewModels`, depend only on `SottoCore`. Same as today; preserved.
 
 ---
 
 ## 4. Component Primitives (new + refactored)
 
-Every new component lives in `Sources/MacParakeet/Views/Settings/Components/` with a `#Preview` block in light + dark, narrow + wide.
+Every new component lives in `Sources/Sotto/Views/Settings/Components/` with a `#Preview` block in light + dark, narrow + wide.
 
 | Primitive | Status | Purpose |
 |---|---|---|
@@ -153,7 +153,7 @@ Every new component lives in `Sources/MacParakeet/Views/Settings/Components/` wi
 
 ### Design rules
 
-- **No bare `Color.*` or numeric spacing literals.** Everything from `DesignSystem`. Lint via `grep -rn "Color\.\(red\|blue\|green\)" Sources/MacParakeet/Views/Settings/` post-merge.
+- **No bare `Color.*` or numeric spacing literals.** Everything from `DesignSystem`. Lint via `grep -rn "Color\.\(red\|blue\|green\)" Sources/Sotto/Views/Settings/` post-merge.
 - **Red is reserved for destructive actions.** Status chips never use red — yellow means "action recommended," green means "OK," gray means "informational."
 - **One accent color, one neutral palette.** Match existing `DesignSystem.Colors`.
 
@@ -318,7 +318,7 @@ Implications:
 - Commits land incrementally on the branch as each phase completes. Daniel (or any reviewer) can scan `git log` to follow the architecture's evolution.
 - No `kSettingsV2Enabled` flag — keeps the codebase clean of dual UI paths.
 - Pre-merge gate: phase 9 (accessibility audit) is the last gate; if anything regresses there, fix in place rather than ship-and-patch.
-- During the implementation window (~3 weeks of senior-dev effort), avoid landing other PRs that touch `Sources/MacParakeet/Views/Settings/` or `Sources/MacParakeetViewModels/SettingsViewModel.swift` to minimize rebase tax.
+- During the implementation window (~3 weeks of senior-dev effort), avoid landing other PRs that touch `Sources/Sotto/Views/Settings/` or `Sources/SottoViewModels/SettingsViewModel.swift` to minimize rebase tax.
 
 ---
 
@@ -380,26 +380,26 @@ Implications:
 
 | Path | Action |
 |---|---|
-| `Sources/MacParakeet/Views/Settings/SettingsView.swift` | Eventually deleted, replaced by tabbed shell |
-| `Sources/MacParakeet/Views/Settings/Components/` | New directory for primitives |
-| `Sources/MacParakeet/Views/Settings/Tabs/ModesSettingsView.swift` | New |
-| `Sources/MacParakeet/Views/Settings/Tabs/EngineSettingsView.swift` | New |
-| `Sources/MacParakeet/Views/Settings/Tabs/AISettingsView.swift` | New (refactor of existing LLMSettingsView) |
-| `Sources/MacParakeet/Views/Settings/Tabs/SystemSettingsView.swift` | New |
-| `Sources/MacParakeet/Views/Settings/LanguagePickerPopover.swift` | Keep, used by Engine tab |
-| `Sources/MacParakeetCore/WhisperLanguageCatalog.swift` | Keep, unchanged |
-| `Sources/MacParakeetViewModels/SettingsViewModel.swift` | Split, eventually deleted |
-| `Sources/MacParakeetViewModels/SettingsRootViewModel.swift` | New |
-| `Sources/MacParakeetViewModels/Modes/{Dictation,Transcription,Meeting}SectionViewModel.swift` | New |
-| `Sources/MacParakeetViewModels/EngineSettingsViewModel.swift` | New |
-| `Sources/MacParakeetViewModels/SystemSettingsViewModel.swift` | New |
+| `Sources/Sotto/Views/Settings/SettingsView.swift` | Eventually deleted, replaced by tabbed shell |
+| `Sources/Sotto/Views/Settings/Components/` | New directory for primitives |
+| `Sources/Sotto/Views/Settings/Tabs/ModesSettingsView.swift` | New |
+| `Sources/Sotto/Views/Settings/Tabs/EngineSettingsView.swift` | New |
+| `Sources/Sotto/Views/Settings/Tabs/AISettingsView.swift` | New (refactor of existing LLMSettingsView) |
+| `Sources/Sotto/Views/Settings/Tabs/SystemSettingsView.swift` | New |
+| `Sources/Sotto/Views/Settings/LanguagePickerPopover.swift` | Keep, used by Engine tab |
+| `Sources/SottoCore/WhisperLanguageCatalog.swift` | Keep, unchanged |
+| `Sources/SottoViewModels/SettingsViewModel.swift` | Split, eventually deleted |
+| `Sources/SottoViewModels/SettingsRootViewModel.swift` | New |
+| `Sources/SottoViewModels/Modes/{Dictation,Transcription,Meeting}SectionViewModel.swift` | New |
+| `Sources/SottoViewModels/EngineSettingsViewModel.swift` | New |
+| `Sources/SottoViewModels/SystemSettingsViewModel.swift` | New |
 
 ### Conventions to honor
 
 - `DesignSystem` tokens (no bare `Color` / spacing literals)
 - `@MainActor @Observable` on all VMs
 - Async/await over Combine for new code
-- ViewModels in `MacParakeetViewModels` target (testable without GUI)
+- ViewModels in `SottoViewModels` target (testable without GUI)
 - Inline `// MARK:` for major sections within each view file
 - `#Preview` blocks for every new component, light + dark
 - No `Task { ... }` fire-and-forget; surface errors as state

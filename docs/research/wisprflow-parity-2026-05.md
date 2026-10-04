@@ -1,10 +1,10 @@
 # WisprFlow Feature Parity Audit — May 2026
 
-> Status: **ACTIVE**. Snapshot of WisprFlow Pro's current feature surface (May 2026, captured from the macOS app) and how MacParakeet stacks up against each surface today.
+> Status: **ACTIVE**. Snapshot of WisprFlow Pro's current feature surface (May 2026, captured from the macOS app) and how Sotto stacks up against each surface today.
 >
 > Companion doc: `wisprflow-deep-dive.md` (Feb 2026, HISTORICAL) covers the high-level positioning. Design follow-on: `transforms-design-2026-05.md` covers the chosen build-direction for Transforms.
 >
-> Implementation update (2026-05-16): MacParakeet now ships productized
+> Implementation update (2026-05-16): Sotto now ships productized
 > Transforms on `main`; the Transforms gap analysis below is preserved as
 > historical rationale and updated where it describes the current state.
 
@@ -20,9 +20,9 @@ The full design exploration for Transforms lives in `transforms-design-2026-05.m
 
 ## TL;DR
 
-WisprFlow Pro now organizes its post-dictation cleanup into five sidebar sections: **Dictionary**, **Snippets**, **Style**, **Auto Cleanup**, and **Transforms**. We have rough parity on Dictionary and Snippets (different UI shape, same underlying capability), productized core parity on Transforms, and no comparable Style routing. Auto Cleanup is binary in MacParakeet (raw vs clean) where WisprFlow ships four gradations.
+WisprFlow Pro now organizes its post-dictation cleanup into five sidebar sections: **Dictionary**, **Snippets**, **Style**, **Auto Cleanup**, and **Transforms**. We have rough parity on Dictionary and Snippets (different UI shape, same underlying capability), productized core parity on Transforms, and no comparable Style routing. Auto Cleanup is binary in Sotto (raw vs clean) where WisprFlow ships four gradations.
 
-| WisprFlow surface | MacParakeet today | Coverage | Strategic fit |
+| WisprFlow surface | Sotto today | Coverage | Strategic fit |
 |---|---|---|---|
 | Dictionary (word teach + misspelling correction) | Custom Words (`word` + optional `replacement`) | Capability parity, UX-lite | Aligned — already shipped |
 | Snippets (trigger → expansion) | Text Snippets in Vocabulary panel | Capability parity, UX-lite | Aligned — already shipped |
@@ -45,16 +45,16 @@ Sidebar item `Dictionary`. Three tabs: All / Personal / Shared with team. "Add n
 
 Empty-state copy: *"Flow learns your unique words and names — automatically or manually. Add personal terms, company jargon, client names, or industry-specific lingo."* The "automatically" hint is interesting — WisprFlow learns words from corrections, which we already model via `CustomWord.Source.learned`.
 
-### MacParakeet today
+### Sotto today
 
-- Model: `Sources/MacParakeetCore/Models/CustomWord.swift` — fields `word`, `replacement: String?`, `source: .manual | .learned`, `isEnabled`.
+- Model: `Sources/SottoCore/Models/CustomWord.swift` — fields `word`, `replacement: String?`, `source: .manual | .learned`, `isEnabled`.
 - Pipeline: step 2 of the deterministic `TextProcessingPipeline` — regex word-boundary replacements, case-insensitive, longest-trigger-first.
-- UI: `Sources/MacParakeet/Views/Vocabulary/CustomWordsView.swift` — search, add, delete, enable/disable. Word and replacement displayed side-by-side.
+- UI: `Sources/Sotto/Views/Vocabulary/CustomWordsView.swift` — search, add, delete, enable/disable. Word and replacement displayed side-by-side.
 - Storage: `custom_words` table.
 
 ### Gap analysis
 
-| Capability | WisprFlow | MacParakeet | Gap |
+| Capability | WisprFlow | Sotto | Gap |
 |---|---|---|---|
 | Teach a single word (no replacement) | Yes (toggle off) | Yes (`replacement` is optional) | UX framing only |
 | Misspelling → correction | Yes (toggle on) | Yes (`replacement` non-nil) | UX framing only |
@@ -83,16 +83,16 @@ Sidebar item `Snippets`. Same All / Personal / Shared layout. Empty-state copy: 
 
 Add modal: `Snippet` (trigger) + `Expansion` text field + Share with team toggle.
 
-### MacParakeet today
+### Sotto today
 
-- Model: `Sources/MacParakeetCore/Models/TextSnippet.swift` — fields `trigger`, `expansion`, `isEnabled`, `useCount`, optional `action: KeyAction?`.
+- Model: `Sources/SottoCore/Models/TextSnippet.swift` — fields `trigger`, `expansion`, `isEnabled`, `useCount`, optional `action: KeyAction?`.
 - Pipeline: text-only snippets at step 4; action snippets (trailing trigger + key action like Enter) at step 3.
-- UI: `Sources/MacParakeet/Views/Vocabulary/TextSnippetsView.swift` — same management surface as Custom Words.
+- UI: `Sources/Sotto/Views/Vocabulary/TextSnippetsView.swift` — same management surface as Custom Words.
 - Bonus we have that they don't: trailing action snippets (e.g., say "send it" → expand to "Best, Dan" + press Enter). WisprFlow only shows pure text expansion.
 
 ### Gap analysis
 
-| Capability | WisprFlow | MacParakeet | Gap |
+| Capability | WisprFlow | Sotto | Gap |
 |---|---|---|---|
 | Trigger → text expansion | Yes | Yes | — |
 | Trigger → text + keystroke | No (apparently) | Yes (KeyAction) | We're ahead |
@@ -123,14 +123,14 @@ Each preset shows a worked example. "Formal" gets `Hey,` and a period; "very cas
 
 The mechanism is clear: WisprFlow reads frontmost-app bundle ID, picks the matching tab's preset, and sends both the transcript and the style preset to a cloud LLM. The LLM rewrites accordingly before paste.
 
-### MacParakeet today
+### Sotto today
 
-No style-routing coverage. MacParakeet now reads the frontmost app for local
+No style-routing coverage. Sotto now reads the frontmost app for local
 history and coarse, privacy-safe telemetry buckets, but not for choosing
 dictation cleanup behavior: we still have no per-app preference surface, and
 our `processingMode` is a single global enum.
 
-We do have `Sources/MacParakeetCore/TextProcessing/AIFormatter.swift` with a user-customizable prompt template that runs through whichever LLM provider the user has configured. But it's a single global prompt — no per-app branching.
+We do have `Sources/SottoCore/TextProcessing/AIFormatter.swift` with a user-customizable prompt template that runs through whichever LLM provider the user has configured. But it's a single global prompt — no per-app branching.
 
 ### Gap analysis
 
@@ -169,7 +169,7 @@ Auto Cleanup tab inside Style. Four levels with worked examples (same input "hey
 
 Important note: *"Note your original dictation is never lost. Just go to the three dots next to a recent dictation in the Home tab, then click 'Undo AI edit.'"* — original transcript is preserved separately, edit is reversible.
 
-### MacParakeet today
+### Sotto today
 
 Two independent layers:
 
@@ -182,7 +182,7 @@ We also already keep the raw transcript in the dictation history, so "Undo AI ed
 
 ### Gap analysis
 
-| Level | WisprFlow | MacParakeet equivalent |
+| Level | WisprFlow | Sotto equivalent |
 |---|---|---|
 | None | Exact STT output | `processingMode = .raw` |
 | Light | Filler + grammar | `processingMode = .clean` (no LLM) |
@@ -220,7 +220,7 @@ There's also a global `Opt in` toggle for the whole Transforms feature, with cop
 
 Failure mode shown in one screenshot: *"Couldn't detect text in your text box — please click into your text box and try again."* — confirms they use AX text selection / focused element APIs, and gracefully fail when the AX path isn't viable.
 
-### MacParakeet today
+### Sotto today
 
 Productized Transforms now ship on `main`:
 
@@ -229,18 +229,18 @@ Productized Transforms now ship on `main`:
 - `SelectionCaptureService` and `SelectionReplacementService` provide AX-first capture/replacement with clipboard fallback.
 - `TransformExecutor` streams through the user's configured LLM provider.
 - `TransformHistoryRepository` records local Transform run history.
-- `macparakeet-cli transforms` manages and runs saved Transforms; `macparakeet-cli llm transform` remains the raw ad-hoc prompt primitive.
+- `sotto-cli transforms` manages and runs saved Transforms; `sotto-cli llm transform` remains the raw ad-hoc prompt primitive.
 
 WisprFlow still has richer polish around rule toggles and live diff preview.
-MacParakeet intentionally shipped raw editable prompts first.
+Sotto intentionally shipped raw editable prompts first.
 
 ### Gap analysis
 
 This was the biggest net-new capability surface. Current gap stack:
 
-1. **Rule-toggle composition.** WisprFlow's built-in Polish can be tuned without editing a prompt. MacParakeet v1 exposes prompt editing instead.
-2. **Diff preview pane.** WisprFlow previews insertions/deletions before applying a Transform. MacParakeet relies on macOS Cmd+Z as the v1 escape hatch.
-3. **Per-app routing.** WisprFlow's broader writing-assistant direction still goes further than MacParakeet's current selected-text utility.
+1. **Rule-toggle composition.** WisprFlow's built-in Polish can be tuned without editing a prompt. Sotto v1 exposes prompt editing instead.
+2. **Diff preview pane.** WisprFlow previews insertions/deletions before applying a Transform. Sotto relies on macOS Cmd+Z as the v1 escape hatch.
+3. **Per-app routing.** WisprFlow's broader writing-assistant direction still goes further than Sotto's current selected-text utility.
 4. **Voice-triggered rewrite.** Still future Command Mode scope.
 
 ### Recommendation
@@ -249,11 +249,11 @@ This is where the strategic decision actually lives. Two coherent answers:
 
 **Path A — stay focused.** Ship nothing here. We are a dictation + transcription + meeting tool. Writing assistance is what Raycast AI, ChatGPT's macOS app, Claude's macOS app, and TextSnipped already do. We compete on "fastest local dictation," not "best inline rewrites." This is the lower-risk path and matches the existing positioning.
 
-**Path B — add Transforms as a third leg.** If we believe dictation users also want post-dictation rewrites (and the conversion of dictation → polished prose → paste is genuinely the same job), then Transforms belongs in MacParakeet. This is the path now implemented on `main`. Sequence:
+**Path B — add Transforms as a third leg.** If we believe dictation users also want post-dictation rewrites (and the conversion of dictation → polished prose → paste is genuinely the same job), then Transforms belongs in Sotto. This is the path now implemented on `main`. Sequence:
 
 1. Wire `Prompt.category = .transform` to a hotkey-driven path. Reuse the existing Prompt Library UI for the management surface.
 2. Implement AX selection-capture with clipboard fallback (the WisprFlow error toast tells us this is the right boundary).
-3. Ship focused defaults that cover polish, distillation, and decision framing. MacParakeet's implemented set is `Polish`, `Distill`, and `Decide`.
+3. Ship focused defaults that cover polish, distillation, and decision framing. Sotto's implemented set is `Polish`, `Distill`, and `Decide`.
 4. Skip the rule-toggle composition in v1 — it's a delightful detail but adds a lot of UI surface. Ship raw editable prompts only.
 5. Skip the live diff preview in v1. Hard to implement well, easy to live without.
 
@@ -292,7 +292,7 @@ WisprFlow leans hard on Opt+number bindings, with the hotkey shown inline on eve
 - Meeting recording (ScreenCaptureKit + mic dual-stream).
 - Live meeting Notes/Transcript/Ask three-tab panel.
 - Multi-language local STT via WhisperKit (KO/JA/ZH coverage).
-- A real CLI (`macparakeet-cli`) for scripting and downstream agents.
+- A real CLI (`sotto-cli`) for scripting and downstream agents.
 - 100% local default. Free. Open source.
 
 The audit above is "what could we steal from them" — but their feature set is also conspicuously narrower than ours in the dimensions that matter for our positioning.

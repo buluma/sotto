@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-BIN_DEFAULT="$ROOT_DIR/.build/arm64-apple-macosx/release/macparakeet-cli"
+BIN_DEFAULT="$ROOT_DIR/.build/arm64-apple-macosx/release/sotto-cli"
 BIN="${BIN:-$BIN_DEFAULT}"
 OUT_DIR="${OUT_DIR:-$ROOT_DIR/output/benchmarks}"
 STAMP="${STAMP:-$(date +%Y%m%d-%H%M%S)}"

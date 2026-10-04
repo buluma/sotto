@@ -1,4 +1,4 @@
-# MacParakeet Fresh-Eye Product and Documentation Audit
+# Sotto Fresh-Eye Product and Documentation Audit
 
 > **Status:** COMPLETE
 > **Date:** 2026-07-16

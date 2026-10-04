@@ -184,10 +184,10 @@
     "false_applied_terms": 9,
     "false_examples": [
       {
-        "hyp": "MacParakeet should keep the transcript LocalVQE",
+        "hyp": "Sotto should keep the transcript LocalVQE",
         "id": "oov-001",
         "original": "local.",
-        "ref": "MacParakeet should keep the transcript local.",
+        "ref": "Sotto should keep the transcript local.",
         "replacement": "LocalVQE"
       },
       {
@@ -246,11 +246,11 @@
     "true_applied_terms": 32,
     "true_examples": [
       {
-        "hyp": "MacParakeet should keep the transcript LocalVQE",
+        "hyp": "Sotto should keep the transcript LocalVQE",
         "id": "oov-001",
         "original": "MAC Parakeet",
-        "ref": "MacParakeet should keep the transcript local.",
-        "replacement": "MacParakeet"
+        "ref": "Sotto should keep the transcript local.",
+        "replacement": "Sotto"
       },
       {
         "hyp": "FluidAudio loads the acoustic model before decoding.",
@@ -300,11 +300,11 @@
     "true_applied_terms": 27,
     "true_examples": [
       {
-        "hyp": "MacParakeet should keep the transcript local.",
+        "hyp": "Sotto should keep the transcript local.",
         "id": "oov-001",
         "original": "MAC Parakeet",
-        "ref": "MacParakeet should keep the transcript local.",
-        "replacement": "MacParakeet"
+        "ref": "Sotto should keep the transcript local.",
+        "replacement": "Sotto"
       },
       {
         "hyp": "FluidAudio loads the acoustic model before decoding.",

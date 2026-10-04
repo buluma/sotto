@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 struct TranscriptCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
@@ -64,7 +64,7 @@ struct TranscriptCommand: AsyncParsableCommand {
             } else if json {
                 try printJSON(record)
             } else if rows.isEmpty {
-                print("No indexed transcript segments found. Run `macparakeet-cli search-reindex`.")
+                print("No indexed transcript segments found. Run `sotto-cli search-reindex`.")
             } else {
                 for segment in rows {
                     let location = segment.startMs.map(formatSearchTimestamp) ?? "#\(segment.seq)"

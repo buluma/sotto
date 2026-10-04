@@ -11,7 +11,7 @@ persistence.
 
 ## Producers And Consumers
 
-`MacParakeetViewModels.TranscriptionViewModel` exposes
+`SottoViewModels.TranscriptionViewModel` exposes
 `applySpeakerCorrection(_:) -> Bool`,
 `applySpeakerCorrectionAndWait(_:) async -> Bool`, and
 `renameSpeaker(id:to:) -> Bool` on the main actor. `TranscriptResultView` uses

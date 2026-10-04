@@ -16,7 +16,7 @@ Fix status: implemented in the QA worktree; root's green validation is pending. 
 
 The fix claims the current on-disk ownership before discard and restores the prior lock on failure while the folder remains. Added coverage also pins missing-folder idempotence and retry after an injected folder-removal failure; the existing failed-settlement test now checks the exact restored lock. The narrow guarantee is documented in `spec/contracts/meeting-recovery-retention.md`. Source locations below describe the original candidate.
 
-Priority: P1 (data-loss consequence), confidence 75. Location: `Sources/MacParakeetCore/Services/MeetingRecording/MeetingRecordingRecoveryService.swift:413` through the folder removal at line 430. This is an adjacent gap in the release's new ownership mechanism; the unconditional discard path predates this release.
+Priority: P1 (data-loss consequence), confidence 75. Location: `Sources/SottoCore/Services/MeetingRecording/MeetingRecordingRecoveryService.swift:413` through the folder removal at line 430. This is an adjacent gap in the release's new ownership mechanism; the unconditional discard path predates this release.
 
 Concrete trace:
 
@@ -83,12 +83,12 @@ Run from the owning QA worktree after root's candidate build. Set `QA_WORKTREE` 
 : "${QA_WORKTREE:?Set the owning QA checkout}"
 : "${QA_FIXTURE_ROOT:?Set the public-corpus root}"
 : "${QA_RUN:?Set a new owned temporary root}"
-QA_CLI="$QA_WORKTREE/.build/arm64-apple-macosx/release/macparakeet-cli"
+QA_CLI="$QA_WORKTREE/.build/arm64-apple-macosx/release/sotto-cli"
 QA_OUT="$QA_RUN/audio-runtime"
 mkdir -p "$QA_OUT"
-MACPARAKEET_TELEMETRY=0 "$QA_CLI" models list --json > "$QA_OUT/models-list.json"
-MACPARAKEET_TELEMETRY=0 "$QA_CLI" models status --json > "$QA_OUT/models-status.json"
-MACPARAKEET_TELEMETRY=0 "$QA_CLI" transcribe \
+SOTTO_TELEMETRY=0 "$QA_CLI" models list --json > "$QA_OUT/models-list.json"
+SOTTO_TELEMETRY=0 "$QA_CLI" models status --json > "$QA_OUT/models-status.json"
+SOTTO_TELEMETRY=0 "$QA_CLI" transcribe \
   "$QA_FIXTURE_ROOT/LibriSpeech/test-clean/1089/134686/1089-134686-0000.flac" \
   --engine parakeet --parakeet-model v3 --mode raw \
   --speaker-detection off --no-history --database "$QA_OUT/history.sqlite" \
@@ -113,26 +113,26 @@ Run the explicit CLI recipe with `--audio-track 1` and `--audio-track 2`, then c
 The root-owned hardware suite:
 
 ```sh
-MACPARAKEET_TELEMETRY=0 MACPARAKEET_HARDWARE_TESTS=1 \
+SOTTO_TELEMETRY=0 SOTTO_HARDWARE_TESTS=1 \
   swift test --filter MicrophoneEngineRealPlatformTests
 ```
 
-Leave `MACPARAKEET_HAL_MUTATION_TESTS`, `MACPARAKEET_STRESS_HARDWARE_TESTS`, and `MACPARAKEET_SLOW_HARDWARE_TESTS` unset initially. The first changes the macOS default input; the others extend runtime. Do not run hardware tests alongside a real app recording.
+Leave `SOTTO_HAL_MUTATION_TESTS`, `SOTTO_STRESS_HARDWARE_TESTS`, and `SOTTO_SLOW_HARDWARE_TESTS` unset initially. The first changes the macOS default input; the others extend runtime. Do not run hardware tests alongside a real app recording.
 
 AEC bundle verification and tests, with actual candidate asset paths:
 
 ```sh
-REQUIRE_MEETING_ECHO_ASSETS=1 scripts/dist/verify_meeting_echo_assets.sh /path/to/candidate/MacParakeet.app
-MACPARAKEET_TELEMETRY=0 \
-  MACPARAKEET_TEST_LOCALVQE_LIBRARY=/path/to/candidate/MacParakeet.app/Contents/Frameworks/liblocalvqe.dylib \
-  MACPARAKEET_TEST_LOCALVQE_MODEL=/path/to/candidate/MacParakeet.app/Contents/Resources/MeetingEchoSuppression/localvqe-v1.4-aec-200K-f32.gguf \
-  MACPARAKEET_TEST_LOCALVQE_MODEL_SHA256=b6e43138588a83bfe903ab5e143b4020b91c1e1629f5a575ac5855ff0003c731 \
+REQUIRE_MEETING_ECHO_ASSETS=1 scripts/dist/verify_meeting_echo_assets.sh /path/to/candidate/Sotto.app
+SOTTO_TELEMETRY=0 \
+  SOTTO_TEST_LOCALVQE_LIBRARY=/path/to/candidate/Sotto.app/Contents/Frameworks/liblocalvqe.dylib \
+  SOTTO_TEST_LOCALVQE_MODEL=/path/to/candidate/Sotto.app/Contents/Resources/MeetingEchoSuppression/localvqe-v1.4-aec-200K-f32.gguf \
+  SOTTO_TEST_LOCALVQE_MODEL_SHA256=b6e43138588a83bfe903ab5e143b4020b91c1e1629f5a575ac5855ff0003c731 \
   swift test --filter 'MeetingEchoSuppressionRuntimeTests|MeetingAecRenderThroughputTests'
 ```
 
-`LongMeetingPipelineBenchmarkTests` supports `MACPARAKEET_LONG_MEETING_PIPELINE_BENCH=1` plus `MACPARAKEET_LONG_MEETING_SYNTHETIC_SECONDS=30`, the same two LocalVQE asset variables, `MACPARAKEET_LONG_MEETING_WORK_DIR` and `MACPARAKEET_LONG_MEETING_RESULTS_FILE` pointed into the owned QA directory. It requires cached speech and diarization models; preflight may reject missing ones. Its synthetic waveform does not establish WER/DER. Do not set `MACPARAKEET_LONG_MEETING_SESSION` to personal recordings without separate deliberate scope.
+`LongMeetingPipelineBenchmarkTests` supports `SOTTO_LONG_MEETING_PIPELINE_BENCH=1` plus `SOTTO_LONG_MEETING_SYNTHETIC_SECONDS=30`, the same two LocalVQE asset variables, `SOTTO_LONG_MEETING_WORK_DIR` and `SOTTO_LONG_MEETING_RESULTS_FILE` pointed into the owned QA directory. It requires cached speech and diarization models; preflight may reject missing ones. Its synthetic waveform does not establish WER/DER. Do not set `SOTTO_LONG_MEETING_SESSION` to personal recordings without separate deliberate scope.
 
-The repository's `benchmarks/asr/score.py` and `score_multi.py` are the canonical scorers, with pinned Python requirements. Use English WER and CJK CER with matching references; retain utterance ID, hypothesis, engine/variant, language hint, candidate SHA, model/runtime versions, wall time, and exit status. `run_macparakeet.py`/`run_macparakeet_fleurs.py` pass `--no-history` but omit `--mode raw` and `--database`; use explicit CLI commands above or adjust a temporary runner copy so saved processing settings cannot enter the experiment. An owned `--work-dir` matters: the LibriSpeech runner removes its `transcripts` child before a run.
+The repository's `benchmarks/asr/score.py` and `score_multi.py` are the canonical scorers, with pinned Python requirements. Use English WER and CJK CER with matching references; retain utterance ID, hypothesis, engine/variant, language hint, candidate SHA, model/runtime versions, wall time, and exit status. `run_sotto.py`/`run_sotto_fleurs.py` pass `--no-history` but omit `--mode raw` and `--database`; use explicit CLI commands above or adjust a temporary runner copy so saved processing settings cannot enter the experiment. An owned `--work-dir` matters: the LibriSpeech runner removes its `transcripts` child before a run.
 
 ## What worked and what did not
 

@@ -22,7 +22,7 @@ an instruction to rebuild the feature.
 
 ## Where the behavior lives
 
-- `MacParakeetCore/Services/Sharing`: allowlisted text projection, interoperable
+- `SottoCore/Services/Sharing`: allowlisted text projection, interoperable
   AES-GCM bundles, strict URLs, device/recovery credentials, HTTP and lifecycle.
 - `SharePublicationRepository`: local publication ledger and ordered durable
   outbox. The existing GRDB migration adds sharing tables without changing

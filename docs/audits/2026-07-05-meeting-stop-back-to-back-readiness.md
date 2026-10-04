@@ -2,7 +2,7 @@
 
 > Status: release-readiness audit note. The behavioral audit was verified
 > against clean `origin/main` checkout
-> `/Users/dmoon/code/macparakeet-worktrees/latest-main-run` at `681e3610e`
+> `/Users/dmoon/code/sotto-worktrees/latest-main-run` at `681e3610e`
 > (`main...origin/main`). The `meeting_stop_stage` diagnostics described below
 > were then added in the active working checkout so release QA can diagnose the
 > stop-to-check gate before shipment. The active checkout had unrelated dirty
@@ -43,10 +43,10 @@ slow Metatron report is not actionable enough to justify architecture changes.
 
 Relevant code:
 
-- `Sources/MacParakeetCore/MeetingRecordingFlow/MeetingRecordingFlowStateMachine.swift`
-- `Sources/MacParakeet/App/MeetingRecordingFlowCoordinator.swift`
-- `Sources/MacParakeet/Views/MeetingRecording/MeetingRecordingPillController.swift`
-- `Sources/MacParakeet/Views/MeetingRecording/MerkabaPillIcon.swift`
+- `Sources/SottoCore/MeetingRecordingFlow/MeetingRecordingFlowStateMachine.swift`
+- `Sources/Sotto/App/MeetingRecordingFlowCoordinator.swift`
+- `Sources/Sotto/Views/MeetingRecording/MeetingRecordingPillController.swift`
+- `Sources/Sotto/Views/MeetingRecording/MerkabaPillIcon.swift`
 
 The state machine documents the successful-stop effect as:
 
@@ -73,9 +73,9 @@ means the meeting has reached the durable queued state.
 
 Relevant code:
 
-- `Sources/MacParakeetCore/Services/MeetingRecording/MeetingRecordingService.swift`
-- `Sources/MacParakeetCore/Audio/AudioFileConverter.swift`
-- `Sources/MacParakeetCore/Utilities/ChildProcessWaiter.swift`
+- `Sources/SottoCore/Services/MeetingRecording/MeetingRecordingService.swift`
+- `Sources/SottoCore/Audio/AudioFileConverter.swift`
+- `Sources/SottoCore/Utilities/ChildProcessWaiter.swift`
 
 The foreground stop path starts at `meetingRecordingService.stopRecording()`.
 It performs:
@@ -203,11 +203,11 @@ bleed can appear in the "Me" side when final STT uses raw mic.
 
 Relevant code:
 
-- `Sources/MacParakeet/App/MeetingTranscriptionQueue.swift`
-- `Sources/MacParakeetCore/Services/TranscriptionService.swift`
-- `Sources/MacParakeetCore/Services/MeetingRecording/MeetingCleanedMicrophoneReadiness.swift`
-- `Sources/MacParakeetCore/Services/MeetingRecording/MeetingCleanedMicRenderer.swift`
-- `Sources/MacParakeetCore/Services/Diarization/DiarizationService.swift`
+- `Sources/Sotto/App/MeetingTranscriptionQueue.swift`
+- `Sources/SottoCore/Services/TranscriptionService.swift`
+- `Sources/SottoCore/Services/MeetingRecording/MeetingCleanedMicrophoneReadiness.swift`
+- `Sources/SottoCore/Services/MeetingRecording/MeetingCleanedMicRenderer.swift`
+- `Sources/SottoCore/Services/Diarization/DiarizationService.swift`
 
 After the recording is queued, `MeetingTranscriptionQueue` owns finalization.
 It is single-active FIFO:
@@ -231,8 +231,8 @@ queue point. They should not block starting the next meeting.
 
 Relevant code:
 
-- `Sources/MacParakeet/App/MeetingRecordingFlowCoordinator.swift`
-- `Tests/MacParakeetTests/MeetingRecordingFlow/MeetingRecordingFlowCoordinatorTests.swift`
+- `Sources/Sotto/App/MeetingRecordingFlowCoordinator.swift`
+- `Tests/SottoTests/MeetingRecordingFlow/MeetingRecordingFlowCoordinatorTests.swift`
 
 New meeting starts are not queued. `startRecording(...)` only succeeds when
 the state machine is already `.idle`. If the user tries too early, the start
@@ -261,11 +261,11 @@ QA finds this confusing, but it is not an architecture blocker.
 
 Relevant code:
 
-- `Sources/MacParakeetCore/STT/STTScheduler.swift`
-- `Sources/MacParakeetCore/STT/README.md`
-- `Sources/MacParakeetCore/Services/TranscriptionService.swift`
-- `Sources/MacParakeetCore/Services/Capture/LiveChunkTranscriber.swift`
-- `Tests/MacParakeetTests/STT/STTSchedulerTests.swift`
+- `Sources/SottoCore/STT/STTScheduler.swift`
+- `Sources/SottoCore/STT/README.md`
+- `Sources/SottoCore/Services/TranscriptionService.swift`
+- `Sources/SottoCore/Services/Capture/LiveChunkTranscriber.swift`
+- `Tests/SottoTests/STT/STTSchedulerTests.swift`
 
 `STTScheduler` has two logical slots:
 
@@ -415,7 +415,7 @@ metadata/lock writes, DB row creation, or queue enqueue.
 
 Local diagnostics reviewed:
 
-- `$HOME/Library/Logs/MacParakeet/dictation-audio.log`
+- `$HOME/Library/Logs/Sotto/dictation-audio.log`
 
 The log currently brackets stop with:
 

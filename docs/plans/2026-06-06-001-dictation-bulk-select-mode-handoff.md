@@ -44,10 +44,10 @@ then select/delete multiple dictations from that mode.
 The implementation currently has selection state but no explicit selection
 mode:
 
-- `Sources/MacParakeetViewModels/DictationHistoryViewModel.swift`
+- `Sources/SottoViewModels/DictationHistoryViewModel.swift`
   - `selectedDictationIDs` is the only mode signal.
   - `hasSelectedDictations` controls whether the selected-actions bar appears.
-- `Sources/MacParakeet/Views/History/DictationHistoryView.swift`
+- `Sources/Sotto/Views/History/DictationHistoryView.swift`
   - `SelectionToggleButton` is always rendered in `DictationCardRow`.
   - The selected-actions bar appears only after a row has already been selected.
   - `CardMenuButton` only exposes row actions: export audio, AI edit toggle,
@@ -59,7 +59,7 @@ history view.
 ## Lifecycle Constraint (important)
 
 `historyViewModel` is a **process-lifetime singleton** owned by `AppDelegate`
-(`Sources/MacParakeet/AppDelegate.swift`), and the Dictations tab is mounted
+(`Sources/Sotto/AppDelegate.swift`), and the Dictations tab is mounted
 conditionally — `case .dictations: DictationHistoryView(viewModel: historyViewModel)`
 in `MainWindowView.swift`. There is no `onAppear`/`loadDictations` reset when the
 view re-appears.
@@ -113,7 +113,7 @@ Leaving bulk mode (all four paths):
 
 File:
 
-- `Sources/MacParakeetViewModels/DictationHistoryViewModel.swift`
+- `Sources/SottoViewModels/DictationHistoryViewModel.swift`
 
 Add explicit state:
 
@@ -181,7 +181,7 @@ usage-signal event can be a follow-up if needed.
 
 File:
 
-- `Sources/MacParakeet/Views/History/DictationHistoryView.swift`
+- `Sources/Sotto/Views/History/DictationHistoryView.swift`
 
 At the call site for `DictationCardRow`, pass a new flag:
 
@@ -202,7 +202,7 @@ In `DictationCardRow`:
 
 File:
 
-- `Sources/MacParakeet/Views/History/DictationHistoryView.swift`
+- `Sources/Sotto/Views/History/DictationHistoryView.swift`
 
 Extend `CardMenuButton`:
 
@@ -231,7 +231,7 @@ first action only enters selection mode.
 
 File:
 
-- `Sources/MacParakeet/Views/History/DictationHistoryView.swift`
+- `Sources/Sotto/Views/History/DictationHistoryView.swift`
 
 Change the action bar condition:
 
@@ -260,7 +260,7 @@ valid while the user is in bulk mode and has cleared all rows.
 
 File:
 
-- `Sources/MacParakeet/Views/MainWindowView.swift`
+- `Sources/Sotto/Views/MainWindowView.swift`
 
 Add `.onChange(of: state.selectedItem)` to the `MainWindowView` body, calling
 `historyViewModel.exitBulkSelection()` whenever `newItem != .dictations`. Because
@@ -279,7 +279,7 @@ wart where a raw selection from PR #445 survived top-level navigation.)
 
 File:
 
-- `Tests/MacParakeetTests/ViewModels/DictationHistoryViewModelTests.swift`
+- `Tests/SottoTests/ViewModels/DictationHistoryViewModelTests.swift`
 
 Add focused tests (the mode flips are synchronous, so these assert directly
 without `await` except where the async delete pipeline is involved):

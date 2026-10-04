@@ -2,7 +2,7 @@
 
 > **Status:** ✅ submitted as issue [#71](https://github.com/vincentkoc/awesome-openclaw/issues/71) on 2026-04-25. Awaiting maintainer triage.
 >
-> Current release note (2026-05-19): `macparakeet-cli 2.3.1` is published
+> Current release note (2026-05-19): `sotto-cli 2.3.1` is published
 > and Homebrew-verified. The submitted issue-template text below preserves
 > the 2026-04-25 wording where it refers to the original 1.0.0 versioning
 > event.
@@ -46,7 +46,7 @@ https://github.com/moona3k/macparakeet
 **`Plugins and Integrations`** — the section description allows
 community-maintained tools, and our value to OpenClaw is precisely
 as an integration target (an OpenClaw skill shells out to
-`macparakeet-cli` for local Parakeet STT on Apple Silicon).
+`sotto-cli` for local Parakeet STT on Apple Silicon).
 
 ### Why it should be included (rationale)
 ```markdown
@@ -56,7 +56,7 @@ stack: Whisper.cpp doesn't use the Apple Neural Engine; the OpenAI
 Whisper API breaks the local-first posture; `parakeet-mlx` is
 Python-only and has no persistence/prompts.
 
-`macparakeet-cli 1.0.0` is the canonical Swift-native CLI for
+`sotto-cli 1.0.0` is the canonical Swift-native CLI for
 Parakeet TDT on the Apple Neural Engine — ~155x realtime, ~2.5% WER,
 GPL-3.0, semver-stable with a written compatibility policy. For an
 OpenClaw skill author specifically:
@@ -66,7 +66,7 @@ OpenClaw skill author specifically:
 - UUID-or-name lookup with `.notFound` / `.ambiguous` error classes.
 - Exit codes: 0 success, non-zero failure, errors to stderr only.
 - Persistent SQLite memory layer at
-  `~/Library/Application Support/MacParakeet/macparakeet.db` — the
+  `~/Library/Application Support/Sotto/sotto.db` — the
   skill can recall prior dictations / transcriptions / prompt outputs
   across sessions without re-transcribing anything.
 - All execution local on the ANE; optional cloud LLM provider only
@@ -74,14 +74,14 @@ OpenClaw skill author specifically:
 
 OpenClaw entry point lives at
 [`integrations/openclaw/`](https://github.com/moona3k/macparakeet/tree/main/integrations/openclaw)
-in the macparakeet repo. The full integration vocabulary
+in the sotto repo. The full integration vocabulary
 (install, JSON conventions, command list) is at
 [`integrations/README.md`](https://github.com/moona3k/macparakeet/blob/main/integrations/README.md).
 The persona-framed landing page lives at
 <https://macparakeet.com/agents>.
 
 Install:
-`brew tap moona3k/tap && brew install macparakeet-cli`
+`brew tap moona3k/tap && brew install sotto-cli`
 (macOS 14.2+ Apple Silicon).
 ```
 
@@ -106,7 +106,7 @@ per CONTRIBUTING quality standards.
 - **Comprehensive documentation**: spec kernel in `spec/`, ADRs for
   locked architectural decisions, AGENTS.md at repo root, a
   semver-tracked CLI changelog at `Sources/CLI/CHANGELOG.md`.
-- **Today**: cut `macparakeet-cli 1.0.0` (first versioned public
+- **Today**: cut `sotto-cli 1.0.0` (first versioned public
   surface), shipped a Homebrew tap with both formula and cask, and
   published [a launch blog post](https://macparakeet.com/blog/macparakeet-cli-1-0/)
   framing the CLI as the canonical Swift-native Parakeet wrapper for
@@ -115,7 +115,7 @@ per CONTRIBUTING quality standards.
 The OpenClaw integration story (`integrations/openclaw/` scaffold) is
 brand new — shipped in [PR #144](https://github.com/moona3k/macparakeet/pull/144)
 on 2026-04-25 — so OpenClaw-specific outside usage is not yet
-established. The underlying tool (`macparakeet-cli`) and the broader
+established. The underlying tool (`sotto-cli`) and the broader
 project are the established surface this submission is asking you to
 list.
 ```
@@ -129,7 +129,7 @@ list.
 ## Proposed entry (for editorial reference, in your format)
 
 ```
-- [moona3k/macparakeet](https://github.com/moona3k/macparakeet) - Local Parakeet TDT speech-to-text on the Apple Neural Engine. Swift-native CLI for OpenClaw skills to shell out to: persistent SQLite memory, prompt library, stable JSON output. ~155x realtime, ~2.5% WER, ~66 MB per inference slot. macOS 14.2+ Apple Silicon, GPL-3.0. `brew install moona3k/tap/macparakeet-cli`. OpenClaw scaffold at [integrations/openclaw/](https://github.com/moona3k/macparakeet/tree/main/integrations/openclaw).
+- [moona3k/macparakeet](https://github.com/moona3k/macparakeet) - Local Parakeet TDT speech-to-text on the Apple Neural Engine. Swift-native CLI for OpenClaw skills to shell out to: persistent SQLite memory, prompt library, stable JSON output. ~155x realtime, ~2.5% WER, ~66 MB per inference slot. macOS 14.2+ Apple Silicon, GPL-3.0. `brew install moona3k/tap/sotto-cli`. OpenClaw scaffold at [integrations/openclaw/](https://github.com/moona3k/macparakeet/tree/main/integrations/openclaw).
 ```
 
 A-Z ordering note: in `## Plugins and Integrations`, entries are
@@ -138,7 +138,7 @@ alphabetical by repo path. `moona3k/macparakeet` would slot between
 
 ## Submission checklist
 
-- [x] Brew tap live and `brew install moona3k/tap/macparakeet-cli` verified
+- [x] Brew tap live and `brew install moona3k/tap/sotto-cli` verified
 - [x] Target section identified (Plugins and Integrations)
 - [x] Issue template fields pre-filled
 - [x] A-Z ordering location identified

@@ -2,7 +2,7 @@ import ArgumentParser
 import GRDB
 import XCTest
 @testable import CLI
-@testable import MacParakeetCore
+@testable import SottoCore
 
 final class ExportCommandTests: XCTestCase {
 
@@ -370,6 +370,6 @@ final class ExportCommandTests: XCTestCase {
 
     private func temporaryDatabaseURL() -> URL {
         FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-\(UUID().uuidString).db")
+            .appendingPathComponent("sotto-cli-\(UUID().uuidString).db")
     }
 }

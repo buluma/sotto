@@ -44,12 +44,12 @@ Hiding a pinned row auto-unpins it; pinning a hidden row auto-shows it.
 
 ## CLI And Bundle
 
-`macparakeet-cli quick-prompts` supports `list`, `show`, `add`, `set`,
+`sotto-cli quick-prompts` supports `list`, `show`, `add`, `set`,
 `delete`, `pin`, `unpin`, `restore-defaults`, `export`, and `import`.
 `--pinned <true|false>` filters `list` and `export`; `add --pinned` creates a
 pinned custom row.
 
-The import/export bundle is `macparakeet.quick_prompts` version 1 and emits
+The import/export bundle is `sotto.quick_prompts` version 1 and emits
 `isPinned: Bool` per prompt. `kind` is not part of the schema.
 
 ## Acceptance Criteria
@@ -66,9 +66,9 @@ The import/export bundle is `macparakeet.quick_prompts` version 1 and emits
 
 ## Test Plan
 
-- `Tests/MacParakeetTests/Database/QuickPromptRepositoryTests.swift`
-- `Tests/MacParakeetTests/ViewModels/QuickPromptsViewModelTests.swift`
-- `Tests/MacParakeetTests/QuickPromptBundleTests.swift`
+- `Tests/SottoTests/Database/QuickPromptRepositoryTests.swift`
+- `Tests/SottoTests/ViewModels/QuickPromptsViewModelTests.swift`
+- `Tests/SottoTests/QuickPromptBundleTests.swift`
 - `Tests/CLITests/QuickPromptsCommandTests.swift`
 
 Final verification: focused quick-prompt tests first, then full `swift test`

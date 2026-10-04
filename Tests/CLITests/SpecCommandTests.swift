@@ -116,7 +116,7 @@ final class SpecCommandTests: XCTestCase {
     func testSpecCommandIsRegisteredAtTopLevel() {
         XCTAssertTrue(
             CLI.configuration.subcommands.contains { $0 == SpecCommand.self },
-            "spec must be available from macparakeet-cli"
+            "spec must be available from sotto-cli"
         )
     }
 
@@ -138,7 +138,7 @@ final class SpecCommandTests: XCTestCase {
 
     func testSpecJSONIncludesAgentFacingMeetingResultsCommand() throws {
         let payload = try specPayload()
-        XCTAssertEqual(payload["schema"] as? String, "macparakeet.cli.spec")
+        XCTAssertEqual(payload["schema"] as? String, "sotto.cli.spec")
         XCTAssertEqual(payload["schemaVersion"] as? Int, 1)
         XCTAssertEqual(payload["cliVersion"] as? String, CLI.cliVersion)
 

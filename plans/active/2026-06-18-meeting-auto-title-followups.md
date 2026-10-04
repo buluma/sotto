@@ -74,20 +74,20 @@ the shipped generator and the Library multi-select substrate.
 
 - PR #553 (`feat/auto-meeting-titles`): open, **`mergeable: CONFLICTING`**,
   not draft, `swift-test` SUCCESS, no review yet. Adds
-  `Sources/MacParakeetCore/Services/MeetingRecording/MeetingTitleGenerator.swift`
+  `Sources/SottoCore/Services/MeetingRecording/MeetingTitleGenerator.swift`
   (~148 lines), an `auto-meeting-titles` pref (AI Settings + settings search +
-  `UserDefaultsAppRuntimePreferences` + `macparakeet-cli config`), and a
+  `UserDefaultsAppRuntimePreferences` + `sotto-cli config`), and a
   finalize-time integration call. Title gate: replaces only "Meeting" / "Meeting
   <date>" fallback patterns; ≥12-word context gate; 2–8 word output; rejects
   generic/multiline/>70-char/date-like/`NO_TITLE`.
 - Default title source (on `main`):
-  `Sources/MacParakeetCore/Services/MeetingRecording/MeetingRecordingService.swift`
+  `Sources/SottoCore/Services/MeetingRecording/MeetingRecordingService.swift`
   — `makeDisplayName(for:)` (~1517-1523) → "Meeting <date> at <time>"; stored in
   `Transcription.fileName`.
-- Rename path: `Sources/MacParakeetViewModels/TranscriptionViewModel.swift`
+- Rename path: `Sources/SottoViewModels/TranscriptionViewModel.swift`
   — `renameCurrentTranscription(to:)` (~1153-1170) updates `fileName`
   (+ `derivedTitle`) and persists `updateFileName(id:fileName:)`.
-- LLM call path: `Sources/MacParakeetCore/Services/LLM/LLMService.swift`
+- LLM call path: `Sources/SottoCore/Services/LLM/LLMService.swift`
   — `generatePromptResult(transcript:systemPrompt:)` (~6); provider presence is
   the "configured" check (service is nil when unconfigured).
 - Post-meeting auto-prompt pipeline (where automatic title-gen runs alongside):

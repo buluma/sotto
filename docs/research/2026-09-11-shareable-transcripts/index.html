@@ -319,9 +319,9 @@
         <ul>
         <li><a href="#executive-assessment"
         id="toc-executive-assessment">Executive assessment</a></li>
-        <li><a href="#why-this-belongs-in-macparakeet"
-        id="toc-why-this-belongs-in-macparakeet">Why this belongs in
-        MacParakeet</a></li>
+        <li><a href="#why-this-belongs-in-sotto"
+        id="toc-why-this-belongs-in-sotto">Why this belongs in
+        Sotto</a></li>
         <li><a href="#the-product-model-a-shared-snapshot"
         id="toc-the-product-model-a-shared-snapshot">The product model:
         a shared snapshot</a></li>
@@ -464,7 +464,7 @@
       </blockquote>
       <h2 id="executive-assessment">Executive assessment</h2>
       <p>The idea is both feasible and strategically sound. Sharing
-      makes MacParakeet’s local corpus more useful and hands selected
+      makes Sotto’s local corpus more useful and hands selected
       speech memory safely to another person, so it passes the product
       filter in ADR-027.<a href="#fn1" class="footnote-ref" id="fnref1"
       role="doc-noteref"><sup>1</sup></a> The strongest version of the
@@ -493,7 +493,7 @@
       </ol>
       <p>A hardware fingerprint solves none of these cleanly. It is an
       identifier rather than a secret, is difficult to rotate, conflicts
-      with MacParakeet’s current public promise of “no fingerprinting,
+      with Sotto’s current public promise of “no fingerprinting,
       no persistent IDs,” and still does not prove that a request comes
       from a legitimate person.<a href="#fn2" class="footnote-ref"
       id="fnref2" role="doc-noteref"><sup>2</sup></a> A
@@ -557,9 +557,9 @@
       </tr>
       </tbody>
       </table>
-      <h2 id="why-this-belongs-in-macparakeet">Why this belongs in
-      MacParakeet</h2>
-      <p>MacParakeet’s accepted direction is private speech memory:
+      <h2 id="why-this-belongs-in-sotto">Why this belongs in
+      Sotto</h2>
+      <p>Sotto’s accepted direction is private speech memory:
       capture stays local, the Library becomes the center of gravity,
       and export and agent access make the corpus useful.<a href="#fn3"
       class="footnote-ref" id="fnref3"
@@ -588,7 +588,7 @@
       updated privacy and network-surface documentation, and explicit
       consent copy.</p>
       <p>This boundary is the differentiation. Cloud-first products
-      already make links. MacParakeet can make the act of disclosure
+      already make links. Sotto can make the act of disclosure
       legible.</p>
       <h2 id="the-product-model-a-shared-snapshot">The product model: a
       shared snapshot</h2>
@@ -696,7 +696,7 @@ Speaker corrections   encrypt    - ciphertext object            - renders text
       product funnel.</p>
       <ol type="1">
       <li>Decrypted title and optional source/date.</li>
-      <li>A provenance line: shared from MacParakeet, snapshot date,
+      <li>A provenance line: shared from Sotto, snapshot date,
       last explicit update, expiry, and “text only; audio was not
       uploaded.”</li>
       <li>The chosen summaries and notes.</li>
@@ -706,7 +706,7 @@ Speaker corrections   encrypt    - ciphertext object            - renders text
       <li>In-page search performed only in the browser.</li>
       <li>Copy and Download Markdown actions performed only in the
       browser.</li>
-      <li>A restrained MacParakeet attribution and <strong>Report this
+      <li>A restrained Sotto attribution and <strong>Report this
       share</strong>.</li>
       </ol>
       <p>The page should carry a brief accuracy note: transcripts and
@@ -779,7 +779,7 @@ Speaker corrections   encrypt    - ciphertext object            - renders text
       <p>Do not let a person type or configure the authentication key;
       human-chosen secrets are weaker. Let the person export, print, or
       save the generated recovery code, with a plain warning that
-      MacParakeet support cannot reconstruct it.</p>
+      Sotto support cannot reconstruct it.</p>
       <p>A concrete v1 token scheme is deliberately boring:</p>
       <pre class="text"><code>device token   mpd1.&lt;base64url(device_id)&gt;.&lt;base64url(device_secret)&gt;
 recovery token mpr1.&lt;base64url(owner_id)&gt;.&lt;base64url(recovery_secret)&gt;
@@ -929,9 +929,9 @@ server verifier
       first-party JavaScript can read both the fragment and decrypted
       text.</li>
       </ul>
-      <p>The correct claim is: <strong>MacParakeet stores the share as
+      <p>The correct claim is: <strong>Sotto stores the share as
       encrypted data and the decryption key is in the link, not sent in
-      the normal request.</strong> Do not claim that MacParakeet “can
+      the normal request.</strong> Do not claim that Sotto “can
       never decrypt” or use an unqualified “zero knowledge” or
       “end-to-end encrypted” label before an independent threat-model
       review.</p>
@@ -947,7 +947,7 @@ server verifier
       with no local file paths or database identifiers:</p>
       <div class="sourceCode" id="cb4"><pre
       class="sourceCode json"><code class="sourceCode json"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;schema&quot;</span><span class="fu">:</span> <span class="st">&quot;com.macparakeet.share-bundle&quot;</span><span class="fu">,</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;schema&quot;</span><span class="fu">:</span> <span class="st">&quot;com.sotto.share-bundle&quot;</span><span class="fu">,</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;schemaVersion&quot;</span><span class="fu">:</span> <span class="dv">1</span><span class="fu">,</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;publishedAt&quot;</span><span class="fu">:</span> <span class="st">&quot;2026-09-11T22:00:00Z&quot;</span><span class="fu">,</span></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;title&quot;</span><span class="fu">:</span> <span class="st">&quot;Optional encrypted title&quot;</span><span class="fu">,</span></span>
@@ -981,7 +981,7 @@ server verifier
       <h2 id="service-architecture">Service architecture</h2>
       <p>The simplest credible deployment is a separate Cloudflare
       project:</p>
-      <pre class="text"><code>MacParakeet app
+      <pre class="text"><code>Sotto app
   | HTTPS owner API: auth + idempotency + ciphertext
   v
 Share Worker at share.macparakeet.com
@@ -1186,13 +1186,13 @@ abuse_reports
       pending-state copy</td>
       </tr>
       <tr>
-      <td><code>MacParakeetViewModels</code></td>
+      <td><code>SottoViewModels</code></td>
       <td><code>ShareDraftViewModel</code>,
       <code>ShareManagementViewModel</code>, stale guards, retry/error
       presentation</td>
       </tr>
       <tr>
-      <td><code>MacParakeetCore/Services/Sharing</code></td>
+      <td><code>SottoCore/Services/Sharing</code></td>
       <td>Allowlisted payload builder, crypto envelope, remote protocol,
       credential store, deletion coordinator</td>
       </tr>
@@ -1438,7 +1438,7 @@ Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()</code><
       compliance without the specific contracts and controls.</li>
       </ul>
       <h2 id="competitive-synthesis">Competitive synthesis</h2>
-      <p>Current products prove demand but also show MacParakeet’s
+      <p>Current products prove demand but also show Sotto’s
       opening:</p>
       <table>
       <colgroup>
@@ -1450,7 +1450,7 @@ Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()</code><
       <tr>
       <th>Product</th>
       <th>Current official behavior</th>
-      <th>Lesson for MacParakeet</th>
+      <th>Lesson for Sotto</th>
       </tr>
       </thead>
       <tbody>
@@ -1549,7 +1549,7 @@ Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()</code><
       <p>A more aligned near-term collaboration model is
       <strong>owner-approved import</strong>: a recipient opens an
       encrypted share, then explicitly imports a provenance- preserving
-      local copy into their own MacParakeet. That keeps each person’s
+      local copy into their own Sotto. That keeps each person’s
       Library local and avoids a shared cloud source of truth.</p>
       <h2 id="high-value-adjacent-ideas">High-value adjacent ideas</h2>
       <ol type="1">
@@ -1570,13 +1570,13 @@ Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()</code><
       sections changed after speaker correction or transcript editing,
       then require preview and explicit update.</li>
       <li><strong>Self-hosted share service.</strong> Because
-      MacParakeet is open source, a later documented service contract
+      Sotto is open source, a later documented service contract
       could let privacy-sensitive teams operate their own compatible
       host. Avoid premature provider abstraction in the first
       implementation, but keep the wire contract portable.</li>
       <li><strong>Native Mac sharing.</strong> Once a URL is created,
       the macOS share sheet can send it through Messages, Mail, AirDrop,
-      or other installed services without MacParakeet becoming a
+      or other installed services without Sotto becoming a
       messaging client.</li>
       </ol>
       <h2 id="anti-goals">Anti-goals</h2>
@@ -1756,7 +1756,7 @@ Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()</code><
       polished feature. The core idea is not “put transcripts on a
       website.” It is <strong>let a person cut a precise, temporary,
       encrypted window into one local speech-memory item.</strong></p>
-      <p>That design gives MacParakeet something cloud meeting tools
+      <p>That design gives Sotto something cloud meeting tools
       cannot say with the same credibility: the Library is still local,
       the disclosure is visible, the host stores ciphertext, audio never
       uploads, and every published copy has an owner-controlled
@@ -1771,37 +1771,37 @@ Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()</code><
       cryptographic and recipient-page prototype—not production
       infrastructure. It should answer three questions cheaply: do links
       survive real sharing channels, do recipients understand the
-      privacy model, and can MacParakeet operate revocation and abuse
+      privacy model, and can Sotto operate revocation and abuse
       response without ever asking to see a transcript?</p>
       <h2 id="sources">Sources</h2>
       <section id="footnotes"
       class="footnotes footnotes-end-of-document" role="doc-endnotes">
       <hr />
       <ol>
-      <li id="fn1"><p>MacParakeet, “<a
+      <li id="fn1"><p>Sotto, “<a
       href="https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/spec/adr/027-product-north-star.md">ADR-027:
       Product North Star — Private Speech Memory</a>,” accepted July 3,
       2026; upstream snapshot accessed September 11, 2026.<a
       href="#fnref1" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn2"><p>MacParakeet, “<a
+      <li id="fn2"><p>Sotto, “<a
       href="https://macparakeet.com/privacy/">Privacy Policy</a>,”
       updated July 9, 2026; accessed September 11, 2026.<a
       href="#fnref2" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn3"><p>MacParakeet, “<a
+      <li id="fn3"><p>Sotto, “<a
       href="https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/spec/adr/027-product-north-star.md">ADR-027:
       Product North Star — Private Speech Memory</a>,” accepted July 3,
       2026; upstream snapshot accessed September 11, 2026.<a
       href="#fnref3" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn4"><p>MacParakeet, “<a
+      <li id="fn4"><p>Sotto, “<a
       href="https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift#L1187-L1212">TranscriptResultView.swift</a>”
       and “<a
       href="https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/Sources/MacParakeet/Views/Transcription/TranscriptResultActions.swift#L5-L59">TranscriptResultActions.swift</a>,”
       upstream snapshot accessed September 11, 2026.<a href="#fnref4"
       class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-      <li id="fn5"><p>MacParakeet, “<a
+      <li id="fn5"><p>Sotto, “<a
       href="https://macparakeet.com/privacy/">Privacy Policy</a>,”
       updated July 9, 2026; accessed September 11, 2026.<a
       href="#fnref5" class="footnote-back"
@@ -1826,7 +1826,7 @@ Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()</code><
       create a shareable link in Proton Drive</a>,” current help page;
       accessed September 11, 2026.<a href="#fnref9"
       class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-      <li id="fn10"><p>MacParakeet, “<a
+      <li id="fn10"><p>Sotto, “<a
       href="https://macparakeet.com/privacy/">Privacy Policy</a>,”
       updated July 9, 2026; accessed September 11, 2026.<a
       href="#fnref10" class="footnote-back"
@@ -1900,11 +1900,11 @@ Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()</code><
       consistency model</a>,” current documentation; accessed September
       11, 2026.<a href="#fnref23" class="footnote-back"
       role="doc-backlink">↩︎</a></p></li>
-      <li id="fn24"><p>MacParakeet, “<a
+      <li id="fn24"><p>Sotto, “<a
       href="https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/Sources/MacParakeetCore/Models/Transcription.swift#L10-L87">Transcription.swift</a>,”
       upstream snapshot accessed September 11, 2026.<a href="#fnref24"
       class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-      <li id="fn25"><p>MacParakeet, “<a
+      <li id="fn25"><p>Sotto, “<a
       href="https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/Sources/MacParakeetViewModels/TranscriptionViewModel.swift#L1922-L1942">TranscriptionViewModel.swift</a>”
       and “<a
       href="https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/Sources/MacParakeetCore/Services/Diarization/SpeakerAttributionReadService.swift#L4-L53">SpeakerAttributionReadService.swift</a>,”
@@ -1995,7 +1995,7 @@ Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()</code><
       create a shareable link in Proton Drive</a>,” current help page;
       accessed September 11, 2026.<a href="#fnref41"
       class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-      <li id="fn42"><p>MacParakeet, “<a
+      <li id="fn42"><p>Sotto, “<a
       href="https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/spec/adr/002-local-only.md#L125-L131">ADR-002:
       Local-First Processing</a>,” upstream snapshot accessed September
       11, 2026.<a href="#fnref42" class="footnote-back"

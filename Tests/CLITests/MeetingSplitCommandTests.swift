@@ -4,7 +4,7 @@ import Darwin
 import Foundation
 import XCTest
 @testable import CLI
-@testable import MacParakeetCore
+@testable import SottoCore
 
 /// Focused coverage for `meetings split`. Only the read-only `preview` and
 /// `status`/`discard` paths are exercised end-to-end here: `create`/`resume`
@@ -516,7 +516,7 @@ final class MeetingSplitCommandTests: XCTestCase {
 
     // MARK: - Real SIGINT delivery (opt-in; isolated child xctest process)
 
-    private static let sigintChildStartedMarkerEnvironmentKey = "MACPARAKEET_SPLIT_SIGINT_CHILD_MARKER"
+    private static let sigintChildStartedMarkerEnvironmentKey = "SOTTO_SPLIT_SIGINT_CHILD_MARKER"
 
     /// Heavy, environment-sensitive end-to-end check: spawns a *separate*
     /// child `xctest` process running only
@@ -526,11 +526,11 @@ final class MeetingSplitCommandTests: XCTestCase {
     /// runner, the host, or any unrelated process — exits `130` rather than
     /// being abruptly terminated by the default disposition. Opt-in, mirroring
     /// `MeetingRecordingCrashRecoveryTests`'s own kill-9 integration test. Run
-    /// with: MACPARAKEET_SPLIT_SIGINT_TESTS=1 swift test
+    /// with: SOTTO_SPLIT_SIGINT_TESTS=1 swift test
     func testSIGINTCooperativelyCancelsAndExits130InAnIsolatedChildProcess() async throws {
         try XCTSkipUnless(
-            ProcessInfo.processInfo.environment["MACPARAKEET_SPLIT_SIGINT_TESTS"] == "1",
-            "Set MACPARAKEET_SPLIT_SIGINT_TESTS=1 to run the real-SIGINT integration test."
+            ProcessInfo.processInfo.environment["SOTTO_SPLIT_SIGINT_TESTS"] == "1",
+            "Set SOTTO_SPLIT_SIGINT_TESTS=1 to run the real-SIGINT integration test."
         )
 
         let markerPath = FileManager.default.temporaryDirectory
@@ -612,7 +612,7 @@ final class MeetingSplitCommandTests: XCTestCase {
 
     private func makeHarness() throws -> Harness {
         let dbURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-split-\(UUID().uuidString).db")
+            .appendingPathComponent("sotto-cli-split-\(UUID().uuidString).db")
         let manager = try DatabaseManager(path: dbURL.path)
         return Harness(dbURL: dbURL, manager: manager, transcriptions: TranscriptionRepository(dbQueue: manager.dbQueue))
     }
@@ -631,7 +631,7 @@ final class MeetingSplitCommandTests: XCTestCase {
 
     private func makeSourceFolder(durationMs: Int) throws -> URL {
         let folderURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("macparakeet-cli-split-source-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("sotto-cli-split-source-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
         try writeToneM4A(
             to: folderURL.appendingPathComponent(MeetingArtifactAudioFileNames.playback),

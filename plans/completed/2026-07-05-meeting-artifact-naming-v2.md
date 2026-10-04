@@ -87,7 +87,7 @@ discarded or re-recorded.
   `cleanedMicrophoneAudioPath` according to the existing cleaned-mic readiness
   gate; it never treats `playbackAudioPath` as the authoritative final-STT
   source.
-- `manifest.json`, `meeting.md` frontmatter, `macparakeet-cli meetings show`,
+- `manifest.json`, `meeting.md` frontmatter, `sotto-cli meetings show`,
   `meetings artifact`, and `meetings export --format json` expose the new field
   names only.
 - Retention/audio-only deletion removes all managed audio files with the new

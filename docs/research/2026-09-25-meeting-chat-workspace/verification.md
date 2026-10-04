@@ -44,11 +44,11 @@ The repeatable runner creates a fresh database with two synthetic recordings:
 
 ```bash
 python3 scripts/dev/ask_workspace_qualification.py \
-  --cli /path/to/extracted/macparakeet-cli \
+  --cli /path/to/extracted/sotto-cli \
   --output-dir /tmp/ask-scripted-new
 
 python3 scripts/dev/ask_workspace_qualification.py \
-  --cli /path/to/extracted/macparakeet-cli \
+  --cli /path/to/extracted/sotto-cli \
   --output-dir /tmp/ask-model-new --real-only \
   --provider lmstudio --endpoint http://127.0.0.1:1234/v1 \
   --model qwen/qwen3-4b-2507

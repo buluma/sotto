@@ -2,7 +2,7 @@
 
 Historical task brief for the fictional HTML concept, not instructions for the app implementation. The user subsequently clarified that the optimal native UI/UX remains open to exploration and decision; the layout and controls below are not binding.
 
-Goal: Produce a beautiful, self-contained HTML product mockup that lets a person split one saved MacParakeet recording into 2, 3, or 4 meetings and understand the consequences.
+Goal: Produce a beautiful, self-contained HTML product mockup that lets a person split one saved Sotto recording into 2, 3, or 4 meetings and understand the consequences.
 
 Context: This is an investigation of GitHub issue #895, not production code. Use synthetic sample content only. Main investigator is auditing data safety separately. Return the complete HTML in your final answer (no code fence); orchestrator saves it with apply_patch. Read only docs/brand-identity.md and spec/04-ui-patterns.md for visual context if useful. Do not explore the whole codebase.
 

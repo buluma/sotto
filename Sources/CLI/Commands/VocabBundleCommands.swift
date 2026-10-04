@@ -1,17 +1,17 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 // MARK: - Export
 
-/// `macparakeet-cli vocab export` — write the combined vocabulary (custom words
+/// `sotto-cli vocab export` — write the combined vocabulary (custom words
 /// + text snippets) as a versioned JSON bundle.
 struct VocabExportCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "export",
         abstract: "Write the current vocabulary as a JSON bundle to a file or stdout.",
         discussion: """
-            Output is a `macparakeet.vocabulary` v1 bundle. Run
+            Output is a `sotto.vocabulary` v1 bundle. Run
             `vocab schema` for the full format. Only manual custom
             words are exported (learned words regenerate per-machine).
             """
@@ -54,13 +54,13 @@ struct VocabExportCommand: AsyncParsableCommand {
 
 // MARK: - Import
 
-/// `macparakeet-cli vocab import` — read a vocabulary bundle and apply it.
+/// `sotto-cli vocab import` — read a vocabulary bundle and apply it.
 struct VocabImportCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "import",
         abstract: "Read a JSON vocabulary bundle and apply it to the database.",
         discussion: """
-            Reads a `macparakeet.vocabulary` v1 bundle from the given file or
+            Reads a `sotto.vocabulary` v1 bundle from the given file or
             stdin. By default, duplicate entries (matched case-insensitively
             on `word` / `trigger`) are SKIPPED — pass `--policy replace` to
             overwrite matching entries, or `--policy replace-all` to remove
@@ -178,7 +178,7 @@ struct VocabImportCommand: AsyncParsableCommand {
         print("  Custom words:   \(preview.wordsTotal)")
         print("  Text snippets:  \(preview.snippetsTotal)")
         if let appVersion = preview.bundle.appVersion {
-            print("  Exported by:    MacParakeet \(appVersion)")
+            print("  Exported by:    Sotto \(appVersion)")
         }
         print("  Exported at:    \(preview.bundle.exportedAt)")
 
@@ -262,7 +262,7 @@ struct VocabImportCommand: AsyncParsableCommand {
 
 // MARK: - Schema
 
-/// `macparakeet-cli vocab schema` — print the bundle spec for agent consumption.
+/// `sotto-cli vocab schema` — print the bundle spec for agent consumption.
 struct VocabSchemaCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "schema",
@@ -307,7 +307,7 @@ struct VocabularyBundleSpec: Encodable {
             schema: VocabularyBundle.schemaIdentifier,
             version: VocabularyBundle.currentVersion,
             description: """
-                Portable backup of a MacParakeet user's vocabulary. Includes \
+                Portable backup of a Sotto user's vocabulary. Includes \
                 custom-word corrections (used by the Clean text-processing \
                 pipeline) and text snippets (trigger phrase → expansion text). \
                 UUIDs are intentionally omitted: they are generated at import \
@@ -328,7 +328,7 @@ struct VocabularyBundleSpec: Encodable {
                     description: "When the bundle was generated. Shown in the import preview."),
                 .init(
                     path: "appVersion", type: "string", required: false,
-                    description: "MacParakeet version that produced the bundle. Optional but recommended."),
+                    description: "Sotto version that produced the bundle. Optional but recommended."),
                 .init(
                     path: "customWords", type: "array of CustomWord", required: true,
                     description: "Word-correction rules applied during the Clean pipeline. Match is case-insensitive."),
@@ -387,7 +387,7 @@ struct VocabularyBundleSpec: Encodable {
                     word: "kubernetes", replacement: "Kubernetes",
                     isEnabled: true, createdAt: now),
                 .init(
-                    word: "MacParakeet", replacement: nil,
+                    word: "Sotto", replacement: nil,
                     isEnabled: true, createdAt: now),
                 .init(
                     word: "centre", replacement: "centre",
@@ -411,7 +411,7 @@ struct VocabularyBundleSpec: Encodable {
         let exampleJSON = String(data: exampleData, encoding: .utf8) ?? "{}"
 
         return """
-            MacParakeet Vocabulary Bundle — JSON Schema (v\(VocabularyBundle.currentVersion))
+            Sotto Vocabulary Bundle — JSON Schema (v\(VocabularyBundle.currentVersion))
             =====================================================================
 
             File identity
@@ -422,7 +422,7 @@ struct VocabularyBundleSpec: Encodable {
               schema        string         required   format identifier
               version       integer        required   bundle format version
               exportedAt    ISO-8601       required   when this file was generated
-              appVersion    string         optional   MacParakeet version that wrote it
+              appVersion    string         optional   Sotto version that wrote it
               customWords   CustomWord[]   required   word correction rules
               textSnippets  TextSnippet[]  required   trigger → expansion shortcuts
 
@@ -451,11 +451,11 @@ struct VocabularyBundleSpec: Encodable {
 
             Round-trip
               # Generate template:
-              macparakeet-cli vocab export > template.json
+              sotto-cli vocab export > template.json
               # ...edit it...
-              macparakeet-cli vocab import --input template.json --dry-run
-              macparakeet-cli vocab import --input template.json
-              macparakeet-cli vocab import --input template.json --policy replace-all
+              sotto-cli vocab import --input template.json --dry-run
+              sotto-cli vocab import --input template.json
+              sotto-cli vocab import --input template.json --policy replace-all
 
             Example
             -------

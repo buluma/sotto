@@ -51,14 +51,14 @@ fix for this stack. Needs a macOS 14 repro.
   `generated_at=2026-09-17T19:57:25.968Z` (`crash_free_by_version` 0.8.5 =
   1 incident / 48 sessions). 0.8.5 published `2026-09-17T16:57:36Z` (~3 h
   earlier).
-- Read-only `wrangler d1 execute macparakeet-telemetry --remote` against D1
+- Read-only `wrangler d1 execute sotto-telemetry --remote` against D1
   `7372263e-6a0b-4c70-8188-8f1d6d16bf31`.
 - Counting contract: website `docs/telemetry-crash-health.md`
   — sessions by event-row `app_ver`; incidents by `props.crash_app_ver`,
   `crash_ts`, and incident fingerprint. The 0.8.4 death uploaded after the
   Sparkle relaunch is attributed to 0.8.4, correctly. The card’s **one**
   0.8.5 incident is the 19:39Z row only.
-- atos of unslid frame 0 against the **shipped** `v0.8.5` `MacParakeet.dmg`
+- atos of unslid frame 0 against the **shipped** `v0.8.5` `Sotto.dmg`
   binary (`atos -arch arm64 -l 0x100000000`). No separate dSYM required for
   the C handler.
 - `git show v0.8.5` for `ParakeetTDTASRConfig`, `STTRuntime` manager
@@ -84,14 +84,14 @@ are used only as the same-machine fingerprint the 0.8.0 catalog already uses.
 | UUID | `A17B0B6F-5D29-3103-9145-C696B7E19E61` = shipped 0.8.5 DMG |
 | Slide | `0x24dc000` |
 | Signal | 10 `SIGBUS`, `si_code=1`, `fault_addr=0x17ff83ffc` |
-| Interrupted PC | `0x18c59b360` (system, not MacParakeet) |
+| Interrupted PC | `0x18c59b360` (system, not Sotto) |
 | Stack | 18 frames / 215 bytes. 0 named app frames besides the handler |
 
 Frame 0 actual `0x102b53e3c`. Unslid = `0x100677e3c`.
 
 ```text
-atos -o MacParakeet.app/Contents/MacOS/MacParakeet -arch arm64 -l 0x100000000 0x100677e3c
-# mpk_signal_handler (in MacParakeet) (MPKCrashSignalHandler.c:281)
+atos -o Sotto.app/Contents/MacOS/Sotto -arch arm64 -l 0x100000000 0x100677e3c
+# mpk_signal_handler (in Sotto) (MPKCrashSignalHandler.c:281)
 ```
 
 Line 281 is `backtrace()`. That is the reporter walking the stack, not the
@@ -178,7 +178,7 @@ bar. It is the same bug on the previous build.
 `v0.8.4` and `v0.8.5` both construct TDT managers with
 `ParakeetTDTASRConfig.make()`:
 
-```2346:2350:Sources/MacParakeetCore/STT/STTRuntime.swift
+```2346:2350:Sources/SottoCore/STT/STTRuntime.swift
                 // `ParakeetTDTASRConfig` drops long-file chunk concurrency to 1
                 // on macOS 14 (issue #997); 15+ keeps FluidAudio's default of 4.
                 let asrConfig = ParakeetTDTASRConfig.make()
@@ -193,7 +193,7 @@ flight.
 
 `ANEInferenceGate` still wraps the **outer** `transcribe(audioURL:)`:
 
-```734:736:Sources/MacParakeetCore/STT/STTRuntime.swift
+```734:736:Sources/SottoCore/STT/STTRuntime.swift
             let result = try await inferenceGate.withExclusiveAccess {
                 try await manager.transcribe(audioURL, decoderState: &decoderState)
             }

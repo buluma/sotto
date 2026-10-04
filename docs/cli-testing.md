@@ -14,12 +14,12 @@ before exiting one so verification does not create a duplicate by importing agai
 
 > Status: **ACTIVE** - CLI testing guide for core services
 
-Use `macparakeet-cli` for fast, repeatable testing of core transcription and text-processing flows.
+Use `sotto-cli` for fast, repeatable testing of core transcription and text-processing flows.
 
 ## Build Once
 
 ```bash
-swift build --product macparakeet-cli
+swift build --product sotto-cli
 ```
 
 ## Canonical Dev App Launch
@@ -42,9 +42,9 @@ and launch-environment limits.
 Use the installed CLI rather than a second manually maintained command catalog:
 
 ```bash
-swift run macparakeet-cli --help
-swift run macparakeet-cli spec --json
-swift run macparakeet-cli <command> --help
+swift run sotto-cli --help
+swift run sotto-cli spec --json
+swift run sotto-cli <command> --help
 ```
 
 The [integration guide](../integrations/README.md) contains supported operator
@@ -70,8 +70,8 @@ a major-version contract change and a matching changelog entry.
 > succeeds, the root runner emits one privacy-safe `cli_operation` event with
 > command, subcommand, outcome, duration, exit code, and low-cardinality error
 > type. `transcribe` also includes coarse input kind and output format. Disable
-> with `MACPARAKEET_TELEMETRY=0`, `DO_NOT_TRACK=1`, or
-> `macparakeet-cli config set telemetry off`.
+> with `SOTTO_TELEMETRY=0`, `DO_NOT_TRACK=1`, or
+> `sotto-cli config set telemetry off`.
 
 ## Core Modes
 
@@ -86,7 +86,7 @@ detection setting; the explicit flag below keeps the behavior visible in test
 commands.
 
 ```bash
-swift run macparakeet-cli transcribe "<FILE_OR_MEDIA_URL>" \
+swift run sotto-cli transcribe "<FILE_OR_MEDIA_URL>" \
   --engine app-default \
   --parakeet-model app-default \
   --speaker-detection app-default \
@@ -100,7 +100,7 @@ swift run macparakeet-cli transcribe "<FILE_OR_MEDIA_URL>" \
 Explicitly pins behavior.
 
 ```bash
-swift run macparakeet-cli transcribe "<FILE_OR_MEDIA_URL>" \
+swift run sotto-cli transcribe "<FILE_OR_MEDIA_URL>" \
   --engine parakeet \
   --parakeet-model v3 \
   --speaker-detection off \
@@ -112,7 +112,7 @@ swift run macparakeet-cli transcribe "<FILE_OR_MEDIA_URL>" \
 Or clean mode with retained downloads:
 
 ```bash
-swift run macparakeet-cli transcribe "<FILE_OR_MEDIA_URL>" \
+swift run sotto-cli transcribe "<FILE_OR_MEDIA_URL>" \
   --engine parakeet \
   --parakeet-model v3 \
   --speaker-detection on \
@@ -151,10 +151,10 @@ nemotron-english-1120ms` to persist it. Download a build explicitly before
 selecting or running it:
 
 ```bash
-swift run macparakeet-cli models download nemotron-multilingual-1120ms
-swift run macparakeet-cli models download nemotron-english-1120ms
+swift run sotto-cli models download nemotron-multilingual-1120ms
+swift run sotto-cli models download nemotron-english-1120ms
 
-swift run macparakeet-cli transcribe "<FILE_OR_MEDIA_URL>" \
+swift run sotto-cli transcribe "<FILE_OR_MEDIA_URL>" \
   --engine nemotron \
   --language auto
 ```
@@ -164,9 +164,9 @@ retranscription after downloading the local Whisper model. It provides word
 timestamps, but first use can be slow while Core ML prepares the model:
 
 ```bash
-swift run macparakeet-cli models download whisper-large-v3-v20240930-turbo-632MB
+swift run sotto-cli models download whisper-large-v3-v20240930-turbo-632MB
 
-swift run macparakeet-cli transcribe "<FILE_OR_MEDIA_URL>" \
+swift run sotto-cli transcribe "<FILE_OR_MEDIA_URL>" \
   --engine whisper \
   --language ko
 ```
@@ -178,11 +178,11 @@ live preview, word timestamps, speaker labels, diarization, or auto language
 detection:
 
 ```bash
-swift run macparakeet-cli models download cohere-transcribe
-swift run macparakeet-cli config set cohere-language ja
-swift run macparakeet-cli config get cohere-language
+swift run sotto-cli models download cohere-transcribe
+swift run sotto-cli config set cohere-language ja
+swift run sotto-cli config get cohere-language
 
-swift run macparakeet-cli transcribe "<FILE_OR_MEDIA_URL>" \
+swift run sotto-cli transcribe "<FILE_OR_MEDIA_URL>" \
   --engine cohere \
   --language ja
 ```
@@ -196,11 +196,11 @@ overrides the saved language for that invocation.
 ### Retranscribe Existing Records
 
 Use `retranscribe` when a support or agent workflow needs to rerun STT against
-source audio that MacParakeet already retained for a saved row:
+source audio that Sotto already retained for a saved row:
 
 ```bash
-swift run macparakeet-cli retranscribe "<ID_OR_TITLE>" --update --json
-swift run macparakeet-cli retranscribe "<MEETING_ID>" \
+swift run sotto-cli retranscribe "<ID_OR_TITLE>" --update --json
+swift run sotto-cli retranscribe "<MEETING_ID>" \
   --kind meeting \
   --update \
   --engine app-default \
@@ -225,11 +225,11 @@ where supported. Pin a run with the explicit option, or use the legacy alias to
 force it off:
 
 ```bash
-swift run macparakeet-cli transcribe "<FILE>" --speaker-detection on
-swift run macparakeet-cli transcribe "<FILE>" --speaker-count 2
-swift run macparakeet-cli transcribe "<FILE>" --speaker-min 2 --speaker-max 4
-swift run macparakeet-cli transcribe "<FILE>" --speaker-detection off
-swift run macparakeet-cli transcribe "<FILE>" --no-diarize
+swift run sotto-cli transcribe "<FILE>" --speaker-detection on
+swift run sotto-cli transcribe "<FILE>" --speaker-count 2
+swift run sotto-cli transcribe "<FILE>" --speaker-min 2 --speaker-max 4
+swift run sotto-cli transcribe "<FILE>" --speaker-detection off
+swift run sotto-cli transcribe "<FILE>" --no-diarize
 ```
 
 `--speaker-count`, `--speaker-min`, and `--speaker-max` are per-run
@@ -252,25 +252,25 @@ pre-run setup: a running GUI may cache some settings until relaunch or an
 in-app change.
 
 ```bash
-swift run macparakeet-cli config list
-swift run macparakeet-cli config set processing-mode raw
-swift run macparakeet-cli config set speech-engine whisper
-swift run macparakeet-cli config set parakeet-model v3
-swift run macparakeet-cli config set nemotron-model english-1120ms
-swift run macparakeet-cli config set nemotron-language auto
-swift run macparakeet-cli config set whisper-language ko
-swift run macparakeet-cli config set speaker-detection off
-swift run macparakeet-cli config set meeting-speaker-detection off
-swift run macparakeet-cli config set auto-meeting-titles on
-swift run macparakeet-cli config set meeting-ai-output-language en
-swift run macparakeet-cli config set save-transcription-audio off
-swift run macparakeet-cli config set meeting-audio-retention keep-forever
-swift run macparakeet-cli config set meeting-audio-source microphone-and-system
-swift run macparakeet-cli config set youtube-audio-quality m4a
-swift run macparakeet-cli config set meeting-artifacts-folder ~/Documents/MacParakeet-Meetings
-swift run macparakeet-cli config set meeting-hook-enabled off
-swift run macparakeet-cli config set voice-return-enabled on
-swift run macparakeet-cli config set voice-return-triggers "hey parakeet|okay parakeet"
+swift run sotto-cli config list
+swift run sotto-cli config set processing-mode raw
+swift run sotto-cli config set speech-engine whisper
+swift run sotto-cli config set parakeet-model v3
+swift run sotto-cli config set nemotron-model english-1120ms
+swift run sotto-cli config set nemotron-language auto
+swift run sotto-cli config set whisper-language ko
+swift run sotto-cli config set speaker-detection off
+swift run sotto-cli config set meeting-speaker-detection off
+swift run sotto-cli config set auto-meeting-titles on
+swift run sotto-cli config set meeting-ai-output-language en
+swift run sotto-cli config set save-transcription-audio off
+swift run sotto-cli config set meeting-audio-retention keep-forever
+swift run sotto-cli config set meeting-audio-source microphone-and-system
+swift run sotto-cli config set youtube-audio-quality m4a
+swift run sotto-cli config set meeting-artifacts-folder ~/Documents/Sotto-Meetings
+swift run sotto-cli config set meeting-hook-enabled off
+swift run sotto-cli config set voice-return-enabled on
+swift run sotto-cli config set voice-return-triggers "hey parakeet|okay parakeet"
 ```
 
 Supported keys: `telemetry`, `processing-mode`, `spoken-punctuation`, `remove-um-filler`, `speech-engine`,
@@ -288,27 +288,27 @@ output uses canonical hyphenated keys.
 
 ```bash
 # Plain text output (default)
-swift run macparakeet-cli transcribe "<FILE>"
+swift run sotto-cli transcribe "<FILE>"
 
 # JSON output (full Transcription object)
-swift run macparakeet-cli transcribe "<FILE>" --format json
+swift run sotto-cli transcribe "<FILE>" --format json
 
 # W3C DAPT original transcript (writes <name>.dapt.xml)
-swift run macparakeet-cli transcribe "<FILE>" --format dapt --output-dir .
+swift run sotto-cli transcribe "<FILE>" --format dapt --output-dir .
 
 # Transcript-only stdout for pipes
-swift run macparakeet-cli transcribe "<FILE>" --format transcript
+swift run sotto-cli transcribe "<FILE>" --format transcript
 
 # Transient transcription: no completed row in Library/history
-swift run macparakeet-cli transcribe "<FILE_OR_MEDIA_URL>" --format transcript --no-history
+swift run sotto-cli transcribe "<FILE_OR_MEDIA_URL>" --format transcript --no-history
 
 # Batch mode: writes one transcript file per resolved input
-swift run macparakeet-cli transcribe lecture1.m4a lectures/ \
+swift run sotto-cli transcribe lecture1.m4a lectures/ \
   --output-dir Transcripts \
   --format transcript
 
 # Select the second embedded audio track (local files/folders only; 1-based)
-swift run macparakeet-cli transcribe episode.mkv --audio-track 2 --format transcript
+swift run sotto-cli transcribe episode.mkv --audio-track 2 --format transcript
 ```
 
 `--audio-track` is an explicit per-run input decision, not a saved CLI/app
@@ -334,23 +334,23 @@ the shared audio-retention default.
 ## Model Selection
 
 ```bash
-swift run macparakeet-cli models list
-swift run macparakeet-cli models list --json
-swift run macparakeet-cli models select parakeet-v3
-swift run macparakeet-cli models select parakeet-v2
-swift run macparakeet-cli models download parakeet-orukeet
-swift run macparakeet-cli models select parakeet-orukeet
-swift run macparakeet-cli models download parakeet-v2
-swift run macparakeet-cli models download nemotron-multilingual-1120ms
-swift run macparakeet-cli models select nemotron-multilingual-1120ms
-swift run macparakeet-cli models download nemotron-english-1120ms
-swift run macparakeet-cli models select nemotron-english-1120ms
-swift run macparakeet-cli models download cohere-transcribe
-swift run macparakeet-cli models select cohere-transcribe
-swift run macparakeet-cli models select whisper-large-v3-v20240930-turbo-632MB
+swift run sotto-cli models list
+swift run sotto-cli models list --json
+swift run sotto-cli models select parakeet-v3
+swift run sotto-cli models select parakeet-v2
+swift run sotto-cli models download parakeet-orukeet
+swift run sotto-cli models select parakeet-orukeet
+swift run sotto-cli models download parakeet-v2
+swift run sotto-cli models download nemotron-multilingual-1120ms
+swift run sotto-cli models select nemotron-multilingual-1120ms
+swift run sotto-cli models download nemotron-english-1120ms
+swift run sotto-cli models select nemotron-english-1120ms
+swift run sotto-cli models download cohere-transcribe
+swift run sotto-cli models select cohere-transcribe
+swift run sotto-cli models select whisper-large-v3-v20240930-turbo-632MB
 ```
 
-`models list` reports the selectable speech models MacParakeet exposes today:
+`models list` reports the selectable speech models Sotto exposes today:
 Parakeet v3, Parakeet v2, Parakeet Unified, the optional Orukeet preview
 (`parakeet-orukeet`), the two Nemotron Beta builds (multilingual and
 English-only), Cohere Transcribe, and the configured WhisperKit variant.
@@ -363,7 +363,7 @@ Nemotron, Cohere, and Whisper selection require the local model to be downloaded
 Use this only when exercising the same entitlement check path the GUI uses:
 
 ```bash
-swift run macparakeet-cli transcribe "<FILE_OR_MEDIA_URL>" \
+swift run sotto-cli transcribe "<FILE_OR_MEDIA_URL>" \
   --enforce-entitlements
 ```
 
@@ -377,19 +377,19 @@ Export a transcription by its UUID or UUID prefix of at least 4 characters. Supp
 
 ```bash
 # List transcriptions to find the ID
-swift run macparakeet-cli history transcriptions
+swift run sotto-cli history transcriptions
 
 # Export to various formats
-swift run macparakeet-cli export <ID> --format txt --output transcript.txt
-swift run macparakeet-cli export <ID> --format srt --output subtitles.srt
-swift run macparakeet-cli export <ID> --format vtt
-swift run macparakeet-cli export <ID> --format dapt
-swift run macparakeet-cli export <ID> --format markdown
-swift run macparakeet-cli export <ID> --format json --stdout
+swift run sotto-cli export <ID> --format txt --output transcript.txt
+swift run sotto-cli export <ID> --format srt --output subtitles.srt
+swift run sotto-cli export <ID> --format vtt
+swift run sotto-cli export <ID> --format dapt
+swift run sotto-cli export <ID> --format markdown
+swift run sotto-cli export <ID> --format json --stdout
 
 # Print to stdout instead of writing a file
-swift run macparakeet-cli export <ID> --format srt --stdout
-swift run macparakeet-cli export <ID> --format dapt --stdout
+swift run sotto-cli export <ID> --format srt --stdout
+swift run sotto-cli export <ID> --format dapt --stdout
 ```
 
 If `--output` is omitted, the file is written to the current directory with an
@@ -402,7 +402,7 @@ characters when present, and remains valid without either.
 ## Stats
 
 ```bash
-swift run macparakeet-cli stats
+swift run sotto-cli stats
 ```
 
 Shows dictation stats (total, words, duration, WPM, streak, equivalents) and transcription counts.
@@ -410,10 +410,10 @@ Shows dictation stats (total, words, duration, WPM, streak, equivalents) and tra
 ## Transcript Segment Search
 
 ```bash
-swift run macparakeet-cli search '"design review" OR parser*' --json
-swift run macparakeet-cli search-reindex --json
-swift run macparakeet-cli transcript <ID> --around 00:05:00 --window 30s --json
-swift run macparakeet-cli transcript <ID> --around-seq 12 --context 2 --json
+swift run sotto-cli search '"design review" OR parser*' --json
+swift run sotto-cli search-reindex --json
+swift run sotto-cli transcript <ID> --around 00:05:00 --window 30s --json
+swift run sotto-cli transcript <ID> --around-seq 12 --context 2 --json
 ```
 
 Search query text is passed to FTS5. Han/Kana/Thai queries automatically use
@@ -425,17 +425,17 @@ maintenance and never mutates canonical transcript text.
 ### List and Search
 
 ```bash
-swift run macparakeet-cli history dictations --limit 20
-swift run macparakeet-cli history transcriptions --limit 20
-swift run macparakeet-cli history search "keyword" --limit 20
-swift run macparakeet-cli history search-transcriptions "keyword" --limit 20
+swift run sotto-cli history dictations --limit 20
+swift run sotto-cli history transcriptions --limit 20
+swift run sotto-cli history search "keyword" --limit 20
+swift run sotto-cli history search-transcriptions "keyword" --limit 20
 ```
 
 ### Delete
 
 ```bash
-swift run macparakeet-cli history delete-dictation <ID>
-swift run macparakeet-cli history delete-transcription <ID>
+swift run sotto-cli history delete-dictation <ID>
+swift run sotto-cli history delete-transcription <ID>
 ```
 
 IDs support UUID prefix matching with at least 4 characters (e.g., `3a7b` matches `3a7b1234-...`).
@@ -444,18 +444,18 @@ Pass `--json` to get a machine-readable success object with the affected ID(s) i
 ### Favorites
 
 ```bash
-swift run macparakeet-cli history favorites
-swift run macparakeet-cli history favorite <ID> --json
-swift run macparakeet-cli history unfavorite <ID> --json
-swift run macparakeet-cli history rename <ID> --title "New title" --json
+swift run sotto-cli history favorites
+swift run sotto-cli history favorite <ID> --json
+swift run sotto-cli history unfavorite <ID> --json
+swift run sotto-cli history rename <ID> --title "New title" --json
 ```
 
 ## Health Check
 
 ```bash
-swift run macparakeet-cli health
-swift run macparakeet-cli health --repair-models --repair-attempts 3
-swift run macparakeet-cli health --repair-binaries
+swift run sotto-cli health
+swift run sotto-cli health --repair-models --repair-attempts 3
+swift run sotto-cli health --repair-binaries
 ```
 
 `health --json` is a non-mutating readiness probe: it can report an existing
@@ -469,15 +469,15 @@ does not run pending migrations or reconcile seeds.
 
 The database probe reports `database.status` as `ok`, `missing`, `schema_skew`,
 or `error`. `schema_skew` means the shared database was migrated by a newer
-MacParakeet app than this CLI build understands — upgrade `macparakeet-cli`
+Sotto app than this CLI build understands — upgrade `sotto-cli`
 and retry. Never reset or delete the user database to make a health probe pass.
 
 For a DEBUG-only missing-state regression (after building the CLI):
 
 ```bash
 state_parent="$(mktemp -d)"
-MACPARAKEET_DEBUG_APP_STATE_DIR="$state_parent/absent" \
-  .build/debug/macparakeet-cli health --json
+SOTTO_DEBUG_APP_STATE_DIR="$state_parent/absent" \
+  .build/debug/sotto-cli health --json
 test ! -e "$state_parent/absent"
 ```
 
@@ -495,19 +495,19 @@ post-stop in-flight transcription abort/delete confirmations are GUI surfaces on
 the Transcribe tile and floating pill.
 
 ```bash
-swift run macparakeet-cli meetings list --limit 10
-swift run macparakeet-cli meetings show <meeting> --json
-swift run macparakeet-cli meetings transcript <meeting> --format srt
+swift run sotto-cli meetings list --limit 10
+swift run sotto-cli meetings show <meeting> --json
+swift run sotto-cli meetings transcript <meeting> --format srt
 
-swift run macparakeet-cli meetings notes get <meeting>
-swift run macparakeet-cli meetings notes append <meeting> --text "**Action:** follow up"
-cat notes.md | swift run macparakeet-cli meetings notes set <meeting> --stdin --json
+swift run sotto-cli meetings notes get <meeting>
+swift run sotto-cli meetings notes append <meeting> --text "**Action:** follow up"
+cat notes.md | swift run sotto-cli meetings notes set <meeting> --stdin --json
 
-swift run macparakeet-cli meetings results list <meeting> --json
-cat agent-notes.md | swift run macparakeet-cli meetings results add <meeting> \
+swift run sotto-cli meetings results list <meeting> --json
+cat agent-notes.md | swift run sotto-cli meetings results add <meeting> \
   --name "Agent Notes" --stdin --json
 
-swift run macparakeet-cli meetings export <meeting> --format md --stdout
+swift run sotto-cli meetings export <meeting> --format md --stdout
 ```
 
 ## Calendar
@@ -520,40 +520,40 @@ is not exposed. List membership, `--filter`, and declined-fetch behavior are
 unchanged.
 
 ```bash
-swift run macparakeet-cli calendar upcoming --days 1 --filter link
-swift run macparakeet-cli calendar upcoming --days 7 --filter all --json
+swift run sotto-cli calendar upcoming --days 1 --filter link
+swift run sotto-cli calendar upcoming --days 7 --filter all --json
 ```
 
 ## Speech Model Lifecycle
 
 ```bash
 # Non-invasive status (does not force downloads)
-swift run macparakeet-cli models status
+swift run sotto-cli models status
 
 # Explicit Parakeet / Nemotron / Cohere / Whisper downloads
-swift run macparakeet-cli models download parakeet-v3
-swift run macparakeet-cli models download parakeet-v2
-swift run macparakeet-cli models download parakeet-orukeet
-swift run macparakeet-cli models download nemotron-multilingual-1120ms
-swift run macparakeet-cli models download cohere-transcribe
-swift run macparakeet-cli models download whisper-large-v3-v20240930-turbo-632MB
+swift run sotto-cli models download parakeet-v3
+swift run sotto-cli models download parakeet-v2
+swift run sotto-cli models download parakeet-orukeet
+swift run sotto-cli models download nemotron-multilingual-1120ms
+swift run sotto-cli models download cohere-transcribe
+swift run sotto-cli models download whisper-large-v3-v20240930-turbo-632MB
 
 # Warm-up (single attempt by default)
-swift run macparakeet-cli models warm-up
+swift run sotto-cli models warm-up
 
 # Repair (best-effort retry; default 3 attempts)
-swift run macparakeet-cli models repair
-swift run macparakeet-cli models repair --attempts 5
+swift run sotto-cli models repair
+swift run sotto-cli models repair --attempts 5
 
 # Delete one downloaded model (frees its disk space; leaves the rest)
-swift run macparakeet-cli models delete parakeet-v2
-swift run macparakeet-cli models delete nemotron-multilingual-1120ms
-swift run macparakeet-cli models delete cohere-transcribe
-swift run macparakeet-cli models delete whisper-large-v3-v20240930-turbo-632MB
-swift run macparakeet-cli models delete parakeet-v3 --force   # override the in-use guard
+swift run sotto-cli models delete parakeet-v2
+swift run sotto-cli models delete nemotron-multilingual-1120ms
+swift run sotto-cli models delete cohere-transcribe
+swift run sotto-cli models delete whisper-large-v3-v20240930-turbo-632MB
+swift run sotto-cli models delete parakeet-v3 --force   # override the in-use guard
 
 # Delete the entire cached speech + speaker stack
-swift run macparakeet-cli models clear
+swift run sotto-cli models clear
 ```
 
 `models warm-up` and `models repair` prepare the selected speech engine plus
@@ -563,26 +563,26 @@ Parakeet build, the Nemotron Beta model, Cohere Transcribe, or the Whisper
 variant - and protects the active model plus Parakeet's configured build unless `--force` is passed;
 `models clear` still wipes everything.
 
-When running with `MACPARAKEET_DEBUG_APP_STATE_DIR` set, CLI state
-is scoped to that throwaway directory. This includes MacParakeet's app support
+When running with `SOTTO_DEBUG_APP_STATE_DIR` set, CLI state
+is scoped to that throwaway directory. This includes Sotto's app support
 files and FluidAudio's speech/speaker model cache, so destructive model commands
 such as `models delete` and `models clear` do not touch the real user cache.
 
 ## Text Pipeline
 
 ```bash
-swift run macparakeet-cli vocab process "your text"
-swift run macparakeet-cli vocab process "your text" --copy   # also copies to clipboard
+swift run sotto-cli vocab process "your text"
+swift run sotto-cli vocab process "your text" --copy   # also copies to clipboard
 
-swift run macparakeet-cli vocab words list
-swift run macparakeet-cli vocab words add "macparakeet" "MacParakeet"
-swift run macparakeet-cli vocab words add "hmm"              # vocabulary anchor (no replacement)
-swift run macparakeet-cli vocab words delete <ID>
+swift run sotto-cli vocab words list
+swift run sotto-cli vocab words add "sotto" "Sotto"
+swift run sotto-cli vocab words add "hmm"              # vocabulary anchor (no replacement)
+swift run sotto-cli vocab words delete <ID>
 
-swift run macparakeet-cli vocab snippets list
-swift run macparakeet-cli vocab snippets add "my signature" "Best regards, Daniel"
-swift run macparakeet-cli vocab snippets edit <ID> --trigger "my signature" --expansion "Best regards, Daniel Moon"
-swift run macparakeet-cli vocab snippets delete <ID>
+swift run sotto-cli vocab snippets list
+swift run sotto-cli vocab snippets add "my signature" "Best regards, Daniel"
+swift run sotto-cli vocab snippets edit <ID> --trigger "my signature" --expansion "Best regards, Daniel Moon"
+swift run sotto-cli vocab snippets delete <ID>
 ```
 
 ## LLM Commands
@@ -608,29 +608,29 @@ when its server-side authentication is enabled.
 ### Test Connection
 
 ```bash
-swift run macparakeet-cli llm test-connection \
+swift run sotto-cli llm test-connection \
   --provider openai --api-key-env OPENAI_API_KEY
 ```
 
 ### Summarize
 
 ```bash
-swift run macparakeet-cli llm summarize transcript.txt \
+swift run sotto-cli llm summarize transcript.txt \
   --provider anthropic --api-key-env ANTHROPIC_API_KEY
 
 # Stream output token-by-token
-swift run macparakeet-cli llm summarize transcript.txt \
+swift run sotto-cli llm summarize transcript.txt \
   --provider anthropic --api-key-env ANTHROPIC_API_KEY --stream
 
 # Read from stdin
-echo "Long text..." | swift run macparakeet-cli llm summarize - \
+echo "Long text..." | swift run sotto-cli llm summarize - \
   --provider anthropic --api-key-env ANTHROPIC_API_KEY
 ```
 
 ### Chat (Q&A about a transcript)
 
 ```bash
-swift run macparakeet-cli llm chat transcript.txt \
+swift run sotto-cli llm chat transcript.txt \
   --provider openai --api-key-env OPENAI_API_KEY \
   --question "What were the key points?"
 ```
@@ -638,7 +638,7 @@ swift run macparakeet-cli llm chat transcript.txt \
 ### Transform (custom instruction)
 
 ```bash
-swift run macparakeet-cli llm transform transcript.txt \
+swift run sotto-cli llm transform transcript.txt \
   --provider anthropic --api-key-env ANTHROPIC_API_KEY \
   --prompt "Translate to Spanish"
 ```
@@ -647,13 +647,13 @@ swift run macparakeet-cli llm transform transcript.txt \
 
 ```bash
 # Test a local LM Studio server
-swift run macparakeet-cli llm test-connection --provider lmstudio --model qwen3.5-27b
+swift run sotto-cli llm test-connection --provider lmstudio --model qwen3.5-27b
 
 # Summarize via LM Studio's OpenAI-compatible endpoint
-swift run macparakeet-cli llm summarize transcript.txt --provider lmstudio --model qwen3.5-27b
+swift run sotto-cli llm summarize transcript.txt --provider lmstudio --model qwen3.5-27b
 
 # Use an LM Studio API token when Require Authentication is enabled
-swift run macparakeet-cli llm summarize transcript.txt --provider lmstudio --model qwen3.5-27b --api-key-env LM_API_TOKEN
+swift run sotto-cli llm summarize transcript.txt --provider lmstudio --model qwen3.5-27b --api-key-env LM_API_TOKEN
 ```
 
 ### Common Options
@@ -673,16 +673,16 @@ All LLM commands accept these additional options:
 
 ```bash
 # Test a CLI tool
-swift run macparakeet-cli llm test-connection --provider cli --command "claude -p --model haiku"
+swift run sotto-cli llm test-connection --provider cli --command "claude -p --model haiku"
 
 # Summarize via Claude Code
-swift run macparakeet-cli llm summarize transcript.txt --provider cli --command "claude -p --model haiku"
+swift run sotto-cli llm summarize transcript.txt --provider cli --command "claude -p --model haiku"
 
 # Use Codex
-swift run macparakeet-cli llm summarize transcript.txt --provider cli --command "codex exec --model gpt-5.4-mini"
+swift run sotto-cli llm summarize transcript.txt --provider cli --command "codex exec --model gpt-5.4-mini"
 
 # Custom command
-swift run macparakeet-cli llm chat transcript.txt --provider cli --command "my-tool --stdin" --question "Key points?"
+swift run sotto-cli llm chat transcript.txt --provider cli --command "my-tool --stdin" --question "Key points?"
 ```
 
 ## Transforms
@@ -693,23 +693,23 @@ are GUI-only.
 
 ```bash
 # Inspect built-ins and custom Transforms
-swift run macparakeet-cli transforms list
-swift run macparakeet-cli transforms show Polish --json
+swift run sotto-cli transforms list
+swift run sotto-cli transforms show Polish --json
 
 # Run a saved Transform against a file or stdin
-swift run macparakeet-cli transforms run Polish --input draft.txt --json
-echo "too long; didn't read" | swift run macparakeet-cli transforms run Distill --input -
+swift run sotto-cli transforms run Polish --input draft.txt --json
+echo "too long; didn't read" | swift run sotto-cli transforms run Distill --input -
 
 # Create a custom Transform
-swift run macparakeet-cli transforms create \
+swift run sotto-cli transforms create \
   --name "Terse" \
   --prompt "Rewrite the input in terse, direct prose. Return only the rewritten text." \
   --shortcut opt+4 \
   --json
 
 # Inspect local run history
-swift run macparakeet-cli transforms history list --json
-swift run macparakeet-cli transforms history show <id-prefix>
+swift run sotto-cli transforms history list --json
+swift run sotto-cli transforms history show <id-prefix>
 ```
 
 ## Prompt Library
@@ -722,20 +722,20 @@ without launching the app.
 
 ```bash
 # Lists default to "all"; --filter narrows to visible-only or auto-run-only.
-swift run macparakeet-cli prompts list
-swift run macparakeet-cli prompts list --filter auto-run --json | jq '.[].name'
+swift run sotto-cli prompts list
+swift run sotto-cli prompts list --filter auto-run --json | jq '.[].name'
 
 # Show full content. <id-or-name> accepts UUID, UUID prefix of at least 4 characters, or exact name.
-swift run macparakeet-cli prompts show "Summary"
-swift run macparakeet-cli prompts show A4882688
+swift run sotto-cli prompts show "Summary"
+swift run sotto-cli prompts show A4882688
 
 # Add a custom prompt. Body precedence: --content > --from-file > stdin.
-swift run macparakeet-cli prompts add --name "Daily Notes" \
+swift run sotto-cli prompts add --name "Daily Notes" \
   --content "Extract action items grouped by person."
-swift run macparakeet-cli prompts add --name "From File" --from-file ./prompt.md
+swift run sotto-cli prompts add --name "From File" --from-file ./prompt.md
 
 # Pipe via stdin when both --content and --from-file are omitted.
-cat ./prompt.md | swift run macparakeet-cli prompts add --name "Piped"
+cat ./prompt.md | swift run sotto-cli prompts add --name "Piped"
 ```
 
 ### Visibility / auto-run toggles
@@ -744,18 +744,18 @@ cat ./prompt.md | swift run macparakeet-cli prompts add --name "Piped"
 implies visible — these invariants are enforced.
 
 ```bash
-swift run macparakeet-cli prompts set "Daily Notes" --auto-run
-swift run macparakeet-cli prompts set "Daily Notes" --auto-run --source meeting --json
-swift run macparakeet-cli prompts set "Daily Notes" --hidden
-swift run macparakeet-cli prompts set "Summary" --no-auto-run
+swift run sotto-cli prompts set "Daily Notes" --auto-run
+swift run sotto-cli prompts set "Daily Notes" --auto-run --source meeting --json
+swift run sotto-cli prompts set "Daily Notes" --hidden
+swift run sotto-cli prompts set "Summary" --no-auto-run
 ```
 
 ### Delete and restore
 
 ```bash
-swift run macparakeet-cli prompts delete "Daily Notes"
-swift run macparakeet-cli prompts restore-defaults   # re-shows hidden built-in result prompts
-swift run macparakeet-cli transforms restore-defaults --transform Polish --json
+swift run sotto-cli prompts delete "Daily Notes"
+swift run sotto-cli prompts restore-defaults   # re-shows hidden built-in result prompts
+swift run sotto-cli transforms restore-defaults --transform Polish --json
 ```
 
 Built-in result prompts cannot be deleted; the CLI surfaces a clear error and
@@ -770,18 +770,18 @@ and the transcription text as input. By default it persists the result to the
 `summaries` table so the GUI sees it on the next reload.
 
 ```bash
-swift run macparakeet-cli prompts run "Summary" \
+swift run sotto-cli prompts run "Summary" \
   --transcription <transcription-id> \
   --provider anthropic --api-key-env ANTHROPIC_API_KEY
 
 # Stream output and skip persistence (preview-only)
-swift run macparakeet-cli prompts run "Action Items & Decisions" \
+swift run sotto-cli prompts run "Action Items & Decisions" \
   --transcription a3f7 \
   --provider openai --api-key-env OPENAI_API_KEY \
   --stream --no-store
 
 # Add per-run instructions (mirrors the GUI's regenerate-with-extra flow)
-swift run macparakeet-cli prompts run "Blog Post" \
+swift run sotto-cli prompts run "Blog Post" \
   --transcription a3f7 \
   --provider anthropic --api-key-env ANTHROPIC_API_KEY \
   --extra "Tone: warm and direct. Audience: engineers."
@@ -797,25 +797,25 @@ the GUI model so agents can seed, pin, hide, export, and import those prompts
 without launching the app.
 
 ```bash
-swift run macparakeet-cli quick-prompts list --visible-only
-swift run macparakeet-cli quick-prompts show "Catch me up"
+swift run sotto-cli quick-prompts list --visible-only
+swift run sotto-cli quick-prompts show "Catch me up"
 
-swift run macparakeet-cli quick-prompts add \
+swift run sotto-cli quick-prompts add \
   --label "Risks?" \
   --prompt "Identify risks, blockers, and open questions from the current meeting context." \
   --pinned
 
-swift run macparakeet-cli quick-prompts pin "Risks?"
-swift run macparakeet-cli quick-prompts set "Risks?" --group "CHALLENGE"
-swift run macparakeet-cli quick-prompts export --out quick-prompts.json --include-builtins
-swift run macparakeet-cli quick-prompts import quick-prompts.json --mode merge --json
+swift run sotto-cli quick-prompts pin "Risks?"
+swift run sotto-cli quick-prompts set "Risks?" --group "CHALLENGE"
+swift run sotto-cli quick-prompts export --out quick-prompts.json --include-builtins
+swift run sotto-cli quick-prompts import quick-prompts.json --mode merge --json
 ```
 
 ## Feedback
 
 ```bash
-swift run macparakeet-cli feedback "The export feature is great" --category feature
-swift run macparakeet-cli feedback "Found a bug with..." --category bug --email user@example.com
+swift run sotto-cli feedback "The export feature is great" --category feature
+swift run sotto-cli feedback "Found a bug with..." --category bug --email user@example.com
 ```
 
 Categories: `bug`, `feature`, `other` (default).
@@ -826,7 +826,7 @@ Categories: `bug`, `feature`, `other` (default).
 - For isolated testing, use a temporary DB:
 
 ```bash
-swift run macparakeet-cli transcribe "<FILE>" --database /tmp/macparakeet-dev.db
+swift run sotto-cli transcribe "<FILE>" --database /tmp/sotto-dev.db
 ```
 
-- For file/URL transcription from `swift run`, FFmpeg can come from your shell `PATH` in development. If needed, set `MACPARAKEET_FFMPEG_PATH=/absolute/path/to/ffmpeg`.
+- For file/URL transcription from `swift run`, FFmpeg can come from your shell `PATH` in development. If needed, set `SOTTO_FFMPEG_PATH=/absolute/path/to/ffmpeg`.

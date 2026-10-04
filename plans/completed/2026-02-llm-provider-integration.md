@@ -18,13 +18,13 @@ Add LLM-powered features (Summary, Chat, Custom Transforms) via external provide
 
 ## Implementation Phases
 
-### Phase 1: Core LLM Client (MacParakeetCore)
+### Phase 1: Core LLM Client (SottoCore)
 
 The foundation — HTTP client and provider configuration. No UI yet.
 
 #### Step 1.1: Provider Config Model
 
-**File:** `Sources/MacParakeetCore/Models/LLMProvider.swift`
+**File:** `Sources/SottoCore/Models/LLMProvider.swift`
 
 ```swift
 public enum LLMProviderID: String, Codable, Sendable, CaseIterable {
@@ -55,7 +55,7 @@ public struct LLMProviderConfig: Codable, Sendable, Equatable {
 
 #### Step 1.2: Chat Types
 
-**File:** `Sources/MacParakeetCore/Models/LLMTypes.swift`
+**File:** `Sources/SottoCore/Models/LLMTypes.swift`
 
 ```swift
 public struct ChatMessage: Codable, Sendable {
@@ -83,7 +83,7 @@ public struct TokenUsage: Sendable {
 
 #### Step 1.3: LLM Client Protocol + Implementation
 
-**File:** `Sources/MacParakeetCore/Services/LLMClient.swift`
+**File:** `Sources/SottoCore/Services/LLMClient.swift`
 
 ```swift
 public protocol LLMClientProtocol: Sendable {
@@ -115,7 +115,7 @@ Implementation uses URLSession. One code path for all providers (OpenAI-compatib
 
 #### Step 1.4: LLM Error Types
 
-**File:** `Sources/MacParakeetCore/Services/LLMError.swift`
+**File:** `Sources/SottoCore/Services/LLMError.swift`
 
 ```swift
 public enum LLMError: Error, LocalizedError, Sendable {
@@ -132,7 +132,7 @@ public enum LLMError: Error, LocalizedError, Sendable {
 
 #### Step 1.5: LLM Service (Domain Operations)
 
-**File:** `Sources/MacParakeetCore/Services/LLMService.swift`
+**File:** `Sources/SottoCore/Services/LLMService.swift`
 
 ```swift
 public protocol LLMServiceProtocol: Sendable {
@@ -153,7 +153,7 @@ Implementation:
 
 #### Step 1.6: Provider Config Storage
 
-**File:** `Sources/MacParakeetCore/Services/LLMConfigStore.swift`
+**File:** `Sources/SottoCore/Services/LLMConfigStore.swift`
 
 - Provider ID, base URL, model name → UserDefaults
 - API key → Keychain (via existing `KeychainKeyValueStore`)
@@ -162,20 +162,20 @@ Implementation:
 
 #### Step 1.7: Tests
 
-**File:** `Tests/MacParakeetTests/LLMClientTests.swift`
+**File:** `Tests/SottoTests/LLMClientTests.swift`
 
 - Mock URLSession (or URLProtocol) to test request construction
 - Verify headers, body format, auth for each provider type
 - Verify SSE parsing (streaming)
 - Verify error mapping (401, 429, 404, etc.)
 
-**File:** `Tests/MacParakeetTests/LLMServiceTests.swift`
+**File:** `Tests/SottoTests/LLMServiceTests.swift`
 
 - Mock LLMClient, verify prompt assembly per feature
 - Verify context truncation behavior
 - Verify summary/chat/transform prompt templates
 
-**File:** `Tests/MacParakeetTests/LLMConfigStoreTests.swift`
+**File:** `Tests/SottoTests/LLMConfigStoreTests.swift`
 
 - Verify provider config persistence round-trip
 - Verify API key goes to Keychain, not UserDefaults
@@ -186,7 +186,7 @@ Implementation:
 
 #### Step 2.1: LLM Settings View
 
-**File:** `Sources/MacParakeet/Views/Settings/LLMSettingsView.swift`
+**File:** `Sources/Sotto/Views/Settings/LLMSettingsView.swift`
 
 Provider picker, API key field, model selector, test connection button, privacy notice. See spec/11-llm-integration.md UI wireframe.
 
@@ -200,7 +200,7 @@ Key behaviors:
 
 #### Step 2.2: LLM Settings ViewModel
 
-**File:** `Sources/MacParakeetViewModels/LLMSettingsViewModel.swift`
+**File:** `Sources/SottoViewModels/LLMSettingsViewModel.swift`
 
 `@MainActor @Observable` with `configure()` pattern. Manages:
 - Selected provider ID
@@ -211,7 +211,7 @@ Key behaviors:
 
 #### Step 2.3: Custom Transforms View
 
-**File:** `Sources/MacParakeet/Views/Settings/CustomTransformsView.swift`
+**File:** `Sources/Sotto/Views/Settings/CustomTransformsView.swift`
 
 List of transforms (built-in + custom). Add/edit/delete custom transforms. Each has name + prompt template.
 
@@ -221,7 +221,7 @@ Add "Intelligence" section to existing SettingsView. Below existing settings sec
 
 #### Step 2.5: Tests
 
-**File:** `Tests/MacParakeetTests/LLMSettingsViewModelTests.swift`
+**File:** `Tests/SottoTests/LLMSettingsViewModelTests.swift`
 
 - Test provider selection updates config
 - Test connection test flow (mock client)
@@ -233,7 +233,7 @@ Add "Intelligence" section to existing SettingsView. Below existing settings sec
 
 #### Step 3.1: Summary UI on Transcript View
 
-**File:** Modify `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift`
+**File:** Modify `Sources/Sotto/Views/Transcription/TranscriptResultView.swift`
 
 Add "Summarize" button to transcript toolbar. When pressed:
 - Show summary section below transcript
@@ -243,21 +243,21 @@ Add "Summarize" button to transcript toolbar. When pressed:
 
 #### Step 3.2: Summary Persistence
 
-**File:** Modify `Sources/MacParakeetCore/Models/Transcription.swift`
+**File:** Modify `Sources/SottoCore/Models/Transcription.swift`
 
 Add `summary: String?` column to Transcription model.
 
-**File:** Modify `Sources/MacParakeetCore/Database/DatabaseManager.swift`
+**File:** Modify `Sources/SottoCore/Database/DatabaseManager.swift`
 
 Add migration to add `summary` column.
 
-**File:** Modify `Sources/MacParakeetCore/Database/TranscriptionRepository.swift`
+**File:** Modify `Sources/SottoCore/Database/TranscriptionRepository.swift`
 
 Add `updateSummary(id:summary:)` method.
 
 #### Step 3.3: TranscriptionViewModel Updates
 
-**File:** Modify `Sources/MacParakeetViewModels/TranscriptionViewModel.swift`
+**File:** Modify `Sources/SottoViewModels/TranscriptionViewModel.swift`
 
 Add:
 - `summary: String?` (loaded from DB, updated after generation)
@@ -278,13 +278,13 @@ Add:
 
 #### Step 4.1: Chat View
 
-**File:** `Sources/MacParakeet/Views/Transcription/TranscriptChatView.swift`
+**File:** `Sources/Sotto/Views/Transcription/TranscriptChatView.swift`
 
 Chat panel alongside transcript. Message list + input field. Streaming responses. See spec wireframe.
 
 #### Step 4.2: Chat ViewModel
 
-**File:** `Sources/MacParakeetViewModels/TranscriptChatViewModel.swift`
+**File:** `Sources/SottoViewModels/TranscriptChatViewModel.swift`
 
 `@MainActor @Observable` with `configure()`. Manages:
 - `messages: [ChatMessage]` (in-memory conversation history)
@@ -334,10 +334,10 @@ Show transformed text in a sheet or inline replacement. User can copy result or 
 
 **Files:** `Sources/CLI/Commands/LLM/`
 
-- `LLMSummarizeCommand.swift` — `macparakeet-cli llm summarize --file <path>`
-- `LLMChatCommand.swift` — `macparakeet-cli llm chat --file <path> "question"`
-- `LLMTransformCommand.swift` — `macparakeet-cli llm transform --prompt "..." "text"`
-- `LLMStatusCommand.swift` — `macparakeet-cli llm status` (show configured provider)
+- `LLMSummarizeCommand.swift` — `sotto-cli llm summarize --file <path>`
+- `LLMChatCommand.swift` — `sotto-cli llm chat --file <path> "question"`
+- `LLMTransformCommand.swift` — `sotto-cli llm transform --prompt "..." "text"`
+- `LLMStatusCommand.swift` — `sotto-cli llm status` (show configured provider)
 
 #### Step 6.2: Tests
 

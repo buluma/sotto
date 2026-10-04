@@ -2,16 +2,16 @@
 
 ## Goal
 
-Determine how MacParakeet can let a person deliberately publish selected text from a local transcription as a revocable web link without weakening its private, local-first product identity.
+Determine how Sotto can let a person deliberately publish selected text from a local transcription as a revocable web link without weakening its private, local-first product identity.
 
 ## Observed context
 
-- Repository: `/Users/dmoon/code/macparakeet`.
+- Repository: `/Users/dmoon/code/sotto`.
 - Current working checkout is dirty and 329 commits behind `origin/main`; do not change it or treat it as the current upstream product. `origin/main` was refreshed on 2026-09-11 at `aaf3dc261536e5fc5158c4b1ca714bd3f4cece19`.
 - Authoritative product direction: `spec/adr/027-product-north-star.md` and `spec/adr/002-local-only.md` on `origin/main`.
 - The current product has local transcripts for dictation, meetings, files, and YouTube; summaries/notes and export/copy surfaces already exist.
 - The desired first milestone is text-only, read-only sharing. The owner chooses which transcript, notes, and summary fields to include. Audio is excluded.
-- A recipient should open a normal web URL without installing MacParakeet or creating an account.
+- A recipient should open a normal web URL without installing Sotto or creating an account.
 - The founder controls `macparakeet.com` and is willing to operate modest server infrastructure.
 
 ## Settled for this investigation

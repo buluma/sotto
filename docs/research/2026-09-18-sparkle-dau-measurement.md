@@ -3,7 +3,7 @@
 Date: 2026-09-18 (Pacific). Queries ran 2026-09-19 00:50–01:30 UTC.
 Status: **read-only research**. No app, website, D1, or Cloudflare config changes.
 Question: did weekday Sparkle device-days falling from ~1,780 (Sep 9) to ~1,130
-(Sep 18) mean MacParakeet DAU stalled?
+(Sep 18) mean Sotto DAU stalled?
 
 ## Verdict
 
@@ -27,13 +27,13 @@ Do not read Sep 11–18 Sparkle as “we lost 40% of users.”
 
 Primary sources only:
 
-- Live D1 `macparakeet-telemetry`
+- Live D1 `sotto-telemetry`
   (`7372263e-6a0b-4c70-8188-8f1d6d16bf31`, account
   `1542b0baf1922ec403cc44ef3fd39233`) via
   `wrangler d1 execute --remote`. Database size ~2.68 GB.
 - `sparkle_check` rows from website Pages middleware
   [`functions/_middleware.ts`](https://github.com/moona3k/macparakeet-website/blob/main/functions/_middleware.ts)
-  (only `User-Agent` matching `^MacParakeet/<ver> Sparkle/`).
+  (only `User-Agent` matching `^Sotto/<ver> Sparkle/`).
 - GUI `surface='gui'` distinct `session` and `dictation_started` /
   `app_launched` on the same `events` table.
 - GitHub releases `moona3k/macparakeet` `v0.8.0`–`v0.8.7`.
@@ -171,7 +171,7 @@ breaking.
 
 ### 3. Same-day version upgrades split fingerprints
 
-The daily device hash includes the UA, which includes `MacParakeet/<ver>`.
+The daily device hash includes the UA, which includes `Sotto/<ver>`.
 0.8.6 → 0.8.7 on the same UTC day is two Sparkle fingerprints, not one
 human. This **inflates** Sparkle slightly on release days and does not
 explain the 40% drop.
@@ -186,7 +186,7 @@ never lifted would also have required a cache-rule change; none landed
 in `functions/_middleware.ts` (last commit `b53776e`).
 
 **UA filter dropping 0.8.x.** Middleware still matches
-`^MacParakeet/<ver> Sparkle/`. Sparkle library on those days is 2.9.0
+`^Sotto/<ver> Sparkle/`. Sparkle library on those days is 2.9.0
 both before and after the cliff (`props.sparkle_ver`). 0.8.0 rows exist
 in D1; they are just late relative to GUI sessions.
 
@@ -310,7 +310,7 @@ devices than GUI sessions, as expected with telemetry-off users.
 
 ### Daily Sparkle (complete)
 
-Every UTC day with at least one MacParakeet Sparkle UA. 2026-09-19 is
+Every UTC day with at least one Sotto Sparkle UA. 2026-09-19 is
 incomplete.
 
 | Day | Dow | Devices | Hits |
@@ -442,7 +442,7 @@ Website checkout, production D1:
 
 ```bash
 # UTC day Sparkle floor
-npx wrangler d1 execute macparakeet-telemetry --remote --json --command \
+npx wrangler d1 execute sotto-telemetry --remote --json --command \
   "SELECT substr(ts,1,10) AS day, COUNT(*) AS hits, COUNT(DISTINCT session) AS devices
    FROM events WHERE event='sparkle_check' AND ts>='2026-09-01T00:00:00Z'
    GROUP BY 1 ORDER BY 1"
@@ -455,7 +455,7 @@ npx wrangler d1 execute macparakeet-telemetry --remote --json --command \
 Live cache posture:
 
 ```bash
-curl -sI -A 'MacParakeet/0.8.7 Sparkle/2.9.0' https://macparakeet.com/appcast.xml
+curl -sI -A 'Sotto/0.8.7 Sparkle/2.9.0' https://macparakeet.com/appcast.xml
 # expect cf-cache-status: DYNAMIC
 ```
 

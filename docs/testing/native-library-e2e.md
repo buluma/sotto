@@ -19,7 +19,7 @@ does not execute inside a network sandbox.
 
 ## Prerequisites
 
-Use a **dedicated disposable logged-in macOS account named `macparakeet-e2e`**.
+Use a **dedicated disposable logged-in macOS account named `sotto-e2e`**.
 It must own the active console. Do not rename your everyday account or run with
 sudo. App state overrides isolate files, but Dev and stable still share some
 preferences and Keychain entries. The explicit account attestation is required;
@@ -33,7 +33,7 @@ deny microphone permission for the app in this account: ordinary AppDelegate
 startup can prompt for or touch the microphone even though the journey itself
 never records or transcribes. This account and runner are not network-sandboxed;
 only telemetry is explicitly disabled.
-Do not run another MacParakeet instance or another UI driver during the journey.
+Do not run another Sotto instance or another UI driver during the journey.
 The runner rejects existing app processes before it seeds or builds anything.
 
 ```sh

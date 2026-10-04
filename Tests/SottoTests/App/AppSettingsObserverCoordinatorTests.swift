@@ -1,0 +1,310 @@
+import XCTest
+import SottoCore
+import SottoViewModels
+@testable import Sotto
+
+@MainActor
+final class AppSettingsObserverCoordinatorTests: XCTestCase {
+
+    // MARK: - Fixture
+
+    /// Bundles a coordinator with an isolated NotificationCenter and counters
+    /// for each callback, so tests don't bleed into `.default` and can assert
+    /// per-notification routing without timing races on shared state.
+    @MainActor
+    private final class Fixture {
+        let center = NotificationCenter()
+        var onboardingCount = 0
+        var settingsCount = 0
+        var settingsTabs: [SettingsTab?] = []
+        var hotkeyTriggerCount = 0
+        var pushToTalkHotkeyTriggerCount = 0
+        var meetingHotkeyTriggerCount = 0
+        var fileTranscriptionHotkeyTriggerCount = 0
+        var youtubeTranscriptionHotkeyTriggerCount = 0
+        var dictationAIPolishHotkeyTriggerCount = 0
+        var appearanceModeCount = 0
+        var menuBarOnlyCount = 0
+        var menuBarIconVisibilityCount = 0
+        var showIdlePillCount = 0
+        var showDiscoverCount = 0
+        var showMeetingRecordingPillCount = 0
+        var instantDictationCount = 0
+        var microphoneSelectionCount = 0
+        var meetingAudioRetentionCount = 0
+        var onCallback: (() -> Void)?
+
+        lazy var coordinator: AppSettingsObserverCoordinator = AppSettingsObserverCoordinator(
+            notificationCenter: center,
+            onOpenOnboarding: { [unowned self] in
+                self.onboardingCount += 1
+                self.onCallback?()
+            },
+            onOpenSettings: { [unowned self] tab in
+                self.settingsCount += 1
+                self.settingsTabs.append(tab)
+                self.onCallback?()
+            },
+            onHotkeyTriggerChanged: { [unowned self] in
+                self.hotkeyTriggerCount += 1
+                self.onCallback?()
+            },
+            onPushToTalkHotkeyTriggerChanged: { [unowned self] in
+                self.pushToTalkHotkeyTriggerCount += 1
+                self.onCallback?()
+            },
+            onMeetingHotkeyTriggerChanged: { [unowned self] in
+                self.meetingHotkeyTriggerCount += 1
+                self.onCallback?()
+            },
+            onFileTranscriptionHotkeyTriggerChanged: { [unowned self] in
+                self.fileTranscriptionHotkeyTriggerCount += 1
+                self.onCallback?()
+            },
+            onYouTubeTranscriptionHotkeyTriggerChanged: { [unowned self] in
+                self.youtubeTranscriptionHotkeyTriggerCount += 1
+                self.onCallback?()
+            },
+            onDictationAIPolishHotkeyTriggerChanged: { [unowned self] in
+                self.dictationAIPolishHotkeyTriggerCount += 1
+                self.onCallback?()
+            },
+            onAppearanceModeChanged: { [unowned self] in
+                self.appearanceModeCount += 1
+                self.onCallback?()
+            },
+            onMenuBarOnlyModeChanged: { [unowned self] in
+                self.menuBarOnlyCount += 1
+                self.onCallback?()
+            },
+            onMenuBarIconVisibilityChanged: { [unowned self] in
+                self.menuBarIconVisibilityCount += 1
+                self.onCallback?()
+            },
+            onShowIdlePillChanged: { [unowned self] in
+                self.showIdlePillCount += 1
+                self.onCallback?()
+            },
+            onShowDiscoverChanged: { [unowned self] in
+                self.showDiscoverCount += 1
+                self.onCallback?()
+            },
+            onShowMeetingRecordingPillChanged: { [unowned self] in
+                self.showMeetingRecordingPillCount += 1
+                self.onCallback?()
+            },
+            onInstantDictationChanged: { [unowned self] in
+                self.instantDictationCount += 1
+                self.onCallback?()
+            },
+            onMicrophoneSelectionChanged: { [unowned self] in
+                self.microphoneSelectionCount += 1
+                self.onCallback?()
+            },
+            onMeetingAudioRetentionChanged: { [unowned self] in
+                self.meetingAudioRetentionCount += 1
+                self.onCallback?()
+            }
+        )
+    }
+
+    // MARK: - Tests
+
+    func test_startObserving_routesEachNotificationToItsCallback() async {
+        let fx = Fixture()
+        let callbacks = expectation(description: "all callbacks fire")
+        callbacks.expectedFulfillmentCount = 17
+        fx.onCallback = { callbacks.fulfill() }
+        fx.coordinator.startObserving()
+
+        fx.center.post(name: .sottoOpenOnboarding, object: nil)
+        fx.center.post(name: .sottoOpenSettings, object: nil)
+        fx.center.post(name: .sottoHotkeyTriggerDidChange, object: nil)
+        fx.center.post(name: .sottoPushToTalkHotkeyTriggerDidChange, object: nil)
+        fx.center.post(name: .sottoMeetingHotkeyTriggerDidChange, object: nil)
+        fx.center.post(name: .sottoFileTranscriptionHotkeyTriggerDidChange, object: nil)
+        fx.center.post(name: .sottoYouTubeTranscriptionHotkeyTriggerDidChange, object: nil)
+        fx.center.post(name: .sottoDictationAIPolishHotkeyTriggerDidChange, object: nil)
+        fx.center.post(name: .sottoAppearanceModeDidChange, object: nil)
+        fx.center.post(name: .sottoMenuBarOnlyModeDidChange, object: nil)
+        fx.center.post(name: .sottoMenuBarIconVisibilityDidChange, object: nil)
+        fx.center.post(name: .sottoShowIdlePillDidChange, object: nil)
+        fx.center.post(name: .sottoShowDiscoverDidChange, object: nil)
+        fx.center.post(name: .sottoShowMeetingRecordingPillDidChange, object: nil)
+        fx.center.post(name: .sottoInstantDictationDidChange, object: nil)
+        fx.center.post(name: .sottoMicrophoneSelectionDidChange, object: nil)
+        fx.center.post(name: .sottoMeetingAudioRetentionDidChange, object: nil)
+
+        await fulfillment(of: [callbacks], timeout: 1.0)
+
+        XCTAssertEqual(fx.onboardingCount, 1)
+        XCTAssertEqual(fx.settingsCount, 1)
+        XCTAssertEqual(fx.settingsTabs, [nil])
+        XCTAssertEqual(fx.hotkeyTriggerCount, 1)
+        XCTAssertEqual(fx.pushToTalkHotkeyTriggerCount, 1)
+        XCTAssertEqual(fx.meetingHotkeyTriggerCount, 1)
+        XCTAssertEqual(fx.fileTranscriptionHotkeyTriggerCount, 1)
+        XCTAssertEqual(fx.youtubeTranscriptionHotkeyTriggerCount, 1)
+        XCTAssertEqual(fx.dictationAIPolishHotkeyTriggerCount, 1)
+        XCTAssertEqual(fx.appearanceModeCount, 1)
+        XCTAssertEqual(fx.menuBarOnlyCount, 1)
+        XCTAssertEqual(fx.menuBarIconVisibilityCount, 1)
+        XCTAssertEqual(fx.showIdlePillCount, 1)
+        XCTAssertEqual(fx.showDiscoverCount, 1)
+        XCTAssertEqual(fx.showMeetingRecordingPillCount, 1)
+        XCTAssertEqual(fx.instantDictationCount, 1)
+        XCTAssertEqual(fx.microphoneSelectionCount, 1)
+        XCTAssertEqual(fx.meetingAudioRetentionCount, 1)
+    }
+
+    func test_discoverPreferenceTransitionsAreNotCoalesced() {
+        let fx = Fixture()
+        var showDiscover = true
+        var appliedPreferences: [Bool] = []
+        fx.onCallback = { appliedPreferences.append(showDiscover) }
+        fx.coordinator.startObserving()
+        defer { fx.coordinator.stopObserving() }
+
+        // No actor yield between changes: disabling must take effect before
+        // re-enabling, rather than all callbacks reading the final value.
+        showDiscover = false
+        fx.center.post(name: .sottoShowDiscoverDidChange, object: nil)
+        showDiscover = true
+        fx.center.post(name: .sottoShowDiscoverDidChange, object: nil)
+        showDiscover = false
+        fx.center.post(name: .sottoShowDiscoverDidChange, object: nil)
+
+        XCTAssertEqual(appliedPreferences, [false, true, false])
+    }
+
+    func test_stopObserving_removesAllObservers() async {
+        let fx = Fixture()
+        let noCallbacks = expectation(description: "no callbacks after stopObserving")
+        noCallbacks.isInverted = true
+        fx.onCallback = { noCallbacks.fulfill() }
+        fx.coordinator.startObserving()
+        fx.coordinator.stopObserving()
+
+        fx.center.post(name: .sottoOpenOnboarding, object: nil)
+        fx.center.post(name: .sottoOpenSettings, object: nil)
+        fx.center.post(name: .sottoHotkeyTriggerDidChange, object: nil)
+        fx.center.post(name: .sottoPushToTalkHotkeyTriggerDidChange, object: nil)
+        fx.center.post(name: .sottoMeetingHotkeyTriggerDidChange, object: nil)
+        fx.center.post(name: .sottoFileTranscriptionHotkeyTriggerDidChange, object: nil)
+        fx.center.post(name: .sottoYouTubeTranscriptionHotkeyTriggerDidChange, object: nil)
+        fx.center.post(name: .sottoDictationAIPolishHotkeyTriggerDidChange, object: nil)
+        fx.center.post(name: .sottoAppearanceModeDidChange, object: nil)
+        fx.center.post(name: .sottoMenuBarOnlyModeDidChange, object: nil)
+        fx.center.post(name: .sottoMenuBarIconVisibilityDidChange, object: nil)
+        fx.center.post(name: .sottoShowIdlePillDidChange, object: nil)
+        fx.center.post(name: .sottoShowDiscoverDidChange, object: nil)
+        fx.center.post(name: .sottoShowMeetingRecordingPillDidChange, object: nil)
+        fx.center.post(name: .sottoInstantDictationDidChange, object: nil)
+        fx.center.post(name: .sottoMicrophoneSelectionDidChange, object: nil)
+        fx.center.post(name: .sottoMeetingAudioRetentionDidChange, object: nil)
+
+        await fulfillment(of: [noCallbacks], timeout: 0.2)
+
+        XCTAssertEqual(fx.onboardingCount, 0)
+        XCTAssertEqual(fx.settingsCount, 0)
+        XCTAssertTrue(fx.settingsTabs.isEmpty)
+        XCTAssertEqual(fx.hotkeyTriggerCount, 0)
+        XCTAssertEqual(fx.pushToTalkHotkeyTriggerCount, 0)
+        XCTAssertEqual(fx.meetingHotkeyTriggerCount, 0)
+        XCTAssertEqual(fx.fileTranscriptionHotkeyTriggerCount, 0)
+        XCTAssertEqual(fx.youtubeTranscriptionHotkeyTriggerCount, 0)
+        XCTAssertEqual(fx.dictationAIPolishHotkeyTriggerCount, 0)
+        XCTAssertEqual(fx.appearanceModeCount, 0)
+        XCTAssertEqual(fx.menuBarOnlyCount, 0)
+        XCTAssertEqual(fx.menuBarIconVisibilityCount, 0)
+        XCTAssertEqual(fx.showIdlePillCount, 0)
+        XCTAssertEqual(fx.showDiscoverCount, 0)
+        XCTAssertEqual(fx.showMeetingRecordingPillCount, 0)
+        XCTAssertEqual(fx.instantDictationCount, 0)
+        XCTAssertEqual(fx.microphoneSelectionCount, 0)
+        XCTAssertEqual(fx.meetingAudioRetentionCount, 0)
+    }
+
+    func test_startObserving_isIdempotent_doesNotDoubleFire() async {
+        // startObserving() defensively calls stopObserving() first. Calling it
+        // twice must not leave two observers on the same notification.
+        let fx = Fixture()
+        let callbacks = expectation(description: "single callback fired")
+        fx.onCallback = { callbacks.fulfill() }
+        fx.coordinator.startObserving()
+        fx.coordinator.startObserving()
+
+        fx.center.post(name: .sottoHotkeyTriggerDidChange, object: nil)
+        await fulfillment(of: [callbacks], timeout: 1.0)
+
+        XCTAssertEqual(fx.hotkeyTriggerCount, 1)
+    }
+
+    func test_stopObserving_isIdempotent_whenNeverStarted() {
+        let fx = Fixture()
+        // Calling stop on a fresh coordinator must not crash or throw.
+        fx.coordinator.stopObserving()
+        fx.coordinator.stopObserving()
+    }
+
+    func test_openSettingsNotificationForwardsRequestedTab() async {
+        let fx = Fixture()
+        let callback = expectation(description: "settings callback fires")
+        fx.onCallback = { callback.fulfill() }
+        fx.coordinator.startObserving()
+
+        fx.center.post(
+            name: .sottoOpenSettings,
+            object: nil,
+            userInfo: [AppSettingsObserverCoordinator.settingsTabUserInfoKey: SettingsTab.ai.rawValue]
+        )
+        await fulfillment(of: [callback], timeout: 1.0)
+
+        XCTAssertEqual(fx.settingsCount, 1)
+        XCTAssertEqual(fx.settingsTabs, [.ai])
+    }
+
+    func test_restart_afterStop_reattachesAllObservers() async {
+        let fx = Fixture()
+        let callbacks = expectation(description: "callbacks fire after restart")
+        callbacks.expectedFulfillmentCount = 2
+        fx.onCallback = { callbacks.fulfill() }
+        fx.coordinator.startObserving()
+        fx.coordinator.stopObserving()
+        fx.coordinator.startObserving()
+
+        fx.center.post(name: .sottoShowIdlePillDidChange, object: nil)
+        fx.center.post(name: .sottoMenuBarOnlyModeDidChange, object: nil)
+        await fulfillment(of: [callbacks], timeout: 1.0)
+
+        XCTAssertEqual(fx.showIdlePillCount, 1)
+        XCTAssertEqual(fx.menuBarOnlyCount, 1)
+    }
+
+    func test_callbacksAreIsolated_perNotificationName() async {
+        // Posting one notification must not fire unrelated callbacks.
+        let fx = Fixture()
+        let callbacks = expectation(description: "single callback for onboarding")
+        fx.onCallback = { callbacks.fulfill() }
+        fx.coordinator.startObserving()
+
+        fx.center.post(name: .sottoOpenOnboarding, object: nil)
+        await fulfillment(of: [callbacks], timeout: 1.0)
+
+        XCTAssertEqual(fx.onboardingCount, 1)
+        XCTAssertEqual(fx.settingsCount, 0)
+        XCTAssertTrue(fx.settingsTabs.isEmpty)
+        XCTAssertEqual(fx.hotkeyTriggerCount, 0)
+        XCTAssertEqual(fx.pushToTalkHotkeyTriggerCount, 0)
+        XCTAssertEqual(fx.meetingHotkeyTriggerCount, 0)
+        XCTAssertEqual(fx.fileTranscriptionHotkeyTriggerCount, 0)
+        XCTAssertEqual(fx.youtubeTranscriptionHotkeyTriggerCount, 0)
+        XCTAssertEqual(fx.dictationAIPolishHotkeyTriggerCount, 0)
+        XCTAssertEqual(fx.appearanceModeCount, 0)
+        XCTAssertEqual(fx.menuBarOnlyCount, 0)
+        XCTAssertEqual(fx.menuBarIconVisibilityCount, 0)
+        XCTAssertEqual(fx.showIdlePillCount, 0)
+        XCTAssertEqual(fx.showDiscoverCount, 0)
+        XCTAssertEqual(fx.meetingAudioRetentionCount, 0)
+    }
+}

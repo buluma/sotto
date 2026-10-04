@@ -4,8 +4,8 @@ Initial candidate: `8548c099af5ee2ab0ed4dd9efe757d85c498cca0`. Test fixes are un
 
 ## Environment and isolation
 
-- Owning branch/worktree: `release/0.8.0-qa` in `/Users/dmoon/code/macparakeet-qa`; unrelated original checkout preserved.
-- GUI: copy of Xcode Release dev product, renamed/re-signed as `com.macparakeet.qa.release080`, displayed version 0.8.0. This is a QA copy, not a notarized distribution candidate.
+- Owning branch/worktree: `release/0.8.0-qa` in `/Users/dmoon/code/sotto-qa`; unrelated original checkout preserved.
+- GUI: copy of Xcode Release dev product, renamed/re-signed as `com.sotto.qa.release080`, displayed version 0.8.0. This is a QA copy, not a notarized distribution candidate.
 - `CFFIXED_USER_HOME` redirects Foundation home/Application Support and the actual open SQLite path; verified with a resolver probe and `lsof`. A unique bundle ID isolates ordinary GUI preferences. Named preference suites and the shared LLM Keychain do not follow that isolation. No saved provider settings/credentials are changed.
 - Public FluidAudio model cache cloned with APFS copy-on-write into the temporary home. No personal transcripts/audio/databases copied. All created/deleted QA data is synthetic or a named public corpus fixture. Telemetry disabled per process.
 - Built-in computer tool failed with `Sky Computer Use requires the trusted nodeRepl runtime`. Used native macOS AX APIs and per-window `screencapture`, with Accessibility and Screen Capture access verified.
@@ -14,9 +14,9 @@ Initial candidate: `8548c099af5ee2ab0ed4dd9efe757d85c498cca0`. Test fixes are un
 
 ## Recovery regression
 
-Command: `MACPARAKEET_TELEMETRY=0 swift test --filter 'MeetingRecordingRecoveryServiceTests.testDiscardWithStaleLock'`.
+Command: `SOTTO_TELEMETRY=0 swift test --filter 'MeetingRecordingRecoveryServiceTests.testDiscardWithStaleLock'`.
 
-Observed: build completed; 2 tests ran and failed with 8 assertions. Both same-process and other-live-process finalization fixtures lost their source bytes and lock after stale discard. Raw local evidence: `/tmp/macparakeet-080-qa/evidence/recovery-discard-red.log`. The test uses disposable audio and deterministic ownership, with no timing sleeps or real process termination.
+Observed: build completed; 2 tests ran and failed with 8 assertions. Both same-process and other-live-process finalization fixtures lost their source bytes and lock after stale discard. Raw local evidence: `/tmp/sotto-080-qa/evidence/recovery-discard-red.log`. The test uses disposable audio and deterministic ownership, with no timing sleeps or real process termination.
 
 Fix implements the existing finalization ownership claim before discard and restores ownership after a failed operation. Focused green validation is pending. This focused invocation does not consume the reserved full-suite gate.
 
@@ -27,9 +27,9 @@ Fix implements the existing finalization ownership claim before discard and rest
 
 ## Running CLI matrix
 
-Exact executable: owning worktree `.build/debug/macparakeet-cli`, reports 3.3.0. Real inference is run sequentially with explicit engine/variant, raw processing, speaker detection off, no history, an owned database path and isolated Foundation home. Each process has a 240-second bound and records command, fixture SHA-256, exit, wall time, JSON and stderr.
+Exact executable: owning worktree `.build/debug/sotto-cli`, reports 3.3.0. Real inference is run sequentially with explicit engine/variant, raw processing, speaker detection off, no history, an owned database path and isolated Foundation home. Each process has a 240-second bound and records command, fixture SHA-256, exit, wall time, JSON and stderr.
 
-Local runner and outputs: `/tmp/macparakeet-080-qa/run-asr.py`, `/tmp/macparakeet-080-qa/audio-runtime/`. Model inventory confirms Parakeet v2/v3/Unified, Nemotron multilingual and Cohere installed; English Nemotron and Whisper Turbo absent in the isolated cache. Installation is not inference proof.
+Local runner and outputs: `/tmp/sotto-080-qa/run-asr.py`, `/tmp/sotto-080-qa/audio-runtime/`. Model inventory confirms Parakeet v2/v3/Unified, Nemotron multilingual and Cohere installed; English Nemotron and Whisper Turbo absent in the isolated cache. Installation is not inference proof.
 
 Full Swift suite: **not yet run**. Root owns the single final invocation after fixes converge.
 

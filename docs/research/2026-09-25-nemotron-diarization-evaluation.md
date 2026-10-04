@@ -1,4 +1,4 @@
-# Nemotron 3 versus MacParakeet's current diarization
+# Nemotron 3 versus Sotto's current diarization
 
 > Research snapshot before implementation. Subsequent matched runs, integration and the adoption decision are recorded in [the evaluation report](../../benchmarks/diarization/2026-09-25-nemotron-evaluation.md). Historical present-tense statements below describe the reviewed baseline.
 
@@ -6,7 +6,7 @@ Date: 2026-09-25. Follow-up to the [Omarchy review](2026-09-25-omarchy-meeting-r
 
 ## Recommendation
 
-**Prioritize a controlled Nemotron evaluation.** It is a materially different diarization approach with encouraging published results, and a native Swift/CoreML integration already exists in **FluidAudio v0.17.4**. We can likely replace the algorithm while retaining the SDK. There is no evidence yet that it beats MacParakeet's exact current pipeline on the same recordings and scoring protocol. [Released implementation](https://github.com/FluidInference/FluidAudio/releases/tag/v0.17.4).
+**Prioritize a controlled Nemotron evaluation.** It is a materially different diarization approach with encouraging published results, and a native Swift/CoreML integration already exists in **FluidAudio v0.17.4**. We can likely replace the algorithm while retaining the SDK. There is no evidence yet that it beats Sotto's exact current pipeline on the same recordings and scoring protocol. [Released implementation](https://github.com/FluidInference/FluidAudio/releases/tag/v0.17.4).
 
 The user has explicitly narrowed the scope: microphone audio stays **Me**, while saved system audio and imported recordings receive speaker diarization. Eight remote identities is an acceptable target for the main meeting use case. The local microphone does not consume one of those eight slots. This is a product choice, not a measured claim that a particular percentage of users records alone.
 
@@ -14,7 +14,7 @@ The next step is a small matched benchmark, followed by an integration only if i
 
 ## What FluidAudio is using under the hood
 
-MacParakeet pins FluidAudio **0.15.7** and uses its **offline Community-1 port**, rather than its legacy online diarizer. The main stages are:
+Sotto pins FluidAudio **0.15.7** and uses its **offline Community-1 port**, rather than its legacy online diarizer. The main stages are:
 
 1. A pyannote powerset segmentation model finds local speaker activity in overlapping windows.
 2. WeSpeaker ResNet34 produces 256-dimensional voice embeddings from speech spans.
@@ -23,7 +23,7 @@ MacParakeet pins FluidAudio **0.15.7** and uses its **offline Community-1 port**
 
 The embedding/clustering stage is where acoustically different samples of one person can become separate clusters, or similar speakers can merge. Nemotron tests a different hypothesis: predict persistent speaker activity channels directly, carrying speaker context forward. This may reduce particular fragmentation errors; the architecture alone does not prove it will. [Offline implementation](https://github.com/FluidInference/FluidAudio/blob/41540ea237350afe5117a082b5c28eda642d0612/Sources/FluidAudio/Diarizer/Offline/Core/OfflineDiarizerManager.swift), [model provenance](https://huggingface.co/FluidInference/speaker-diarization-coreml/blob/df2625ac79a7ac6b65ad868fee6d80f320da4232/PROVENANCE.md).
 
-MacParakeet uses a one-second window hop, allows short embedding/segment spans, enables zero-vote re-embedding, and retains the corrected default clustering threshold. Its default output intervals are exclusive. These details matter more than saying simply “FluidAudio.” The package's VBx implementation also follows pyannote's per-observation mixture update; it is not the original temporal HMM with a speaker-stickiness knob. [App configuration](../../Sources/MacParakeetCore/Services/Diarization/DiarizationService.swift), [pinned settings](https://github.com/FluidInference/FluidAudio/blob/41540ea237350afe5117a082b5c28eda642d0612/Sources/FluidAudio/Diarizer/Offline/Core/OfflineDiarizerTypes.swift), [VBx explanation](https://github.com/FluidInference/FluidAudio/blob/41540ea237350afe5117a082b5c28eda642d0612/Documentation/Diarization/GettingStarted.md#why-vbx-has-no-transition-self-loop-prior).
+Sotto uses a one-second window hop, allows short embedding/segment spans, enables zero-vote re-embedding, and retains the corrected default clustering threshold. Its default output intervals are exclusive. These details matter more than saying simply “FluidAudio.” The package's VBx implementation also follows pyannote's per-observation mixture update; it is not the original temporal HMM with a speaker-stickiness knob. [App configuration](../../Sources/SottoCore/Services/Diarization/DiarizationService.swift), [pinned settings](https://github.com/FluidInference/FluidAudio/blob/41540ea237350afe5117a082b5c28eda642d0612/Sources/FluidAudio/Diarizer/Offline/Core/OfflineDiarizerTypes.swift), [VBx explanation](https://github.com/FluidInference/FluidAudio/blob/41540ea237350afe5117a082b5c28eda642d0612/Documentation/Diarization/GettingStarted.md#why-vbx-has-no-transition-self-loop-prior).
 
 The CoreML bundle documents Community-1 lineage, but some historical conversion provenance was reconstructed afterward. This is not proof that the port numerically matches upstream PyTorch. Also, the SDK resolves model downloads through mutable `main` references: a Swift package pin alone does not pin cached model bytes. The experiment must hash both baseline and candidate assets. [Provenance manifest](https://huggingface.co/FluidInference/speaker-diarization-coreml/blob/df2625ac79a7ac6b65ad868fee6d80f320da4232/provenance.json), [model registry](https://github.com/FluidInference/FluidAudio/blob/41540ea237350afe5117a082b5c28eda642d0612/Sources/FluidAudio/ModelRegistry.swift).
 
@@ -38,7 +38,7 @@ DER is diarization error rate: missed speech, false speech, and wrong-speaker ti
 | FluidAudio offline, default | VoxConverse, 232 test clips, 0.25 s collar, overlap excluded | 15.07% mean | Historical configuration, not today's exact app pipeline. |
 | FluidAudio offline, finer hop/short spans | Same reported set and protocol | 13.89% mean | Motivated our high-accuracy settings; predates later clustering fixes and was not rerun for the complete app configuration. |
 | FluidAudio offline | 16 AMI sessions, labelled “SDM,” 0.25 s collar, overlap excluded | 10.62% average | Inspected runner/downloader loads mixed-headset files; do not treat this as proven distant-microphone SDM. |
-| Upstream pyannote Community-1 | AMI IHM / SDM, zero collar, overlap included | 17.0% / 19.9% | Underlying model family, not FluidAudio CoreML or MacParakeet. |
+| Upstream pyannote Community-1 | AMI IHM / SDM, zero collar, overlap included | 17.0% / 19.9% | Underlying model family, not FluidAudio CoreML or Sotto. |
 | Upstream pyannote Community-1 | AliMeeting channel 1 / DIHARD 3 full, same strict protocol | 20.3% / 20.2% | Useful context, not a matched comparison with NVIDIA's differently annotated meeting results. |
 
 Sources: [historical Fluid benchmark](https://github.com/FluidInference/FluidAudio/blob/41540ea237350afe5117a082b5c28eda642d0612/Documentation/Benchmarks.md#offline-diarization-pipeline), [Community-1 card](https://huggingface.co/pyannote/speaker-diarization-community-1/blob/3533c8cf8e369892e6b79ff1bf80f7b0286a54ee/README.md).
@@ -78,7 +78,7 @@ Fluid's released CoreML conversion reports the following on **16 AMI mixed-heads
 
 The first three use approximately 190 MB of weights; the split variant uses 95 MB. These are conversion-author reports, not reproduced measurements. `offline` and `fast128` are the useful initial pair for our post-recording job. The small numeric gap from NVIDIA's report is encouraging, but neither export parity nor the claimed explanation of that gap has been independently verified here. [Pinned CoreML model card](https://huggingface.co/FluidInference/nemotron-3-diarization-coreml/blob/1b0b133f6f8820292010afd776d8f9fbc9fca17e/README.md).
 
-Other reports corroborate interest without settling the app decision. Argmax OpenBench reports Nemotron AMI DER around 9%/11%, but uses its own SDK variant, updated AMI annotations, and includes training-exposed VoxConverse in a macro average with missing-dataset exclusions. Its September 22 run should not be assumed identical to our final GA export. Voice Arena's early leaderboard reports 14.72% DER across 139 sessions; it has no matched MacParakeet row. These are supporting signals. [Pinned OpenBench report](https://github.com/argmaxinc/OpenBench/blob/e13108070b9693f2646e4a3e22e4b2d0130d779f/BENCHMARKS.md), [Voice Arena publisher](https://voicearena.com/diarization-bench).
+Other reports corroborate interest without settling the app decision. Argmax OpenBench reports Nemotron AMI DER around 9%/11%, but uses its own SDK variant, updated AMI annotations, and includes training-exposed VoxConverse in a macro average with missing-dataset exclusions. Its September 22 run should not be assumed identical to our final GA export. Voice Arena's early leaderboard reports 14.72% DER across 139 sessions; it has no matched Sotto row. These are supporting signals. [Pinned OpenBench report](https://github.com/argmaxinc/OpenBench/blob/e13108070b9693f2646e4a3e22e4b2d0130d779f/BENCHMARKS.md), [Voice Arena publisher](https://voicearena.com/diarization-bench).
 
 The more direct OpenBench comparison uses Argmax implementations of both model families:
 
@@ -91,7 +91,7 @@ The more direct OpenBench comparison uses Argmax implementations of both model f
 
 These support a development upgrade and candidate integration, while identifying earnings calls as a regression class to investigate. They are not measurements of our FluidAudio adapter. AMI uses the report's forced-aligned references. [Same benchmark report](https://github.com/argmaxinc/OpenBench/blob/e13108070b9693f2646e4a3e22e4b2d0130d779f/BENCHMARKS.md#diarization-error-rate-der).
 
-Upgrading the dependency alone will not activate Nemotron: the app explicitly constructs `OfflineDiarizerManager`. The new backend needs an adapter and model loading through the existing service boundary. [Current construction](../../Sources/MacParakeetCore/Services/Diarization/DiarizationService.swift).
+Upgrading the dependency alone will not activate Nemotron: the app explicitly constructs `OfflineDiarizerManager`. The new backend needs an adapter and model loading through the existing service boundary. [Current construction](../../Sources/SottoCore/Services/Diarization/DiarizationService.swift).
 
 ## Best public data for the decision
 
@@ -132,7 +132,7 @@ NVIDIA's **NeMo-Speech.cpp** supplies a native ggml/Metal alternative if the Swi
 
 Nemotron diarization is separate from Nemotron ASR. It labels speaker activity; it does not separate overlapping waveforms or recover words missed by the recognizer. Existing ASR should remain fixed during the model comparison.
 
-Current MacParakeet contracts include exact counts up to 100, ranged constraints, and a separate WeSpeaker-based identity layer. The new model does not automatically honor those count controls or produce compatible identity embeddings. Keep an honest fallback for unsupported explicit constraints and experimental voice profiles during evaluation. Eight active output channels cannot establish that a ninth person never spoke. [Service/count contract](../../Sources/MacParakeetCore/Services/Diarization/DiarizationService.swift), [voice-profile contract](../../spec/contracts/speaker-voiceprints.md).
+Current Sotto contracts include exact counts up to 100, ranged constraints, and a separate WeSpeaker-based identity layer. The new model does not automatically honor those count controls or produce compatible identity embeddings. Keep an honest fallback for unsupported explicit constraints and experimental voice profiles during evaluation. Eight active output channels cannot establish that a ninth person never spoke. [Service/count contract](../../Sources/SottoCore/Services/Diarization/DiarizationService.swift), [voice-profile contract](../../spec/contracts/speaker-voiceprints.md).
 
 The [earlier review](2026-09-25-omarchy-meeting-recorder-diarization-review.md#5-reconcile-the-findings-with-our-existing-1046-work) also verified that current one-word smoothing can erase a correctly diarized acknowledgement. Final meeting rosters and intervals are then rebuilt from the resulting words. Therefore score raw acoustic output and the final transcript separately. A better model can be obscured by current postprocessing; cleaner-looking bubbles can also hide worse recall.
 
@@ -140,7 +140,7 @@ The [earlier review](2026-09-25-omarchy-meeting-recorder-diarization-review.md#5
 
 | Component | Inspected revision |
 | --- | --- |
-| MacParakeet local / fetched main | `779e9b30fa084e9f56c9a68b2e69ab9e3fdd62b3` / `7ad569afae560266b37a0003e9e2b9f17a2dfa47` |
+| Sotto local / fetched main | `779e9b30fa084e9f56c9a68b2e69ab9e3fdd62b3` / `7ad569afae560266b37a0003e9e2b9f17a2dfa47` |
 | FluidAudio baseline 0.15.7 | `41540ea237350afe5117a082b5c28eda642d0612` |
 | FluidAudio candidate 0.17.4 | `21493f8dac5a97e65742e6ff26f42f164c2fda0f` |
 | NVIDIA final model repository | `f667ed73aee57d40cc39428eb768b4fd87a0a29e` |

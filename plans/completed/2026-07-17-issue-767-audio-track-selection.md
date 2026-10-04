@@ -49,7 +49,7 @@ Governing surfaces:
 
 ## Implementation
 
-1. Add typed audio-track discovery and selection in `MacParakeetCore`, with an
+1. Add typed audio-track discovery and selection in `SottoCore`, with an
    isolated FFmpeg stderr parser and numbered fallback labels.
 2. Make file conversion accept an optional audio-stream ordinal and emit
    `-map 0:a:N` only when explicitly selected.

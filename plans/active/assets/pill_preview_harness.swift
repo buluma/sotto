@@ -9,7 +9,7 @@ import AppKit
 //
 // Run:
 //   swiftc -o /tmp/pillrender plans/active/assets/pill_preview_harness.swift \
-//       Sources/MacParakeet/Views/MeetingRecording/MerkabaPillIcon.swift && /tmp/pillrender
+//       Sources/Sotto/Views/MeetingRecording/MerkabaPillIcon.swift && /tmp/pillrender
 
 let badgeFont = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .semibold)
 

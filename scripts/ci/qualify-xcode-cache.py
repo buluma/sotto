@@ -9,9 +9,9 @@ import subprocess
 import uuid
 
 REPO = Path(__file__).resolve().parents[2]
-SOURCE = Path("Sources/MacParakeet/AppDelegate.swift")
-RESOURCE = Path("Sources/MacParakeet/Resources/discover-fallback.json")
-ORIGINAL = '"MacParakeet Failed to Start"'
+SOURCE = Path("Sources/Sotto/AppDelegate.swift")
+RESOURCE = Path("Sources/Sotto/Resources/discover-fallback.json")
+ORIGINAL = '"Sotto Failed to Start"'
 
 
 def run_build(root, env):
@@ -44,20 +44,20 @@ def qualify(root, environment):
     document = json.loads(original_resource)
     if not document.get("items") or not isinstance(document["items"][0].get("title"), str):
         raise RuntimeError("Expected the existing discover resource title")
-    marker = "MacParakeetCacheProbe-" + uuid.uuid4().hex
+    marker = "SottoCacheProbe-" + uuid.uuid4().hex
     document["items"][0]["title"] = marker
     env = dict(environment, SKIP_BUILD="0", BUILD_SYSTEM="xcodebuild", UNIVERSAL="0",
-               APP_NAME="MacParakeet", BUNDLE_YTDLP="0", BUNDLE_NODE="0",
+               APP_NAME="Sotto", BUNDLE_YTDLP="0", BUNDLE_NODE="0",
                FFMPEG_PATH="/usr/bin/true", VERSION="0.0.0", BUILD_NUMBER="cache-probe",
-               MACPARAKEET_TELEMETRY="0")
+               SOTTO_TELEMETRY="0")
     try:
         source.write_text(text.replace(ORIGINAL, json.dumps(marker)))
         resource.write_text(json.dumps(document) + "\n")
         run_build(root, env)
-        app = root / "dist/MacParakeet.app/Contents"
-        if marker.encode() not in (app / "MacOS/MacParakeet").read_bytes():
+        app = root / "dist/Sotto.app/Contents"
+        if marker.encode() not in (app / "MacOS/Sotto").read_bytes():
             raise RuntimeError("Packaged app binary lacks the changed source marker")
-        bundled = app / "Resources/MacParakeet_MacParakeet.bundle/Contents/Resources/discover-fallback.json"
+        bundled = app / "Resources/Sotto_Sotto.bundle/Contents/Resources/discover-fallback.json"
         if json.loads(bundled.read_text())["items"][0]["title"] != marker:
             raise RuntimeError("Packaged JSON lacks the changed resource marker")
     finally:

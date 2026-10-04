@@ -1,0 +1,486 @@
+import Foundation
+import GRDB
+
+/// Encodes and decodes vocabulary bundles, and applies imports against the live repositories.
+///
+/// Pure data shuffling — no UI, no `@MainActor`. UI layers wrap this in their own view models.
+public final class VocabularyImportExportService: @unchecked Sendable {
+    private let customWordRepo: CustomWordRepositoryProtocol
+    private let snippetRepo: TextSnippetRepositoryProtocol
+    private let dbQueue: DatabaseQueue
+    private let appVersion: String?
+    private let clock: @Sendable () -> Date
+
+    public init(
+        customWordRepo: CustomWordRepositoryProtocol,
+        snippetRepo: TextSnippetRepositoryProtocol,
+        dbQueue: DatabaseQueue,
+        appVersion: String? = BuildIdentity.current.version,
+        clock: @escaping @Sendable () -> Date = { Date() }
+    ) {
+        self.customWordRepo = customWordRepo
+        self.snippetRepo = snippetRepo
+        self.dbQueue = dbQueue
+        self.appVersion = appVersion
+        self.clock = clock
+    }
+
+    // MARK: - Types
+
+    public enum ImportError: LocalizedError, Equatable {
+        case invalidSchema
+        case unsupportedVersion(found: Int, supported: Int)
+        case decodingFailed(String)
+        case invalidEntry(String)
+        case ioFailed(String)
+        case emptyReplaceAll
+        case stalePreview
+
+        public var errorDescription: String? {
+            switch self {
+            case .invalidSchema:
+                return "This file isn't a Sotto vocabulary backup."
+            case let .unsupportedVersion(found, supported):
+                return
+                    "This file was created by a newer Sotto (format v\(found); this build understands v\(supported)). Update Sotto to import it."
+            case let .decodingFailed(detail):
+                return "Couldn't read the backup file: \(detail)"
+            case let .invalidEntry(detail):
+                return "The backup contains an invalid vocabulary entry: \(detail)"
+            case let .ioFailed(detail):
+                return "Couldn't read the file: \(detail)"
+            case .emptyReplaceAll:
+                return "This file has no words or snippets. Replace-all requires a dictionary with entries."
+            case .stalePreview:
+                return
+                    "Your vocabulary changed since the preview. Choose the file again to review the current removals."
+            }
+        }
+    }
+
+    public enum ConflictPolicy: String, Sendable, CaseIterable, Equatable {
+        case skip
+        case replace
+        case replaceAll = "replace-all"
+    }
+
+    public struct ImportPreview: Sendable, Equatable {
+        public let bundle: VocabularyBundle
+        public let wordsTotal: Int
+        public let snippetsTotal: Int
+        public let wordConflicts: [String]
+        public let snippetConflicts: [String]
+        public let duplicateWords: [String]
+        public let duplicateSnippets: [String]
+        /// Manual custom words that would be deleted under `.replaceAll`.
+        public let wordsRemoved: [String]
+        /// Snippets that would be deleted under `.replaceAll`.
+        public let snippetsRemoved: [String]
+        /// Learned words whose keys are not in the bundle (kept under `.replaceAll`).
+        public let learnedWordsPreserved: Int
+        let existingWords: [CustomWord]
+        let existingSnippets: [TextSnippet]
+
+        public var hasConflicts: Bool {
+            !wordConflicts.isEmpty
+                || !snippetConflicts.isEmpty
+                || !duplicateWords.isEmpty
+                || !duplicateSnippets.isEmpty
+        }
+
+        public var hasRemovals: Bool {
+            !wordsRemoved.isEmpty || !snippetsRemoved.isEmpty
+        }
+    }
+
+    public struct ExportResult: Sendable, Equatable {
+        public let bundle: VocabularyBundle
+        public let data: Data
+
+        public init(bundle: VocabularyBundle, data: Data) {
+            self.bundle = bundle
+            self.data = data
+        }
+    }
+
+    public struct ImportResult: Sendable, Equatable {
+        public let wordsAdded: Int
+        public let wordsReplaced: Int
+        public let wordsSkipped: Int
+        public let snippetsAdded: Int
+        public let snippetsReplaced: Int
+        public let snippetsSkipped: Int
+        public let wordsRemoved: Int
+        public let snippetsRemoved: Int
+
+        public init(
+            wordsAdded: Int = 0,
+            wordsReplaced: Int = 0,
+            wordsSkipped: Int = 0,
+            snippetsAdded: Int = 0,
+            snippetsReplaced: Int = 0,
+            snippetsSkipped: Int = 0,
+            wordsRemoved: Int = 0,
+            snippetsRemoved: Int = 0
+        ) {
+            self.wordsAdded = wordsAdded
+            self.wordsReplaced = wordsReplaced
+            self.wordsSkipped = wordsSkipped
+            self.snippetsAdded = snippetsAdded
+            self.snippetsReplaced = snippetsReplaced
+            self.snippetsSkipped = snippetsSkipped
+            self.wordsRemoved = wordsRemoved
+            self.snippetsRemoved = snippetsRemoved
+        }
+    }
+
+    // MARK: - Export
+
+    /// Builds a bundle from the current vocabulary, filtering out `.learned` words.
+    public func makeBundle() throws -> VocabularyBundle {
+        let words = try customWordRepo.fetchAll()
+            .filter { $0.source == .manual }
+            .map {
+                VocabularyBundle.ExportedCustomWord(
+                    word: $0.word,
+                    replacement: $0.replacement,
+                    isEnabled: $0.isEnabled,
+                    createdAt: $0.createdAt
+                )
+            }
+
+        let snippets = try snippetRepo.fetchAll().map {
+            VocabularyBundle.ExportedTextSnippet(
+                trigger: $0.trigger,
+                expansion: $0.expansion,
+                isEnabled: $0.isEnabled,
+                action: $0.action,
+                createdAt: $0.createdAt
+            )
+        }
+
+        return VocabularyBundle(
+            exportedAt: clock(),
+            appVersion: appVersion,
+            customWords: words,
+            textSnippets: snippets
+        )
+    }
+
+    public func exportData() throws -> Data {
+        try exportBundleData().data
+    }
+
+    public func exportBundleData() throws -> ExportResult {
+        let bundle = try makeBundle()
+        let data = try Self.encoder.encode(bundle)
+        return ExportResult(bundle: bundle, data: data)
+    }
+
+    /// Suggested filename in the form `Sotto-Vocabulary-YYYY-MM-DD.json`.
+    public func suggestedFilename(now: Date? = nil) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return "Sotto-Vocabulary-\(formatter.string(from: now ?? clock())).json"
+    }
+
+    // MARK: - Import
+
+    public func decodePreview(from data: Data) throws -> ImportPreview {
+        let bundle: VocabularyBundle
+        do {
+            bundle = try Self.decoder.decode(VocabularyBundle.self, from: data)
+        } catch {
+            throw ImportError.decodingFailed(error.localizedDescription)
+        }
+
+        guard bundle.schema == VocabularyBundle.schemaIdentifier else {
+            throw ImportError.invalidSchema
+        }
+
+        guard bundle.version <= VocabularyBundle.currentVersion else {
+            throw ImportError.unsupportedVersion(
+                found: bundle.version,
+                supported: VocabularyBundle.currentVersion
+            )
+        }
+
+        let validatedBundle = try Self.validatedBundle(bundle)
+
+        let existingWordRecords = try customWordRepo.fetchAll()
+        let existingSnippetRecords = try snippetRepo.fetchAll()
+        let incomingWordKeys = Set(validatedBundle.customWords.map { $0.word.lowercased() })
+        let incomingSnippetKeys = Set(validatedBundle.textSnippets.map { $0.trigger.lowercased() })
+        let existingWords = Set(existingWordRecords.map { $0.word.lowercased() })
+        let existingTriggers = Set(existingSnippetRecords.map { $0.trigger.lowercased() })
+
+        let wordConflicts = validatedBundle.customWords
+            .map(\.word)
+            .filter { existingWords.contains($0.lowercased()) }
+        let snippetConflicts = validatedBundle.textSnippets
+            .map(\.trigger)
+            .filter { existingTriggers.contains($0.lowercased()) }
+        let duplicateWords = Self.caseInsensitiveDuplicates(in: validatedBundle.customWords.map(\.word))
+        let duplicateSnippets = Self.caseInsensitiveDuplicates(in: validatedBundle.textSnippets.map(\.trigger))
+        let wordsRemoved =
+            existingWordRecords
+            .filter { $0.source == .manual && !incomingWordKeys.contains($0.word.lowercased()) }
+            .map(\.word)
+        let snippetsRemoved =
+            existingSnippetRecords
+            .filter { !incomingSnippetKeys.contains($0.trigger.lowercased()) }
+            .map(\.trigger)
+        let learnedWordsPreserved =
+            existingWordRecords
+            .filter { $0.source == .learned && !incomingWordKeys.contains($0.word.lowercased()) }
+            .count
+
+        return ImportPreview(
+            bundle: validatedBundle,
+            wordsTotal: validatedBundle.customWords.count,
+            snippetsTotal: validatedBundle.textSnippets.count,
+            wordConflicts: wordConflicts,
+            snippetConflicts: snippetConflicts,
+            duplicateWords: duplicateWords,
+            duplicateSnippets: duplicateSnippets,
+            wordsRemoved: wordsRemoved,
+            snippetsRemoved: snippetsRemoved,
+            learnedWordsPreserved: learnedWordsPreserved,
+            existingWords: existingWordRecords,
+            existingSnippets: existingSnippetRecords
+        )
+    }
+
+    public func apply(preview: ImportPreview, policy: ConflictPolicy) throws -> ImportResult {
+        if policy == .replaceAll, preview.wordsTotal == 0, preview.snippetsTotal == 0 {
+            throw ImportError.emptyReplaceAll
+        }
+        let now = clock()
+
+        return try dbQueue.write { db in
+            var wordsRemoved = 0
+            var snippetsRemoved = 0
+
+            if policy == .replaceAll {
+                let currentWords = try CustomWord.fetchAll(db)
+                let currentSnippets = try TextSnippet.fetchAll(db)
+                guard
+                    Dictionary(uniqueKeysWithValues: currentWords.map { ($0.id, $0) })
+                        == Dictionary(uniqueKeysWithValues: preview.existingWords.map { ($0.id, $0) }),
+                    Dictionary(uniqueKeysWithValues: currentSnippets.map { ($0.id, $0) })
+                        == Dictionary(uniqueKeysWithValues: preview.existingSnippets.map { ($0.id, $0) })
+                else {
+                    throw ImportError.stalePreview
+                }
+                let incomingWordKeys = Set(preview.bundle.customWords.map { $0.word.lowercased() })
+                let incomingSnippetKeys = Set(preview.bundle.textSnippets.map { $0.trigger.lowercased() })
+
+                for word in preview.existingWords {
+                    let key = word.word.lowercased()
+                    guard !incomingWordKeys.contains(key) else { continue }
+                    guard word.source != .learned else { continue }
+                    _ = try CustomWord.deleteOne(db, key: word.id)
+                    wordsRemoved += 1
+                }
+
+                for snippet in preview.existingSnippets {
+                    let key = snippet.trigger.lowercased()
+                    guard !incomingSnippetKeys.contains(key) else { continue }
+                    _ = try TextSnippet.deleteOne(db, key: snippet.id)
+                    snippetsRemoved += 1
+                }
+            }
+
+            var wordsByKey: [String: CustomWord] = [:]
+            for word in try CustomWord.fetchAll(db) {
+                wordsByKey[word.word.lowercased()] = word
+            }
+
+            var wordsAdded = 0
+            var wordsReplaced = 0
+            var wordsSkipped = 0
+
+            for imported in preview.bundle.customWords {
+                let key = imported.word.lowercased()
+                if let match = wordsByKey[key] {
+                    switch policy {
+                    case .skip:
+                        wordsSkipped += 1
+                    case .replace, .replaceAll:
+                        _ = try CustomWord.deleteOne(db, key: match.id)
+                        let new = CustomWord(
+                            id: UUID(),
+                            word: imported.word,
+                            replacement: imported.replacement,
+                            source: .manual,
+                            isEnabled: imported.isEnabled,
+                            createdAt: imported.createdAt ?? now,
+                            updatedAt: now
+                        )
+                        try new.save(db)
+                        wordsByKey[key] = new
+                        wordsReplaced += 1
+                    }
+                } else {
+                    let new = CustomWord(
+                        id: UUID(),
+                        word: imported.word,
+                        replacement: imported.replacement,
+                        source: .manual,
+                        isEnabled: imported.isEnabled,
+                        createdAt: imported.createdAt ?? now,
+                        updatedAt: now
+                    )
+                    try new.save(db)
+                    wordsByKey[key] = new
+                    wordsAdded += 1
+                }
+            }
+
+            var snippetsByKey: [String: TextSnippet] = [:]
+            for snippet in try TextSnippet.fetchAll(db) {
+                snippetsByKey[snippet.trigger.lowercased()] = snippet
+            }
+
+            var snippetsAdded = 0
+            var snippetsReplaced = 0
+            var snippetsSkipped = 0
+
+            for imported in preview.bundle.textSnippets {
+                let key = imported.trigger.lowercased()
+                if let match = snippetsByKey[key] {
+                    switch policy {
+                    case .skip:
+                        snippetsSkipped += 1
+                    case .replace, .replaceAll:
+                        _ = try TextSnippet.deleteOne(db, key: match.id)
+                        let new = TextSnippet(
+                            id: UUID(),
+                            trigger: imported.trigger,
+                            expansion: imported.expansion,
+                            isEnabled: imported.isEnabled,
+                            useCount: 0,
+                            action: imported.action,
+                            createdAt: imported.createdAt ?? now,
+                            updatedAt: now
+                        )
+                        try new.save(db)
+                        snippetsByKey[key] = new
+                        snippetsReplaced += 1
+                    }
+                } else {
+                    let new = TextSnippet(
+                        id: UUID(),
+                        trigger: imported.trigger,
+                        expansion: imported.expansion,
+                        isEnabled: imported.isEnabled,
+                        useCount: 0,
+                        action: imported.action,
+                        createdAt: imported.createdAt ?? now,
+                        updatedAt: now
+                    )
+                    try new.save(db)
+                    snippetsByKey[key] = new
+                    snippetsAdded += 1
+                }
+            }
+
+            return ImportResult(
+                wordsAdded: wordsAdded,
+                wordsReplaced: wordsReplaced,
+                wordsSkipped: wordsSkipped,
+                snippetsAdded: snippetsAdded,
+                snippetsReplaced: snippetsReplaced,
+                snippetsSkipped: snippetsSkipped,
+                wordsRemoved: wordsRemoved,
+                snippetsRemoved: snippetsRemoved
+            )
+        }
+    }
+
+    // MARK: - Codec
+
+    private static let encoder: JSONEncoder = {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+        encoder.dateEncodingStrategy = .iso8601
+        return encoder
+    }()
+
+    private static let decoder: JSONDecoder = {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return decoder
+    }()
+
+    private static func caseInsensitiveDuplicates(in values: [String]) -> [String] {
+        var seen = Set<String>()
+        var duplicates: [String] = []
+        for value in values {
+            let key = value.lowercased()
+            if seen.contains(key) {
+                duplicates.append(value)
+            } else {
+                seen.insert(key)
+            }
+        }
+        return duplicates
+    }
+
+    private static func validatedBundle(_ bundle: VocabularyBundle) throws -> VocabularyBundle {
+        let customWords = try bundle.customWords.enumerated().map { index, imported in
+            let word = imported.word.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !word.isEmpty else {
+                throw ImportError.invalidEntry("customWords[\(index)].word must not be empty.")
+            }
+
+            return VocabularyBundle.ExportedCustomWord(
+                word: word,
+                replacement: normalizedOptionalText(imported.replacement),
+                isEnabled: imported.isEnabled,
+                createdAt: imported.createdAt
+            )
+        }
+
+        let textSnippets = try bundle.textSnippets.enumerated().map { index, imported in
+            let trigger = imported.trigger.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trigger.isEmpty else {
+                throw ImportError.invalidEntry("textSnippets[\(index)].trigger must not be empty.")
+            }
+
+            let expansion = normalizedSnippetExpansion(imported.expansion)
+            guard !expansion.isEmpty else {
+                throw ImportError.invalidEntry("textSnippets[\(index)].expansion must not be empty.")
+            }
+
+            return VocabularyBundle.ExportedTextSnippet(
+                trigger: trigger,
+                expansion: expansion,
+                isEnabled: imported.isEnabled,
+                action: imported.action,
+                createdAt: imported.createdAt
+            )
+        }
+
+        return VocabularyBundle(
+            exportedAt: bundle.exportedAt,
+            appVersion: bundle.appVersion,
+            customWords: customWords,
+            textSnippets: textSnippets
+        )
+    }
+
+    private static func normalizedOptionalText(_ value: String?) -> String? {
+        guard let value else { return nil }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private static func normalizedSnippetExpansion(_ value: String) -> String {
+        value
+            .trimmingCharacters(in: .whitespaces)
+            .replacingOccurrences(of: "\\n", with: "\n")
+    }
+}

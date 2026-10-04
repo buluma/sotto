@@ -12,15 +12,15 @@
 
 ADR-014 shipped meeting recording as a manual, hotkey-or-click flow. The user opens the meeting panel (or hits the meeting hotkey) when a call starts. This is simple and predictable, but it misses the most common failure mode: *the user forgets to start recording*. By the time they remember, the first 5–10 minutes of context is already gone.
 
-Oatmeal (sibling repo, same owner, GPL-3.0) solves this with calendar integration: EventKit access → upcoming events → reminder notifications → optional auto-start when a meeting begins. Oatmeal's code is already partitioned cleanly — a pure `MeetingMonitor` state machine plus a thin `CalendarService` wrapper plus a coordinator — and MacParakeet can port ~80% of it verbatim (license is GPL-3.0 → GPL-3.0, no conflict).
+Oatmeal (sibling repo, same owner, GPL-3.0) solves this with calendar integration: EventKit access → upcoming events → reminder notifications → optional auto-start when a meeting begins. Oatmeal's code is already partitioned cleanly — a pure `MeetingMonitor` state machine plus a thin `CalendarService` wrapper plus a coordinator — and Sotto can port ~80% of it verbatim (license is GPL-3.0 → GPL-3.0, no conflict).
 
-This ADR defines MacParakeet's scope for that feature. It is deliberately narrower than Oatmeal's: no cloud sync, no AI-generated meeting titles, no attendee enrichment, no cross-meeting threading. Just **"remind me, and if I want, start recording for me."**
+This ADR defines Sotto's scope for that feature. It is deliberately narrower than Oatmeal's: no cloud sync, no AI-generated meeting titles, no attendee enrichment, no cross-meeting threading. Just **"remind me, and if I want, start recording for me."**
 
 ## Decision
 
 ### 1. EventKit only — no cloud calendar APIs
 
-Calendar access goes through Apple's EventKit framework (`EKEventStore`), which reads whatever calendars the user has already configured in the macOS Calendar app (iCloud, Google via macOS Internet Accounts, Exchange, CalDAV). Microsoft 365 and Exchange calendars therefore work when Calendar is enabled for the account in System Settings → Internet Accounts; an account configured only inside Outlook is outside EventKit and is not visible to MacParakeet. Shared and delegated Exchange calendars are not claimed without representative runtime verification. MacParakeet does not run its own OAuth flows and does not ship Google/Microsoft SDKs.
+Calendar access goes through Apple's EventKit framework (`EKEventStore`), which reads whatever calendars the user has already configured in the macOS Calendar app (iCloud, Google via macOS Internet Accounts, Exchange, CalDAV). Microsoft 365 and Exchange calendars therefore work when Calendar is enabled for the account in System Settings → Internet Accounts; an account configured only inside Outlook is outside EventKit and is not visible to Sotto. Shared and delegated Exchange calendars are not claimed without representative runtime verification. Sotto does not run its own OAuth flows and does not ship Google/Microsoft SDKs.
 
 **Why:** ADR-002 (local-first). Events stay on-device; we don't add a new cloud surface. The in-context Settings flow delegates authorization to macOS without adding first-run friction.
 
@@ -68,17 +68,17 @@ Countdown is fixed at 5 seconds; not exposing it as a setting. Longer defeats th
 >
 > **What replaces it:** Nothing, for now. The coordinator never stops a recording; the user stops manually (one click on the recording pill). The trade-off — trailing dead air if the user walks away — is recoverable (trim) and the clear lesser evil vs. truncation.
 >
-> **Replacement implemented in ADR-023:** the right stop signal is the meeting *actually ending*, detected from the audio MacParakeet already captures (sustained `systemLevel` silence, optionally plus a Zoom-app-quit fast path) — engine-agnostic across the Zoom app, a browser Meet/Teams tab, and in-person recordings. ADR-023 implements that replacement behind a default-off flag with a veto countdown and the normal finalize/transcribe path.
+> **Replacement implemented in ADR-023:** the right stop signal is the meeting *actually ending*, detected from the audio Sotto already captures (sustained `systemLevel` silence, optionally plus a Zoom-app-quit fast path) — engine-agnostic across the Zoom app, a browser Meet/Teams tab, and in-person recordings. ADR-023 implements that replacement behind a default-off flag with a veto countdown and the normal finalize/transcribe path.
 >
 > **Removed surfaces:** the `.autoStop` countdown toast, the `MeetingMonitor.autoStopDue` event + auto-stop config, the coordinator's auto-start→recording ownership binding (`onAutoStartFailed` / `stopFromCalendar`), the "Stop recording at meeting end" Settings toggle (`calendarAutoStopEnabled`), and the `calendar_auto_stop_shown` / `calendar_auto_stop_cancelled` telemetry. Auto-*start* is unchanged.
 
 ### 6. No calendar cache in SQLite — in-memory only
 
-Oatmeal persists events to GRDB for its RAG/entity-extraction features. MacParakeet doesn't need that. The coordinator fetches upcoming events on each poll tick, filters, and discards. No migration, no repository, no new table.
+Oatmeal persists events to GRDB for its RAG/entity-extraction features. Sotto doesn't need that. The coordinator fetches upcoming events on each poll tick, filters, and discards. No migration, no repository, no new table.
 
 **Why:** Simpler, less to maintain, less data footprint, less surface to reason about for privacy. Recomputing on a 60-second poll is cheap (EventKit reads are near-instant).
 
-> **Amendment (2026-07-03): persist one meeting-start snapshot, not an event cache.** ADR-027's meeting-corpus direction (PR #680) changes the retention boundary for context available at recording start: context not captured then is lost forever. MacParakeet still does **not** persist a queryable calendar-event cache or EventKit repository. It now stores one local `calendarEventSnapshot` on each meeting transcription when a recording starts from a calendar event (`confirmed`) or, for manual starts, when the coordinator's current poll cache overlaps "now" (`probable`). The same snapshot is mirrored into meeting artifact metadata so exported/shared local folders are self-describing. Attendee and organizer names/emails are user data and remain local-only; they must never be sent in telemetry, including as counts.
+> **Amendment (2026-07-03): persist one meeting-start snapshot, not an event cache.** ADR-027's meeting-corpus direction (PR #680) changes the retention boundary for context available at recording start: context not captured then is lost forever. Sotto still does **not** persist a queryable calendar-event cache or EventKit repository. It now stores one local `calendarEventSnapshot` on each meeting transcription when a recording starts from a calendar event (`confirmed`) or, for manual starts, when the coordinator's current poll cache overlaps "now" (`probable`). The same snapshot is mirrored into meeting artifact metadata so exported/shared local folders are self-describing. Attendee and organizer names/emails are user data and remain local-only; they must never be sent in telemetry, including as counts.
 
 ### 7. Polling cadence: 60s baseline, 5s near events
 
@@ -160,7 +160,7 @@ architecture, UI, types, and tests:
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
-│                     MacParakeetCore (new)                       │
+│                     SottoCore (new)                       │
 │                                                                 │
 │  CalendarService      (EventKit wrapper, permission, fetch)     │
 │  MeetingLinkParser    (Zoom/Meet/Teams/Webex URL extraction)    │
@@ -178,7 +178,7 @@ architecture, UI, types, and tests:
                            │
                            ▼
 ┌────────────────────────────────────────────────────────────────┐
-│                   MacParakeet (app layer)                       │
+│                   Sotto (app layer)                       │
 │                                                                 │
 │  MeetingAutoStartCoordinator  (@MainActor)                      │
 │    ├── polls CalendarService every 60s (or 5s near events)     │
@@ -197,11 +197,11 @@ architecture, UI, types, and tests:
 
 ### Why not use `ScheduledRecording` / custom scheduling UI instead of calendar?
 
-Users already have a calendar with their meetings in it. A second UI for "tell MacParakeet about your meetings" is duplication. The calendar is the source of truth.
+Users already have a calendar with their meetings in it. A second UI for "tell Sotto about your meetings" is duplication. The calendar is the source of truth.
 
 ### Why not port Oatmeal's full feature set?
 
-Oatmeal uses its calendar data for AI meeting notes, cross-meeting RAG, and entity extraction. MacParakeet doesn't have those features and isn't getting them. Porting the GRDB cache, event repository, and related infrastructure would be 300+ lines we'd never use. Strip to the coordination layer only.
+Oatmeal uses its calendar data for AI meeting notes, cross-meeting RAG, and entity extraction. Sotto doesn't have those features and isn't getting them. Porting the GRDB cache, event repository, and related infrastructure would be 300+ lines we'd never use. Strip to the coordination layer only.
 
 ### Why not also port pre-meeting "late join" detection?
 
@@ -237,20 +237,20 @@ Notifications are dismissed silently by macOS when the user isn't at their machi
 
 ## Implementation Direction
 
-### Core types (MacParakeetCore)
+### Core types (SottoCore)
 
 - `CalendarService` — EventKit wrapper; public surface: `permissionStatus`, `requestPermission() async -> Bool`, `fetchUpcomingEvents(withinDays:) async throws -> [CalendarEvent]`, `availableCalendars() -> [CalendarInfo]`
 - `MeetingLinkParser` — static `extractConferenceURL(from: CalendarEvent) -> URL?`
 - `MeetingMonitor` — `candidates(...)` + `evaluate(...)`; no stored state. Phase 2b annotates skipped candidates instead of a coordinator-private dismiss set.
 - `CalendarEvent` / `CalendarInfo` / `EventParticipant` — plain `Sendable` structs, no GRDB
 
-### Settings (MacParakeetViewModels)
+### Settings (SottoViewModels)
 
 - Extend `SettingsViewModel` with `calendarAutoStartMode`, `calendarReminderMinutes`, `meetingTriggerFilter`, `calendarExcludedIdentifiers`, and Phase 2b skipped occurrence/event sets
 - Persist via `UserDefaults` (keys namespaced `CalendarAutoStart.*`, including Phase 2b skipped occurrence/event IDs)
-- Post a new `AppNotification.macParakeetCalendarSettingsDidChange` on any change
+- Post a new `AppNotification.sottoCalendarSettingsDidChange` on any change
 
-### App layer (MacParakeet)
+### App layer (Sotto)
 
 - `MeetingAutoStartCoordinator` — owns the poll timer, EventKit change observer, notification scheduler, countdown toast controller; wires to `MeetingRecordingFlowCoordinator`
 - New `MeetingCountdownToastController` — a small, non-activating floating panel (reuse `KeylessPanel`) with a 5-second bar and a Cancel button
@@ -266,23 +266,23 @@ Notifications are dismissed silently by macOS when the user isn't at their machi
 - `.permissionGranted(permission: .calendar)` / `.permissionDenied(permission: .calendar)`
 - `.settingChanged(setting: .calendarAutoStartMode)` etc.
 
-Per the telemetry allowlist rule, each new `TelemetryEventName` case must also be added to `ALLOWED_EVENTS` in `macparakeet-website/functions/api/telemetry.ts`.
+Per the telemetry allowlist rule, each new `TelemetryEventName` case must also be added to `ALLOWED_EVENTS` in `sotto-website/functions/api/telemetry.ts`.
 
 ## Files to Port from Oatmeal (reference)
 
 Repo: `https://github.com/moona3k/oatmeal` (same owner, GPL-3.0).
 
-| Oatmeal path | MacParakeet path | Adaptation |
+| Oatmeal path | Sotto path | Adaptation |
 |--------------|------------------|------------|
-| `Sources/OatmealCore/Services/CalendarService.swift` | `Sources/MacParakeetCore/Calendar/CalendarService.swift` | Strip telemetry hooks that reference Oatmeal categories; keep API surface |
-| `Sources/OatmealCore/Services/MeetingLinkParser.swift` | `Sources/MacParakeetCore/Calendar/MeetingLinkParser.swift` | Verbatim |
-| `Sources/OatmealCore/Services/MeetingMonitor.swift` | `Sources/MacParakeetCore/Calendar/MeetingMonitor.swift` | Verbatim |
-| `Sources/OatmealCore/Models/CalendarEvent.swift` | `Sources/MacParakeetCore/Calendar/CalendarEvent.swift` | Drop GRDB conformances; keep `Sendable` + `Codable` |
-| `Sources/Oatmeal/App/MeetingAutoStartCoordinator.swift` | `Sources/MacParakeet/App/MeetingAutoStartCoordinator.swift` | Rewrite to call `MeetingRecordingFlowCoordinator`, remove `LicenseManager`, swap notification body copy |
+| `Sources/OatmealCore/Services/CalendarService.swift` | `Sources/SottoCore/Calendar/CalendarService.swift` | Strip telemetry hooks that reference Oatmeal categories; keep API surface |
+| `Sources/OatmealCore/Services/MeetingLinkParser.swift` | `Sources/SottoCore/Calendar/MeetingLinkParser.swift` | Verbatim |
+| `Sources/OatmealCore/Services/MeetingMonitor.swift` | `Sources/SottoCore/Calendar/MeetingMonitor.swift` | Verbatim |
+| `Sources/OatmealCore/Models/CalendarEvent.swift` | `Sources/SottoCore/Calendar/CalendarEvent.swift` | Drop GRDB conformances; keep `Sendable` + `Codable` |
+| `Sources/Oatmeal/App/MeetingAutoStartCoordinator.swift` | `Sources/Sotto/App/MeetingAutoStartCoordinator.swift` | Rewrite to call `MeetingRecordingFlowCoordinator`, remove `LicenseManager`, swap notification body copy |
 
 ## Phased Rollout
 
-1. **Phase 1 — Notify only ✅ IMPLEMENTED (2026-04-25; onboarding amended 2026-06-13):** Ported `CalendarService`, `MeetingLinkParser`, `MeetingMonitor`, `CalendarEvent` from Oatmeal. Built `MeetingAutoStartCoordinator` (`@MainActor`, adaptive 60s/15s/5s polling, `.EKEventStoreChanged` observer, daily stale-id cleanup). The Settings subsection and per-calendar include list are implemented and enabled (`AppFeatures.calendarEnabled = true`). CLI surface (`macparakeet-cli calendar upcoming` + `health` extension) ships alongside for headless verification. Mode defaults to `.off` and is enabled from Settings. The original onboarding step was removed by ADR-005's dictation-first amendment.
+1. **Phase 1 — Notify only ✅ IMPLEMENTED (2026-04-25; onboarding amended 2026-06-13):** Ported `CalendarService`, `MeetingLinkParser`, `MeetingMonitor`, `CalendarEvent` from Oatmeal. Built `MeetingAutoStartCoordinator` (`@MainActor`, adaptive 60s/15s/5s polling, `.EKEventStoreChanged` observer, daily stale-id cleanup). The Settings subsection and per-calendar include list are implemented and enabled (`AppFeatures.calendarEnabled = true`). CLI surface (`sotto-cli calendar upcoming` + `health` extension) ships alongside for headless verification. Mode defaults to `.off` and is enabled from Settings. The original onboarding step was removed by ADR-005's dictation-first amendment.
 2. **Phase 2 — Auto-start with countdown ✅ IMPLEMENTED (2026-04-25):** Built `MeetingCountdownToastController` for the pre-meeting auto-start countdown. **Superseded by the 2026-05-22 amendment:** the original end-of-meeting auto-stop countdown was removed, and the auto-start toast was redesigned as a minimal top-right "countdown halo" (sacred-geometry rosette inside a coral ring, ✕ to cancel / ↵ to start now). Current coordinator behavior handles `.autoStartDue` -> toast -> `MeetingRecordingFlowCoordinator.startFromCalendar()` and never stops recordings from calendar end times. Settings exposes all three modes but no auto-stop toggle. Current telemetry events are `calendar_reminder_shown`, `calendar_auto_start_triggered`, `calendar_auto_start_cancelled`, and `calendar_auto_start_failed`; removed auto-stop events are historical only. `meeting_recording_started` gained an optional `trigger` prop. `CalendarServicing` protocol + `MockCalendarService` extracted for `MeetingAutoStartCoordinatorTests`.
    - **Post-#318 reliability hardening (2026-05-21) — flag enabled:** countdowns are closed/ignored when calendar settings or permissions disable the action mid-flight; auto-start is gated on RSVP (declined/pending excluded) and zero-duration/inverted events are dropped; rescheduled occurrences re-fire via `CalendarEvent.dedupeKey`; and `pollAsync` is reentrancy-guarded with coalescing.
 3. **Phase 2b — Per-event skip (IMPLEMENTED 2026-09-14):** Persist occurrence (`dedupeKey`) and meeting/series (`eventKey`) skips. Offer series skip only when `isRecurring`. Upcoming + coordinator share `candidates`; CLI annotates without changing membership. Toast ✕ is this occurrence. Effect-boundary: re-evaluate the owning countdown under the full new policy; skip of B must not close A; skip/unskip of A must rearm A without waiting for a fetch. Issue #609. See §11.

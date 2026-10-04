@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 extension MeetingsCommand {
     struct TypesSubcommand: AsyncParsableCommand {

@@ -21,7 +21,7 @@ One concern: find correctness/robustness issues in the public CLI contract: cata
 ## Fences
 
 - Read-only. Write only: `docs/research/2026-09-17-cli-gui-parity/05-robustness.md`
-- Use `swift run macparakeet-cli spec --json` only if a build already exists; do not start a full `swift test`. Reading SpecCommand.swift is enough if build is heavy.
+- Use `swift run sotto-cli spec --json` only if a build already exists; do not start a full `swift test`. Reading SpecCommand.swift is enough if build is heavy.
 
 ## Done
 

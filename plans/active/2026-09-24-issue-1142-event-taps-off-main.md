@@ -4,9 +4,9 @@ Status: **PR OPEN** (branch `fix/event-taps-off-main`)
 
 ## Problem
 
-Every MacParakeet `CGEvent` tap was installed on the main run loop. macOS holds
+Every Sotto `CGEvent` tap was installed on the main run loop. macOS holds
 each keyboard event until a filtering tap's callback returns, so any
-main-thread stall in MacParakeet delayed typing in every other app, and a long
+main-thread stall in Sotto delayed typing in every other app, and a long
 enough stall made macOS disable the tap (#1132, #1133).
 
 Default installs have two filtering taps: the meeting shortcut
@@ -61,6 +61,6 @@ UI-bound. It no longer delays keystrokes to other apps.
   process-scoped tap still receives events during the stall (skips without
   Input Monitoring permission).
 - Tap-count checks across start/stop cycles for each owner.
-- Manual QA: DEBUG `MACPARAKEET_DEBUG_MAIN_STALL_MS` stalls the main thread
+- Manual QA: DEBUG `SOTTO_DEBUG_MAIN_STALL_MS` stalls the main thread
   periodically; typing in another app should stay smooth, and configured
   shortcuts should still be consumed.

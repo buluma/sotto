@@ -1,6 +1,6 @@
 # Rebuilt 0.8.0 GUI verification
 
-The initial rebuilt pass exercised an isolated copy of the signed distribution bundle at `3827999ddb84c8a8e0edcb3ac190e66813fc95fe`, after the recovery, displayed-row cache and Sparkle fixes. The unique bundle identifier was `com.macparakeet.qa.release080`; the real open database path was checked with `lsof` before destructive actions. This build predates the later integration of saved meeting notes from PR #959.
+The initial rebuilt pass exercised an isolated copy of the signed distribution bundle at `3827999ddb84c8a8e0edcb3ac190e66813fc95fe`, after the recovery, displayed-row cache and Sparkle fixes. The unique bundle identifier was `com.sotto.qa.release080`; the real open database path was checked with `lsof` before destructive actions. This build predates the later integration of saved meeting notes from PR #959.
 
 ## Initial rebuilt pass at `3827999d`
 

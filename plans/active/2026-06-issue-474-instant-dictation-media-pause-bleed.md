@@ -83,7 +83,7 @@ speaking, which hands the pipeline a clean run of media-only speech.
 ## Confirmed mechanism, with code references
 
 Press-time sequence (`DictationFlowCoordinator.startRecordingTask`,
-`Sources/MacParakeet/App/DictationFlowCoordinator.swift:878-901`):
+`Sources/Sotto/App/DictationFlowCoordinator.swift:878-901`):
 
 1. `mediaPauseCoordinator.requestPauseBeforeDictationCapture()` — explicitly
    fire-and-forget (`DictationFlowCoordinator.swift:888-893`; comment explains
@@ -91,8 +91,8 @@ Press-time sequence (`DictationFlowCoordinator.startRecordingTask`,
    PR #384 "Decouple media pause from dictation capture start", `b25eb0a47`).
 2. `serviceSession.startRecording(...)` → `AudioRecorder.start()`.
 
-The pause path (`Sources/MacParakeet/App/DictationMediaPauseCoordinator.swift:53-91`
-→ `Sources/MacParakeetCore/Services/System/SystemMediaController.swift:53-79`):
+The pause path (`Sources/Sotto/App/DictationMediaPauseCoordinator.swift:53-91`
+→ `Sources/SottoCore/Services/System/SystemMediaController.swift:53-79`):
 
 - `pauseIfPlaying()` first runs `OsaScriptNowPlayingSnapshotReader.snapshot()`
   — spawns `/usr/bin/osascript -l JavaScript` which loads the private
@@ -106,7 +106,7 @@ The pause path (`Sources/MacParakeet/App/DictationMediaPauseCoordinator.swift:53
 - Then the media app reacts (some players fade out over 100–500 ms), plus
   output-device latency.
 
-The capture path (`Sources/MacParakeetCore/Audio/AudioRecorder.swift`):
+The capture path (`Sources/SottoCore/Audio/AudioRecorder.swift`):
 
 - `preRollPrependSamples = 0.45 s` at 16 kHz (`AudioRecorder.swift:187`).
 - `start()` snapshots the ring's suffix and writes it to the WAV head
@@ -198,7 +198,7 @@ press — or use headphones."
   `AudioCaptureDiagnostics.append(...)` so uploaded logs quantify the real
   pause window in the wild. Optionally a telemetry counter (remember:
   telemetry allowlist is a two-repo change — Worker `ALLOWED_EVENTS` in
-  macparakeet-website).
+  sotto-website).
 
 **Tier 1 — drop pre-roll when media was confirmed playing (cheap; do now;
 ~halves the bleed).**
@@ -257,7 +257,7 @@ snapshot *already available* at press time (Tier 2), not reordering it.
 
 **Tier 3 — AEC / VPIO: rejected (provably-zero requires this; not worth it).**
 VPIO is deliberately not the dictation default (PR #189 duplex-channel
-regression, call-safety; see `Sources/MacParakeetCore/Audio/README.md` — VPIO
+regression, call-safety; see `Sources/SottoCore/Audio/README.md` — VPIO
 is sticky process-wide once engaged). The neural echo-suppression plan
 (`plans/active/2026-05-meeting-neural-echo-suppression.md`) is meeting-scoped
 and needs a far-end system-audio reference; dictation doesn't capture system

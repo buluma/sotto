@@ -1,9 +1,9 @@
 # Voiceprints Phase 0 Calibration Report
 
 - **Date:** 2026-07-04
-- **Scope:** FluidAudio 0.15.4 offline diarizer speaker embeddings for MacParakeet speaker-profile matching.
+- **Scope:** FluidAudio 0.15.4 offline diarizer speaker embeddings for Sotto speaker-profile matching.
 - **Privacy posture:** This report contains no transcript text, no personal names, and no audio content. It uses anonymized session labels (M1-M3; UUID mapping kept local only), month-level dates, durations, and aggregate distance statistics only.
-- **User-data rule:** Meeting recordings under `~/Library/Application Support/MacParakeet/meeting-recordings/` were read in place only.
+- **User-data rule:** Meeting recordings under `~/Library/Application Support/Sotto/meeting-recordings/` were read in place only.
 - **Status:** NO-GO for Phase 1 on the current corpus — attributed to corpus
   quality/availability (pre-AEC echo contamination, 3 usable sessions), not a
   proven embedding failure. Phase 0b (clean-corpus validation) decides whether
@@ -21,7 +21,7 @@
 
 Inventory artifact: `docs/research/2026-07-04-voiceprints-phase0/data/inventory.json`.
 
-Read-only scan of `~/Library/Application Support/MacParakeet/meeting-recordings/`:
+Read-only scan of `~/Library/Application Support/Sotto/meeting-recordings/`:
 
 | Metric | Value |
 |---|---:|

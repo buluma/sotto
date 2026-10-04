@@ -166,7 +166,7 @@ def score_backend(records: list[dict], reference_root: Path, predictions: Path,
                 "backend": document.get("backend"),
                 "config": document.get("config"),
             }
-        with tempfile.TemporaryDirectory(prefix="macparakeet-der-") as temporary:
+        with tempfile.TemporaryDirectory(prefix="sotto-der-") as temporary:
             root = Path(temporary)
             for name, lines in (("reference.rttm", reference), ("predicted.rttm", predicted), ("scoring.uem", uem)):
                 (root / name).write_text("".join(lines))

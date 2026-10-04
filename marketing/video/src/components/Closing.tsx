@@ -13,7 +13,7 @@ import { SCRIPT } from '../content/script';
 /**
  * Closing card — used by Demo60 and HeroLoop30 as the final beat.
  *
- * Paper-cream background, the actual MacParakeet app icon (white
+ * Paper-cream background, the actual Sotto app icon (white
  * parakeet on near-black, rounded macOS corners, soft shadow), ink
  * headline, coral URL. The icon's near-black background creates a
  * dock-like card sitting on the warm cream ground — reads as "this is

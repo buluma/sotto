@@ -3,7 +3,7 @@ import Darwin
 import FluidAudio
 import Foundation
 
-/// Frozen acoustic baseline from MacParakeet commit
+/// Frozen acoustic baseline from Sotto commit
 /// 7ad569afae560266b37a0003e9e2b9f17a2dfa47 DiarizationService.swift:
 /// highAccuracyConfig, modelLoader, chronological ID mapping and millisecond
 /// rounding. See README.md for provenance and deliberately excluded app work.
@@ -68,7 +68,7 @@ struct DiarizationBaseline {
                 """
                 USAGE: diarization-baseline AUDIO --output JSON --models-directory MODELS_ROOT
 
-                Runs the frozen MacParakeet automatic Community-1 configuration with
+                Runs the frozen Sotto automatic Community-1 configuration with
                 FluidAudio 0.15.7. MODELS_ROOT contains speaker-diarization/, usually
                 ~/Library/Application Support/FluidAudio/Models. Existing models are
                 required; network downloads and cache repair are disabled. Outputs

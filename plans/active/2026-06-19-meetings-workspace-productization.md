@@ -1,14 +1,14 @@
 # Plan: Productize Meetings Workspace
 
 > **Executor instructions**: Treat this as staged productization of
-> MacParakeet's existing meeting system. The first safe slices are Meetings
+> Sotto's existing meeting system. The first safe slices are Meetings
 > workspace legibility, artifact-folder actions, and app-smoke scaffolding.
 > Cross-meeting Ask is
 > blocked on a local index and should not be implemented by scanning the whole
 > database or by sending full meeting histories to an LLM provider.
 >
 > **Drift check (run first)**:
-> `git diff --stat 225c61dfc..HEAD -- Sources/MacParakeet/Views/Meetings Sources/MacParakeet/Views/Transcription Sources/MacParakeetViewModels/MeetingsWorkspaceViewModel.swift Sources/MacParakeetCore/Database Sources/MacParakeetCore/Services/MeetingRecording Tests/MacParakeetTests/ViewModels/MeetingsWorkspaceViewModelTests.swift spec/09-testing.md docs/human-qa-guide.md plans/completed/2026-06-19-boundary-contracts.md`
+> `git diff --stat 225c61dfc..HEAD -- Sources/Sotto/Views/Meetings Sources/Sotto/Views/Transcription Sources/SottoViewModels/MeetingsWorkspaceViewModel.swift Sources/SottoCore/Database Sources/SottoCore/Services/MeetingRecording Tests/SottoTests/ViewModels/MeetingsWorkspaceViewModelTests.swift spec/09-testing.md docs/human-qa-guide.md plans/completed/2026-06-19-boundary-contracts.md`
 > If any of those paths changed since this plan was written, compare the
 > current-state notes below against the live files before editing.
 
@@ -25,13 +25,13 @@
 
 ## Why this matters
 
-The product review surfaced ideas worth adapting to MacParakeet's meeting
+The product review surfaced ideas worth adapting to Sotto's meeting
 workflow: make meetings easier to scan, make notes and artifacts more visible,
-and prove the whole app workflow with smoke coverage. MacParakeet already has a
+and prove the whole app workflow with smoke coverage. Sotto already has a
 solid local-first meeting stack, durable local artifacts, native capture, and no
 account system; this plan builds on those strengths.
 
-MacParakeet already has most of the hard substrate: live recording state,
+Sotto already has most of the hard substrate: live recording state,
 calendar preview, recovery attention, recent meetings, per-transcript chat,
 notes, prompt results, automation hooks, and materialized meeting folders.
 This plan makes those capabilities more legible and testable, then stages the
@@ -40,7 +40,7 @@ indexing, and cross-meeting Ask.
 
 ## Product ideas reviewed
 
-| Idea | Verdict | MacParakeet-shaped interpretation |
+| Idea | Verdict | Sotto-shaped interpretation |
 |------------|---------|-----------------------------------|
 | Turn Meetings into the daily workspace | Valid and near-term | Keep the existing native `MeetingsView`, but make it more compact and scannable: live status, next meetings, needs attention, previous meetings, All Notes entry point, search, and quick start in one workspace. |
 | Add folders/tags/projects for meeting notes | Valid, but staged | Store organization in SQLite, not filesystem folders. Start with folders/projects as user-visible collections; add tags once the collection model is proven. Enforce exclusive folder/project assignment in the persistence layer, not only in UI state. Mirror metadata into artifacts as a refreshable snapshot, not the source of truth. |
@@ -50,45 +50,45 @@ indexing, and cross-meeting Ask.
 
 ## Current state
 
-- `Sources/MacParakeet/Views/Meetings/MeetingsView.swift:104-139` has a
+- `Sources/Sotto/Views/Meetings/MeetingsView.swift:104-139` has a
   Meetings header, live status chip, and recording tile. `:151-166` lays out
   Upcoming plus Recent Meetings on the left and Attention, Intelligence, Auto
   Notes, and Meeting Prompts on the right.
-- `Sources/MacParakeet/Views/Meetings/MeetingsView.swift:406-520` already
+- `Sources/Sotto/Views/Meetings/MeetingsView.swift:406-520` already
   includes Recent Meetings search and grouped rows. The row menu at `:470-502`
   is audio-centric: Open, Show in Finder, Save Audio As, Delete Audio.
-- `Sources/MacParakeetViewModels/MeetingsWorkspaceViewModel.swift:69-80`
+- `Sources/SottoViewModels/MeetingsWorkspaceViewModel.swift:69-80`
   owns the recent-meetings VM, meeting pill VM, settings, LLM settings, quick
   prompts, and prompt library. `:123-139` refreshes recent meetings, upcoming
   events, quick prompts, and auto-notes. `:297-335` produces attention items
   for recovery, recording errors, and AI unavailability.
-- `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift:460-489`
+- `Sources/Sotto/Views/Transcription/TranscriptResultView.swift:460-489`
   has an Audio menu for meeting details. It is disabled when the mixed audio
   file is missing, so it cannot expose artifacts that still exist after audio
   retention or user deletion.
-- `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift:1895-1910`
+- `Sources/Sotto/Views/Transcription/TranscriptResultView.swift:1895-1910`
   has per-transcript chat with the prompt "Ask about this transcript...".
   There is no cross-meeting Ask surface.
-- `Sources/MacParakeetCore/Services/MeetingRecording/MeetingArtifactStore.swift:25-37`
+- `Sources/SottoCore/Services/MeetingRecording/MeetingArtifactStore.swift:25-37`
   defines `MeetingArtifactSnapshot`; `:68-74` defines artifact schema and
   stable filenames; `:82-146` materializes the folder, manifest, transcript,
   notes, and prompt-result files.
-- `Sources/MacParakeetCore/Services/MeetingRecording/MeetingAutomationHookRunner.swift`
+- `Sources/SottoCore/Services/MeetingRecording/MeetingAutomationHookRunner.swift`
   already consumes `MeetingArtifactSnapshot` and passes artifact directory and
   manifest paths to hooks. The app UI does not make those same artifact
   affordances first-class.
-- `Sources/MacParakeetCore/Database/DatabaseManager.swift:60-87` originally
+- `Sources/SottoCore/Database/DatabaseManager.swift:60-87` originally
   created an FTS5 table for dictations; `:311-319` later dropped it because
   search used LIKE and the FTS table was unused. `:535-545` added
   `transcriptions.userNotes` for live meeting notes.
-- `Sources/MacParakeetCore/Database/TranscriptionRepository.swift:125-214`
+- `Sources/SottoCore/Database/TranscriptionRepository.swift:125-214`
   handles library search by fetching candidate rows and applying Unicode
   matching in Swift. `:315-335` does the same for repository search. That is
   acceptable for library filtering but not a foundation for cross-meeting Ask.
-- `Sources/MacParakeetCore/Database/README.md:50-54` requires one repository
+- `Sources/SottoCore/Database/README.md:50-54` requires one repository
   per table and cross-table joins at the service layer. New organization and
   index work should follow that split.
-- `Tests/MacParakeetTests/ViewModels/MeetingsWorkspaceViewModelTests.swift`
+- `Tests/SottoTests/ViewModels/MeetingsWorkspaceViewModelTests.swift`
   covers calendar filtering, recurring collapse, recording status, attention
   items, and prompt preview behavior. It does not prove the full app workflow.
 - `spec/09-testing.md:86-122` documents broad meeting recording and scheduler
@@ -118,9 +118,9 @@ indexing, and cross-meeting Ask.
 
 ### Out of scope
 
-- Replacing MacParakeet's existing meeting recording pipeline, recovery model,
+- Replacing Sotto's existing meeting recording pipeline, recovery model,
   or local artifact folder contract.
-- Changing MacParakeet's local-first architecture, account-free product model,
+- Changing Sotto's local-first architecture, account-free product model,
   or on-device meeting artifact contract.
 - Building semantic/vector search in the first slice. Start with SQLite FTS or
   an equivalent local text index that fits the current GRDB stack.
@@ -194,7 +194,7 @@ indexing, and cross-meeting Ask.
   source meeting detail.
 - R13a. Citations use stable meeting IDs and a typed local route, not
   title-only text or filesystem paths. A renderer may expose that route as a
-  Markdown link such as `macparakeet://meetings/<uuid>?snippet=<snippet-id>`
+  Markdown link such as `sotto://meetings/<uuid>?snippet=<snippet-id>`
   after URL handling exists, but the model contract is the typed route.
 - R14. Cross-meeting Ask assembles a bounded context from local search results,
   never all meeting history.
@@ -226,7 +226,7 @@ indexing, and cross-meeting Ask.
 
 ## Key technical decisions
 
-- **Productize the native Meetings workspace.** MacParakeet already has native
+- **Productize the native Meetings workspace.** Sotto already has native
   capture, recovery, notes, prompt results, and local artifacts. The plan adapts
   the strongest product ideas to that existing foundation.
 - **Keep organization in SQLite.** Filesystem folders are output locations and
@@ -288,9 +288,9 @@ from local retrieval.
   changing capture semantics.
 - **Dependencies:** none
 - **Files:**
-  - `Sources/MacParakeet/Views/Meetings/MeetingsView.swift`
-  - `Sources/MacParakeetViewModels/MeetingsWorkspaceViewModel.swift`
-  - `Tests/MacParakeetTests/ViewModels/MeetingsWorkspaceViewModelTests.swift`
+  - `Sources/Sotto/Views/Meetings/MeetingsView.swift`
+  - `Sources/SottoViewModels/MeetingsWorkspaceViewModel.swift`
+  - `Tests/SottoTests/ViewModels/MeetingsWorkspaceViewModelTests.swift`
   - `spec/02-features.md`
   - `spec/04-ui-patterns.md`
 - **Approach:**
@@ -311,7 +311,7 @@ from local retrieval.
 - **Patterns to follow:**
   - `MeetingsLiveStatusChip` isolation in `MeetingsView`.
   - `MeetingsWorkspaceViewModel.attentionItems` for recovery/error/AI states.
-  - Existing `parakeetAction` button styling.
+  - Existing `sottoAction` button styling.
 - **Test scenarios:**
   - When recording state changes from idle to recording/paused/transcribing,
     the view model exposes the correct workspace status and active-recording
@@ -339,12 +339,12 @@ from local retrieval.
 - **Dependencies:** boundary-contract wording from
   `plans/completed/2026-06-19-boundary-contracts.md` is useful but not blocking.
 - **Files:**
-  - `Sources/MacParakeet/Views/Transcription/MeetingAudioActions.swift`
-  - `Sources/MacParakeet/Views/Meetings/MeetingsView.swift`
-  - `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift`
-  - `Sources/MacParakeetCore/Services/MeetingRecording/MeetingArtifactStore.swift`
-  - `Tests/MacParakeetTests/Services/MeetingRecording/MeetingArtifactStoreTests.swift`
-  - `Tests/MacParakeetTests/Audio/MeetingAudioFileTests.swift`
+  - `Sources/Sotto/Views/Transcription/MeetingAudioActions.swift`
+  - `Sources/Sotto/Views/Meetings/MeetingsView.swift`
+  - `Sources/Sotto/Views/Transcription/TranscriptResultView.swift`
+  - `Sources/SottoCore/Services/MeetingRecording/MeetingArtifactStore.swift`
+  - `Tests/SottoTests/Services/MeetingRecording/MeetingArtifactStoreTests.swift`
+  - `Tests/SottoTests/Audio/MeetingAudioFileTests.swift`
 - **Approach:**
   - Preserve a durable artifact folder locator on the meeting row. `filePath`
     remains the mixed-audio playback/export path and may be cleared by
@@ -388,17 +388,17 @@ from local retrieval.
 - **Dependencies:** none; should land before U4-U7 when practical.
 - **Files:**
   - `Package.swift`
-  - `Sources/MacParakeet/App/AppStartupBootstrapper.swift`
-  - `Sources/MacParakeet/App/AppEnvironment.swift`
-  - `Sources/MacParakeet/App/AppEnvironmentConfigurer.swift`
-  - `Sources/MacParakeet/App/DebugMeetingWorkflowQA.swift`
-  - `Tests/MacParakeetAppSmokeTests/`
+  - `Sources/Sotto/App/AppStartupBootstrapper.swift`
+  - `Sources/Sotto/App/AppEnvironment.swift`
+  - `Sources/Sotto/App/AppEnvironmentConfigurer.swift`
+  - `Sources/Sotto/App/DebugMeetingWorkflowQA.swift`
+  - `Tests/SottoAppSmokeTests/`
   - `scripts/dev/meeting_workflow_smoke.sh`
   - `spec/09-testing.md`
   - `docs/human-qa-guide.md`
 - **Approach:**
   - Add a DEBUG-only app support/database override or equivalent launch
-    argument so a smoke run cannot touch production `macparakeet.db`.
+    argument so a smoke run cannot touch production `sotto.db`.
   - Add deterministic meeting workflow injection for the default smoke path:
     fake calendar event, fake/fixture recording source, model-free
     finalization, and seeded settings.
@@ -429,14 +429,14 @@ from local retrieval.
 - **Goal:** Add durable organization for meeting notes and recordings.
 - **Dependencies:** U3 preferred before large persistence/UI changes.
 - **Files:**
-  - `Sources/MacParakeetCore/Database/DatabaseManager.swift`
-  - `Sources/MacParakeetCore/Database/README.md`
-  - `Sources/MacParakeetCore/Models/MeetingCollection.swift`
-  - `Sources/MacParakeetCore/Models/MeetingCollectionMembership.swift`
-  - `Sources/MacParakeetCore/Database/MeetingCollectionRepository.swift`
-  - `Sources/MacParakeetCore/Services/MeetingRecording/MeetingArtifactStore.swift`
-  - `Tests/MacParakeetTests/Database/MeetingCollectionRepositoryTests.swift`
-  - `Tests/MacParakeetTests/Database/DatabaseManagerTests.swift`
+  - `Sources/SottoCore/Database/DatabaseManager.swift`
+  - `Sources/SottoCore/Database/README.md`
+  - `Sources/SottoCore/Models/MeetingCollection.swift`
+  - `Sources/SottoCore/Models/MeetingCollectionMembership.swift`
+  - `Sources/SottoCore/Database/MeetingCollectionRepository.swift`
+  - `Sources/SottoCore/Services/MeetingRecording/MeetingArtifactStore.swift`
+  - `Tests/SottoTests/Database/MeetingCollectionRepositoryTests.swift`
+  - `Tests/SottoTests/Database/DatabaseManagerTests.swift`
   - `spec/01-data-model.md`
 - **Approach:**
   - Add `meeting_collections` and `meeting_collection_memberships` or a
@@ -461,7 +461,7 @@ from local retrieval.
     for affected existing artifact folders or a clearly documented lazy refresh
     on next materialize/export/open-folder action.
 - **Patterns to follow:**
-  - One repository per table from `Sources/MacParakeetCore/Database/README.md`.
+  - One repository per table from `Sources/SottoCore/Database/README.md`.
   - GRDB `fetchOne(key:)` and Codable-aware predicates for UUID lookups.
   - Prompt and quick-prompt repositories for CRUD plus tests.
 - **Test scenarios:**
@@ -488,13 +488,13 @@ from local retrieval.
   detail without fragmenting the model.
 - **Dependencies:** U4
 - **Files:**
-  - `Sources/MacParakeet/Views/Meetings/MeetingsView.swift`
-  - `Sources/MacParakeet/Views/Transcription/TranscriptionLibraryView.swift`
-  - `Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift`
-  - `Sources/MacParakeetViewModels/MeetingsWorkspaceViewModel.swift`
-  - `Sources/MacParakeetViewModels/TranscriptionLibraryViewModel.swift`
-  - `Tests/MacParakeetTests/ViewModels/MeetingsWorkspaceViewModelTests.swift`
-  - `Tests/MacParakeetTests/ViewModels/TranscriptionLibraryViewModelTests.swift`
+  - `Sources/Sotto/Views/Meetings/MeetingsView.swift`
+  - `Sources/Sotto/Views/Transcription/TranscriptionLibraryView.swift`
+  - `Sources/Sotto/Views/Transcription/TranscriptResultView.swift`
+  - `Sources/SottoViewModels/MeetingsWorkspaceViewModel.swift`
+  - `Sources/SottoViewModels/TranscriptionLibraryViewModel.swift`
+  - `Tests/SottoTests/ViewModels/MeetingsWorkspaceViewModelTests.swift`
+  - `Tests/SottoTests/ViewModels/TranscriptionLibraryViewModelTests.swift`
   - `spec/04-ui-patterns.md`
 - **Approach:**
   - Add compact folder/project filters to Meetings without turning the page into
@@ -525,14 +525,14 @@ from local retrieval.
 - **Dependencies:** U3 preferred; U4 optional unless organization needs to be
   searchable in the first index slice.
 - **Files:**
-  - `Sources/MacParakeetCore/Database/DatabaseManager.swift`
-  - `Sources/MacParakeetCore/Database/MeetingSearchIndexRepository.swift`
-  - `Sources/MacParakeetCore/Services/MeetingSearchIndexService.swift`
-  - `Sources/MacParakeetCore/Database/TranscriptionRepository.swift`
-  - `Sources/MacParakeetCore/Database/PromptResultRepository.swift`
-  - `Sources/MacParakeetCore/Services/TranscriptionService.swift`
-  - `Tests/MacParakeetTests/Database/MeetingSearchIndexRepositoryTests.swift`
-  - `Tests/MacParakeetTests/Services/MeetingSearchIndexServiceTests.swift`
+  - `Sources/SottoCore/Database/DatabaseManager.swift`
+  - `Sources/SottoCore/Database/MeetingSearchIndexRepository.swift`
+  - `Sources/SottoCore/Services/MeetingSearchIndexService.swift`
+  - `Sources/SottoCore/Database/TranscriptionRepository.swift`
+  - `Sources/SottoCore/Database/PromptResultRepository.swift`
+  - `Sources/SottoCore/Services/TranscriptionService.swift`
+  - `Tests/SottoTests/Database/MeetingSearchIndexRepositoryTests.swift`
+  - `Tests/SottoTests/Services/MeetingSearchIndexServiceTests.swift`
   - `spec/01-data-model.md`
 - **Approach:**
   - Add an FTS5-backed local index or equivalent GRDB-compatible structure that
@@ -567,14 +567,14 @@ from local retrieval.
   retrieval.
 - **Dependencies:** U6
 - **Files:**
-  - `Sources/MacParakeet/Views/Meetings/MeetingsView.swift`
-  - `Sources/MacParakeet/Views/Meetings/CrossMeetingAskView.swift`
-  - `Sources/MacParakeetViewModels/CrossMeetingAskViewModel.swift`
-  - `Sources/MacParakeetCore/Services/MeetingSearchIndexService.swift`
-  - `Sources/MacParakeetCore/Services/LLM/LLMService.swift`
-  - `Sources/MacParakeetCore/Database/ChatConversationRepository.swift`
-  - `Tests/MacParakeetTests/ViewModels/CrossMeetingAskViewModelTests.swift`
-  - `Tests/MacParakeetTests/Services/LLM/LLMServiceTests.swift`
+  - `Sources/Sotto/Views/Meetings/MeetingsView.swift`
+  - `Sources/Sotto/Views/Meetings/CrossMeetingAskView.swift`
+  - `Sources/SottoViewModels/CrossMeetingAskViewModel.swift`
+  - `Sources/SottoCore/Services/MeetingSearchIndexService.swift`
+  - `Sources/SottoCore/Services/LLM/LLMService.swift`
+  - `Sources/SottoCore/Database/ChatConversationRepository.swift`
+  - `Tests/SottoTests/ViewModels/CrossMeetingAskViewModelTests.swift`
+  - `Tests/SottoTests/Services/LLM/LLMServiceTests.swift`
   - `spec/11-llm-integration.md`
 - **Approach:**
   - Add an Ask surface in Meetings after the index can return cited snippets.
@@ -583,7 +583,7 @@ from local retrieval.
   - Show citations in the answer so users can open source meetings. The
     citation model should carry meeting UUID, optional snippet ID/range, display
     title, and date. Rendering may use a local URL like
-    `macparakeet://meetings/<uuid>?snippet=<snippet-id>`, but routing tests
+    `sotto://meetings/<uuid>?snippet=<snippet-id>`, but routing tests
     should target the typed route so the app is not coupled to Markdown text.
   - Reuse provider setup status from existing LLM settings. If no provider is
     configured, show setup state rather than pretending local index alone can
@@ -638,7 +638,7 @@ from local retrieval.
 
 ## Acceptance examples
 
-- AE1. A meeting-heavy user opens Meetings and can see whether MacParakeet is
+- AE1. A meeting-heavy user opens Meetings and can see whether Sotto is
   recording, what meeting is next, whether anything needs attention, and the
   latest saved meetings without switching to Library.
 - AE2. A user whose meeting audio was deleted by retention can still open the

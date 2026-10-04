@@ -4,17 +4,17 @@
 
 | File | What it covers | What it does not cover |
 |---|---|---|
-| Tests/MacParakeetTests/Services/Diarization/DiarizationServiceTests.swift (1-174) | Mock behavior; model cache dir; `offlineConfig` constraint mapping; chronological "S1" remap with a recording fake manager | Never runs the real FluidAudio pipeline; no audio |
-| Tests/MacParakeetTests/Services/Diarization/SpeakerMergerTests.swift (1-186) | Empty inputs, exact/partial overlap, gaps, ties, many speakers, content preservation | Real word-timing jitter; overlapping segments; short segments |
-| Tests/MacParakeetTests/Services/TranscriptionServiceTests.swift:540-600 | File path skips diarization without word timings | |
-| Tests/MacParakeetTests/Services/TranscriptionServiceTests.swift:2465-2546 | Meeting: system-only diarization, offset shift, "Me"/"Others 1"/"Others 2" roster | |
-| Tests/MacParakeetTests/Services/TranscriptionServiceTests.swift:2548-2648 | Meeting preference gating | |
-| Tests/MacParakeetTests/Services/TranscriptionServiceTests.swift:2649-2711 | Uncovered system words keep "Others" alongside "Others 1" | |
-| Tests/MacParakeetTests/Services/MeetingRecording/MeetingTranscriptSourceReconcilerTests.swift | Echo duplicate removal rules (10 tests) | |
-| Tests/MacParakeetTests/Services/MeetingRecording/MeetingTranscriptAssemblerTests.swift | Live preview source labels (6 tests) | |
-| Tests/MacParakeetTests/Utilities/TranscriptSegmenterTests.swift | Segment boundaries, nil-speaker inheritance, stats, labels (21 tests) | |
+| Tests/SottoTests/Services/Diarization/DiarizationServiceTests.swift (1-174) | Mock behavior; model cache dir; `offlineConfig` constraint mapping; chronological "S1" remap with a recording fake manager | Never runs the real FluidAudio pipeline; no audio |
+| Tests/SottoTests/Services/Diarization/SpeakerMergerTests.swift (1-186) | Empty inputs, exact/partial overlap, gaps, ties, many speakers, content preservation | Real word-timing jitter; overlapping segments; short segments |
+| Tests/SottoTests/Services/TranscriptionServiceTests.swift:540-600 | File path skips diarization without word timings | |
+| Tests/SottoTests/Services/TranscriptionServiceTests.swift:2465-2546 | Meeting: system-only diarization, offset shift, "Me"/"Others 1"/"Others 2" roster | |
+| Tests/SottoTests/Services/TranscriptionServiceTests.swift:2548-2648 | Meeting preference gating | |
+| Tests/SottoTests/Services/TranscriptionServiceTests.swift:2649-2711 | Uncovered system words keep "Others" alongside "Others 1" | |
+| Tests/SottoTests/Services/MeetingRecording/MeetingTranscriptSourceReconcilerTests.swift | Echo duplicate removal rules (10 tests) | |
+| Tests/SottoTests/Services/MeetingRecording/MeetingTranscriptAssemblerTests.swift | Live preview source labels (6 tests) | |
+| Tests/SottoTests/Utilities/TranscriptSegmenterTests.swift | Segment boundaries, nil-speaker inheritance, stats, labels (21 tests) | |
 | Tests/CLITests/TranscribeCommandTests.swift | Flag resolution | |
-| Tests/MacParakeetTests/Benchmarks/LongMeetingPipelineBenchmarkTests.swift | Env-gated end-to-end timing on a retained session with real `DiarizationService()` (118-119, 379-380) | Measures elapsed time and RSS only; no accuracy metric |
+| Tests/SottoTests/Benchmarks/LongMeetingPipelineBenchmarkTests.swift | Env-gated end-to-end timing on a retained session with real `DiarizationService()` (118-119, 379-380) | Measures elapsed time and RSS only; no accuracy metric |
 
 There is no `MeetingTranscriptFinalizerTests.swift`; finalizer behavior is exercised through
 TranscriptionServiceTests and the reconciler tests.

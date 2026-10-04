@@ -11,12 +11,12 @@ Build **Ask**, a native full-page workspace for investigating a user-selected se
 | Boundary | Responsibility |
 | --- | --- |
 | Pi agent core | Adaptive model/tool loop and structured execution events |
-| MacParakeet | Native workspace, selected-source enforcement, local retrieval, evidence and citations, durable conversations, run limits, and privacy |
+| Sotto | Native workspace, selected-source enforcement, local retrieval, evidence and citations, durable conversations, run limits, and privacy |
 | Model adapter | Translate model requests, tool calls/results, streaming, errors, usage, and cancellation for each qualified provider |
 
 The implementation uses Pi's reusable agent core and app-supplied tools. Its full coding-agent application and durable harness are separate integration options, with different APIs; neither is included. The [source comparison](opensource-harnesses.md#pi-distinguish-the-layers) records those distinctions.
 
-The selected design is **model agnostic, with capability checks**. Changing a model should not change which meetings it may read or how citations work. Each model still needs qualification for tool use, context limits, cancellation, and answer quality. The bridge uses MacParakeet's configured provider client; existing string-only chat events were not sufficient for an agent runtime.
+The selected design is **model agnostic, with capability checks**. Changing a model should not change which meetings it may read or how citations work. Each model still needs qualification for tool use, context limits, cancellation, and answer quality. The bridge uses Sotto's configured provider client; existing string-only chat events were not sufficient for an agent runtime.
 
 Start with read-only research tools. Code Mode, a REPL, and recursive model calls remain experiments for harder questions. Recurring-meeting selection and cited timelines fit the product direction; a knowledge graph is outside the current scope.
 
@@ -65,7 +65,7 @@ recordings to external models.
 ## Evidence boundary
 
 The original reports inspect primary upstream sources and the then-current
-MacParakeet working tree. The competitor report additionally records previously
+Sotto working tree. The competitor report additionally records previously
 inspected public client bundles and installed Wispr files. No user transcripts
 were used and no Jev inference was invoked during that research. Later
 implementation activity is documented separately in the plan; runtime quality,

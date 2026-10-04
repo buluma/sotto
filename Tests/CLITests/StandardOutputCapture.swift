@@ -9,7 +9,7 @@ func captureStandardOutput(_ body: () throws -> Void) throws -> String {
         throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno))
     }
     let readGroup = DispatchGroup()
-    let readQueue = DispatchQueue(label: "macparakeet.tests.stdout-capture")
+    let readQueue = DispatchQueue(label: "sotto.tests.stdout-capture")
     var capturedData = Data()
     readGroup.enter()
     readQueue.async {

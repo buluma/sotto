@@ -13,7 +13,7 @@
 
 ### Validated empirically (CLI spike, M4 Pro)
 
-Ran the real engines via `macparakeet-cli` (isolated `--database`, `--no-history`, `MACPARAKEET_TELEMETRY=0`) to test whether the ANE **serializes** or **parallelizes** the two engines.
+Ran the real engines via `sotto-cli` (isolated `--database`, `--no-history`, `SOTTO_TELEMETRY=0`) to test whether the ANE **serializes** or **parallelizes** the two engines.
 
 - **Warm-inference contention is benign.** While Whisper saturated the ANE transcribing a 206 s clip (**12.6 s** wall, ~16× realtime), Parakeet on a 5 s clip stayed **sub-0.6 s on every run** — baseline median **~0.29 s** vs under-load median **~0.38 s** (worst **0.59 s**). The pattern is fine-grained time-slicing, **not** serialization. The catastrophic failure mode for Stage B — background Whisper *freezing* dictation — is **ruled out for the inference case.**
 - **Why the CLI proxy is valid:** ANE contention is system-wide, so the cross-process CLI test faithfully reproduces the hardware contention an in-process build would see. Caveats: process-per-call over-weights model load (real warm dictation is faster than these absolute numbers); small N; single run.
@@ -167,13 +167,13 @@ Cancel path: `U->>VM: Cancel` → `VM->>Sch: cancelWhisperPrepare()` → stay on
 
 | File | Change |
 |---|---|
-| `Sources/MacParakeetCore/STT/STTRuntime.swift` | New `whisperPrepareState` machine: `prepareWhisperInBackground()`, `observeWhisperPrepare()`, `cancelWhisperPrepare()`, generation guard, memory-reclaim on cancel. Independent of `backgroundWarmUp`. |
-| `Sources/MacParakeetCore/STT/STTScheduler.swift` | Forward the three prep methods to the runtime; add `engineSwitchAvailability()` derived from existing private guards. |
-| `Sources/MacParakeetCore/STT/STTClientProtocol.swift` | New protocol(s) for what the VM holds: `WhisperBackgroundPreparing` (prepare/observe/cancel) + `EngineSwitchAvailabilityProviding`. `STTScheduler` conforms. |
-| `Sources/MacParakeetCore/AppFeatures.swift` | `static let backgroundWhisperOptimizeEnabled: Bool` (default `false` until validated). |
-| `Sources/MacParakeetViewModels/SettingsViewModel.swift` | Cold-tap path: when flag on + Whisper cold → `prepareWhisperInBackground()` + observe; drive `whisperOptimizing`/progress; on `.ready` flip (retry under busy); `cancelWhisperOptimize()`. `engineSwitchBlockedReason` for A3. When flag off → existing blocking switch (unchanged). |
-| `Sources/MacParakeet/Views/Settings/Components/EngineOptionTile.swift` | "Optimizing…" footer state + inline **Cancel**; disabled appearance + reason tooltip. |
-| `Sources/MacParakeet/Views/Settings/SettingsView.swift` | Wire optimize state, Cancel action, and availability-driven disabling into the tiles; replace generic busy error with named reason. |
+| `Sources/SottoCore/STT/STTRuntime.swift` | New `whisperPrepareState` machine: `prepareWhisperInBackground()`, `observeWhisperPrepare()`, `cancelWhisperPrepare()`, generation guard, memory-reclaim on cancel. Independent of `backgroundWarmUp`. |
+| `Sources/SottoCore/STT/STTScheduler.swift` | Forward the three prep methods to the runtime; add `engineSwitchAvailability()` derived from existing private guards. |
+| `Sources/SottoCore/STT/STTClientProtocol.swift` | New protocol(s) for what the VM holds: `WhisperBackgroundPreparing` (prepare/observe/cancel) + `EngineSwitchAvailabilityProviding`. `STTScheduler` conforms. |
+| `Sources/SottoCore/AppFeatures.swift` | `static let backgroundWhisperOptimizeEnabled: Bool` (default `false` until validated). |
+| `Sources/SottoViewModels/SettingsViewModel.swift` | Cold-tap path: when flag on + Whisper cold → `prepareWhisperInBackground()` + observe; drive `whisperOptimizing`/progress; on `.ready` flip (retry under busy); `cancelWhisperOptimize()`. `engineSwitchBlockedReason` for A3. When flag off → existing blocking switch (unchanged). |
+| `Sources/Sotto/Views/Settings/Components/EngineOptionTile.swift` | "Optimizing…" footer state + inline **Cancel**; disabled appearance + reason tooltip. |
+| `Sources/Sotto/Views/Settings/SettingsView.swift` | Wire optimize state, Cancel action, and availability-driven disabling into the tiles; replace generic busy error with named reason. |
 | Telemetry | Extend `speechEngineSwitchOperation` with `mode: foreground|background` + `was_cold`; add `whisperBackgroundOptimize` start/complete/cancel/fail with duration. Remember the two-repo allowlist (`functions/api/telemetry.ts`). |
 
 ## 6. Edge cases & invariants

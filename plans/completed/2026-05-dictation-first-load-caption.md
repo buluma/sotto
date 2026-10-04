@@ -28,7 +28,7 @@ Programmatic verification performed:
 - Focused caption coordinator tests under parallel scheduling: `swift test --parallel --filter DictationFlowCoordinatorLoadCaptionTests` PASS, 10 tests.
 - Focused first-dictation persistence tests: `swift test --filter DictationServiceTests` PASS, 13 tests.
 - Focused telemetry serialization/contract tests: `swift test --filter TelemetryServiceTests` PASS, 41 tests.
-- Swift 6 language-mode build without WhisperKit: `MACPARAKEET_SKIP_WHISPERKIT=1 swift build --build-path .build-swift6-no-whisper -Xswiftc -swift-version -Xswiftc 6` PASS.
+- Swift 6 language-mode build without WhisperKit: `SOTTO_SKIP_WHISPERKIT=1 swift build --build-path .build-swift6-no-whisper -Xswiftc -swift-version -Xswiftc 6` PASS.
 - CI-style parallel suite: `swift test --parallel` PASS, 2424 XCTest tests plus 16 Swift Testing tests.
 - Final full suite after cleanup: `swift test` PASS, 2425 XCTest tests, 10 skipped, plus 16 Swift Testing tests.
 
@@ -58,11 +58,11 @@ No audio-capture, state-machine, or cancellation logic is touched. The state mac
 
 ## Context
 
-The lazy-init path: `STTRuntime.transcribe()` → `ensureInitialized()` (`Sources/MacParakeetCore/STT/STTRuntime.swift:459`) loads the CoreML model into ANE the first time it's needed. There is no progress reporting on this path — the spinner just spins.
+The lazy-init path: `STTRuntime.transcribe()` → `ensureInitialized()` (`Sources/SottoCore/STT/STTRuntime.swift:459`) loads the CoreML model into ANE the first time it's needed. There is no progress reporting on this path — the spinner just spins.
 
-The existing dictation overlay (`Sources/MacParakeet/Views/Dictation/DictationOverlayView.swift:540`) renders `SpinnerRingView` (two counter-rotating triangles, `Sources/MacParakeet/Views/Components/SacredGeometry.swift:24`) during `.processing`. There is an *inline* message slot beside the spinner (`HStack { Spinner; Text(message) }` at line 553), used today for the `"Still transcribing..."` hint when the user re-presses Fn during processing (`DictationOverlayController.swift:245`). This slot is **semantically reserved for user-triggered transient hints** and should not be repurposed for engine state.
+The existing dictation overlay (`Sources/Sotto/Views/Dictation/DictationOverlayView.swift:540`) renders `SpinnerRingView` (two counter-rotating triangles, `Sources/Sotto/Views/Components/SacredGeometry.swift:24`) during `.processing`. There is an *inline* message slot beside the spinner (`HStack { Spinner; Text(message) }` at line 553), used today for the `"Still transcribing..."` hint when the user re-presses Fn during processing (`DictationOverlayController.swift:245`). This slot is **semantically reserved for user-triggered transient hints** and should not be repurposed for engine state.
 
-Mic capture is already decoupled from model load: `DictationService.startRecording()` (`Sources/MacParakeetCore/Services/Dictation/DictationService.swift:182`) calls `audioProcessor.startCapture()` immediately on Fn press, regardless of model state. **No ring-buffer or capture-and-queue is needed** — the existing file-based flow already gives us "capture-and-queue" for free.
+Mic capture is already decoupled from model load: `DictationService.startRecording()` (`Sources/SottoCore/Services/Dictation/DictationService.swift:182`) calls `audioProcessor.startCapture()` immediately on Fn press, regardless of model state. **No ring-buffer or capture-and-queue is needed** — the existing file-based flow already gives us "capture-and-queue" for free.
 
 Pre-warm infrastructure already exists: `STTRuntime.backgroundWarmUp()` (`STTRuntime.swift:238`) is idempotent — short-circuits if state is already `.ready` (line 239), so it's safe to call concurrently with onboarding or meeting-recording warmup. Today the only caller is `MeetingRecordingFlowCoordinator.swift:807` when a meeting starts. We extend it to also fire on app launch.
 
@@ -128,8 +128,8 @@ Trade-off: if model loads in 1s and transcription takes 30s (long dictation, war
 
 ### 1. Pre-warm at app launch
 
-**File:** `Sources/MacParakeet/AppDelegate.swift:225` (in `applicationDidFinishLaunching`)
-   or `Sources/MacParakeet/App/AppEnvironmentConfigurer.swift:77` (in `configure`).
+**File:** `Sources/Sotto/AppDelegate.swift:225` (in `applicationDidFinishLaunching`)
+   or `Sources/Sotto/App/AppEnvironmentConfigurer.swift:77` (in `configure`).
 
 After environment setup, schedule a deferred `Task.detached`:
 
@@ -152,7 +152,7 @@ private func schedulePreWarm(env: AppEnvironment) {
 
 ### 2. STT readiness snapshot at `.processing` entry
 
-**File:** `Sources/MacParakeet/App/DictationFlowCoordinator.swift:322` (handler for `.showProcessingState`)
+**File:** `Sources/Sotto/App/DictationFlowCoordinator.swift:322` (handler for `.showProcessingState`)
 
 ```swift
 case .showProcessingState:
@@ -229,7 +229,7 @@ Wire `dismissCaption(...)` into all `.processing` exit effect handlers in `Dicta
 
 ### 3. New overlay VM state
 
-**File:** `Sources/MacParakeet/Views/Dictation/DictationOverlayController.swift:179` (`DictationOverlayViewModel`)
+**File:** `Sources/Sotto/Views/Dictation/DictationOverlayController.swift:179` (`DictationOverlayViewModel`)
 
 Add:
 
@@ -247,7 +247,7 @@ Independent of `state` (`OverlayState`) — caption shows during `.processing` b
 
 ### 4. New view: `LoadingCaptionView`
 
-**New file:** `Sources/MacParakeet/Views/Dictation/LoadingCaptionView.swift`
+**New file:** `Sources/Sotto/Views/Dictation/LoadingCaptionView.swift`
 
 A compact capsule:
 - Background: `DesignSystem.Colors.pillBackground.opacity(0.55)`
@@ -296,7 +296,7 @@ struct LoadingCaptionView: View {
 
 ### 5. Mount the caption in the overlay
 
-**File:** `Sources/MacParakeet/Views/Dictation/DictationOverlayView.swift`
+**File:** `Sources/Sotto/Views/Dictation/DictationOverlayView.swift`
 
 Wrap the existing pill content in a `VStack` (or `ZStack` with `.alignmentGuide`) so the caption floats above without displacing the pill's bottom-anchored screen position:
 
@@ -321,7 +321,7 @@ The dictation overlay panel is already 300×160 (`DictationOverlayController.swi
 
 ### 6. First-dictation flag
 
-**File:** `Sources/MacParakeetCore/AppRuntimePreferences.swift:92` (`UserDefaultsAppRuntimePreferences`)
+**File:** `Sources/SottoCore/AppRuntimePreferences.swift:92` (`UserDefaultsAppRuntimePreferences`)
 
 Add to `AppRuntimePreferencesProtocol`:
 
@@ -348,12 +348,12 @@ public func markFirstDictationCompleted() {
 
 ### 7. Telemetry
 
-Add to `Sources/MacParakeetCore/Services/Telemetry/TelemetryEvent.swift`:
+Add to `Sources/SottoCore/Services/Telemetry/TelemetryEvent.swift`:
 
 - **`dictationFirstLoadCaptionShown`** — payload: `first_install: Bool`. Fired when the caption fades in.
 - **`dictationFirstLoadCaptionDuration`** — payload: `duration_ms: Int`, `outcome: "success" | "no_speech" | "failure" | "cancelled"`. Fired when caption fades out.
 
-**Two-repo change required:** Add both event names to `ALLOWED_EVENTS` in `macparakeet-website/functions/api/telemetry.ts` **BEFORE** the app build ships. Per `memory/feedback_telemetry_allowlist.md`, the Worker rejects the entire batch if any event is unknown, silently dropping valid co-batched events. Verify with curl after deploy.
+**Two-repo change required:** Add both event names to `ALLOWED_EVENTS` in `sotto-website/functions/api/telemetry.ts` **BEFORE** the app build ships. Per `memory/feedback_telemetry_allowlist.md`, the Worker rejects the entire batch if any event is unknown, silently dropping valid co-batched events. Verify with curl after deploy.
 
 ## State machine additions
 
@@ -396,7 +396,7 @@ VoiceOver: caption text announced on appear via `accessibilityLabel`. No live re
 
 ### Coordinator / integration
 
-- **New file:** `Tests/MacParakeetTests/Dictation/DictationFlowCoordinatorLoadCaptionTests.swift`
+- **New file:** `Tests/SottoTests/Dictation/DictationFlowCoordinatorLoadCaptionTests.swift`
 - Mock `STTRuntime`'s `isReady()` to control readiness. Exercise:
   - Model ready at entry → no caption ever.
   - Model not ready, processing < 600ms → no caption (grace suppressed).
@@ -462,23 +462,23 @@ WHERE name IN ('dictation_first_load_caption_shown', 'dictation_first_load_capti
 
 ### Source
 
-- `Sources/MacParakeet/AppDelegate.swift` — schedule deferred pre-warm
-- `Sources/MacParakeet/App/AppEnvironmentConfigurer.swift` — wire pre-warm trigger (alternative location)
-- `Sources/MacParakeet/App/DictationFlowCoordinator.swift` — readiness snapshot + caption timing + telemetry
-- `Sources/MacParakeet/Views/Dictation/DictationOverlayController.swift` — `ProcessingLoadCaption` enum, VM property
-- `Sources/MacParakeet/Views/Dictation/DictationOverlayView.swift` — mount caption above pill via VStack
-- `Sources/MacParakeet/Views/Dictation/LoadingCaptionView.swift` — **new**
-- `Sources/MacParakeetCore/AppRuntimePreferences.swift` — `hasCompletedFirstDictation` accessor + setter
-- `Sources/MacParakeetCore/Services/Dictation/DictationService.swift` — flip flag on first success
-- `Sources/MacParakeetCore/Services/Telemetry/TelemetryEvent.swift` — two new event cases
+- `Sources/Sotto/AppDelegate.swift` — schedule deferred pre-warm
+- `Sources/Sotto/App/AppEnvironmentConfigurer.swift` — wire pre-warm trigger (alternative location)
+- `Sources/Sotto/App/DictationFlowCoordinator.swift` — readiness snapshot + caption timing + telemetry
+- `Sources/Sotto/Views/Dictation/DictationOverlayController.swift` — `ProcessingLoadCaption` enum, VM property
+- `Sources/Sotto/Views/Dictation/DictationOverlayView.swift` — mount caption above pill via VStack
+- `Sources/Sotto/Views/Dictation/LoadingCaptionView.swift` — **new**
+- `Sources/SottoCore/AppRuntimePreferences.swift` — `hasCompletedFirstDictation` accessor + setter
+- `Sources/SottoCore/Services/Dictation/DictationService.swift` — flip flag on first success
+- `Sources/SottoCore/Services/Telemetry/TelemetryEvent.swift` — two new event cases
 
 ### Tests
 
-- `Tests/MacParakeetTests/Dictation/DictationFlowCoordinatorLoadCaptionTests.swift` — **new**
+- `Tests/SottoTests/Dictation/DictationFlowCoordinatorLoadCaptionTests.swift` — **new**
 
 ### Sibling repo (must land before app ship)
 
-- `macparakeet-website/functions/api/telemetry.ts` — allowlist update for two new event names
+- `sotto-website/functions/api/telemetry.ts` — allowlist update for two new event names
 
 ### Spec
 

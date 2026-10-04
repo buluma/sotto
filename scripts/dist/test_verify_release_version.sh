@@ -20,7 +20,7 @@ make_app() {
 
   mkdir -p "$app_path/Contents"
   /usr/libexec/PlistBuddy -c 'Clear dict' "$plist_path" >/dev/null 2>&1 || true
-  /usr/libexec/PlistBuddy -c 'Add :CFBundleIdentifier string com.macparakeet.fixture' "$plist_path"
+  /usr/libexec/PlistBuddy -c 'Add :CFBundleIdentifier string com.sotto.fixture' "$plist_path"
   /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $build_number" "$plist_path"
   if [[ "$include_short_version" == "1" ]]; then
     /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string $short_version" "$plist_path"

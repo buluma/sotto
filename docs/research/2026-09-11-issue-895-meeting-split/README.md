@@ -25,7 +25,7 @@ The provisional [storage](storage-findings.md) and [transcript/product](transcri
 To rerun the synthetic experiment on a Mac with the Swift toolchain, from the repository root:
 
 ```sh
-split_spike_dir=$(mktemp -d /tmp/macparakeet-895-audio.XXXXXX)
+split_spike_dir=$(mktemp -d /tmp/sotto-895-audio.XXXXXX)
 swiftc -parse-as-library docs/research/2026-09-11-issue-895-meeting-split/audio-range-spike.swift -o "$split_spike_dir/audio-range-spike"
 "$split_spike_dir/audio-range-spike" "$split_spike_dir"
 ```

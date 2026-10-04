@@ -58,7 +58,7 @@ import sys
 
 json_path, ats_json = sys.argv[1], sys.argv[2]
 doc = {
-    "CFBundleIdentifier": "com.macparakeet.fixture",
+    "CFBundleIdentifier": "com.sotto.fixture",
     "NSMicrophoneUsageDescription": "Microphone",
     "NSAudioCaptureUsageDescription": "System audio",
     "NSCalendarsFullAccessUsageDescription": "Calendar",
@@ -75,7 +75,7 @@ PY
 
 run_verifier() {
   PATH="$FAKE_BIN:$PATH" \
-    EXPECTED_BUNDLE_ID="com.macparakeet.fixture" \
+    EXPECTED_BUNDLE_ID="com.sotto.fixture" \
     EXPECTED_TEAM_ID="TESTTEAM" \
     EXPECTED_AUTHORITY="Fixture Authority" \
     "$VERIFY_SCRIPT" "$1" 2>&1

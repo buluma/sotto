@@ -45,7 +45,7 @@ What should we mitigate before treating long meetings as a first-class path?
 At meeting stop, final transcription is enqueued through
 `MeetingTranscriptionQueue`. The queue holds one active item and an array of
 pending items, starts only when there is no active task, and removes pending
-items FIFO-style (`Sources/MacParakeet/App/MeetingTranscriptionQueue.swift:34`,
+items FIFO-style (`Sources/Sotto/App/MeetingTranscriptionQueue.swift:34`,
 `:54`, `:67`, `:69`, `:79`).
 
 The active queue item calls `finalizeMeetingTranscription(...)`, then marks the
@@ -79,7 +79,7 @@ remains "Me"; AEC is what prevents remote speaker bleed from becoming false
 Dictation is protected at the STT scheduler layer. `STTScheduler` explicitly
 documents independent slots so dictation can remain responsive while meeting
 and file work share a prioritized background path
-(`Sources/MacParakeetCore/STT/STTScheduler.swift:20`).
+(`Sources/SottoCore/STT/STTScheduler.swift:20`).
 
 Slot routing is:
 
@@ -118,7 +118,7 @@ outranks file work.
 Meeting diarization is not a `STTScheduler` job. `DiarizationService` prepares
 offline models and calls FluidAudio's offline diarizer inside
 `ANEInferenceGate.shared.withExclusiveAccess(...)`
-(`Sources/MacParakeetCore/Services/Diarization/DiarizationService.swift:112`).
+(`Sources/SottoCore/Services/Diarization/DiarizationService.swift:112`).
 The gate serializes ANE inference only on macOS 14, where concurrent ANE use
 intermittently SIGBUSes; on macOS 15+ it is a no-op. So the failure mode
 differs by OS: on macOS 14, diarization extends total post-stop wall-clock by
@@ -257,7 +257,7 @@ bounded/chunked thinking there or keep it as explicit background enrichment.
 Every load-bearing claim above was re-verified against `origin/main` at
 `cfbcccb30e23`:
 
-- Slot routing confirmed at `Sources/MacParakeetCore/STT/STTScheduler.swift:843`
+- Slot routing confirmed at `Sources/SottoCore/STT/STTScheduler.swift:843`
   (`.dictation` -> interactive; meeting/file jobs -> background) with
   within-slot priority `meetingFinalize` (0) > `meetingLiveChunk` (1) >
   `fileTranscription` (2).

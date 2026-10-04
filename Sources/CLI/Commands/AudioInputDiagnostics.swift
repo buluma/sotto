@@ -1,6 +1,6 @@
 import CoreAudio
 import Foundation
-import MacParakeetCore
+import SottoCore
 
 struct AudioInputDiagnostics {
     let devices: [AudioDeviceManager.InputDevice]
@@ -33,7 +33,7 @@ struct AudioInputDiagnostics {
 }
 
 func loadAudioInputDiagnostics(
-    defaults: UserDefaults = macParakeetAppDefaults(),
+    defaults: UserDefaults = sottoAppDefaults(),
     inputDevices: () -> [AudioDeviceManager.InputDevice] = { AudioDeviceManager.inputDevices() },
     defaultInputDeviceInfo: () -> AudioDeviceManager.InputDevice? = {
         AudioDeviceManager.defaultInputDeviceInfo()

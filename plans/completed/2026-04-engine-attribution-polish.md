@@ -5,7 +5,7 @@
 
 ## Problem
 
-After PR #167 (Whisper) shipped, MacParakeet has two STT engines but no surfaces tell users *which engine produced what*. Three concrete gaps:
+After PR #167 (Whisper) shipped, Sotto has two STT engines but no surfaces tell users *which engine produced what*. Three concrete gaps:
 
 1. **Live progress card** (`TranscriptionViewModel.subline`): hardcoded `"Runs entirely on-device using the Neural Engine"` — Parakeet-flavored copy that's shown for Whisper too.
 2. **Settings → Whisper status detail**: never names the variant (`large-v3-v20240930_turbo_632MB`). Users see no friendly model name anywhere.
@@ -32,8 +32,8 @@ One cohesive engine-attribution polish: live UI honest about which engine is run
 
 | Surface | File | Change |
 |---|---|---|
-| Progress card subline | `Sources/MacParakeetViewModels/TranscriptionViewModel.swift` | Replace hardcoded subline with engine-aware copy read from `STTRuntime.currentSpeechEngineSelection()` |
-| Settings Whisper status detail | `Sources/MacParakeetViewModels/SettingsViewModel.swift` | Prefix friendly variant name onto status detail strings |
+| Progress card subline | `Sources/SottoViewModels/TranscriptionViewModel.swift` | Replace hardcoded subline with engine-aware copy read from `STTRuntime.currentSpeechEngineSelection()` |
+| Settings Whisper status detail | `Sources/SottoViewModels/SettingsViewModel.swift` | Prefix friendly variant name onto status detail strings |
 
 ### Friendly-name helper
 
@@ -58,7 +58,7 @@ public static func friendlyVariantName(_ rawVariant: String) -> String
 
 ### Schema migration
 
-`Sources/MacParakeetCore/Database/DatabaseManager.swift`, new migration `v0.8-engine-attribution`:
+`Sources/SottoCore/Database/DatabaseManager.swift`, new migration `v0.8-engine-attribution`:
 
 ```sql
 ALTER TABLE transcriptions ADD COLUMN engine TEXT;
@@ -72,12 +72,12 @@ ALTER TABLE dictations    ADD COLUMN engineVariant TEXT;
 
 ### Model updates
 
-- `Sources/MacParakeetCore/Models/Transcription.swift`: add `engine: String?`, `engineVariant: String?`. Update `init(from:)` with `decodeIfPresent`. Extend `Columns`.
-- `Sources/MacParakeetCore/Models/Dictation.swift`: same.
+- `Sources/SottoCore/Models/Transcription.swift`: add `engine: String?`, `engineVariant: String?`. Update `init(from:)` with `decodeIfPresent`. Extend `Columns`.
+- `Sources/SottoCore/Models/Dictation.swift`: same.
 
 ### STTResult carries authoritative engine
 
-`Sources/MacParakeetCore/STT/STTResult.swift`:
+`Sources/SottoCore/STT/STTResult.swift`:
 ```swift
 public struct STTResult: Sendable {
     public let text: String
@@ -96,15 +96,15 @@ Populate engine fields from `STTResult`:
 
 | File | Lines | Change |
 |---|---|---|
-| `Sources/MacParakeetCore/Services/DictationService.swift` | ~530 | `Dictation(...)` init gets `engine: result.engine.rawValue, engineVariant: result.engineVariant` |
-| `Sources/MacParakeetCore/Services/TranscriptionService.swift` | 4 save sites (262, 421, 544, 1114) | Same — populate when building/updating `Transcription` |
-| `Sources/MacParakeetCore/Services/MeetingRecordingRecoveryService.swift` | 336 | Recovered meetings inherit engine from lock metadata if present |
+| `Sources/SottoCore/Services/DictationService.swift` | ~530 | `Dictation(...)` init gets `engine: result.engine.rawValue, engineVariant: result.engineVariant` |
+| `Sources/SottoCore/Services/TranscriptionService.swift` | 4 save sites (262, 421, 544, 1114) | Same — populate when building/updating `Transcription` |
+| `Sources/SottoCore/Services/MeetingRecordingRecoveryService.swift` | 336 | Recovered meetings inherit engine from lock metadata if present |
 
 ### Display surfaces
 
 | Surface | File | Copy |
 |---|---|---|
-| Transcription detail metadata footer | `Sources/MacParakeet/Views/Transcription/...` (find concrete view) | `"Transcribed with Parakeet TDT"` / `"Transcribed with Whisper Large v3 Turbo"` — only when non-nil |
+| Transcription detail metadata footer | `Sources/Sotto/Views/Transcription/...` (find concrete view) | `"Transcribed with Parakeet TDT"` / `"Transcribed with Whisper Large v3 Turbo"` — only when non-nil |
 | CLI JSON output | `Sources/CLI/...` | Add `engine`, `engineVariant` fields to JSON shape |
 
 ## Validation

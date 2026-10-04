@@ -7,7 +7,7 @@
 > `plans/active/2026-06-12-advisor-index.md`.
 >
 > **Drift check (run first)**:
-> `git diff --stat 3f9361005..HEAD -- Sources/MacParakeetCore/Audio/MicrophoneEnginePlatform.swift Tests/MacParakeetTests/Audio/MicrophoneEnginePlatformConfigChangeRecoveryTests.swift Sources/MacParakeetCore/Services/Dictation/DictationService.swift Tests/MacParakeetTests/Services/Dictation/DictationServiceTests.swift Tests/MacParakeetTests/STT/MockSTTClient.swift`
+> `git diff --stat 3f9361005..HEAD -- Sources/SottoCore/Audio/MicrophoneEnginePlatform.swift Tests/SottoTests/Audio/MicrophoneEnginePlatformConfigChangeRecoveryTests.swift Sources/SottoCore/Services/Dictation/DictationService.swift Tests/SottoTests/Services/Dictation/DictationServiceTests.swift Tests/SottoTests/STT/MockSTTClient.swift`
 > If any of these changed since `3f9361005`, compare the "Current state"
 > excerpts against the live code before proceeding; on a mismatch, treat it as
 > a STOP condition.
@@ -58,7 +58,7 @@ into "CI proves it stays correct."
 
 ### Area 1 — mic self-heal recovery (Step 1)
 
-- `Sources/MacParakeetCore/Audio/MicrophoneEnginePlatform.swift`:
+- `Sources/SottoCore/Audio/MicrophoneEnginePlatform.swift`:
   - The class `AVAudioEngineMicrophonePlatform` has a test seam: an
     `EngineStarter` closure (typealias at line ~61) injected via a test-only
     init (line ~134). Its signature passes **four** arguments —
@@ -69,7 +69,7 @@ into "CI proves it stays correct."
     `lastStartRequestLocked` (struct at line ~99).
   - `recoverFromConfigurationChangeLocked` (line ~598) replays that request:
     `configureAndStartLocked(vpioEnabled: request.vpioEnabled, bufferSize: request.bufferSize, tapHandler: request.tapHandler)` (line ~608) — so on recovery the **4th arg to the `EngineStarter` is the original tap handler**.
-- `Tests/MacParakeetTests/Audio/MicrophoneEnginePlatformConfigChangeRecoveryTests.swift`:
+- `Tests/SottoTests/Audio/MicrophoneEnginePlatformConfigChangeRecoveryTests.swift`:
   - Three tests, all using `engineStarter: { engine, vpio, bufferSize, _ in ... }`
     — **the 4th parameter (the tap handler) is discarded (`_`) in every test.**
   - `testConfigurationChangeWhileRunningRestartsEngine` (line ~30) is the
@@ -86,20 +86,20 @@ into "CI proves it stays correct."
 
 ### Area 2 — Nemotron live partial routing (Step 2)
 
-- `Sources/MacParakeetCore/Services/Dictation/DictationService.swift`:
+- `Sources/SottoCore/Services/Dictation/DictationService.swift`:
   - Live partials feed a stream created with `bufferingPolicy: .bufferingNewest(1)`
     (around line ~733) with a comment that this + a single consumer guarantees
     "a stale partial can never land after a newer one".
   - The applied partial is exposed as `service.liveTranscript` and updated
     behind a session-ID guard (around line ~815).
-- `Tests/MacParakeetTests/STT/MockSTTClient.swift` (`public actor MockSTTClient`,
+- `Tests/SottoTests/STT/MockSTTClient.swift` (`public actor MockSTTClient`,
   line ~4) provides the live test surface:
   - `configureLive(result:)`, `configureLive(beginError:)`,
     `configureLive(appendError:)`, `configureLive(finishError:)` (around line ~75+).
   - `emitLivePartial(_ text:)` — pushes a partial onto the live stream.
   - Call-count actors: `liveBeginCallCount`, `liveAppendCallCount`,
     `liveFinishCallCount`, `liveCancelCallCount`, `transcribeCallCount`.
-- `Tests/MacParakeetTests/Services/Dictation/DictationServiceTests.swift`:
+- `Tests/SottoTests/Services/Dictation/DictationServiceTests.swift`:
   - The exemplar is `testStopRecordingUsesLiveNemotronResultWhenAvailable`
     (line ~290): constructs the service with
     `shouldAttemptLiveDictationTranscription: { true }`, `mockAudio`, `mockSTT`,
@@ -125,17 +125,17 @@ into "CI proves it stays correct."
 
 ## Suggested executor toolkit
 
-- Read `Sources/MacParakeetCore/Audio/README.md` and
-  `Sources/MacParakeetCore/STT/README.md` before editing — they capture the
+- Read `Sources/SottoCore/Audio/README.md` and
+  `Sources/SottoCore/STT/README.md` before editing — they capture the
   threading/generation-guard invariants these tests are meant to protect.
 
 ## Scope
 
 **In scope** (the only files you should modify):
-- `Tests/MacParakeetTests/Audio/MicrophoneEnginePlatformConfigChangeRecoveryTests.swift`
-- `Tests/MacParakeetTests/Services/Dictation/DictationServiceTests.swift`
-- `Tests/MacParakeetTests/Services/MeetingRecording/MeetingTranscriptSourceReconcilerTests.swift` — **only if** Step 3 is explicitly requested.
-- `Tests/MacParakeetTests/STT/MockSTTClient.swift` — **only if** Step 2 proves
+- `Tests/SottoTests/Audio/MicrophoneEnginePlatformConfigChangeRecoveryTests.swift`
+- `Tests/SottoTests/Services/Dictation/DictationServiceTests.swift`
+- `Tests/SottoTests/Services/MeetingRecording/MeetingTranscriptSourceReconcilerTests.swift` — **only if** Step 3 is explicitly requested.
+- `Tests/SottoTests/STT/MockSTTClient.swift` — **only if** Step 2 proves
   the mock cannot express the stale-partial scenario without a tiny additive
   hook (see Step 2; if you touch it, it must be purely additive).
 
@@ -211,7 +211,7 @@ whether the mock can express this** before writing assertions:
      check) that `service.liveTranscript` is **not** `"stale ghost"` — the
      stale partial was dropped by the session-ID guard.
 3. Also add a cancel-mid-stream test if a cancel entry point exists
-   (`grep -n "func cancel" Sources/MacParakeetCore/Services/Dictation/DictationService.swift`):
+   (`grep -n "func cancel" Sources/SottoCore/Services/Dictation/DictationService.swift`):
    start recording, emit a partial, cancel, assert no further partial mutates
    state and the live append/cancel counts are consistent.
 
@@ -229,7 +229,7 @@ the new test(s).
 
 `MeetingTranscriptSourceReconciler` drops a mic run of ≥5 words when fuzzy-LCS ≥80%
 of the simultaneous system tokens. The existing tests in
-`Tests/MacParakeetTests/Services/MeetingRecording/MeetingTranscriptSourceReconcilerTests.swift`
+`Tests/SottoTests/Services/MeetingRecording/MeetingTranscriptSourceReconcilerTests.swift`
 cover the happy path and clear positives/negatives but not the exact 80%
 rounding boundary. If asked to add it: a 5-word mic run matching 4/5 system
 words (80.0%) should drop; matching 3/5 (60%) should be preserved. This is a

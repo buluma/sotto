@@ -5,7 +5,7 @@ Date: 2026-09-13. Status: implemented in this change. Reference:
 
 ## Verdict
 
-MacParakeet already uses the right desktop translation of wide events:
+Sotto already uses the right desktop translation of wide events:
 one `*_operation` outcome per product workflow, plus the bounded
 `audio_engine_lifecycle` snapshot for native microphone work that may
 never return. The remaining holes are joinability, build provenance, and

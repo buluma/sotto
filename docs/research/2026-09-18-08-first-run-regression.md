@@ -10,7 +10,7 @@ Sources: tags `v0.7.3` (`d6321f87`, 2026-07-16) and `v0.8.0`
 (`76c126b1`, 2026-09-09), GitHub PRs
 [#984](https://github.com/moona3k/macparakeet/pull/984) and
 [#1099](https://github.com/moona3k/macparakeet/pull/1099), D1
-`macparakeet-telemetry`, current `HotkeyManager` at those tags.
+`sotto-telemetry`, current `HotkeyManager` at those tags.
 
 ## Verdict
 
@@ -43,7 +43,7 @@ What changed that can produce “they never start”:
 0.8.0 hole.
 
 Onboarding copy, default Fn/Fn shared gesture, and the Ready-screen
-“Open MacParakeet” finish path are **unchanged** from 0.7.3 to 0.8.0.
+“Open Sotto” finish path are **unchanged** from 0.7.3 to 0.8.0.
 The long-running Ready-screen leak is still there; it is not new in 0.8.
 
 ## What the 8 points actually are
@@ -94,7 +94,7 @@ event. `HotkeyTrigger.swift` and `AppHotkeyCoordinator.swift` have
 
 **Rejected as an 0.8.0 delta.** `OnboardingFlowView` still says
 double-tap Fn / hold Fn, still has the no-STT “Try it now” preview,
-still finishes on **“Open MacParakeet.”** Defaults remain
+still finishes on **“Open Sotto.”** Defaults remain
 `.defaultDictation = .fn` and `.defaultPushToTalk = .fn`. The
 Ready-screen leak exists on 0.7.3 too (37.5% is already bad).
 

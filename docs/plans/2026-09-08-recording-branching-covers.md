@@ -11,7 +11,7 @@ Replace generic missing-artwork placeholders with a stable, beautiful Branching 
 ## Settled design
 User selected Branching Field above harmonic and orbital alternatives. Reference: seed72841659, density6, disruption0.44, negative space0.28; three approved curated palettes Tidal stone, Lichen dusk, Plum mineral. Automatically select family and restrained variant from domain-separated deterministic UUID seed streams. No product palette picker. Approximate uniform distribution, not quotas; adding/sorting/deleting recordings cannot recolor others. Color is decorative, never label/status identity.
 
-Use the local study as visual reference: /Users/dmoon/code/macparakeet/docs/design/2026-09-08-recording-art/index.html (renderBranch, paletteForSeed and paletteMap). Do not copy p5 runtime/HTML into the app. Preserve organic branch silhouette, hierarchy, small warm center; make primary limbs legible at thumbnail size. No animation/timers/particles needing continuous updates. Keep title, duration and status in existing card chrome.
+Use the local study as visual reference: /Users/dmoon/code/sotto/docs/design/2026-09-08-recording-art/index.html (renderBranch, paletteForSeed and paletteMap). Do not copy p5 runtime/HTML into the app. Preserve organic branch silhouette, hierarchy, small warm center; make primary limbs legible at thumbnail size. No animation/timers/particles needing continuous updates. Keep title, duration and status in existing card chrome.
 
 The user selected the Recursive Canopy refinement over a denser filigree
 alternative and a Mandelbrot comparison study. Before the first release, v1
@@ -42,7 +42,7 @@ Focused checks used `swift test --jobs 4 --filter BranchingRecordingCoverRecipeT
 
 On the final focused run, the complete Branching Field recipe plus renderer and PNG pipeline measured cold p50/p95 5.36/6.14 ms and warm p50/p95 5.38/6.49 ms across 24 UUIDs; twelve sequential covers took 62.45 ms. A flat waveform placeholder through the same pipeline measured p50/p95 1.41/3.19 ms and 18.89 ms for twelve. These are native synthetic export measurements, not a library scrolling profile; they do not establish a cache need or a no-lag claim. The implementation remains uncached and static pending combined UI QA.
 
-The combined-suite attempt on the stacked UI-plus-art head did not pass: `/tmp/macparakeet-library-art-combined-full-20260908.log` exited 1 after 5,855 XCTest tests with 21 skips and 46 assertion failures across 22 `HotkeyManagerTests`; Swift Testing reported 29 passed. At the same code head, `/tmp/macparakeet-hotkey-focused-20260908-rerun.log` ran the isolated `HotkeyManagerTests` 87/87 passed. Independent UI review found the Hotkey source and tests byte-identical to `origin/main`; all 22 failing cases use the live physical-keyboard default without injection, and the host state was not captured. This remains historical evidence of a likely pre-existing test-isolation flake, not a local full-suite pass. No source or test change was made for it. Hosted exact-head CI subsequently passed in runs 34279191343 and 34279276556.
+The combined-suite attempt on the stacked UI-plus-art head did not pass: `/tmp/sotto-library-art-combined-full-20260908.log` exited 1 after 5,855 XCTest tests with 21 skips and 46 assertion failures across 22 `HotkeyManagerTests`; Swift Testing reported 29 passed. At the same code head, `/tmp/sotto-hotkey-focused-20260908-rerun.log` ran the isolated `HotkeyManagerTests` 87/87 passed. Independent UI review found the Hotkey source and tests byte-identical to `origin/main`; all 22 failing cases use the live physical-keyboard default without injection, and the host state was not captured. This remains historical evidence of a likely pre-existing test-isolation flake, not a local full-suite pass. No source or test change was made for it. Hosted exact-head CI subsequently passed in runs 34279191343 and 34279276556.
 
 ## Recursive Canopy refinement evidence (September 8, 2026)
 The refined recipe preserves the static, UUID-only Canvas architecture with no
@@ -54,8 +54,8 @@ passed all eight focused tests for both the exact prior `origin/main` recipe
 and the refinement. Each renderer run constructed a fresh 320×180 pt SwiftUI
 `ImageRenderer` at 2×, rasterized Canvas, encoded `NSBitmapImageRep` PNG, and
 wrote twelve synthetic covers. The baseline outputs are in
-`/tmp/macparakeet-recursive-canopy-baseline-gallery-20260908`; refined outputs
-are in `/tmp/macparakeet-recursive-canopy-refinement-gallery-20260908`.
+`/tmp/sotto-recursive-canopy-baseline-gallery-20260908`; refined outputs
+are in `/tmp/sotto-recursive-canopy-refinement-gallery-20260908`.
 
 Using that same combined synthetic method, the prior recipe measured cold
 p50/p95 5.66/6.09 ms, warm p50/p95 5.63/6.02 ms, and 67.82 ms for twelve

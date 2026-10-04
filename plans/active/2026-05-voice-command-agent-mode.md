@@ -13,7 +13,7 @@ Updated: 2026-05-10
 ## Objective
 
 Explore a future mode where spoken intent can trigger app actions, selected-text
-rewrites, or constrained agent workflows without weakening MacParakeet's
+rewrites, or constrained agent workflows without weakening Sotto's
 local-first dictation reliability.
 
 This is intentionally separate from paste-targeting UX. Plain dictation now
@@ -24,12 +24,12 @@ safety and product pass before it can use stricter target locking.
 
 ## Product Thesis
 
-MacParakeet should stay excellent at plain dictation first. Voice command or
+Sotto should stay excellent at plain dictation first. Voice command or
 agent behavior is only worth shipping when it feels predictable:
 
 1. normal speech inserts text
 2. command speech is opt-in and visually distinct
-3. actions run only against the intended target app or an explicit MacParakeet tool
+3. actions run only against the intended target app or an explicit Sotto tool
 4. failure never causes wrong-target paste, data loss, or hidden automation
 
 ## Candidate Capabilities

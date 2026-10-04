@@ -136,7 +136,7 @@ The split service uses these focused audio and ownership primitives:
   `MeetingSplitGeometry.ranges(durationMs:cutPointsMs:)` turns approved cut
   points into contiguous, gapless ranges, rejecting zero/terminal/
   out-of-range/duplicate/unordered cuts. See
-  `Sources/MacParakeetCore/Services/MeetingSplit/MeetingSplitSourceRange.swift`.
+  `Sources/SottoCore/Services/MeetingSplit/MeetingSplitSourceRange.swift`.
 - `MeetingSplitAudioExporter.export(sourceFolderURL:sourceAlignment:children:)`
   slices canonical playback plus whichever raw mic/system/cleaned-mic tracks
   are present and overlap each child's range into fresh AAC files at
@@ -146,7 +146,7 @@ The split service uses these focused audio and ownership primitives:
   publishing a silently short file. `inspectSource(sourceFolderURL:)` is a
   read-only, no-write probe returning whole-timeline duration, on-disk size,
   and which optional tracks exist. See
-  `Sources/MacParakeetCore/Services/MeetingSplit/MeetingSplitAudioExporter.swift`.
+  `Sources/SottoCore/Services/MeetingSplit/MeetingSplitAudioExporter.swift`.
 - `MeetingMediaMutationLease` is the cross-process advisory lock a split's
   media preparation/publication and saved-meeting audio deletion/retention
   cleanup both must hold; see its dedicated section in the
@@ -155,7 +155,7 @@ The split service uses these focused audio and ownership primitives:
 
 ### Implemented split service, ownership and CLI (U3)
 
-`MeetingSplitService` (`Sources/MacParakeetCore/Services/MeetingSplit/MeetingSplitService.swift`)
+`MeetingSplitService` (`Sources/SottoCore/Services/MeetingSplit/MeetingSplitService.swift`)
 is the one shared Core operation: `preview`, `createAndProcess`,
 `resumeProcessing`, `operation(id:)`/`operations(sourceId:)`, `discard`, and
 `operationOwnership(operationId:)`. The `meetings split

@@ -9,7 +9,7 @@
 
 ADR-017 shipped calendar-driven auto-*start*, but its **2026-05-22 amendment withdrew calendar-driven auto-*stop***. Scheduled end times are unreliable — meetings overrun constantly — so a clock-driven stop risks **truncating a recording mid-meeting**, and losing the end of a meeting is far worse than over-recording. That amendment named the correct replacement explicitly:
 
-> "the right stop signal is the meeting *actually ending*, detected from the audio MacParakeet already captures (sustained `systemLevel` silence, optionally plus a Zoom-app-quit fast path) — engine-agnostic across the Zoom app, a browser Meet/Teams tab, and in-person recordings. To be specced as its own ADR; deliberately not pre-built here."
+> "the right stop signal is the meeting *actually ending*, detected from the audio Sotto already captures (sustained `systemLevel` silence, optionally plus a Zoom-app-quit fast path) — engine-agnostic across the Zoom app, a browser Meet/Teams tab, and in-person recordings. To be specced as its own ADR; deliberately not pre-built here."
 
 **This is that ADR.** Today recordings stop only manually (one click on the pill). The failure mode it leaves open: a user finishes a call, closes the meeting window, walks away — and the recording keeps running, producing trailing dead air, wasted battery, and a transcript that needs trimming. Auto-start removed "I forgot to start it"; this removes "I forgot to stop it."
 
@@ -23,7 +23,7 @@ Auto-stop is driven only by signals that the meeting is *actually over*. No cale
 
 ### 2. Two signals — sustained silence (primary, engine-agnostic) + recognized-app-quit (fast path)
 
-- **Primary — sustained dual-channel silence.** When both the mic ("You") and system ("Others") audio have been continuously below the speech threshold for a long grace window, the meeting has very likely ended. This is the *engine-agnostic* signal: it works identically for the Zoom app, a browser Meet/Teams tab, and an in-person recording. It reuses the VAD / level signal MacParakeet already computes for live chunking (`MeetingVADService`, and the panel's `systemLevel` / `micLevel`) — no new audio plumbing.
+- **Primary — sustained dual-channel silence.** When both the mic ("You") and system ("Others") audio have been continuously below the speech threshold for a long grace window, the meeting has very likely ended. This is the *engine-agnostic* signal: it works identically for the Zoom app, a browser Meet/Teams tab, and an in-person recording. It reuses the VAD / level signal Sotto already computes for live chunking (`MeetingVADService`, and the panel's `systemLevel` / `micLevel`) — no new audio plumbing.
 - **Fast path — recognized meeting-app termination.** If a recognized conferencing app (bundle-ID allowlist: Zoom `us.zoom.xos`, Teams `com.microsoft.teams2`/`com.microsoft.teams`, Webex `com.cisco.webexmeetingsapp`/`Cisco-Systems.Spark`, FaceTime `com.apple.FaceTime`) that was running *while we recorded* quits, that is a high-confidence "call over" signal — stop responsively, ahead of the silence grace. This covers the most common case (close the Zoom window) without waiting minutes.
 
 > When ADR-024's per-process audio-attribution layer lands, auto-stop can consume the richer "the call's audio session ended" signal (app still open, call ended) in addition to / instead of raw app-quit.
@@ -40,11 +40,11 @@ Auto-stop calls the normal stop through `MeetingRecordingFlowCoordinator` with t
 
 ### 5. Opt-in, default off, one Settings toggle
 
-A single `meetingAutoStopEnabled` preference (default `false`), mirroring the opt-in posture of calendar auto-start. Staged behind a new `AppFeatures.meetingAutoStopEnabled` compile-time flag. The settings plumbing mirrors `calendarAutoStartMode`: persist to a namespaced key → post `.macParakeetMeetingAutoStopDidChange` → `Telemetry.send(.settingChanged(...))`. The toggle lives in the Meeting Recording settings card.
+A single `meetingAutoStopEnabled` preference (default `false`), mirroring the opt-in posture of calendar auto-start. Staged behind a new `AppFeatures.meetingAutoStopEnabled` compile-time flag. The settings plumbing mirrors `calendarAutoStartMode`: persist to a namespaced key → post `.sottoMeetingAutoStopDidChange` → `Telemetry.send(.settingChanged(...))`. The toggle lives in the Meeting Recording settings card.
 
 ### 6. Pure policy + thin coordinator
 
-A pure `MeetingAutoStopPolicy.evaluate(...)` in `MacParakeetCore` (mirrors `MeetingMonitor.evaluate` — all state passed in, no side effects, `Sendable`, trivially unit-testable), and a `@MainActor MeetingAutoStopCoordinator` in the app layer (mirrors `MeetingAutoStartCoordinator`) that, *only while a recording is active*, observes app termination + samples the audio signal, runs the grace clock, and drives the veto countdown.
+A pure `MeetingAutoStopPolicy.evaluate(...)` in `SottoCore` (mirrors `MeetingMonitor.evaluate` — all state passed in, no side effects, `Sendable`, trivially unit-testable), and a `@MainActor MeetingAutoStopCoordinator` in the app layer (mirrors `MeetingAutoStartCoordinator`) that, *only while a recording is active*, observes app termination + samples the audio signal, runs the grace clock, and drives the veto countdown.
 
 ### 7. Correctness invariants
 
@@ -60,7 +60,7 @@ A pure `MeetingAutoStopPolicy.evaluate(...)` in `MacParakeetCore` (mirrors `Meet
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                       MacParakeetCore                        │
+│                       SottoCore                        │
 │                                                              │
 │  MeetingAutoStopPolicy   (pure, Sendable — no AppKit)        │
 │    evaluate(context, observation, config) -> Decision        │
@@ -71,7 +71,7 @@ A pure `MeetingAutoStopPolicy.evaluate(...)` in `MacParakeetCore` (mirrors `Meet
                            │
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    MacParakeet (app layer)                   │
+│                    Sotto (app layer)                   │
 │                                                              │
 │  MeetingAutoStopCoordinator  (@MainActor)                    │
 │    ├── active ONLY while a recording is in flight            │
@@ -112,21 +112,21 @@ A pure `MeetingAutoStopPolicy.evaluate(...)` in `MacParakeetCore` (mirrors `Meet
 
 ## Implementation Direction
 
-### Core (`MacParakeetCore`)
-- `Sources/MacParakeetCore/Services/MeetingRecording/MeetingAutoStopPolicy.swift` — pure `evaluate(...)`, `Decision`/`StopReason`/`MeetingContext`/`Observation`/`Config` value types.
+### Core (`SottoCore`)
+- `Sources/SottoCore/Services/MeetingRecording/MeetingAutoStopPolicy.swift` — pure `evaluate(...)`, `Decision`/`StopReason`/`MeetingContext`/`Observation`/`Config` value types.
 - Recognized conferencing-app bundle-ID registry (shared with ADR-024).
 
-### App layer (`MacParakeet`)
-- `Sources/MacParakeet/App/MeetingAutoStopCoordinator.swift` — wired in `AppEnvironmentConfigurer.swift`; reuses `MeetingCountdownToastController`; calls the flow coordinator's stop with the `.autoStop` operation trigger, distinct from recording-start trigger attribution.
+### App layer (`Sotto`)
+- `Sources/Sotto/App/MeetingAutoStopCoordinator.swift` — wired in `AppEnvironmentConfigurer.swift`; reuses `MeetingCountdownToastController`; calls the flow coordinator's stop with the `.autoStop` operation trigger, distinct from recording-start trigger attribution.
 
-### Settings (`MacParakeetViewModels` + UI)
-- `meetingAutoStopEnabled` on `SettingsViewModel` (namespaced UserDefaults key), posting `.macParakeetMeetingAutoStopDidChange` (add to `AppNotifications.swift`).
+### Settings (`SottoViewModels` + UI)
+- `meetingAutoStopEnabled` on `SettingsViewModel` (namespaced UserDefaults key), posting `.sottoMeetingAutoStopDidChange` (add to `AppNotifications.swift`).
 - Toggle in the Meeting Recording settings card; add to `SettingsSearchIndex`.
 - `AppFeatures.meetingAutoStopEnabled` flag for staged rollout.
 
 ### Telemetry (new cases — must mirror to website allowlist)
 - `meeting_auto_stop_proposed{reason}` · `meeting_auto_stop_confirmed{reason}` · `meeting_auto_stop_vetoed{reason}` · `.settingChanged(setting: .meetingAutoStop)`.
-- Per the telemetry allowlist rule, each new `TelemetryEventName` case must also be added to `ALLOWED_EVENTS` in `macparakeet-website/functions/api/telemetry.ts` (two-repo change) before any flag-on build.
+- Per the telemetry allowlist rule, each new `TelemetryEventName` case must also be added to `ALLOWED_EVENTS` in `sotto-website/functions/api/telemetry.ts` (two-repo change) before any flag-on build.
 
 ## Phased Rollout
 

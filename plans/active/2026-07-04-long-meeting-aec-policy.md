@@ -52,7 +52,7 @@ enrichment lane the measurements justify.
 ## Invariants (must not change)
 
 - Dictation stays on the `interactive` STT slot; no meeting or file work ever
-  routes to it (`Sources/MacParakeetCore/STT/STTScheduler.swift:843`).
+  routes to it (`Sources/SottoCore/STT/STTScheduler.swift:843`).
 - `MeetingTranscriptionQueue` stays single-active for finalization.
 - Raw mic/system artifacts remain the source of truth; cleaned mic remains a
   derivative artifact and is never a replacement for raw.
@@ -72,7 +72,7 @@ inside the readiness cap.
 ### Design (settled — do not re-litigate)
 
 - Add to `MeetingCleanedMicrophoneReadinessPolicy`
-  (`Sources/MacParakeetCore/Services/MeetingRecording/MeetingCleanedMicrophoneReadiness.swift:13-46`):
+  (`Sources/SottoCore/Services/MeetingRecording/MeetingCleanedMicrophoneReadiness.swift:13-46`):
   - a constant `bestMeasuredRealtimeFactor: Double = 12.59` with a comment
     citing `docs/audits/2026-07-04-localvqe-aec-runtime-findings.md` (measured
     11.67-12.59x on M4 Pro; the FASTEST audited measurement is the bound so
@@ -131,7 +131,7 @@ real meeting, per stage.
   artifacts, wall-clock + peak RSS per stage), not the synthetic quality
   harness.
 - Deliverable: an env-gated entry point (env-gated XCTest in the pattern of
-  existing `MACPARAKEET_*`-gated simulation tests, or a `scripts/dev/` runner —
+  existing `SOTTO_*`-gated simulation tests, or a `scripts/dev/` runner —
   executor's choice, but it must NOT run in a default `swift test`) that takes
   a meeting session folder and emits a per-stage markdown table row: decode,
   AEC render, mic STT, system STT, diarization, finalizer merge — each with

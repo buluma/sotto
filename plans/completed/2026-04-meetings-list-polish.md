@@ -58,13 +58,13 @@ Scope is the meetings surface only. Many of the underlying changes (derived colu
 
 | File | Lines | Role |
 |---|---|---|
-| `Sources/MacParakeet/Views/MeetingRecording/MeetingsView.swift` | 1–171 | Header, search, list container |
-| `Sources/MacParakeet/Views/MeetingRecording/MeetingRowCard.swift` | 1–248 | Row component (target of redesign) |
-| `Sources/MacParakeetCore/Models/Transcription.swift` | 1–55 | Data model (target of derived fields) |
-| `Sources/MacParakeetCore/Database/TranscriptionRepository.swift` | — | CRUD; new fetch path for grouped lists |
-| `Sources/MacParakeetCore/Database/DatabaseManager.swift` | 53–549 | Migrations (inline closure pattern) |
-| `Sources/MacParakeetViewModels/TranscriptionLibraryViewModel.swift` | 1–73 | Owns filter/sort/scope; needs grouping output |
-| `Sources/MacParakeet/Views/Components/DesignSystem.swift` | — | Tokens (use `Colors.warningAmber`, `Animation.hoverTransition`, etc.) |
+| `Sources/Sotto/Views/MeetingRecording/MeetingsView.swift` | 1–171 | Header, search, list container |
+| `Sources/Sotto/Views/MeetingRecording/MeetingRowCard.swift` | 1–248 | Row component (target of redesign) |
+| `Sources/SottoCore/Models/Transcription.swift` | 1–55 | Data model (target of derived fields) |
+| `Sources/SottoCore/Database/TranscriptionRepository.swift` | — | CRUD; new fetch path for grouped lists |
+| `Sources/SottoCore/Database/DatabaseManager.swift` | 53–549 | Migrations (inline closure pattern) |
+| `Sources/SottoViewModels/TranscriptionLibraryViewModel.swift` | 1–73 | Owns filter/sort/scope; needs grouping output |
+| `Sources/Sotto/Views/Components/DesignSystem.swift` | — | Tokens (use `Colors.warningAmber`, `Animation.hoverTransition`, etc.) |
 
 ## Information placement
 
@@ -148,8 +148,8 @@ Low-risk, no UI chrome change. Lands the data plumbing the visual phases depend 
 #### A.1 Add `derivedTitle` and `derivedSnippet` columns
 
 **Files:**
-- `Sources/MacParakeetCore/Database/DatabaseManager.swift` — register new migration
-- `Sources/MacParakeetCore/Models/Transcription.swift` — add fields
+- `Sources/SottoCore/Database/DatabaseManager.swift` — register new migration
+- `Sources/SottoCore/Models/Transcription.swift` — add fields
 
 **Migration name:** `v0.9-derived-title-snippet` (or next-available; verify at impl time).
 
@@ -165,11 +165,11 @@ migrator.registerMigration("v0.9-derived-title-snippet") { db in
 **Acceptance:**
 - [ ] Migration runs cleanly on a v0.8 database.
 - [ ] Existing rows have `nil` for both fields immediately post-migration.
-- [ ] Existing tests in `MacParakeetTests` still pass.
+- [ ] Existing tests in `SottoTests` still pass.
 
 #### A.2 Backfill derived fields on first launch
 
-**Files:** new `Sources/MacParakeetCore/Services/DerivedFieldsBackfillService.swift`
+**Files:** new `Sources/SottoCore/Services/DerivedFieldsBackfillService.swift`
 
 - On app start, query for `transcriptions WHERE derivedTitle IS NULL AND status = 'completed'`.
 - Run derivation in batches of 50, on a low-priority background queue.
@@ -183,7 +183,7 @@ migrator.registerMigration("v0.9-derived-title-snippet") { db in
 
 #### A.3 Tier-1 auto-title derivation
 
-**Files:** new `Sources/MacParakeetCore/TextProcessing/TitleDeriver.swift`
+**Files:** new `Sources/SottoCore/TextProcessing/TitleDeriver.swift`
 
 Algorithm:
 1. If `cleanTranscript ?? rawTranscript` is empty or <30 chars → fall back to `"{time-of-day}"` (e.g., "1:53 PM").
@@ -203,7 +203,7 @@ Algorithm:
 
 #### A.4 Smart snippet derivation
 
-**Files:** `Sources/MacParakeetCore/TextProcessing/SnippetDeriver.swift`
+**Files:** `Sources/SottoCore/TextProcessing/SnippetDeriver.swift`
 
 Algorithm:
 1. From the first 10% of transcript, find the longest sentence in [40, 140] chars after filler-stripping.
@@ -217,7 +217,7 @@ Algorithm:
 
 #### A.5 Hook derivation into save path
 
-**Files:** `Sources/MacParakeetCore/Services/MeetingRecordingService.swift` (or wherever transcription completes)
+**Files:** `Sources/SottoCore/Services/MeetingRecordingService.swift` (or wherever transcription completes)
 
 After transcription completes, before saving the row:
 ```swift
@@ -232,7 +232,7 @@ record.derivedSnippet = SnippetDeriver.derive(from: record)
 
 #### A.6 Sub-5s recording gate
 
-**Files:** `Sources/MacParakeetCore/Services/MeetingRecordingService.swift` — `stopRecording()`
+**Files:** `Sources/SottoCore/Services/MeetingRecordingService.swift` — `stopRecording()`
 
 If recorded duration < 5000 ms:
 - Don't persist a `Transcription` row.
@@ -249,7 +249,7 @@ Threshold lives as a constant `MeetingRecordingService.minPersistedDurationMs = 
 
 #### A.7 Date grouping in view model
 
-**Files:** `Sources/MacParakeetViewModels/TranscriptionLibraryViewModel.swift` — extend with `groupedTranscriptions: [(DateGroup, [Transcription])]` computed property.
+**Files:** `Sources/SottoViewModels/TranscriptionLibraryViewModel.swift` — extend with `groupedTranscriptions: [(DateGroup, [Transcription])]` computed property.
 
 ```swift
 public enum DateGroup: Hashable {
@@ -276,7 +276,7 @@ Group computation:
 
 #### B.1 New `MeetingRowCard` layout
 
-**Files:** `Sources/MacParakeet/Views/MeetingRecording/MeetingRowCard.swift` — full rewrite.
+**Files:** `Sources/Sotto/Views/MeetingRecording/MeetingRowCard.swift` — full rewrite.
 
 Replace the duration column / icon strip / inline-snippet structure with the two-column layout in the spec above. Use `derivedTitle` / `derivedSnippet` for content. Conditional decorators per the placement table.
 
@@ -292,7 +292,7 @@ Replace the duration column / icon strip / inline-snippet structure with the two
 
 #### B.2 Date group headers in `MeetingsView`
 
-**Files:** `Sources/MacParakeet/Views/MeetingRecording/MeetingsView.swift` — replace `LazyVStack` of rows with sections.
+**Files:** `Sources/Sotto/Views/MeetingRecording/MeetingsView.swift` — replace `LazyVStack` of rows with sections.
 
 ```swift
 LazyVStack(alignment: .leading, spacing: 0) {
@@ -372,7 +372,7 @@ LazyVStack(alignment: .leading, spacing: 0) {
 
 #### D.1 Active recording banner
 
-**Files:** new `Sources/MacParakeet/Views/MeetingRecording/ActiveRecordingBanner.swift`; insert at top of `MeetingsView` list when recording is live.
+**Files:** new `Sources/Sotto/Views/MeetingRecording/ActiveRecordingBanner.swift`; insert at top of `MeetingsView` list when recording is live.
 
 - Subscribes to `MeetingRecordingService.state`.
 - Shows when state is `.recording` or `.transcribing`.

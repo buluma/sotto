@@ -11,7 +11,7 @@
 
 Add `--json` to the four LLM CLI commands (`summarize`, `chat`, `transform`, `test-connection`) plus `prompts run`, before 1.x output shapes harden into a contract. Agents calling the CLI today get free-form prose; they want a structured envelope with model, usage, and latency so cost/observability dashboards work and so multi-step pipelines don't have to regex the output.
 
-This is mostly a **MacParakeetCore refactor**: today `LLMService.summarize/chat/transform` returns `String`. To populate `usage`/`stopReason`/`latencyMs`, each of the 8 providers in `RoutingLLMClient` needs to surface a result envelope. The CLI change is the easy part.
+This is mostly a **SottoCore refactor**: today `LLMService.summarize/chat/transform` returns `String`. To populate `usage`/`stopReason`/`latencyMs`, each of the 8 providers in `RoutingLLMClient` needs to surface a result envelope. The CLI change is the easy part.
 
 ---
 
@@ -87,7 +87,7 @@ Normalization rule: providers map their native usage fields to `promptTokens`/`c
 
 ## Implementation phases
 
-### Phase 1 — Core API change (MacParakeetCore)
+### Phase 1 — Core API change (SottoCore)
 
 Add a result envelope type:
 
@@ -173,8 +173,8 @@ Plan doc lands now (cheap, lets reviewers redirect schema decisions before code 
 
 - **Cost-in-USD calculation.** Token counts are enough. Pricing tables churn weekly and belong in user-facing dashboards, not in a deterministic CLI envelope.
 - **`stopReason` normalization.** Pass-through. Each agent ecosystem will normalize per their own taxonomy.
-- **Tool-use / function-calling envelope.** Not surfaced today by these commands; revisit when/if MacParakeet exposes it.
-- **Cache hit/miss flags.** Anthropic prompt caching surfaces these, but not all providers do — and MacParakeet doesn't currently use prompt caching anywhere.
+- **Tool-use / function-calling envelope.** Not surfaced today by these commands; revisit when/if Sotto exposes it.
+- **Cache hit/miss flags.** Anthropic prompt caching surfaces these, but not all providers do — and Sotto doesn't currently use prompt caching anywhere.
 - **Backwards-compatibility for the existing `String`-returning methods.** Keep them. The GUI is a happy consumer; no reason to churn.
 
 ---
@@ -187,4 +187,4 @@ None left to resolve. (Earlier round: token names = OpenAI-compat; `stopReason` 
 
 ## Success signal
 
-An agent author can pipe `macparakeet-cli llm summarize transcript.txt --provider anthropic --api-key ... --json | jq '.usage.totalTokens'` and get an integer. The same envelope shape is observable across all 8 providers, with the `usage` field honestly absent when unavailable. NDJSON streaming will let `read line; jq -r '.output' <<< "$line"` work in a shell loop in the follow-up.
+An agent author can pipe `sotto-cli llm summarize transcript.txt --provider anthropic --api-key ... --json | jq '.usage.totalTokens'` and get an integer. The same envelope shape is observable across all 8 providers, with the `usage` field honestly absent when unavailable. NDJSON streaming will let `read line; jq -r '.output' <<< "$line"` work in a shell loop in the follow-up.

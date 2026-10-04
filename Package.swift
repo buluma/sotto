@@ -3,12 +3,12 @@
 import PackageDescription
 import Foundation
 
-let skipWhisperKit = ProcessInfo.processInfo.environment["MACPARAKEET_SKIP_WHISPERKIT"] == "1"
+let skipWhisperKit = ProcessInfo.processInfo.environment["SOTTO_SKIP_WHISPERKIT"] == "1"
 // The existing no-WhisperKit mode is the repository's first-party Swift 6
 // compatibility build. Omit the Swift 5-only Markdown dependency graph there
 // as well; normal release, concurrency, and test builds still compile it.
 let skipStreamingMarkdown = skipWhisperKit
-let enableMLXLocalLLM = ProcessInfo.processInfo.environment["MACPARAKEET_ENABLE_MLX_LOCAL_LLM"] == "1"
+let enableMLXLocalLLM = ProcessInfo.processInfo.environment["SOTTO_ENABLE_MLX_LOCAL_LLM"] == "1"
 
 let streamingMarkdownPackageDependencies: [Package.Dependency] = skipStreamingMarkdown ? [] : [
     // Shared SwiftUI renderer for static and streaming LLM Markdown output.
@@ -34,8 +34,6 @@ let packageDependencies: [Package.Dependency] = [
     .package(url: "https://github.com/FluidInference/FluidAudio", exact: "0.17.4"),
     // ArgumentParser for CLI
     .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
-    // Sparkle for auto-updates (non-App Store distribution)
-    .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.9.0"),
     // FluidAudio's Swift module exposes yyjson under current Xcode/Swift.
     .package(url: "https://github.com/ibireme/yyjson.git", exact: "0.12.0"),
     // WhisperKit for multilingual STT fallback (Korean + 95 other languages).
@@ -60,67 +58,66 @@ let coreDependencies: [Target.Dependency] = [
     .product(name: "GRDB", package: "GRDB.swift"),
     .product(name: "FluidAudio", package: "FluidAudio"),
     .product(name: "yyjson", package: "yyjson"),
-    "MacParakeetObjCShims"
+    "SottoObjCShims"
 ] + (skipWhisperKit ? [] : [
     .product(name: "WhisperKit", package: "argmax-oss-swift")
 ])
 
 let whisperKitSwiftSettings: [SwiftSetting] = skipWhisperKit ? [] : [
-    .define("MACPARAKEET_HAS_WHISPERKIT")
+    .define("SOTTO_HAS_WHISPERKIT")
 ]
 
 let mlxLocalLLMSwiftSettings: [SwiftSetting] = enableMLXLocalLLM ? [
-    .define("MACPARAKEET_HAS_MLX_LOCAL_LLM")
+    .define("SOTTO_HAS_MLX_LOCAL_LLM")
 ] : []
 
 let streamingMarkdownTargetDependencies: [Target.Dependency] = skipStreamingMarkdown ? [] : [
     .product(name: "SwiftStreamingMarkdown", package: "SwiftStreamingMarkdown")
 ]
 let appDependencies: [Target.Dependency] = [
-    "MacParakeetCore",
-    "MacParakeetViewModels",
-    .product(name: "Sparkle", package: "Sparkle"),
+    "SottoCore",
+    "SottoViewModels",
 ] + streamingMarkdownTargetDependencies + (enableMLXLocalLLM ? [
-    "MacParakeetLocalLLM"
+    "SottoLocalLLM"
 ] : [])
 
 let appTestDependencies: [Target.Dependency] = [
-    "MacParakeet",
-    "MacParakeetCore",
-    "MacParakeetViewModels",
-    "MacParakeetObjCShims",
+    "Sotto",
+    "SottoCore",
+    "SottoViewModels",
+    "SottoObjCShims",
 ] + streamingMarkdownTargetDependencies + (enableMLXLocalLLM ? [
-    "MacParakeetLocalLLM"
+    "SottoLocalLLM"
 ] : [])
 
 let mlxLocalLLMTargets: [Target] = enableMLXLocalLLM ? [
     .target(
-        name: "MacParakeetLocalLLM",
+        name: "SottoLocalLLM",
         dependencies: [
-            "MacParakeetCore",
+            "SottoCore",
             .product(name: "MLXLLM", package: "mlx-swift-lm"),
             .product(name: "MLXLMCommon", package: "mlx-swift-lm"),
             .product(name: "MLXHuggingFace", package: "mlx-swift-lm"),
             .product(name: "Tokenizers", package: "swift-transformers"),
         ],
-        path: "Sources/MacParakeetLocalLLM",
+        path: "Sources/SottoLocalLLM",
         swiftSettings: mlxLocalLLMSwiftSettings
     )
 ] : []
 
 let package = Package(
-    name: "MacParakeet",
+    name: "Sotto",
     platforms: [
         // Note: SPM doesn't support patch-level versions for macOS 14, but the app
         // documents macOS 14.2+ and enforces it at runtime.
         .macOS(.v14)
     ],
     products: [
-        .executable(name: "MacParakeet", targets: ["MacParakeet"]),
-        .executable(name: "macparakeet-cli", targets: ["CLI"]),
+        .executable(name: "Sotto", targets: ["Sotto"]),
+        .executable(name: "sotto-cli", targets: ["CLI"]),
         .executable(name: "diarization-benchmark", targets: ["DiarizationBenchmark"]),
-        .library(name: "MacParakeetCore", targets: ["MacParakeetCore"]),
-        .library(name: "MacParakeetViewModels", targets: ["MacParakeetViewModels"])
+        .library(name: "SottoCore", targets: ["SottoCore"]),
+        .library(name: "SottoViewModels", targets: ["SottoViewModels"])
     ],
     dependencies: packageDependencies,
     targets: [
@@ -128,26 +125,26 @@ let package = Package(
         .executableTarget(
             name: "DiarizationBenchmark",
             dependencies: [
-                "MacParakeetCore",
+                "SottoCore",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ],
             path: "benchmarks/diarization/Sources"
         ),
         // Main GUI app
         .executableTarget(
-            name: "MacParakeet",
+            name: "Sotto",
             dependencies: appDependencies,
-            path: "Sources/MacParakeet",
+            path: "Sources/Sotto",
             resources: [.process("Resources")],
             swiftSettings: mlxLocalLLMSwiftSettings
         ),
-        // macparakeet-cli — versioned public surface (semver, Sources/CLI/CHANGELOG.md).
+        // sotto-cli — versioned public surface (semver, Sources/CLI/CHANGELOG.md).
         // Consumed by the macOS app, scripted callers, and downstream agent skills
         // (see /AGENTS.md and integrations/README.md).
         .executableTarget(
             name: "CLI",
             dependencies: [
-                "MacParakeetCore",
+                "SottoCore",
                 .product(name: "ArgumentParser", package: "swift-argument-parser")
             ],
             path: "Sources/CLI",
@@ -158,15 +155,15 @@ let package = Package(
         // AppKit / AVFoundation / Core Audio — we need an @try/@catch trampoline
         // to convert them into Swift-throwable NSError values. See issue #91.
         .target(
-            name: "MacParakeetObjCShims",
-            path: "Sources/MacParakeetObjCShims",
+            name: "SottoObjCShims",
+            path: "Sources/SottoObjCShims",
             publicHeadersPath: "include"
         ),
         // Shared core library (no UI dependencies)
         .target(
-            name: "MacParakeetCore",
+            name: "SottoCore",
             dependencies: coreDependencies,
-            path: "Sources/MacParakeetCore",
+            path: "Sources/SottoCore",
             exclude: [
                 "Audio/README.md",
                 "Calendar/README.md",
@@ -182,21 +179,34 @@ let package = Package(
         ),
         // ViewModels library (testable, depends on Core + AppKit/SwiftUI)
         .target(
-            name: "MacParakeetViewModels",
-            dependencies: ["MacParakeetCore"],
-            path: "Sources/MacParakeetViewModels"
+            name: "SottoViewModels",
+            dependencies: ["SottoCore"],
+            path: "Sources/SottoViewModels"
         ),
         // Tests
         .testTarget(
-            name: "MacParakeetTests",
+            name: "SottoTests",
             dependencies: appTestDependencies,
-            path: "Tests/MacParakeetTests",
+            path: "Tests/SottoTests",
             swiftSettings: whisperKitSwiftSettings + mlxLocalLLMSwiftSettings
         ),
         .testTarget(
+            name: "SottoCoreIdentityTests",
+            dependencies: ["SottoCore"],
+            path: "Tests/SottoCoreIdentityTests"
+        ),
+        .testTarget(
             name: "CLITests",
-            dependencies: ["CLI", "MacParakeetCore"],
+            dependencies: ["CLI", "SottoCore"],
             path: "Tests/CLITests"
         )
     ] + mlxLocalLLMTargets
 )
+
+// A personal CLI-only build can run without full Xcode's SwiftUI tooling.
+// Use together with SOTTO_SKIP_WHISPERKIT=1 for the reduced dependency graph.
+if ProcessInfo.processInfo.environment["SOTTO_CLI_ONLY"] == "1" {
+    let excludedTargets: Set<String> = ["Sotto", "SottoViewModels", "SottoLocalLLM", "SottoTests"]
+    package.targets.removeAll { excludedTargets.contains($0.name) }
+    package.products.removeAll { ["Sotto", "SottoViewModels"].contains($0.name) }
+}

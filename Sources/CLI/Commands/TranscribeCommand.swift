@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 import os
 
 enum TranscribeMode: String, ExpressibleByArgument {
@@ -73,14 +73,7 @@ struct TranscribeCommand: AsyncParsableCommand, CLITelemetryMetadataProviding {
         commandName: "transcribe",
         abstract: "Transcribe files, folders, Apple Podcasts, podcast searches, or media URLs.",
         discussion: """
-        Telemetry: the root CLI runner emits one privacy-safe `cli_operation` \
-        event per invocation; `transcribe` adds allowlisted input/output metadata \
-        (input_kind, output_format, json). It never includes the path, URL, \
-        transcript, language value, or user content. Disable with \
-        `MACPARAKEET_TELEMETRY=0`, `DO_NOT_TRACK=1`, the persistent \
-        `macparakeet-cli config set telemetry off`, or the GUI Settings toggle. \
-        Auto-disabled in CI (CI/GITHUB_ACTIONS/etc.). See \
-        https://github.com/moona3k/macparakeet/blob/main/docs/telemetry.md.
+        Sotto sends no remote telemetry. Updates are manual.
         """
     )
 
@@ -147,7 +140,7 @@ struct TranscribeCommand: AsyncParsableCommand, CLITelemetryMetadataProviding {
     @Flag(help: "Run retained entitlement checks before transcribing. Current free builds remain unlocked.")
     var enforceEntitlements: Bool = false
 
-    @Flag(name: .long, help: "Do not save the completed transcription to MacParakeet history. Downloaded media is temporary.")
+    @Flag(name: .long, help: "Do not save the completed transcription to Sotto history. Downloaded media is temporary.")
     var noHistory: Bool = false
 
     var cliTelemetryMetadata: CLITelemetry.OperationMetadata {
@@ -531,7 +524,7 @@ struct TranscribeCommand: AsyncParsableCommand, CLITelemetryMetadataProviding {
             let customWordRepo = CustomWordRepository(dbQueue: dbManager.dbQueue)
             let snippetRepo = TextSnippetRepository(dbQueue: dbManager.dbQueue)
             let promptResultRepo = PromptResultRepository(dbQueue: dbManager.dbQueue)
-            let defaults = macParakeetAppDefaults()
+            let defaults = sottoAppDefaults()
             let storedSpeechEngine = defaults.string(forKey: SpeechEnginePreference.defaultsKey)
             let physicalMemoryBytes = ProcessInfo.processInfo.physicalMemory
             let speechEngine = Self.resolveSpeechEngine(
@@ -1089,26 +1082,26 @@ struct TranscribeCommand: AsyncParsableCommand, CLITelemetryMetadataProviding {
 
     private func makeEntitlementsService() -> EntitlementsService {
         let checkoutURLString =
-            (Bundle.main.object(forInfoDictionaryKey: "MacParakeetCheckoutURL") as? String)
-            ?? ProcessInfo.processInfo.environment["MACPARAKEET_CHECKOUT_URL"]
+            (Bundle.main.object(forInfoDictionaryKey: "SottoCheckoutURL") as? String)
+            ?? ProcessInfo.processInfo.environment["SOTTO_CHECKOUT_URL"]
         let checkoutURL = checkoutURLString
             .flatMap { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .flatMap { $0.isEmpty ? nil : $0 }
             .flatMap(URL.init(string:))
 
         let expectedVariantID: Int? = {
-            if let n = Bundle.main.object(forInfoDictionaryKey: "MacParakeetLemonSqueezyVariantID") as? NSNumber {
+            if let n = Bundle.main.object(forInfoDictionaryKey: "SottoLemonSqueezyVariantID") as? NSNumber {
                 return n.intValue
             }
             let s =
-                (Bundle.main.object(forInfoDictionaryKey: "MacParakeetLemonSqueezyVariantID") as? String)
-                ?? ProcessInfo.processInfo.environment["MACPARAKEET_LS_VARIANT_ID"]
+                (Bundle.main.object(forInfoDictionaryKey: "SottoLemonSqueezyVariantID") as? String)
+                ?? ProcessInfo.processInfo.environment["SOTTO_LS_VARIANT_ID"]
             guard let s, !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
             return Int(s.trimmingCharacters(in: .whitespacesAndNewlines))
         }()
 
         let config = LicensingConfig(checkoutURL: checkoutURL, expectedVariantID: expectedVariantID)
-        let serviceName = Bundle.main.bundleIdentifier ?? "com.macparakeet"
+        let serviceName = Bundle.main.bundleIdentifier ?? "com.sotto"
         let store = KeychainKeyValueStore(service: serviceName)
         return EntitlementsService(config: config, store: store, api: LemonSqueezyLicenseAPI())
     }
@@ -1125,7 +1118,7 @@ struct TranscribeCommand: AsyncParsableCommand, CLITelemetryMetadataProviding {
         guard !noHistory, format == .text || format == .transcript else { return }
         printErr("")
         printErr("Saved to your library (id \(t.id.uuidString)).")
-        printErr("Turn it into a file: macparakeet-cli export \(t.id.uuidString) --format vtt"
+        printErr("Turn it into a file: sotto-cli export \(t.id.uuidString) --format vtt"
             + "   (or srt, dapt, txt, markdown, json)")
     }
 

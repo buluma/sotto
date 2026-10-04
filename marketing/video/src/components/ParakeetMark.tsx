@@ -28,7 +28,7 @@ export const ParakeetMark: React.FC<ParakeetMarkProps> = ({
       height={size}
       style={{ color, opacity, display: 'block' }}
       role="img"
-      aria-label="MacParakeet"
+      aria-label="Sotto"
     >
       <path
         fill="currentColor"

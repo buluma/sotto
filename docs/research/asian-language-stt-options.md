@@ -1,4 +1,4 @@
-# Asian Language STT Options for MacParakeet
+# Asian Language STT Options for Sotto
 
 > Status: **HISTORICAL** — Research findings from before the WhisperKit implementation
 > Last verified: 2026-04-02
@@ -6,7 +6,7 @@
 
 ## Summary
 
-MacParakeet uses Parakeet TDT 0.6B via FluidAudio CoreML. The default v3 build supports **25 European languages only**; the opt-in v2 build is English-only. This document evaluates options for adding Asian language support (Korean, Japanese, Chinese, and others).
+Sotto uses Parakeet TDT 0.6B via FluidAudio CoreML. The default v3 build supports **25 European languages only**; the opt-in v2 build is English-only. This document evaluates options for adding Asian language support (Korean, Japanese, Chinese, and others).
 
 **Bottom line:** No model matches Parakeet's speed (~155x realtime baseline, ~190x on M4 Pro) for Asian languages today. The best available option is **Qwen3-ASR-0.6B via FluidAudio CoreML** (~3–5x realtime), which is already shipped in FluidAudio v0.12.1+ and requires no new dependencies. Accuracy is strong — it beats Whisper large-v3 (a 2.5x larger model) on Chinese and is competitive on Korean/Japanese.
 
@@ -21,7 +21,7 @@ MacParakeet uses Parakeet TDT 0.6B via FluidAudio CoreML. The default v3 build s
 | English WER | ~1.93% (LibriSpeech test-clean) |
 | Speed | ~155x realtime baseline (M1); ~190x on M4 Pro |
 | Working memory | ~66 MB |
-| Model size on disk | ~465 MB fetched components per Parakeet build in current MacParakeet usage |
+| Model size on disk | ~465 MB fetched components per Parakeet build in current Sotto usage |
 | Asian languages | **None** |
 
 Source: [nvidia/parakeet-tdt-0.6b-v3 (HuggingFace)](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3)
@@ -186,7 +186,7 @@ Source: [NVIDIA Riva ASR Support Matrix](https://docs.nvidia.com/nim/riva/asr/la
 
 ## Architecture Assessment
 
-MacParakeet's `STTClientProtocol` is already engine-agnostic. Both `DictationService` and `TranscriptionService` depend only on the protocol. Adding a second engine requires:
+Sotto's `STTClientProtocol` is already engine-agnostic. Both `DictationService` and `TranscriptionService` depend only on the protocol. Adding a second engine requires:
 
 1. A new `STTClientProtocol` conformance (e.g., `QwenSTTClient`) wrapping FluidAudio's Qwen3-ASR API
 2. A routing layer in `AppEnvironment` that picks the engine based on language setting

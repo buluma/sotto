@@ -26,7 +26,7 @@ compatibility that no runtime consumer depends on yet.
 
 ## Problem Frame
 
-The current PR stack gives MacParakeet the right foundation: per-process audio
+The current PR stack gives Sotto the right foundation: per-process audio
 activity, global camera activity, a trust-tiered app registry, a pure detector,
 auto-stop policy, and mic-health monitoring. That foundation is not enough for
 the desired user experience.
@@ -47,9 +47,9 @@ suppression, and a runtime refresh policy before the feature is exposed.
   wiring, prompt telemetry, and staged rollout.
 - REQ-MEET-016 is active and explicitly says Phases A+B are only the
   default-off foundation.
-- `Sources/MacParakeetCore/MeetingDetection/ActivitySignalSnapshot.swift`
+- `Sources/SottoCore/MeetingDetection/ActivitySignalSnapshot.swift`
   currently carries `hasRecognizedMeetingURL` as a boolean, not a room identity.
-- `Sources/MacParakeetCore/MeetingDetection/MeetingActivityDetector.swift`
+- `Sources/SottoCore/MeetingDetection/MeetingActivityDetector.swift`
   currently returns `MeetingIdentity(source: .app/.camera, app: MeetingApp?)`,
   which is too coarse for same-session suppression or evidence explanations.
 - No `MeetingActivityDetectionCoordinator`, prompt state machine, or browser
@@ -226,19 +226,19 @@ stateDiagram-v2
 - **Requirements:** R1, R2, R4, R5, R6, R15.
 - **Dependencies:** None.
 - **Files:**
-  - `Sources/MacParakeetCore/MeetingDetection/MeetingCandidate.swift`
-  - `Sources/MacParakeetCore/MeetingDetection/MeetingURLIdentity.swift`
-  - `Sources/MacParakeetCore/MeetingDetection/ActivitySignalSnapshot.swift`
-  - `Sources/MacParakeetCore/Calendar/MeetingLinkParser.swift`
-  - `Tests/MacParakeetTests/MeetingDetection/MeetingURLIdentityTests.swift`
+  - `Sources/SottoCore/MeetingDetection/MeetingCandidate.swift`
+  - `Sources/SottoCore/MeetingDetection/MeetingURLIdentity.swift`
+  - `Sources/SottoCore/MeetingDetection/ActivitySignalSnapshot.swift`
+  - `Sources/SottoCore/Calendar/MeetingLinkParser.swift`
+  - `Tests/SottoTests/MeetingDetection/MeetingURLIdentityTests.swift`
 - **Approach:** Add `MeetingCandidate`, `MeetingCandidate.Evidence`,
   `BrowserMeetingContext`, and `MeetingURLIdentity`. Keep raw URL handling out
   of telemetry-facing types. Extend `ActivitySignalSnapshot` from a boolean
   `hasRecognizedMeetingURL` to optional browser meeting contexts while keeping
   a compatibility initializer if it reduces churn.
 - **Patterns to follow:** Existing `Sendable` value types in
-  `Sources/MacParakeetCore/MeetingDetection/ActivitySignalSnapshot.swift`;
-  existing URL service detection in `Sources/MacParakeetCore/Calendar/MeetingLinkParser.swift`.
+  `Sources/SottoCore/MeetingDetection/ActivitySignalSnapshot.swift`;
+  existing URL service detection in `Sources/SottoCore/Calendar/MeetingLinkParser.swift`.
 - **Test scenarios:**
   - Google Meet URL with query parameters normalizes to a stable room ID.
   - Google Meet landing pages and malformed paths return no meeting identity.
@@ -255,18 +255,18 @@ stateDiagram-v2
 - **Requirements:** R1, R2, R4, R5, R6, R7.
 - **Dependencies:** U1.
 - **Files:**
-  - `Sources/MacParakeetCore/MeetingDetection/MeetingCandidateResolver.swift`
-  - `Sources/MacParakeetCore/MeetingDetection/MeetingActivityDetector.swift`
-  - `Sources/MacParakeetCore/MeetingDetection/MeetingAppRegistry.swift`
-  - `Tests/MacParakeetTests/MeetingDetection/MeetingCandidateResolverTests.swift`
-  - `Tests/MacParakeetTests/MeetingDetection/MeetingActivityDetectorTests.swift`
+  - `Sources/SottoCore/MeetingDetection/MeetingCandidateResolver.swift`
+  - `Sources/SottoCore/MeetingDetection/MeetingActivityDetector.swift`
+  - `Sources/SottoCore/MeetingDetection/MeetingAppRegistry.swift`
+  - `Tests/SottoTests/MeetingDetection/MeetingCandidateResolverTests.swift`
+  - `Tests/SottoTests/MeetingDetection/MeetingActivityDetectorTests.swift`
 - **Approach:** Move app/browser/camera fusion into a pure resolver. Keep
   `MeetingActivityDetector.evaluate(...)` as the policy facade, but make it
   operate on candidates. Preserve the conservative false-positive rules:
   mic required, camera alone rejected, output-only rejected, Slack requires
   full duplex, and browser requires a focused URL or attributed browser input.
 - **Patterns to follow:** Current pure detector tests in
-  `Tests/MacParakeetTests/MeetingDetection/MeetingActivityDetectorTests.swift`;
+  `Tests/SottoTests/MeetingDetection/MeetingActivityDetectorTests.swift`;
   app tiers in `MeetingAppRegistry`.
 - **Test scenarios:**
   - Dedicated app holding mic resolves to an app candidate with source bundle ID
@@ -290,10 +290,10 @@ stateDiagram-v2
 - **Requirements:** R5, R8, R9, R15.
 - **Dependencies:** U1.
 - **Files:**
-  - `Sources/MacParakeet/App/MeetingActivity/BrowserMeetingURLCollector.swift`
-  - `Sources/MacParakeet/App/MeetingActivity/RunningApplicationSnapshot.swift`
-  - `Tests/MacParakeetTests/MeetingActivity/BrowserMeetingURLCollectorTests.swift`
-  - `Tests/MacParakeetTests/Calendar/MeetingLinkParserTests.swift`
+  - `Sources/Sotto/App/MeetingActivity/BrowserMeetingURLCollector.swift`
+  - `Sources/Sotto/App/MeetingActivity/RunningApplicationSnapshot.swift`
+  - `Tests/SottoTests/MeetingActivity/BrowserMeetingURLCollectorTests.swift`
+  - `Tests/SottoTests/Calendar/MeetingLinkParserTests.swift`
 - **Approach:** Probe browser window document URLs via Accessibility metadata
   first. Add an optional, throttled active-tab fallback only for an allowlist of
   browsers that can be addressed by existing process ID without relaunching.
@@ -321,12 +321,12 @@ stateDiagram-v2
 - **Requirements:** R7, R8, R9, R14.
 - **Dependencies:** U1, U2, U3.
 - **Files:**
-  - `Sources/MacParakeetCore/MeetingDetection/MeetingSignalRefreshPolicy.swift`
-  - `Sources/MacParakeetCore/MeetingDetection/AudioProcessActivityCollector.swift`
-  - `Sources/MacParakeetCore/MeetingDetection/CameraActivityCollector.swift`
-  - `Tests/MacParakeetTests/MeetingDetection/MeetingSignalRefreshPolicyTests.swift`
-  - `Tests/MacParakeetTests/MeetingDetection/AudioProcessActivityCollectorTests.swift`
-  - `Tests/MacParakeetTests/MeetingDetection/CameraActivityCollectorTests.swift`
+  - `Sources/SottoCore/MeetingDetection/MeetingSignalRefreshPolicy.swift`
+  - `Sources/SottoCore/MeetingDetection/AudioProcessActivityCollector.swift`
+  - `Sources/SottoCore/MeetingDetection/CameraActivityCollector.swift`
+  - `Tests/SottoTests/MeetingDetection/MeetingSignalRefreshPolicyTests.swift`
+  - `Tests/SottoTests/MeetingDetection/AudioProcessActivityCollectorTests.swift`
+  - `Tests/SottoTests/MeetingDetection/CameraActivityCollectorTests.swift`
 - **Approach:** Add an idle/suspicious policy that decides whether to refresh
   audio attribution and browser URLs on each trigger. Suspicious mode is entered
   by mic/camera changes, recent browser URL, active candidate, prompt visible,
@@ -354,8 +354,8 @@ stateDiagram-v2
 - **Requirements:** R10, R11, R12, R13.
 - **Dependencies:** U1, U2.
 - **Files:**
-  - `Sources/MacParakeetCore/MeetingDetection/MeetingActivityPromptStateMachine.swift`
-  - `Tests/MacParakeetTests/MeetingDetection/MeetingActivityPromptStateMachineTests.swift`
+  - `Sources/SottoCore/MeetingDetection/MeetingActivityPromptStateMachine.swift`
+  - `Tests/SottoTests/MeetingDetection/MeetingActivityPromptStateMachineTests.swift`
 - **Approach:** Keep prompt policy pure. Track visible prompt ID, pending
   candidate dwell start, user-dismissed suppression IDs, and auto-dismiss
   suppression IDs with expiries. Block prompts while detection is disabled,
@@ -384,11 +384,11 @@ stateDiagram-v2
 - **Requirements:** R8, R9, R10, R11, R13, R14, R16.
 - **Dependencies:** U1, U2, U3, U4, U5.
 - **Files:**
-  - `Sources/MacParakeet/App/MeetingActivity/MeetingActivityDetectionCoordinator.swift`
-  - `Sources/MacParakeet/App/AppEnvironmentConfigurer.swift`
-  - `Sources/MacParakeet/App/MeetingRecordingFlowCoordinator.swift`
-  - `Sources/MacParakeetCore/AppNotifications.swift`
-  - `Tests/MacParakeetTests/MeetingActivity/MeetingActivityDetectionCoordinatorTests.swift`
+  - `Sources/Sotto/App/MeetingActivity/MeetingActivityDetectionCoordinator.swift`
+  - `Sources/Sotto/App/AppEnvironmentConfigurer.swift`
+  - `Sources/Sotto/App/MeetingRecordingFlowCoordinator.swift`
+  - `Sources/SottoCore/AppNotifications.swift`
+  - `Tests/SottoTests/MeetingActivity/MeetingActivityDetectionCoordinatorTests.swift`
 - **Approach:** Add a `@MainActor` coordinator that starts only when the compile
   flag and user mode allow it. It owns event observers, coalesced evaluations,
   collector start/stop, and prompt callbacks. It does not own recording logic;
@@ -417,17 +417,17 @@ stateDiagram-v2
 - **Requirements:** R10, R11, R12, R13, R14, R15, R16.
 - **Dependencies:** U5, U6.
 - **Files:**
-  - `Sources/MacParakeetCore/MeetingDetection/MeetingActivityDetectionMode.swift`
-  - `Sources/MacParakeetCore/AppRuntimePreferences.swift`
-  - `Sources/MacParakeetCore/Services/Telemetry/TelemetryEvent.swift`
-  - `Sources/MacParakeetViewModels/SettingsViewModel.swift`
-  - `Sources/MacParakeetViewModels/SettingsSearchIndex.swift`
-  - `Sources/MacParakeet/Views/Settings/SettingsView.swift`
-  - `Sources/MacParakeet/Views/MeetingRecording/MeetingActivityPromptController.swift`
-  - `Sources/MacParakeet/Views/MeetingRecording/MeetingActivityPromptView.swift`
-  - `Tests/MacParakeetTests/ViewModels/SettingsViewModelTests.swift`
-  - `Tests/MacParakeetTests/ViewModels/SettingsSearchIndexTests.swift`
-  - `Tests/MacParakeetTests/MeetingActivity/MeetingActivityPromptControllerTests.swift`
+  - `Sources/SottoCore/MeetingDetection/MeetingActivityDetectionMode.swift`
+  - `Sources/SottoCore/AppRuntimePreferences.swift`
+  - `Sources/SottoCore/Services/Telemetry/TelemetryEvent.swift`
+  - `Sources/SottoViewModels/SettingsViewModel.swift`
+  - `Sources/SottoViewModels/SettingsSearchIndex.swift`
+  - `Sources/Sotto/Views/Settings/SettingsView.swift`
+  - `Sources/Sotto/Views/MeetingRecording/MeetingActivityPromptController.swift`
+  - `Sources/Sotto/Views/MeetingRecording/MeetingActivityPromptView.swift`
+  - `Tests/SottoTests/ViewModels/SettingsViewModelTests.swift`
+  - `Tests/SottoTests/ViewModels/SettingsSearchIndexTests.swift`
+  - `Tests/SottoTests/MeetingActivity/MeetingActivityPromptControllerTests.swift`
 - **Approach:** Persist a user mode with default `.off`, hide controls when the
   compile flag is false, and keep `.autoStart` unavailable unless explicitly
   included in a later phase. Prompt UI should show service/app display name and
@@ -453,15 +453,15 @@ stateDiagram-v2
 - **Requirements:** R7, R8, R9, R11, R13, R14, R15, R16.
 - **Dependencies:** U1 through U7.
 - **Files:**
-  - `Tests/MacParakeetTests/MeetingActivity/MeetingActivityIntegrationTests.swift`
+  - `Tests/SottoTests/MeetingActivity/MeetingActivityIntegrationTests.swift`
   - `spec/adr/024-activity-based-meeting-detection.md`
   - `docs/qa/meeting-activity-detection.md`
 - **Approach:** Add a small integration-style test layer over fake collectors
   and document a manual QA matrix for real OS behavior. Update ADR-024 and
   the narrative specs only after implementation lands.
 - **Patterns to follow:** Existing coordinator integration tests under
-  `Tests/MacParakeetTests/Calendar` and
-  `Tests/MacParakeetTests/MeetingRecordingFlow`.
+  `Tests/SottoTests/Calendar` and
+  `Tests/SottoTests/MeetingRecordingFlow`.
 - **Test scenarios:**
   - Zoom mic input prompts once after dwell; decline prevents re-prompt for the
     same session.
@@ -526,12 +526,12 @@ QA matrix is clean.
   activity-detection architecture and staged rollout.
 - The legacy `REQ-MEET-016` entry is historical; current status belongs in
   ADR-024 and the narrative specs.
-- `Sources/MacParakeetCore/MeetingDetection/MeetingActivityDetector.swift`
+- `Sources/SottoCore/MeetingDetection/MeetingActivityDetector.swift`
   shows the current coarse detector contract that this plan replaces.
-- `Sources/MacParakeetCore/MeetingDetection/CameraActivityCollector.swift`
+- `Sources/SottoCore/MeetingDetection/CameraActivityCollector.swift`
   provides the listener lifecycle pattern to mirror for audio hardening.
-- `Sources/MacParakeet/App/MeetingAutoStartCoordinator.swift` and
-  `Sources/MacParakeet/App/MeetingAutoStopCoordinator.swift` provide the
+- `Sources/Sotto/App/MeetingAutoStartCoordinator.swift` and
+  `Sources/Sotto/App/MeetingAutoStopCoordinator.swift` provide the
   app-layer coordinator patterns to follow.
-- `Sources/MacParakeetCore/Calendar/MeetingLinkParser.swift` provides the
+- `Sources/SottoCore/Calendar/MeetingLinkParser.swift` provides the
   existing meeting URL recognition surface.

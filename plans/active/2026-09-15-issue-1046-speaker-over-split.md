@@ -72,7 +72,7 @@ Focused only:
 Same seven WAVs. Baseline = frozen unconstrained 0.15.7 JSON. Candidate = this branch CLI, unconstrained only.
 
 ```sh
-export CANDIDATE_CLI=.build/debug/macparakeet-cli
+export CANDIDATE_CLI=.build/debug/sotto-cli
 export VOXCONVERSE_ROOT="$HOME/asr-bench/voxconverse"
 export RESULTS_DIR="$HOME/asr-bench/issue-1046-ab/results"
 benchmarks/diarization/scripts/run_issue_1046_unconstrained_ab.sh

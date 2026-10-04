@@ -12,7 +12,7 @@
 Current [ExportCommand](../../Sources/CLI/Commands/ExportCommand.swift) calls
 `formatPlainText(projection:)`, adding the file export's metadata/timestamps/
 speaker presentation. [The CLI changelog](../../Sources/CLI/CHANGELOG.md)
-acknowledges this under Unreleased, while `CLI.cliVersion` in `MacParakeetCLI.swift` is `3.3.0`.
+acknowledges this under Unreleased, while `CLI.cliVersion` in `SottoCLI.swift` is `3.3.0`.
 Its compatibility policy treats changed existing defaults as a major change.
 
 **Why it matters:** a script consuming text from the same invocation receives
@@ -33,8 +33,8 @@ fallback for callers that need bare stored text. JSON schema v1 is unchanged.
 
 ## 2. Reconsider automatic legacy-license validation in free builds
 
-**Observed:** [AppEnvironmentConfigurer](../../Sources/MacParakeet/App/AppEnvironmentConfigurer.swift)
-invokes `refreshValidationIfNeeded`; [EntitlementsService](../../Sources/MacParakeetCore/Licensing/EntitlementsService.swift)
+**Observed:** [AppEnvironmentConfigurer](../../Sources/Sotto/App/AppEnvironmentConfigurer.swift)
+invokes `refreshValidationIfNeeded`; [EntitlementsService](../../Sources/SottoCore/Licensing/EntitlementsService.swift)
 can contact LemonSqueezy for a retained key/instance once cached validation is at
 least a day old. CLI transcription can also request it with
 `--enforce-entitlements`. The free build always returns unlocked. No Keychain
@@ -65,7 +65,7 @@ artifact was corrupted or mismatched.
 **Observed:** [ADR-010](../../spec/adr/010-speaker-diarization.md) now pins
 FluidAudio 0.15.6 and a high-accuracy preset. The cited older DER/throughput tables
 predate clustering fixes; model download size is not process peak memory.
-Separately, [MeetingTranscriptFinalizer](../../Sources/MacParakeetCore/Services/MeetingRecording/MeetingTranscriptFinalizer.swift)
+Separately, [MeetingTranscriptFinalizer](../../Sources/SottoCore/Services/MeetingRecording/MeetingTranscriptFinalizer.swift)
 still invokes `MeetingTranscriptSourceReconciler` after source transcription.
 That heuristic removes sufficiently long, similar simultaneous speech; a
 cleaned microphone artifact does not disable it.

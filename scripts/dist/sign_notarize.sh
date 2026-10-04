@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Sign + notarize MacParakeet.app and optionally produce a notarized DMG.
+# Sign + notarize Sotto.app and optionally produce a notarized DMG.
 #
 # Prereqs:
 # - Developer ID Application certificate installed in Keychain.
@@ -9,14 +9,14 @@ set -euo pipefail
 #     xcrun notarytool store-credentials "$NOTARYTOOL_PROFILE" --apple-id ... --team-id ... --password ...
 #
 # Environment variables:
-#   APP_NAME              (default: MacParakeet)
+#   APP_NAME              (default: Sotto)
 #   DIST_DIR              (default: ./dist)
 #   SIGN_IDENTITY         (default: Developer ID Application: Daniel Moon (FYAF2ZD7RM))
 #   NOTARYTOOL_PROFILE    (required to notarize)
 #   CREATE_DMG            (default: 1)
 #   NOTARY_TIMEOUT_SECONDS       (default: 1800)
 #   NOTARY_POLL_INTERVAL_SECONDS (default: 15)
-#   MACPARAKEET_ALLOW_DEV_VERSION_SIGNING (default: 0; set 1 only for diagnostic signing)
+#   SOTTO_ALLOW_DEV_VERSION_SIGNING (default: 0; set 1 only for diagnostic signing)
 #
 # notarytool submit on this Mac SIGBUS-crashes (exit 138) with the default
 # --progress / S3-acceleration path. A crashed submit can still appear in
@@ -25,11 +25,11 @@ set -euo pipefail
 # and JSON output. Never use --wait. See docs/distribution.md gotcha #1.
 #
 # Outputs:
-#   dist/MacParakeet.app (signed + stapled)
-#   dist/MacParakeet.dmg (signed + stapled) if CREATE_DMG=1
+#   dist/Sotto.app (signed + stapled)
+#   dist/Sotto.dmg (signed + stapled) if CREATE_DMG=1
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-APP_NAME="${APP_NAME:-MacParakeet}"
+APP_NAME="${APP_NAME:-Sotto}"
 DIST_DIR="${DIST_DIR:-$ROOT_DIR/dist}"
 APP_PATH="$DIST_DIR/${APP_NAME}.app"
 
@@ -230,7 +230,7 @@ done < <(
   find "$APP_PATH/Contents/MacOS" -maxdepth 1 -type f -perm -111 -print0 2>/dev/null || true
 )
 
-ENTITLEMENTS="$ROOT_DIR/scripts/dist/MacParakeet.entitlements"
+ENTITLEMENTS="$ROOT_DIR/scripts/dist/Sotto.entitlements"
 
 echo "[3/8] Codesigning app (hardened runtime + entitlements)…"
 codesign --force --sign "$SIGN_IDENTITY" --options runtime --timestamp \

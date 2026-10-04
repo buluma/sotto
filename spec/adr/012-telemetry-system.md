@@ -5,7 +5,7 @@
 
 ## Context
 
-MacParakeet launched with a "zero telemetry" stance as a privacy selling point. In practice, this leaves us blind to:
+Sotto launched with a "zero telemetry" stance as a privacy selling point. In practice, this leaves us blind to:
 
 - How many people actively use the app
 - Which features are popular vs unused
@@ -54,7 +54,7 @@ This is not "anonymous" in the strict GDPR sense (session + chip + locale + coun
 ### What We Collect
 
 The live source of truth for event types is the `TelemetryEventName`
-enum (`Sources/MacParakeetCore/Services/Telemetry/TelemetryEvent.swift`) and the
+enum (`Sources/SottoCore/Services/Telemetry/TelemetryEvent.swift`) and the
 catalog in `docs/telemetry.md`. They span app lifecycle, dictation,
 transcription, speaker diarization, meeting recording + crash recovery, calendar
 auto-start, feature adoption, settings, licensing (retained but mostly unfired in
@@ -99,9 +99,9 @@ Transcription content, audio, file paths, YouTube URLs, LLM prompts/responses, c
 ### Risks
 
 - **Endpoint abuse** — Mitigated with event name allowlist, rate limiting, field validation
-- **Schema evolution** — Props are JSON, so new props and new event shapes on an existing event name do not require D1 migrations or website allowlist changes. Every new `TelemetryEventName`, including `audio_engine_lifecycle`, must be added to `ALLOWED_EVENTS` in the **separate** `macparakeet-website` repo and deployed before the client ships. An unknown event causes HTTP 400 for the entire batch; the client's permanent-rejection policy discards valid co-batched events too and reports the transport failure locally. `scripts/ci/check-telemetry-allowlist.sh` diffs the Swift enum against that allowlist; CI skips rather than fails when the private website repo is unreachable. App tests do not verify the deployed server. Unknown `audio_engine_lifecycle` keys are dropped silently, so new diagnostic fields on that event also need a website deploy first.
+- **Schema evolution** — Props are JSON, so new props and new event shapes on an existing event name do not require D1 migrations or website allowlist changes. Every new `TelemetryEventName`, including `audio_engine_lifecycle`, must be added to `ALLOWED_EVENTS` in the **separate** `sotto-website` repo and deployed before the client ships. An unknown event causes HTTP 400 for the entire batch; the client's permanent-rejection policy discards valid co-batched events too and reports the transport failure locally. `scripts/ci/check-telemetry-allowlist.sh` diffs the Swift enum against that allowlist; CI skips rather than fails when the private website repo is unreachable. App tests do not verify the deployed server. Unknown `audio_engine_lifecycle` keys are dropped silently, so new diagnostic fields on that event also need a website deploy first.
 
 ## References
 
 - Full design: `docs/telemetry.md`
-- Feedback worker (same pattern): `macparakeet-website/functions/api/feedback.ts`
+- Feedback worker (same pattern): `sotto-website/functions/api/feedback.ts`

@@ -1,8 +1,8 @@
 import ArgumentParser
 import Foundation
-import MacParakeetCore
+import SottoCore
 
-/// `macparakeet-cli transforms` — manage and run user-defined Transforms
+/// `sotto-cli transforms` — manage and run user-defined Transforms
 /// (ADR-022) headlessly. Built so an agent operator can provision a fresh
 /// device, dispatch a saved prompt against arbitrary text from CI, and
 /// verify the dispatch table without launching the GUI.
@@ -651,7 +651,7 @@ private func saveCLITransformHistory(
         transformName: transform.name,
         inputText: inputText,
         outputText: outputText,
-        sourceAppName: "macparakeet-cli",
+        sourceAppName: "sotto-cli",
         capturePath: inputPath == "-" ? "stdin" : "file",
         replacementPath: "stdout",
         llmElapsedMs: llmElapsedMs,
@@ -1097,7 +1097,7 @@ private func shortcutsMatch(_ lhs: KeyboardShortcut, _ rhs: KeyboardShortcut) ->
 
 func appHotkeyCollision(
     for shortcut: KeyboardShortcut,
-    defaults: UserDefaults = macParakeetAppDefaults()
+    defaults: UserDefaults = sottoAppDefaults()
 ) -> CLITransformsError? {
     let candidate = shortcut.hotkeyTrigger
     let reservedHotkeys: [(name: String, trigger: HotkeyTrigger, mode: HotkeyTrigger.ConflictMode)] = [

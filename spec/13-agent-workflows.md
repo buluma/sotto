@@ -10,7 +10,7 @@ includes CLI discovery, local history/segment search, cited transcript slices,
 knowledge-card reads/generation, saved meeting notes/results/artifacts/exports,
 and the disabled-by-default post-meeting executable hook. Use
 [`integrations/README.md`](../integrations/README.md) and the installed
-`macparakeet-cli spec --json` for those contracts and their I/O boundaries.
+`sotto-cli spec --json` for those contracts and their I/O boundaries.
 Generalized workflows, agent profiles, autonomous desktop actions, and App
 Intents below remain proposals; no MCP service or GUI-mirroring requirement is
 introduced by this document.
@@ -99,7 +99,7 @@ Important: only the summary snapshot path is locked today. The foreign-key relat
 
 ## Proposed ProcessingContext
 
-If MacParakeet introduces action execution, each action likely needs a standard input contract.
+If Sotto introduces action execution, each action likely needs a standard input contract.
 
 ### Transcript Context
 
@@ -168,22 +168,22 @@ That distinction is conceptually useful, but it still needs explicit safety and 
 
 ### Possible Environment Variable Contract
 
-If command-backed actions ship, a future contract could map context to `MACPARAKEET_*` environment variables:
+If command-backed actions ship, a future contract could map context to `SOTTO_*` environment variables:
 
-- `MACPARAKEET_TRANSCRIPT`
-- `MACPARAKEET_SOURCE_TYPE`
-- `MACPARAKEET_FILENAME`
-- `MACPARAKEET_DURATION`
-- `MACPARAKEET_SPEAKER_COUNT`
-- `MACPARAKEET_LANGUAGE`
-- `MACPARAKEET_YOUTUBE_URL`
-- `MACPARAKEET_PREVIOUS_OUTPUT`
-- `MACPARAKEET_ACTIVE_APP`
-- `MACPARAKEET_ACTIVE_APP_BUNDLE_ID`
-- `MACPARAKEET_BROWSER_URL`
-- `MACPARAKEET_SELECTED_TEXT`
-- `MACPARAKEET_CLIPBOARD_TEXT`
-- `MACPARAKEET_LOCALE`
+- `SOTTO_TRANSCRIPT`
+- `SOTTO_SOURCE_TYPE`
+- `SOTTO_FILENAME`
+- `SOTTO_DURATION`
+- `SOTTO_SPEAKER_COUNT`
+- `SOTTO_LANGUAGE`
+- `SOTTO_YOUTUBE_URL`
+- `SOTTO_PREVIOUS_OUTPUT`
+- `SOTTO_ACTIVE_APP`
+- `SOTTO_ACTIVE_APP_BUNDLE_ID`
+- `SOTTO_BROWSER_URL`
+- `SOTTO_SELECTED_TEXT`
+- `SOTTO_CLIPBOARD_TEXT`
+- `SOTTO_LOCALE`
 
 This should be treated as a proposal, not a promise.
 
@@ -228,15 +228,15 @@ The agent-assisted builder is a UX hypothesis, not a committed direction.
 
 ## Apple Shortcuts / App Intents
 
-An alternative or complementary direction is exposing MacParakeet capabilities to Apple Shortcuts through App Intents.
+An alternative or complementary direction is exposing Sotto capabilities to Apple Shortcuts through App Intents.
 
-That path would let macOS handle orchestration and triggers while MacParakeet provides building blocks such as:
+That path would let macOS handle orchestration and triggers while Sotto provides building blocks such as:
 
 - Transcribe file
 - Summarize with prompt
 - Get last transcription
 
-This may be lower-risk than building a full native workflow engine, but it also constrains how much custom state and desktop context MacParakeet can manage itself.
+This may be lower-risk than building a full native workflow engine, but it also constrains how much custom state and desktop context Sotto can manage itself.
 
 ---
 

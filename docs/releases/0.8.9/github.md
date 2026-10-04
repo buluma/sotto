@@ -1,4 +1,4 @@
-# MacParakeet 0.8.9
+# Sotto 0.8.9
 
 A small follow-up to 0.8.8 that makes AI setup clearer and fixes saved-key handling.
 
@@ -12,7 +12,7 @@ A small follow-up to 0.8.8 that makes AI setup clearer and fixes saved-key handl
 
 Explicit Apple Intelligence requests for summaries, chat, and Transforms now fail before generation, including streaming requests. Scripts using those commands must select another provider. Apple Intelligence remains available for the cleanup route. See the [CLI changelog](https://github.com/moona3k/macparakeet/blob/v0.8.9/Sources/CLI/CHANGELOG.md) for compatibility details. The standalone Homebrew CLI has a separate release channel.
 
-Requires **Apple Silicon and macOS 14.2 or later**. Update with **Check for Updates…**, or download `MacParakeet.dmg` and drag it to Applications.
+Requires **Apple Silicon and macOS 14.2 or later**. Update with **Check for Updates…**, or download `Sotto.dmg` and drag it to Applications.
 
 Coming from 0.8.7 or earlier? This update also includes [everything in 0.8.8](https://github.com/moona3k/macparakeet/releases/tag/v0.8.8): failed-dictation retry, transcript and saved-result editing, a faster Library, and updated speech-model options.
 

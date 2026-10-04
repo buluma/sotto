@@ -1,5 +1,5 @@
 ---
-title: Evaluate Nemotron 3 for MacParakeet speaker diarization
+title: Evaluate Nemotron 3 for Sotto speaker diarization
 date: 2026-09-25
 type: plan
 execution: knowledge-work
@@ -71,7 +71,7 @@ Score all outputs through **one pinned external scorer**, such as `nryant/dscore
 
 Before trusting the runner, verify perfect, empty, missing-file, shuffled-label, silence-only, overlapping, duplicated, and shifted hypotheses. Empty output over reference speech must be penalized. An empty prediction must never cause the recording or its UEM to disappear from aggregation.
 
-Use automatic speaker count for the primary model comparison. Oracle count experiments are diagnostic only. Evaluate MacParakeet's actual calendar/count hints in a separate product pass; do not silently give the baseline a known count or suppress Nemotron channels to fit the answer.
+Use automatic speaker count for the primary model comparison. Oracle count experiments are diagnostic only. Evaluate Sotto's actual calendar/count hints in a separate product pass; do not silently give the baseline a known count or suppress Nemotron channels to fit the answer.
 
 ## 3. Compare a small number of meaningful candidates
 
@@ -140,10 +140,10 @@ Run focused tests for `DiarizationServiceTests`, `DiarizationServiceEmbeddingTes
 
 ## Entry points for the next agent
 
-- `Sources/MacParakeetCore/Services/Diarization/DiarizationService.swift`: protocol, factory, configuration, constraints, inference ownership, embedding identity.
-- `Sources/MacParakeetCore/Services/Diarization/SpeakerMerger.swift`: acoustic-to-word assignment and smoothing.
-- `Sources/MacParakeetCore/Services/MeetingRecording/MeetingTranscriptFinalizer.swift`: source attribution, roster filtering, and saved intervals.
-- `Sources/MacParakeetCore/Services/TranscriptionService.swift`: file path, system-only meeting diarization, retranscription, and persistence.
+- `Sources/SottoCore/Services/Diarization/DiarizationService.swift`: protocol, factory, configuration, constraints, inference ownership, embedding identity.
+- `Sources/SottoCore/Services/Diarization/SpeakerMerger.swift`: acoustic-to-word assignment and smoothing.
+- `Sources/SottoCore/Services/MeetingRecording/MeetingTranscriptFinalizer.swift`: source attribution, roster filtering, and saved intervals.
+- `Sources/SottoCore/Services/TranscriptionService.swift`: file path, system-only meeting diarization, retranscription, and persistence.
 - `benchmarks/diarization/2026-09-15-issue-1046-baseline.md`: prior experiment and frozen regression slice.
 - `plans/active/2026-09-15-issue-1046-speaker-over-split.md`: existing #1046 work; centroid-only consolidation was rejected, not a proven repair.
 - `spec/adr/010-speaker-diarization.md` and `spec/contracts/speaker-voiceprints.md`: decisions and identity boundary to preserve or amend deliberately.

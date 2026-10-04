@@ -18,7 +18,7 @@
 
 ## Executive assessment
 
-The idea is both feasible and strategically sound. Sharing makes MacParakeet's
+The idea is both feasible and strategically sound. Sharing makes Sotto's
 local corpus more useful and hands selected speech memory safely to another
 person, so it passes the product filter in ADR-027.[^1] The strongest version of
 the feature does not imitate a cloud meeting workspace. It turns a local item
@@ -43,7 +43,7 @@ one “unique key”:
    material, automated account creation, and denial-of-wallet attacks.
 
 A hardware fingerprint solves none of these cleanly. It is an identifier rather
-than a secret, is difficult to rotate, conflicts with MacParakeet's current
+than a secret, is difficult to rotate, conflicts with Sotto's current
 public promise of “no fingerprinting, no persistent IDs,” and still does not
 prove that a request comes from a legitimate person.[^2] A cryptographically
 random installation credential is safer, simpler, and more honest.
@@ -63,9 +63,9 @@ The recommended first release is intentionally narrow:
 | Analytics | None for recipients in v1 |
 | Collaboration | Separate future decision; not an extension of v1 |
 
-## Why this belongs in MacParakeet
+## Why this belongs in Sotto
 
-MacParakeet's accepted direction is private speech memory: capture stays local,
+Sotto's accepted direction is private speech memory: capture stays local,
 the Library becomes the center of gravity, and export and agent access make the
 corpus useful.[^1] A share link fits that direction if it is treated as a
 controlled export. It does not fit if it quietly moves the Library into a cloud
@@ -87,7 +87,7 @@ a new governing ADR or amendment, a public share-bundle contract, updated
 privacy and network-surface documentation, and explicit consent copy.
 
 This boundary is the differentiation. Cloud-first products already make links.
-MacParakeet can make the act of disclosure legible.
+Sotto can make the act of disclosure legible.
 
 ## The product model: a shared snapshot
 
@@ -190,14 +190,14 @@ link may still work.
 The recipient should get a quiet, readable document—not a product funnel.
 
 1. Decrypted title and optional source/date.
-2. A provenance line: shared from MacParakeet, snapshot date, last explicit
+2. A provenance line: shared from Sotto, snapshot date, last explicit
    update, expiry, and “text only; audio was not uploaded.”
 3. The chosen summaries and notes.
 4. Chapters or an outline for a long transcript.
 5. Transcript passages with optional speakers and timestamps.
 6. In-page search performed only in the browser.
 7. Copy and Download Markdown actions performed only in the browser.
-8. A restrained MacParakeet attribution and **Report this share**.
+8. A restrained Sotto attribution and **Report this share**.
 
 The page should carry a brief accuracy note: transcripts and generated
 summaries can contain errors. It should not show a login prompt, install gate,
@@ -256,7 +256,7 @@ and not an intrinsic property of the Mac.
 
 Do not let a person type or configure the authentication key; human-chosen
 secrets are weaker. Let the person export, print, or save the generated recovery
-code, with a plain warning that MacParakeet support cannot reconstruct it.
+code, with a plain warning that Sotto support cannot reconstruct it.
 
 A concrete v1 token scheme is deliberately boring:
 
@@ -379,9 +379,9 @@ logs. It does **not** protect against:
 - a malicious or compromised viewer deployment, because first-party JavaScript
   can read both the fragment and decrypted text.
 
-The correct claim is: **MacParakeet stores the share as encrypted data and the
+The correct claim is: **Sotto stores the share as encrypted data and the
 decryption key is in the link, not sent in the normal request.** Do not claim
-that MacParakeet “can never decrypt” or use an unqualified “zero knowledge” or
+that Sotto “can never decrypt” or use an unqualified “zero knowledge” or
 “end-to-end encrypted” label before an independent threat-model review.
 
 Content-specific Open Graph previews are incompatible with this default because
@@ -398,7 +398,7 @@ paths or database identifiers:
 
 ```json
 {
-  "schema": "com.macparakeet.share-bundle",
+  "schema": "com.sotto.share-bundle",
   "schemaVersion": 1,
   "publishedAt": "2026-09-11T22:00:00Z",
   "title": "Optional encrypted title",
@@ -434,7 +434,7 @@ as defense-in-depth.[^15]
 The simplest credible deployment is a separate Cloudflare project:
 
 ```text
-MacParakeet app
+Sotto app
   | HTTPS owner API: auth + idempotency + ciphertext
   v
 Share Worker at share.macparakeet.com
@@ -551,8 +551,8 @@ Keep the existing dependency direction rather than adding a new package target:
 | Layer | Proposed responsibility |
 |---|---|
 | SwiftUI app | Share actions, exact preview, confirmation, management, pending-state copy |
-| `MacParakeetViewModels` | `ShareDraftViewModel`, `ShareManagementViewModel`, stale guards, retry/error presentation |
-| `MacParakeetCore/Services/Sharing` | Allowlisted payload builder, crypto envelope, remote protocol, credential store, deletion coordinator |
+| `SottoViewModels` | `ShareDraftViewModel`, `ShareManagementViewModel`, stale guards, retry/error presentation |
+| `SottoCore/Services/Sharing` | Allowlisted payload builder, crypto envelope, remote protocol, credential store, deletion coordinator |
 | GRDB | Publication ledger plus durable upload/revoke/delete outbox |
 | Separate web service | Anonymous enrollment, quotas, lifecycle metadata, private ciphertext objects |
 | Static web viewer | Web Crypto decryption, structured safe render, local search/copy/download |
@@ -715,9 +715,9 @@ This is issue-spotting, not legal advice.
 
 ## Competitive synthesis
 
-Current products prove demand but also show MacParakeet's opening:
+Current products prove demand but also show Sotto's opening:
 
-| Product | Current official behavior | Lesson for MacParakeet |
+| Product | Current official behavior | Lesson for Sotto |
 |---|---|---|
 | Granola | A unique web URL can expose summarized notes instead of the full transcript, with private/company/anyone-link controls.[^27] | Summary-first sharing is useful; expose selected passages without normalizing full-transcript disclosure. |
 | Otter | Anyone-link viewers can access transcript/playback without sign-in; exports are owner-controlled; normal links can be revoked, but snippet links cannot.[^4] | Every share and excerpt needs an independently revocable resource. |
@@ -748,7 +748,7 @@ document editor.
 
 A more aligned near-term collaboration model is **owner-approved import**: a
 recipient opens an encrypted share, then explicitly imports a provenance-
-preserving local copy into their own MacParakeet. That keeps each person's
+preserving local copy into their own Sotto. That keeps each person's
 Library local and avoids a shared cloud source of truth.
 
 ## High-value adjacent ideas
@@ -765,13 +765,13 @@ Library local and avoids a shared cloud source of truth.
 5. **Correction-aware republish.** Show which shared sections changed after
    speaker correction or transcript editing, then require preview and explicit
    update.
-6. **Self-hosted share service.** Because MacParakeet is open source, a later
+6. **Self-hosted share service.** Because Sotto is open source, a later
    documented service contract could let privacy-sensitive teams operate their
    own compatible host. Avoid premature provider abstraction in the first
    implementation, but keep the wire contract portable.
 7. **Native Mac sharing.** Once a URL is created, the macOS share sheet can send
    it through Messages, Mail, AirDrop, or other installed services without
-   MacParakeet becoming a messaging client.
+   Sotto becoming a messaging client.
 
 ## Anti-goals
 
@@ -877,7 +877,7 @@ Proceed—but prototype the trust boundary before building the polished feature.
 The core idea is not “put transcripts on a website.” It is **let a person cut a
 precise, temporary, encrypted window into one local speech-memory item.**
 
-That design gives MacParakeet something cloud meeting tools cannot say with the
+That design gives Sotto something cloud meeting tools cannot say with the
 same credibility: the Library is still local, the disclosure is visible, the
 host stores ciphertext, audio never uploads, and every published copy has an
 owner-controlled lifecycle.
@@ -891,14 +891,14 @@ URL can copy and forward the text.
 The most valuable next artifact is a synthetic, throwaway cryptographic and
 recipient-page prototype—not production infrastructure. It should answer three
 questions cheaply: do links survive real sharing channels, do recipients
-understand the privacy model, and can MacParakeet operate revocation and abuse
+understand the privacy model, and can Sotto operate revocation and abuse
 response without ever asking to see a transcript?
 
 ## Sources
 
-[^1]: MacParakeet, “[ADR-027: Product North Star — Private Speech Memory](https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/spec/adr/027-product-north-star.md),” accepted July 3, 2026; upstream snapshot accessed September 11, 2026.
-[^2]: MacParakeet, “[Privacy Policy](https://macparakeet.com/privacy/),” updated July 9, 2026; accessed September 11, 2026.
-[^3]: MacParakeet, “[TranscriptResultView.swift](https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift#L1187-L1212)” and “[TranscriptResultActions.swift](https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/Sources/MacParakeet/Views/Transcription/TranscriptResultActions.swift#L5-L59),” upstream snapshot accessed September 11, 2026.
+[^1]: Sotto, “[ADR-027: Product North Star — Private Speech Memory](https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/spec/adr/027-product-north-star.md),” accepted July 3, 2026; upstream snapshot accessed September 11, 2026.
+[^2]: Sotto, “[Privacy Policy](https://macparakeet.com/privacy/),” updated July 9, 2026; accessed September 11, 2026.
+[^3]: Sotto, “[TranscriptResultView.swift](https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/Sources/MacParakeet/Views/Transcription/TranscriptResultView.swift#L1187-L1212)” and “[TranscriptResultActions.swift](https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/Sources/MacParakeet/Views/Transcription/TranscriptResultActions.swift#L5-L59),” upstream snapshot accessed September 11, 2026.
 [^4]: Otter, “[Share a conversation](https://help.otter.ai/hc/en-us/articles/360048338793-Share-a-conversation),” updated May 16, 2024; accessed September 11, 2026.
 [^5]: Fathom, “[Sharing Call Recordings](https://help.fathom.video/en/articles/295616),” edited June 4, 2026; accessed September 11, 2026.
 [^6]: Descript, “[Export and publish content with Descript web links](https://help.descript.com/hc/en-us/articles/10255817744653-Export-and-publish-content-with-Descript-web-links),” current help page; accessed September 11, 2026.
@@ -926,6 +926,6 @@ response without ever asking to see a transcript?
 [^28]: Fireflies, “[Share Meeting Recaps](https://guide.fireflies.ai/articles/2474667467-share-meeting-recaps-with-teammates-participants-specific-people-user-groups-and-non-fireflies-users),” updated July 15, 2026; accessed September 11, 2026.
 [^29]: Notion, “[Sharing and permissions](https://www.notion.com/help/sharing-and-permissions)” and “[Publish a Notion Site](https://www.notion.com/en-gb/help/public-pages-and-web-publishing),” current help pages; accessed September 11, 2026.
 [^30]: Dropbox, “[How to set or change shared link permissions](https://help.dropbox.com/share/set-link-permissions),” updated February 20, 2026; accessed September 11, 2026.
-[^31]: MacParakeet, “[ADR-002: Local-First Processing](https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/spec/adr/002-local-only.md#L125-L131),” upstream snapshot accessed September 11, 2026.
-[^32]: MacParakeet, “[Transcription.swift](https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/Sources/MacParakeetCore/Models/Transcription.swift#L10-L87),” upstream snapshot accessed September 11, 2026.
-[^33]: MacParakeet, “[TranscriptionViewModel.swift](https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/Sources/MacParakeetViewModels/TranscriptionViewModel.swift#L1922-L1942)” and “[SpeakerAttributionReadService.swift](https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/Sources/MacParakeetCore/Services/Diarization/SpeakerAttributionReadService.swift#L4-L53),” upstream snapshot accessed September 11, 2026.
+[^31]: Sotto, “[ADR-002: Local-First Processing](https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/spec/adr/002-local-only.md#L125-L131),” upstream snapshot accessed September 11, 2026.
+[^32]: Sotto, “[Transcription.swift](https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/Sources/MacParakeetCore/Models/Transcription.swift#L10-L87),” upstream snapshot accessed September 11, 2026.
+[^33]: Sotto, “[TranscriptionViewModel.swift](https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/Sources/MacParakeetViewModels/TranscriptionViewModel.swift#L1922-L1942)” and “[SpeakerAttributionReadService.swift](https://github.com/moona3k/macparakeet/blob/aaf3dc261536e5fc5158c4b1ca714bd3f4cece19/Sources/MacParakeetCore/Services/Diarization/SpeakerAttributionReadService.swift#L4-L53),” upstream snapshot accessed September 11, 2026.

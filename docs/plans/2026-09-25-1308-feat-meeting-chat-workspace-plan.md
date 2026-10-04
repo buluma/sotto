@@ -12,7 +12,7 @@ execution: code
 
 ## Goal Capsule
 
-**Objective:** Help a MacParakeet user answer questions across a chosen set of meetings and other retained transcripts, verify the evidence, and resume that work later.
+**Objective:** Help a Sotto user answer questions across a chosen set of meetings and other retained transcripts, verify the evidence, and resume that work later.
 
 **Means:** A top-level Ask destination with a full conversation canvas, a searchable source picker, and a small agent harness for investigating the selected material.
 
@@ -49,15 +49,15 @@ Source inspection used working-tree HEAD `779e9b30f` on 2026-09-25. The checkout
 
 | Existing capability | Evidence | Consequence for this proposal |
 | --- | --- | --- |
-| Several saved chats per transcript | [ChatConversation](../../Sources/MacParakeetCore/Models/ChatConversation.swift), [chat view model](../../Sources/MacParakeetViewModels/TranscriptChatViewModel.swift), [feature scope](../../spec/02-features.md#f10c-transcript-chat-gui-mvp) | Reuse the familiar chat experience, but broaden ownership deliberately. |
-| Required single-transcript ownership with cascading deletion | [DatabaseManager](../../Sources/MacParakeetCore/Database/DatabaseManager.swift), `chat_conversations` migration; [repository tests](../../Tests/MacParakeetTests/Database/ChatConversationRepositoryTests.swift) | A workspace cannot simply belong to its first selected transcript. |
-| Search, source filters, labels, and multiple selection in Library | [Library view model](../../Sources/MacParakeetViewModels/TranscriptionLibraryViewModel.swift), [label UX](../../spec/04-ui-patterns.md#transcription-labels-popover) | Extend existing organization instead of adding a second tag system. |
-| Bounded chat input with middle truncation of long transcripts | [LLMService](../../Sources/MacParakeetCore/Services/LLM/LLMService.swift), `buildChatSystemPrompt` / `truncateMiddle` | Concatenating many transcripts into today's input would hide missing evidence. |
-| Corrected transcript projections, durable segments, and summary freshness receipts | [AI context formatter](../../Sources/MacParakeetCore/TextProcessing/TranscriptAIContextFormatter.swift), [PromptResult](../../Sources/MacParakeetCore/Models/PromptResult.swift), [CLI segment contract](../../spec/contracts/cli-json-v1.md) | There are useful foundations for accurate citations and stale-result handling. |
-| Calendar occurrence and meeting identity in live calendar handling | [Calendar README](../../Sources/MacParakeetCore/Calendar/README.md), [saved snapshot](../../Sources/MacParakeetCore/Models/MeetingCalendarSnapshot.swift) | Saved snapshots retain identifiers but omit explicit recurrence and calendar identifier fields. Durable series grouping needs validation. |
-| Segment search and file/stdin CLI chat | [SegmentRepository](../../Sources/MacParakeetCore/Database/SegmentRepository.swift), [LLMChatCommand](../../Sources/CLI/Commands/LLMChatCommand.swift) | Current query fields lack selected-transcript-ID restriction; workspace scope and structured citations need matching automation semantics. |
+| Several saved chats per transcript | [ChatConversation](../../Sources/SottoCore/Models/ChatConversation.swift), [chat view model](../../Sources/SottoViewModels/TranscriptChatViewModel.swift), [feature scope](../../spec/02-features.md#f10c-transcript-chat-gui-mvp) | Reuse the familiar chat experience, but broaden ownership deliberately. |
+| Required single-transcript ownership with cascading deletion | [DatabaseManager](../../Sources/SottoCore/Database/DatabaseManager.swift), `chat_conversations` migration; [repository tests](../../Tests/SottoTests/Database/ChatConversationRepositoryTests.swift) | A workspace cannot simply belong to its first selected transcript. |
+| Search, source filters, labels, and multiple selection in Library | [Library view model](../../Sources/SottoViewModels/TranscriptionLibraryViewModel.swift), [label UX](../../spec/04-ui-patterns.md#transcription-labels-popover) | Extend existing organization instead of adding a second tag system. |
+| Bounded chat input with middle truncation of long transcripts | [LLMService](../../Sources/SottoCore/Services/LLM/LLMService.swift), `buildChatSystemPrompt` / `truncateMiddle` | Concatenating many transcripts into today's input would hide missing evidence. |
+| Corrected transcript projections, durable segments, and summary freshness receipts | [AI context formatter](../../Sources/SottoCore/TextProcessing/TranscriptAIContextFormatter.swift), [PromptResult](../../Sources/SottoCore/Models/PromptResult.swift), [CLI segment contract](../../spec/contracts/cli-json-v1.md) | There are useful foundations for accurate citations and stale-result handling. |
+| Calendar occurrence and meeting identity in live calendar handling | [Calendar README](../../Sources/SottoCore/Calendar/README.md), [saved snapshot](../../Sources/SottoCore/Models/MeetingCalendarSnapshot.swift) | Saved snapshots retain identifiers but omit explicit recurrence and calendar identifier fields. Durable series grouping needs validation. |
+| Segment search and file/stdin CLI chat | [SegmentRepository](../../Sources/SottoCore/Database/SegmentRepository.swift), [LLMChatCommand](../../Sources/CLI/Commands/LLMChatCommand.swift) | Current query fields lack selected-transcript-ID restriction; workspace scope and structured citations need matching automation semantics. |
 
-The current [ChatMessage](../../Sources/MacParakeetCore/Models/LLMTypes.swift) record does not supply a structured evidence receipt. Displaying a model-written timestamp is not sufficient to establish that the cited passage supports a claim.
+The current [ChatMessage](../../Sources/SottoCore/Models/LLMTypes.swift) record does not supply a structured evidence receipt. Displaying a model-written timestamp is not sufficient to establish that the cited passage supports a claim.
 
 ### Approaches considered
 
@@ -125,7 +125,7 @@ Each send freezes its source set and evidence versions. While an answer is strea
 
 ### A small agent harness for Ask
 
-**Recommendation: own Ask's research contracts and evaluate Pi's agent core as the first reusable runtime.** The user wants an assistant that can investigate a question, choose its next operation from the evidence, and revise its approach. A fixed search-then-answer pipeline does not fully express that intent. The harness is the code that maintains a run, executes permitted operations, feeds results back to the model, and decides when work must stop. MacParakeet must own the product rules around that loop; the loop's implementation may be reused.
+**Recommendation: own Ask's research contracts and evaluate Pi's agent core as the first reusable runtime.** The user wants an assistant that can investigate a question, choose its next operation from the evidence, and revise its approach. A fixed search-then-answer pipeline does not fully express that intent. The harness is the code that maintains a run, executes permitted operations, feeds results back to the model, and decides when work must stop. Sotto must own the product rules around that loop; the loop's implementation may be reused.
 
 Code Mode and RLM describe complementary mechanisms. [Code Mode](https://developers.cloudflare.com/agents/tools/codemode/) lets a model compose tool operations in executable code. The [RLM approach](https://alexzhang13.github.io/blog/2025/rlm/) keeps the corpus in an external environment that the model can inspect and partition, with model subcalls for selected portions. An agent loop can use ordinary tools without a REPL; an RLM-style REPL adds programmable working memory and context decomposition. Neither requires multiple named agents or unlimited recursion.
 
@@ -143,7 +143,7 @@ flowchart TB
     V --> F["Answer + inspectable evidence"]
 ```
 
-| Harness responsibility | What MacParakeet should own |
+| Harness responsibility | What Sotto should own |
 | --- | --- |
 | Source access | A fixed source selection and revisions for the run; enforce R5 and R9 on every read, including reads from generated code. |
 | Execution loop | Validated operations, bounded iteration and model subcalls, failure handling, and cancellation. |
@@ -152,7 +152,7 @@ flowchart TB
 | Product lifecycle | Save questions, answers, and user-meaningful progress without making a live interpreter necessary to reopen a conversation. |
 | Provider boundary | Apply R10 to the lead model and every auxiliary call; a local execution runtime does not make remote reasoning local. |
 
-The existing [LLM client](../../Sources/MacParakeetCore/Services/LLM/LLMClient.swift) already exposes completion, streaming, execution context, and structured-output capability. The inspected [chat service interface](../../Sources/MacParakeetCore/Services/LLM/LLMService.swift) accepts transcript text and returns answer text; it is not itself this investigation loop. The current `ChatMessage` roles are system, user, and assistant, so a portable tool-event protocol cannot be assumed to exist in that type. Reuse provider infrastructure, while qualifying each intended model's ability to choose operations and write reliable code. Successful text chat alone is insufficient qualification.
+The existing [LLM client](../../Sources/SottoCore/Services/LLM/LLMClient.swift) already exposes completion, streaming, execution context, and structured-output capability. The inspected [chat service interface](../../Sources/SottoCore/Services/LLM/LLMService.swift) accepts transcript text and returns answer text; it is not itself this investigation loop. The current `ChatMessage` roles are system, user, and assistant, so a portable tool-event protocol cannot be assumed to exist in that type. Reuse provider infrastructure, while qualifying each intended model's ability to choose operations and write reliable code. Successful text chat alone is insufficient qualification.
 
 Own the source/evidence contracts and run lifecycle; evaluate reusable execution infrastructure before implementing a sandbox. A REPL must expose only explicitly supplied capabilities. Prompt instructions are not an isolation boundary. Filesystem, network, credentials, and process access should be unavailable except through approved application operations. The exact runtime and provider-adapter design remain implementation choices.
 
@@ -172,21 +172,21 @@ This earlier assessment is retained as an alternative. Pi is now the lead experi
 
 Reviewed official documentation and upstream source on 2026-09-25. Code observations below use commit [`adee738d1e4597a2d0d317ca61a1625eff289efa`](https://github.com/anomalyco/opencode/tree/adee738d1e4597a2d0d317ca61a1625eff289efa), a development-branch snapshot, not a qualified release.
 
-| Evidence | Implication for MacParakeet |
+| Evidence | Implication for Sotto |
 | --- | --- |
 | OpenCode documents a headless HTTP/OpenAPI server, sessions, abort, and event streaming. [Server](https://opencode.ai/docs/server/), [SDK](https://opencode.ai/docs/sdk/) | Keep the native Ask UI and drive the runtime programmatically. No terminal UI is required. |
 | Custom tools and MCP integrations are supported. [Custom tools](https://opencode.ai/docs/custom-tools/), [MCP](https://opencode.ai/docs/mcp-servers/) | Expose selected-recording operations through a narrow bridge; whole-Library filesystem access is unnecessary for the proposed tools. |
 | The JS SDK launcher starts an `opencode` process; the inspected `@opencode-ai/core` package is marked private. [Launcher](https://github.com/anomalyco/opencode/blob/adee738d1e4597a2d0d317ca61a1625eff289efa/packages/sdk/js/src/server.ts), [core manifest](https://github.com/anomalyco/opencode/blob/adee738d1e4597a2d0d317ca61a1625eff289efa/packages/core/package.json) | The documented server is the practical first integration path. Do not assume an internal package is a supported embeddable Swift library. |
-| OpenCode supports configurable providers and local models. [Models](https://opencode.ai/docs/models/) | A local endpoint is possible. Reusing MacParakeet's in-process Swift model requires a bridge or another explicit integration; it is not established by this provider support. |
+| OpenCode supports configurable providers and local models. [Models](https://opencode.ai/docs/models/) | A local endpoint is possible. Reusing Sotto's in-process Swift model requires a bridge or another explicit integration; it is not established by this provider support. |
 | Configuration merges multiple locations, retaining non-conflicting settings. [Config](https://opencode.ai/docs/config/) | Test that unrelated user/project tools, plugins, and instructions cannot enter the managed Ask runtime. An override file alone is not proof of isolation. |
 | OpenCode explicitly states that its permission system is not a sandbox. [Security model](https://github.com/anomalyco/opencode/blob/adee738d1e4597a2d0d317ca61a1625eff289efa/SECURITY.md) | Tool permissions are useful controls, but generated-code isolation remains a separate responsibility. |
 | The inspected repository license is MIT. [License](https://github.com/anomalyco/opencode/blob/adee738d1e4597a2d0d317ca61a1625eff289efa/LICENSE) | Record the pinned distribution's license and dependency notices during packaging; source availability is not packaging qualification. |
 
-**Alternative experiment if Pi proves unsuitable:** native Ask interface → a thin MacParakeet run adapter → a managed OpenCode process → scoped recording tools. OpenCode would handle orchestration and its model calls. MacParakeet would remain authoritative for selected sources, corrected text, source references, conversation ownership, and deletion. Session history retained by OpenCode must obey the same source-change and deletion semantics; it cannot become an untracked second copy of meeting data.
+**Alternative experiment if Pi proves unsuitable:** native Ask interface → a thin Sotto run adapter → a managed OpenCode process → scoped recording tools. OpenCode would handle orchestration and its model calls. Sotto would remain authoritative for selected sources, corrected text, source references, conversation ownership, and deletion. Session history retained by OpenCode must obey the same source-change and deletion semantics; it cannot become an untracked second copy of meeting data.
 
 Use the documented API and a pinned runtime without forking core. Disable unrelated coding, shell, web, sharing, and plugin behavior in the managed configuration and verify the resulting behavior. Give any experimental code execution a separately isolated, bounded environment. OpenCode's shell and subagent support do not by themselves establish the persistent, source-aware REPL and controlled model-subcall interface proposed here.
 
-Swift can call the documented HTTP API directly; a Node client layer is not intrinsically required. This is an architectural inference from the HTTP boundary, not a tested MacParakeet integration. A distributable version would need a managed executable, authenticated loopback transport, reliable child-process cleanup, and qualification with the app's signing/update flow. No startup, memory, bundle-size, or latency measurements have been made.
+Swift can call the documented HTTP API directly; a Node client layer is not intrinsically required. This is an architectural inference from the HTTP boundary, not a tested Sotto integration. A distributable version would need a managed executable, authenticated loopback transport, reliable child-process cleanup, and qualification with the app's signing/update flow. No startup, memory, bundle-size, or latency measurements have been made.
 
 If evaluating this alternative, compare it with the Pi baseline using the same source operations and questions. The decision should turn on demonstrated integration cost and user behavior:
 
@@ -254,7 +254,7 @@ These requirements govern the focused first version authorized for implementatio
 - **One automatic answer strategy with visible evidence.** The app should absorb context-management work while remaining honest about coverage. Governs R5–R7.
 - **Source changes start a new context section.** Preserving a visual thread must not reintroduce excluded material through its history. Governs R8, R9.
 - **Meetings first, shared Library sources alongside them.** Existing labels already span these sources; artificially excluding imports would obstruct the stated comparison job. Governs R1, R2.
-- **Application-owned research contracts with Pi as the first runtime candidate.** Prototype Pi agent core with only scoped recording tools and a provider bridge; MacParakeet retains authority over scope and evidence. OpenCode and a native loop remain alternatives. Governs R5, R9, R10, R13, R14; production adoption depends on qualification.
+- **Application-owned research contracts with Pi as the first runtime candidate.** Prototype Pi agent core with only scoped recording tools and a provider bridge; Sotto retains authority over scope and evidence. OpenCode and a native loop remain alternatives. Governs R5, R9, R10, R13, R14; production adoption depends on qualification.
 
 ### Privacy and lifecycle details
 
@@ -340,7 +340,7 @@ Google's current [NotebookLM/Gemini Notebook chat documentation](https://support
 
 Granola's current [meeting-chat documentation](https://docs.granola.ai/help-center/getting-more-from-your-notes/chatting-with-your-meetings) describes chat scoped by an individual meeting, selected meetings, folders, or the home view. The fetched current page says next-generation chat does not require manually toggling transcripts. Older indexed text described manual summaries/transcript limits; those older limits are not treated as current product facts here.
 
-These sources establish that the interaction patterns exist, not that they will work well in MacParakeet or that either product's answer quality was evaluated. The recommendation starts from MacParakeet's user-controlled local corpus and [private speech memory direction](../../spec/adr/027-product-north-star.md). Source review, documentation, and link checks are the evidence from this exploration; native UX, retrieval quality, model performance, and migration safety remain untested.
+These sources establish that the interaction patterns exist, not that they will work well in Sotto or that either product's answer quality was evaluated. The recommendation starts from Sotto's user-controlled local corpus and [private speech memory direction](../../spec/adr/027-product-north-star.md). Source review, documentation, and link checks are the evidence from this exploration; native UX, retrieval quality, model performance, and migration safety remain untested.
 
 
 ---
@@ -356,7 +356,7 @@ Product Contract unchanged in scope. The execution authority and previously open
 - KTD3. **Give Ask independent persistence.** Add an `ask_conversations` domain separate from transcription-owned chats. Preserve ordered source sections and messages with revision-aware writes, draft persistence, and explicit deletion. Store citation references and bounded quoted evidence rather than full transcript copies. Source membership has historical identity, so deleting a recording must not cascade the whole conversation. Concurrent GUI/CLI writes must fail safely instead of silently replacing newer state. Implements R4, R8–R12.
 - KTD4. **Enforce scope in Swift tools.** Source metadata, lexical passage search, bounded passage reads, and current-summary reads operate only within the run's fixed source IDs and content fingerprints. Read current corrected projections and derive segments with `KnowledgeSegmenter`; legacy edited transcripts use the edited clean text and untimed pseudo-segmentation, never old word timestamps. No stale derived index can widen scope. Validate citation handles and source versions before completing an answer and again when opening evidence. Search is lexical in this version, with no claim of semantic or exhaustive coverage. Implements R5–R9.
 - KTD5. **Native restrained workspace.** Use the existing app sidebar and action/Markdown components. Center the reading column; keep history in the header; put source curation in a large sheet with results and selected items; use an evidence inspector or compact-width sheet. Preserve draft, focus, selection, and scroll position. Design with system typography and existing semantic surfaces, reserving coral for primary actions. Implements R1–R4, R6.
-- KTD6. **One service for GUI and CLI.** Share conversation, selection, run, evidence, and cancellation behavior in Core. Add `macparakeet-cli ask` commands and document the additive JSON contract. Remote inference needs explicit context permission in both surfaces; local operation never invokes a remote helper model. Implements R10–R12. Jev may later rank candidates or check claim support, but no external semantic helper is required for this implementation.
+- KTD6. **One service for GUI and CLI.** Share conversation, selection, run, evidence, and cancellation behavior in Core. Add `sotto-cli ask` commands and document the additive JSON contract. Remote inference needs explicit context permission in both surfaces; local operation never invokes a remote helper model. Implements R10–R12. Jev may later rank candidates or check claim support, but no external semantic helper is required for this implementation.
 
 ### High-level technical design
 
@@ -430,14 +430,14 @@ Implement the focused version described in the Product Contract. Recurring-serie
 ### U1. Durable workspace and scoped evidence
 
 - **Goal:** Persist independent Ask conversations and expose correct, bounded source tools. Covers R2, R4–R9, R11; F2–F4; KTD3–KTD4.
-- **Files:** new `Sources/MacParakeetCore/Models/AskWorkspace.swift`, `Database/AskConversationRepository.swift`, `Services/Ask/AskSourceService.swift`; additive `Database/DatabaseManager.swift` migration; tests under `Tests/MacParakeetTests/Ask/`.
+- **Files:** new `Sources/SottoCore/Models/AskWorkspace.swift`, `Database/AskConversationRepository.swift`, `Services/Ask/AskSourceService.swift`; additive `Database/DatabaseManager.swift` migration; tests under `Tests/SottoTests/Ask/`.
 - **Approach:** Define shared value contracts first. Reuse corrected projections, source metadata, existing labels, and segment derivation. Keep synchronous GRDB work behind an async service boundary. Prevent deleted conversations from being recreated by late writes.
 - **Test scenarios:** database round-trip, empty/duplicate selections, ordered sections, concurrent stale writes, deleted sources, corrected/retranscribed evidence, repeated titles, untimed imported text, long passages, malformed/out-of-scope source and evidence IDs, and stale summaries.
 
 ### U2. Pi helper and provider bridge
 
 - **Goal:** Execute the actual Pi loop with only application tools and existing model configuration. Covers R10, R13–R14; F5; KTD1–KTD2.
-- **Files:** new `Sources/AskAgentHelper/` package, lockfile, bundle and behavior tests; new `Sources/MacParakeetCore/Services/Ask/PiAskAgent.swift` and supporting bridge files; `scripts/dist/build_app_bundle.sh`, `scripts/dev/run_app.sh`, helper build script, standalone CLI package layout and Homebrew scaffold; tests under `Tests/MacParakeetTests/Ask/`.
+- **Files:** new `Sources/AskAgentHelper/` package, lockfile, bundle and behavior tests; new `Sources/SottoCore/Services/Ask/PiAskAgent.swift` and supporting bridge files; `scripts/dist/build_app_bundle.sh`, `scripts/dev/run_app.sh`, helper build script, standalone CLI package layout and Homebrew scaffold; tests under `Tests/SottoTests/Ask/`.
 - **Approach:** Build a bundle with reproducible npm dependencies and register a small fixed tool schema. Use private versioned JSONL between Pi and Swift. Pi's injected model stream requests model work through Swift; all provider calls keep credentials outside the helper. Expose genuine final text streaming.
 - **Test scenarios:** actual Pi tool/result continuation using a scripted host; malformed JSON action, unknown tool, oversized frame, wrong request/run ID, helper exit, deadlines, max turns, cancellation during both model and tool work, no silent cloud switch, and unknown usage accounting, and a standalone installed CLI package smoke check without repository-relative helper lookup.
 - **Execution note:** Prove the published package and actual IPC smoke path before depending on the helper in the UI.
@@ -445,14 +445,14 @@ Implement the focused version described in the Product Contract. Recurring-serie
 ### U3. Shared run orchestration and CLI
 
 - **Goal:** Bind runs to source sections and expose the same lifecycle through GUI and automation. Depends on U1–U2. Covers R5–R14; F3–F5; KTD2–KTD4, KTD6.
-- **Files:** new `Services/Ask/AskWorkspaceService.swift`; `Sources/CLI/Commands/AskCommand.swift` and command registration; `Tests/MacParakeetTests/Ask/AskWorkspaceServiceTests.swift`, CLI contract tests.
+- **Files:** new `Services/Ask/AskWorkspaceService.swift`; `Sources/CLI/Commands/AskCommand.swift` and command registration; `Tests/SottoTests/Ask/AskWorkspaceServiceTests.swift`, CLI contract tests.
 - **Approach:** Freeze provider/source revisions, obtain remote-context permission, emit source activity and text events, validate completion, and persist completed/failed/cancelled outcomes. Rebuild active context from only the current section. Enforce one active run per conversation and safe conflicts across processes.
 - **Test scenarios:** real in-memory DB + source tools + scripted agent flow; source removal excludes prior assistant facts; correction/deletion during generation; empty source set; late responses after Stop; retry without lost history; independent simultaneous conversations; GUI-equivalent CLI scope and citations.
 
 ### U4. Native workspace and source picker
 
 - **Goal:** Deliver the polished daily workflow. Depends on U1 contracts and U3 service contract. Covers R1–R4, R6, R8, R10–R11, R14; F1–F5; KTD5.
-- **Files:** new `Sources/MacParakeetViewModels/AskWorkspaceViewModel.swift`, `Sources/MacParakeet/Views/Ask/`; update `MainWindowView.swift`, `MainWindowState.swift`, app composition, and Library selection action; `Tests/MacParakeetTests/Ask/AskWorkspaceViewModelTests.swift`.
+- **Files:** new `Sources/SottoViewModels/AskWorkspaceViewModel.swift`, `Sources/Sotto/Views/Ask/`; update `MainWindowView.swift`, `MainWindowState.swift`, app composition, and Library selection action; `Tests/SottoTests/Ask/AskWorkspaceViewModelTests.swift`.
 - **Approach:** Header conversation menu, source control, readable-width stream, compact composer and provider disclosure. Expanded source sheet uses existing labels plus search/type/date filters, retained selection and preview. Evidence opens with source/date and appropriate timed or text anchor. Empty, unavailable, loading, error, remote consent, streaming and cancellation states must be designed.
 - **Test scenarios:** source selection survives filters/cancel; applying scope changes preserves draft and marks history; navigation/reopen restores state; stale async loads cannot replace a new selection; Stop is immediate; dark/light and compact/wide layouts; keyboard and accessible control labels; no scroll jumps while reading old messages.
 

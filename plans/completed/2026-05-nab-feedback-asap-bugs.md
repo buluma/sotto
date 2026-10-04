@@ -14,7 +14,7 @@ diagnostic logs line up. Raw-mode mitigation is implemented in the current
 working tree and covered by focused/full Swift tests. The remaining acceptance
 check is a real two-party Zoom/Meet call after launching this build.
 
-When MacParakeet meeting recording starts, the user's voice heard by the other
+When Sotto meeting recording starts, the user's voice heard by the other
 Zoom participant becomes much quieter/muffled. Pausing or stopping the
 recording restores the voice. This was observed in both directions during the
 call: Daniel's voice dropped when Daniel started recording, and Nab's voice
@@ -54,7 +54,7 @@ What was tested:
   concurrent-flow soak where dictation during meeting produced non-empty
   transcripts.
 - These tests do **not** cover the external multi-app interaction where Zoom
-  and MacParakeet use the same physical mic and Zoom participants judge the
+  and Sotto use the same physical mic and Zoom participants judge the
   outgoing voice quality.
 
 External reference check:
@@ -99,7 +99,7 @@ Evidence from the call-time log:
 
 Immediate acceptance criteria:
 
-- Starting and stopping MacParakeet meeting recording must not audibly change
+- Starting and stopping Sotto meeting recording must not audibly change
   how the user's voice sounds to another Zoom participant.
 - The fix must be validated with a real two-party call, not only unit tests.
 - Diagnostics should make the effective mic mode visible:
@@ -108,7 +108,7 @@ Immediate acceptance criteria:
 Implementation notes:
 
 - The app-level default is currently a single production override in
-  `Sources/MacParakeet/App/AppEnvironment.swift`.
+  `Sources/Sotto/App/AppEnvironment.swift`.
 - A focused verification run passed while investigating:
   `swift test --filter 'MicrophoneCaptureTests|SharedMicrophoneStreamTests|MeetingAudioCaptureServiceTests'`
   (55 tests, 0 failures).
@@ -124,11 +124,11 @@ Likely first mitigation:
 
 Useful code pointers:
 
-- `Sources/MacParakeet/App/AppEnvironment.swift`
-- `Sources/MacParakeetCore/Audio/MicrophoneEnginePlatform.swift`
-- `Sources/MacParakeetCore/Audio/SharedMicrophoneStream.swift`
-- `Sources/MacParakeetCore/Audio/MicrophoneCapture.swift`
-- `Sources/MacParakeetCore/Audio/MeetingAudioCaptureService.swift`
+- `Sources/Sotto/App/AppEnvironment.swift`
+- `Sources/SottoCore/Audio/MicrophoneEnginePlatform.swift`
+- `Sources/SottoCore/Audio/SharedMicrophoneStream.swift`
+- `Sources/SottoCore/Audio/MicrophoneCapture.swift`
+- `Sources/SottoCore/Audio/MeetingAudioCaptureService.swift`
 
 ### P1: AI setup is too hidden for meeting summaries/action items
 
@@ -223,10 +223,10 @@ Acceptance criteria:
 
 Useful code/test pointers:
 
-- `Sources/MacParakeetViewModels/PromptResultsViewModel.swift`
-- `Sources/MacParakeetViewModels/TranscriptionViewModel.swift`
-- `Tests/MacParakeetTests/ViewModels/PromptResultsViewModelTests.swift`
-- `Tests/MacParakeetTests/ViewModels/TranscriptionViewModelTests.swift`
+- `Sources/SottoViewModels/PromptResultsViewModel.swift`
+- `Sources/SottoViewModels/TranscriptionViewModel.swift`
+- `Tests/SottoTests/ViewModels/PromptResultsViewModelTests.swift`
+- `Tests/SottoTests/ViewModels/TranscriptionViewModelTests.swift`
 
 ### P2: Provider/model settings can appear changed before they are saved
 

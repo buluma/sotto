@@ -6,7 +6,7 @@
 
 ## Context
 
-MacParakeet has committed to fully local AI execution (ADR-002) and has already migrated STT to FluidAudio on ANE (ADR-007). The remaining AI roadmap items depend on a local text LLM:
+Sotto has committed to fully local AI execution (ADR-002) and has already migrated STT to FluidAudio on ANE (ADR-007). The remaining AI roadmap items depend on a local text LLM:
 
 - AI text refinement modes (Formal, Email, Code)
 - Command mode text transforms
@@ -16,7 +16,7 @@ We need one production baseline that is fast enough, reliable in native Swift, a
 
 ## Decision
 
-MacParakeet will use:
+Sotto will use:
 
 - **Runtime:** `mlx-swift-lm` (in-process, native Swift)
 - **Model:** **Qwen3-8B 4-bit** (`mlx-community/Qwen3-8B-4bit`)

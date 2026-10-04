@@ -23,7 +23,7 @@ This plan captures the **structural fix** — inject a `Clock` so the tests don'
 
 ## Problem statement
 
-Three of the duration-related test assertions in `Tests/MacParakeetTests/Services/MeetingRecording/MeetingRecordingServiceTests.swift` use real wallclock:
+Three of the duration-related test assertions in `Tests/SottoTests/Services/MeetingRecording/MeetingRecordingServiceTests.swift` use real wallclock:
 
 - `testStopRecordingDurationExcludesPausedTime` (line ~1256)
 - `testStopRecordingWhilePausedSettlesOngoingPauseIntoDuration` (line ~1308)
@@ -160,7 +160,7 @@ Rough — assumes one engineer familiar with the meeting subsystem.
 | Update 42 test construction sites (mostly mechanical, default arg covers most) | 2-3 |
 | Convert 3 timing-fragile tests to use `MockMeetingClock` | 2 |
 | Audit telemetry emit sites for clock consistency | 1 |
-| Write `Tests/MacParakeetCore/Mocks/MockMeetingClock.swift` + helper extensions | 1 |
+| Write `Tests/SottoCore/Mocks/MockMeetingClock.swift` + helper extensions | 1 |
 | Run full XCTest + Swift Testing, fix any fallout | 2-4 |
 | PR review cycle (likely multi-reviewer given service-layer touch) | 2-4 (calendar) |
 

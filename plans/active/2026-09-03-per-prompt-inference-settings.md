@@ -111,12 +111,12 @@ optional model:
 - Prompt results currently pass application default `temperature = 0.7`.
 - Native Ollama currently sends `think: false` explicitly.
 - Normalizing an all-default struct to `nil` removes any way to distinguish
-  “inherit MacParakeet's historical behavior” from “omit this key and let the
+  “inherit Sotto's historical behavior” from “omit this key and let the
   provider decide”.
 
 Accepted v1 decision:
 
-1. Call the blank state **MacParakeet default** (or simply **Default**) in UI.
+1. Call the blank state **Sotto default** (or simply **Default**) in UI.
 2. Define `nil` per-prompt settings as “inherit the operation's current
    `ChatCompletionOptions.default` and adapter defaults”.
 3. Define an unset numeric field inside a custom settings object the same way:
@@ -136,7 +136,7 @@ feature PR is declared ready.
 
 ### Domain and validation
 
-Add `PromptInferenceSettings.swift` in `MacParakeetCore/Models` with:
+Add `PromptInferenceSettings.swift` in `SottoCore/Models` with:
 
 - `PromptInferenceSettings`: optional numeric fields plus `ThinkingMode`.
 - A throwing validation/normalization API used by both GUI and CLI-facing
@@ -292,10 +292,10 @@ and presentation.
 
 Files likely touched:
 
-- `Sources/MacParakeetCore/Models/PromptInferenceSettings.swift` (new)
-- `Sources/MacParakeetCore/Models/Prompt.swift`
-- `Sources/MacParakeetCore/Models/PromptResult.swift`
-- `Sources/MacParakeetCore/Models/LLMTypes.swift`
+- `Sources/SottoCore/Models/PromptInferenceSettings.swift` (new)
+- `Sources/SottoCore/Models/Prompt.swift`
+- `Sources/SottoCore/Models/PromptResult.swift`
+- `Sources/SottoCore/Models/LLMTypes.swift`
 - provider capability resolver (new Core file)
 - focused model/resolver tests
 

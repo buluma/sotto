@@ -78,7 +78,7 @@ conflicts against this app's capture shortcuts and configured Transform shortcut
 it does not claim to detect every shortcut registered by another application.
 
 The Jev key is stored in macOS Keychain under service
-`com.macparakeet.voice-control.jev`, account `apiKey`. Production app code has no
+`com.sotto.voice-control.jev`, account `apiKey`. Production app code has no
 shell-environment or repository-file key fallback. There is no default key in
 source, diagnostic output, examples or tests.
 
@@ -242,7 +242,7 @@ head. `events.jsonl` streams the same step records, one `type=decision` line per
 model request, plus one `type=turn` line when the turn stops. Field values and
 selected text stay out. End clears the panel and does not delete the log.
 
-`macparakeet-cli voice-control replay <session.json> [--goal …] [--observation N]
+`sotto-cli voice-control replay <session.json> [--goal …] [--observation N]
 [--history …] [--jev]` routes an instruction against a persisted observation
 through the same router and, with `--jev` and `JEV_API_KEY`, the same decision
 client. It never observes or acts on the live screen. The inbox accepts
@@ -250,7 +250,7 @@ client. It never observes or acts on the live screen. The inbox accepts
 `dispatch/dry_run` trace naming the consequence, reports "would <operation>
 <control>", and ends the task without executing or asking for confirmation.
 Retention is the last 20 sessions. A pointer copy is also written to
-`/tmp/macparakeet-voice-control/latest.md` with owner-only permissions. That
+`/tmp/sotto-voice-control/latest.md` with owner-only permissions. That
 pointer is not a command inbox. `command.json` is read only from the Voice
 Control log directory. A dry run is a fresh proposal: it cannot activate an
 app, confirm, stop, enter literal mode, or replace an in-progress turn, a
@@ -357,7 +357,7 @@ This implementation does not promise arbitrary application support, pixel/OCR
 fallback, dragging, a universal reversible undo stack, custom workflow recording,
 a wake word, speaker authentication, or universal browser coverage. Native accessibility
 coverage varies by application and browser. Model confidence is not calibrated
-end-to-end task success. The upstream flight demo's timing is not a MacParakeet
+end-to-end task success. The upstream flight demo's timing is not a Sotto
 benchmark.
 
 Release qualification must independently demonstrate actual microphone capture,

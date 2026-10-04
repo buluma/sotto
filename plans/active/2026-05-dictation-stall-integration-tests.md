@@ -23,32 +23,32 @@ current engine instance and the engine has actually stopped. The
 `engine_is_running=` (actual `AVAudioEngine.isRunning`) alongside the
 platform-flag `isRunning=`, closing the instrumentation gap called out
 below. Regression tests:
-`Tests/MacParakeetTests/Audio/MicrophoneEnginePlatformConfigChangeRecoveryTests.swift`.
+`Tests/SottoTests/Audio/MicrophoneEnginePlatformConfigChangeRecoveryTests.swift`.
 The Tier-4 HAL-mutation test is now expected to pass *because of* recovery
 on machines where the default-input mutation is observable.
 
 ## Status (2026-05-04, amended 2026-05-27)
 
-- **Tier 1 shipped + expanded** — 9 tests in `Tests/MacParakeetTests/Audio/MicrophoneEngineRealPlatformTests.swift`. Run the normal hardware subset with `MACPARAKEET_HARDWARE_TESTS=1`.
+- **Tier 1 shipped + expanded** — 9 tests in `Tests/SottoTests/Audio/MicrophoneEngineRealPlatformTests.swift`. Run the normal hardware subset with `SOTTO_HARDWARE_TESTS=1`.
 - **Normal hardware subset** — 6 tests: cold start, post-cycle, post-VPIO, active-VPIO + late non-VPIO subscriber, deferred-VPIO promotion, and 10-cycle raw stress.
 - **Additional opt-in tests**:
-  - `MACPARAKEET_SLOW_HARDWARE_TESTS=1` — 3-minute idle-gap test.
-  - `MACPARAKEET_STRESS_HARDWARE_TESTS=1` — 50-cycle shared-stream raw/VPIO stress.
-  - `MACPARAKEET_HAL_MUTATION_TESTS=1` — default-input device switch while the shared stream is running. Skips unless at least two input devices are available and the OS reports the default-device mutation back to the test runner. This test mutates the user's selected microphone and restores the original default in cleanup.
+  - `SOTTO_SLOW_HARDWARE_TESTS=1` — 3-minute idle-gap test.
+  - `SOTTO_STRESS_HARDWARE_TESTS=1` — 50-cycle shared-stream raw/VPIO stress.
+  - `SOTTO_HAL_MUTATION_TESTS=1` — default-input device switch while the shared stream is running. Skips unless at least two input devices are available and the OS reports the default-device mutation back to the test runner. This test mutates the user's selected microphone and restores the original default in cleanup.
 - **Local results after the 2026-05-04 expansion**:
   - `swift test --filter MicrophoneEngineRealPlatformTests` — 9 skipped, 0 failures (hardware gate off; compile verified)
-  - `MACPARAKEET_HARDWARE_TESTS=1 swift test --filter MicrophoneEngineRealPlatformTests` — 6 passed, 3 skipped, 0 failures in 7.61 s
+  - `SOTTO_HARDWARE_TESTS=1 swift test --filter MicrophoneEngineRealPlatformTests` — 6 passed, 3 skipped, 0 failures in 7.61 s
     - `testColdStartDeliversBuffers` ✓ 0.395 s
     - `testConcurrentVPIODeliversBuffersToLateNonVPIOSubscriber` ✓ 0.779 s
     - `testDeferredVPIOPromotionDeliversBuffersAfterRawSubscriberLeaves` ✓ 1.062 s
     - `testPostCycleDeliversBuffers` ✓ 0.614 s
     - `testPostVPIODeliversBuffers` ✓ 0.972 s
     - `testStressTenCycles` ✓ 3.782 s
-  - `MACPARAKEET_HARDWARE_TESTS=1 MACPARAKEET_STRESS_HARDWARE_TESTS=1 swift test --filter MicrophoneEngineRealPlatformTests` — 7 passed, 2 skipped, 0 failures in 35.21 s
+  - `SOTTO_HARDWARE_TESTS=1 SOTTO_STRESS_HARDWARE_TESTS=1 swift test --filter MicrophoneEngineRealPlatformTests` — 7 passed, 2 skipped, 0 failures in 35.21 s
     - `testStressFiftySharedStreamCycles` ✓ 27.542 s
-  - `MACPARAKEET_HARDWARE_TESTS=1 MACPARAKEET_HAL_MUTATION_TESTS=1 swift test --filter MicrophoneEngineRealPlatformTests/testDefaultInputSwitchWhileSharedStreamRunningKeepsDeliveringBuffers` — skipped: default-input mutation was not observable on this machine
+  - `SOTTO_HARDWARE_TESTS=1 SOTTO_HAL_MUTATION_TESTS=1 swift test --filter MicrophoneEngineRealPlatformTests/testDefaultInputSwitchWhileSharedStreamRunningKeepsDeliveringBuffers` — skipped: default-input mutation was not observable on this machine
   - `swift test` — 2220 XCTest, 10 skipped, 0 failures in 99.57 s; 16 Swift Testing tests passed
-- **Earlier idle result retained**: `MACPARAKEET_HARDWARE_TESTS=1 MACPARAKEET_SLOW_HARDWARE_TESTS=1 swift test --filter testIdleGapDeliversBuffers` passed in 180.75 s before this expansion.
+- **Earlier idle result retained**: `SOTTO_HARDWARE_TESTS=1 SOTTO_SLOW_HARDWARE_TESTS=1 swift test --filter testIdleGapDeliversBuffers` passed in 180.75 s before this expansion.
 - **2026-05-04 review finding addressed**: the plan listed `testConcurrentVPIODeliversBuffers`, but the test file did not cover the real `SharedMicrophoneStream` concurrent path. The suite now adds:
   - `testConcurrentVPIODeliversBuffersToLateNonVPIOSubscriber`
   - `testDeferredVPIOPromotionDeliversBuffersAfterRawSubscriberLeaves`
@@ -58,13 +58,13 @@ on machines where the default-input mutation is observable.
   3. **System-level events** — sleep/wake, exclusive-access takeover by another process.
 - **Tier 2 deferred** — needs a test seam that doesn't exist today.
 - **Tier 3 not started** — feasible follow-up.
-- **Tier 4 scaffolded**: `testDefaultInputSwitchWhileSharedStreamRunningKeepsDeliveringBuffers` programmatically toggles the default input device via `AudioObjectSetPropertyData(kAudioHardwarePropertyDefaultInputDevice)` mid-session and asserts the shared stream continues delivering buffers. It is gated by `MACPARAKEET_HAL_MUTATION_TESTS=1` because it mutates system audio state.
+- **Tier 4 scaffolded**: `testDefaultInputSwitchWhileSharedStreamRunningKeepsDeliveringBuffers` programmatically toggles the default input device via `AudioObjectSetPropertyData(kAudioHardwarePropertyDefaultInputDevice)` mid-session and asserts the shared stream continues delivering buffers. It is gated by `SOTTO_HAL_MUTATION_TESTS=1` because it mutates system audio state.
 - **Instrumentation gap closed in this branch**: `AVAudioEngineMicrophonePlatform` now installs a log-only Core Audio listener for `kAudioHardwarePropertyDefaultInputDevice` while the shared mic engine is running and emits `audio_default_input_changed ...` to `dictation-audio.log`. This completes the decision rule that separates HAL route churn from a fresh-engine attach failure on the next field stall.
 - **Tier 1 earns its keep** as permanent regression coverage for the healthy paths even though it didn't reproduce the bug. Any future change that breaks the contract on these paths fails immediately.
 
 ### 2026-05-27 release-audit note: VPIO tests are not the shipped-path gate
 
-`MACPARAKEET_HARDWARE_TESTS=1 swift test --filter MicrophoneEngineRealPlatformTests`
+`SOTTO_HARDWARE_TESTS=1 swift test --filter MicrophoneEngineRealPlatformTests`
 failed on macOS 26.5 with CoreAudio `-10868` in the VPIO teardown path,
 especially `testPostVPIODeliversBuffers` (start VPIO -> stop -> start raw).
 Raw cold start and the active-VPIO + late non-VPIO subscriber path still passed.
@@ -133,7 +133,7 @@ Operationally:
 
 ### Tier 1 — invariant under varied state (real platform, real mic)
 
-New file: `Tests/MacParakeetTests/Audio/MicrophoneEngineRealPlatformTests.swift`
+New file: `Tests/SottoTests/Audio/MicrophoneEngineRealPlatformTests.swift`
 
 Each test method:
 
@@ -143,15 +143,15 @@ Each test method:
 
 | Test method | Scenario | Gate |
 |-------------|----------|------|
-| `testColdStartDeliversBuffers` | Fresh process, single platform start | `MACPARAKEET_HARDWARE_TESTS=1` |
-| `testPostCycleDeliversBuffers` | Platform start → stop → start immediately | `MACPARAKEET_HARDWARE_TESTS=1` |
-| `testPostVPIODeliversBuffers` | Platform VPIO start → stop → raw start | `MACPARAKEET_HARDWARE_TESTS=1` |
-| `testConcurrentVPIODeliversBuffersToLateNonVPIOSubscriber` | Shared stream: VPIO subscriber active, then non-VPIO subscriber joins | `MACPARAKEET_HARDWARE_TESTS=1` |
-| `testDeferredVPIOPromotionDeliversBuffersAfterRawSubscriberLeaves` | Shared stream: raw subscriber blocks VPIO, then leaves and VPIO promotes | `MACPARAKEET_HARDWARE_TESTS=1` |
-| `testStressTenCycles` | 10 back-to-back raw platform start/stop cycles | `MACPARAKEET_HARDWARE_TESTS=1` |
-| `testIdleGapDeliversBuffers` | Platform start → stop → wait 3 min → start | `MACPARAKEET_HARDWARE_TESTS=1 MACPARAKEET_SLOW_HARDWARE_TESTS=1` |
-| `testStressFiftySharedStreamCycles` | 50 shared-stream cycles alternating raw and VPIO | `MACPARAKEET_HARDWARE_TESTS=1 MACPARAKEET_STRESS_HARDWARE_TESTS=1` |
-| `testDefaultInputSwitchWhileSharedStreamRunningKeepsDeliveringBuffers` | Shared stream stays alive across default-input switch away/back | `MACPARAKEET_HARDWARE_TESTS=1 MACPARAKEET_HAL_MUTATION_TESTS=1` |
+| `testColdStartDeliversBuffers` | Fresh process, single platform start | `SOTTO_HARDWARE_TESTS=1` |
+| `testPostCycleDeliversBuffers` | Platform start → stop → start immediately | `SOTTO_HARDWARE_TESTS=1` |
+| `testPostVPIODeliversBuffers` | Platform VPIO start → stop → raw start | `SOTTO_HARDWARE_TESTS=1` |
+| `testConcurrentVPIODeliversBuffersToLateNonVPIOSubscriber` | Shared stream: VPIO subscriber active, then non-VPIO subscriber joins | `SOTTO_HARDWARE_TESTS=1` |
+| `testDeferredVPIOPromotionDeliversBuffersAfterRawSubscriberLeaves` | Shared stream: raw subscriber blocks VPIO, then leaves and VPIO promotes | `SOTTO_HARDWARE_TESTS=1` |
+| `testStressTenCycles` | 10 back-to-back raw platform start/stop cycles | `SOTTO_HARDWARE_TESTS=1` |
+| `testIdleGapDeliversBuffers` | Platform start → stop → wait 3 min → start | `SOTTO_HARDWARE_TESTS=1 SOTTO_SLOW_HARDWARE_TESTS=1` |
+| `testStressFiftySharedStreamCycles` | 50 shared-stream cycles alternating raw and VPIO | `SOTTO_HARDWARE_TESTS=1 SOTTO_STRESS_HARDWARE_TESTS=1` |
+| `testDefaultInputSwitchWhileSharedStreamRunningKeepsDeliveringBuffers` | Shared stream stays alive across default-input switch away/back | `SOTTO_HARDWARE_TESTS=1 SOTTO_HAL_MUTATION_TESTS=1` |
 
 Each test uses `OSAllocatedUnfairLock` to count tap callbacks
 thread-safely from the audio render thread. Assert `count > 0` after
@@ -208,7 +208,7 @@ hypothesis.
 
 ### Tier 4 — HAL default-input mutation (real platform, opt-in)
 
-> Status: **SCAFFOLDED** — gated by `MACPARAKEET_HAL_MUTATION_TESTS=1`.
+> Status: **SCAFFOLDED** — gated by `SOTTO_HAL_MUTATION_TESTS=1`.
 
 `testDefaultInputSwitchWhileSharedStreamRunningKeepsDeliveringBuffers`
 targets the strongest field-log signature we have: Core Audio
@@ -236,15 +236,15 @@ These tests require real microphone access. They can't run in CI
 without infrastructure that grants TCC microphone access to the test
 runner and provides a real or emulated input device. For now:
 
-- Gated via `XCTSkipIf` on a `MACPARAKEET_HARDWARE_TESTS=1` environment
+- Gated via `XCTSkipIf` on a `SOTTO_HARDWARE_TESTS=1` environment
   variable.
 - `swift test` skips them by default.
 - Developers run locally:
-  `MACPARAKEET_HARDWARE_TESTS=1 swift test --filter MicrophoneEngineRealPlatform`
+  `SOTTO_HARDWARE_TESTS=1 swift test --filter MicrophoneEngineRealPlatform`
 - Slow/forensic additions are separately gated:
-  `MACPARAKEET_SLOW_HARDWARE_TESTS=1`,
-  `MACPARAKEET_STRESS_HARDWARE_TESTS=1`, and
-  `MACPARAKEET_HAL_MUTATION_TESTS=1`.
+  `SOTTO_SLOW_HARDWARE_TESTS=1`,
+  `SOTTO_STRESS_HARDWARE_TESTS=1`, and
+  `SOTTO_HAL_MUTATION_TESTS=1`.
 - Document the variable in `docs/cli-testing.md` and AGENTS.md once
   the pattern is proven.
 

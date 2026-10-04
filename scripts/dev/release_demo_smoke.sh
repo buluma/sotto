@@ -5,26 +5,26 @@ usage() {
   cat <<'EOF'
 Usage: scripts/dev/release_demo_smoke.sh [options]
 
-Runs a local release-demo smoke against a MacParakeet CLI binary:
+Runs a local release-demo smoke against a Sotto CLI binary:
   1. CLI version probe
   2. non-mutating health --json
   3. synthesized tiny WAV transcription into an isolated SQLite database
   4. fresh-process history read and markdown export content verification
 
 Options:
-  --cli PATH           CLI binary to test. Defaults to /Applications/MacParakeet.app/Contents/MacOS/macparakeet-cli,
-                       then PATH lookup for macparakeet-cli.
-  --allow-swift-run   Use `swift run macparakeet-cli` if no installed CLI is found.
+  --cli PATH           CLI binary to test. Defaults to /Applications/Sotto.app/Contents/MacOS/sotto-cli,
+                       then PATH lookup for sotto-cli.
+  --allow-swift-run   Use `swift run sotto-cli` if no installed CLI is found.
   --output-dir DIR    Evidence directory. Defaults to .codex/release-demo-smoke/<UTC timestamp>.
   -h, --help          Show this help.
 
 Environment:
-  MACPARAKEET_CLI     Same as --cli.
+  SOTTO_CLI     Same as --cli.
 EOF
 }
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-cli_path="${MACPARAKEET_CLI:-}"
+cli_path="${SOTTO_CLI:-}"
 allow_swift_run=0
 output_dir="$repo_root/.codex/release-demo-smoke/$(date -u +%Y%m%dT%H%M%SZ)"
 summary_result=""
@@ -52,7 +52,7 @@ write_summary() {
 
   mkdir -p "$output_dir"
   {
-    printf '# MacParakeet Release Demo Smoke\n\n'
+    printf '# Sotto Release Demo Smoke\n\n'
     printf '%s\n' "- Result: \`$result\`"
     printf '%s\n' "- CLI: \`${CLI_CMD[*]-<unresolved>}\`"
     printf '%s\n' "- Evidence directory: \`$output_dir\`"
@@ -128,29 +128,29 @@ resolve_cli() {
     return
   fi
 
-  local app_cli="/Applications/MacParakeet.app/Contents/MacOS/macparakeet-cli"
+  local app_cli="/Applications/Sotto.app/Contents/MacOS/sotto-cli"
   if [[ -x "$app_cli" ]]; then
     CLI_CMD=("$app_cli")
     return
   fi
 
-  if command -v macparakeet-cli >/dev/null 2>&1; then
-    CLI_CMD=("$(command -v macparakeet-cli)")
+  if command -v sotto-cli >/dev/null 2>&1; then
+    CLI_CMD=("$(command -v sotto-cli)")
     return
   fi
 
   if [[ "$allow_swift_run" -eq 1 ]]; then
-    CLI_CMD=("swift" "run" "--package-path" "$repo_root" "macparakeet-cli" "--")
+    CLI_CMD=("swift" "run" "--package-path" "$repo_root" "sotto-cli" "--")
     return
   fi
 
   cat >&2 <<'EOF'
-No installed macparakeet-cli was found.
+No installed sotto-cli was found.
 
-Install/open the released MacParakeet app, pass --cli PATH, set MACPARAKEET_CLI,
+Install/open the released Sotto app, pass --cli PATH, set SOTTO_CLI,
 or rerun with --allow-swift-run for a development-build smoke.
 EOF
-  failure_context="no installed macparakeet-cli found"
+  failure_context="no installed sotto-cli found"
   exit 69
 }
 
@@ -241,17 +241,17 @@ validate_json() {
 : >"$command_log"
 resolve_cli
 
-printf 'MacParakeet release demo smoke fixture. This short local audio proves transcription and export.\n' >"$fixture_text"
+printf 'Sotto release demo smoke fixture. This short local audio proves transcription and export.\n' >"$fixture_text"
 
 run_capture "cli-version" "$output_dir/cli-version.txt" "$output_dir/cli-version.stderr" "${CLI_CMD[@]}" --version
-run_capture "health-json" "$health_json" "$output_dir/health.stderr" env MACPARAKEET_TELEMETRY=0 "${CLI_CMD[@]}" health --json
+run_capture "health-json" "$health_json" "$output_dir/health.stderr" env SOTTO_TELEMETRY=0 "${CLI_CMD[@]}" health --json
 validate_json "$health_json"
 
 run_capture "say-fixture" "$output_dir/say.stdout" "$output_dir/say.stderr" /usr/bin/say -o "$fixture_aiff" "$(cat "$fixture_text")"
 run_capture "convert-fixture" "$output_dir/afconvert.stdout" "$output_dir/afconvert.stderr" /usr/bin/afconvert -f WAVE -d LEI16@16000 "$fixture_aiff" "$fixture_wav"
 require_file "$fixture_wav"
 
-run_capture "transcribe-json" "$transcribe_json" "$output_dir/transcribe.stderr" env MACPARAKEET_TELEMETRY=0 "${CLI_CMD[@]}" transcribe "$fixture_wav" --format json --database "$smoke_db" --speaker-detection off --engine parakeet --parakeet-model v3 --mode raw
+run_capture "transcribe-json" "$transcribe_json" "$output_dir/transcribe.stderr" env SOTTO_TELEMETRY=0 "${CLI_CMD[@]}" transcribe "$fixture_wav" --format json --database "$smoke_db" --speaker-detection off --engine parakeet --parakeet-model v3 --mode raw
 validate_json "$transcribe_json"
 
 transcription_id="$(/usr/bin/plutil -extract id raw -o - "$transcribe_json")"
@@ -277,9 +277,9 @@ if [[ -z "${raw_transcript}${clean_transcript}" ]]; then
   exit 1
 fi
 
-run_capture "history-readback" "$history_json" "$output_dir/history.stderr" env MACPARAKEET_TELEMETRY=0 "${CLI_CMD[@]}" history transcriptions --json --limit 2 --database "$smoke_db"
+run_capture "history-readback" "$history_json" "$output_dir/history.stderr" env SOTTO_TELEMETRY=0 "${CLI_CMD[@]}" history transcriptions --json --limit 2 --database "$smoke_db"
 validate_json "$history_json"
-run_capture "export-markdown" "$output_dir/export.stdout" "$output_dir/export.stderr" env MACPARAKEET_TELEMETRY=0 "${CLI_CMD[@]}" export "$transcription_id" --format markdown --output "$export_md" --database "$smoke_db"
+run_capture "export-markdown" "$output_dir/export.stdout" "$output_dir/export.stderr" env SOTTO_TELEMETRY=0 "${CLI_CMD[@]}" export "$transcription_id" --format markdown --output "$export_md" --database "$smoke_db"
 require_file "$export_md"
 run_capture "verify-content" "$output_dir/validation.json" "$output_dir/validation.stderr" python3 "$repo_root/scripts/dev/verify_release_demo.py" "$output_dir"
 

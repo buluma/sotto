@@ -21,5 +21,5 @@ final labels; correction UX (rename, apply to all, merge, split, undo) and wheth
 train future identification; speaker profiles/enrollment and consent/privacy handling;
 timing drift between ASR and diarization; any published accuracy claims with their conditions.
 
-Deliver a source-backed pattern matrix, the 5 strongest patterns for MacParakeet's situation,
+Deliver a source-backed pattern matrix, the 5 strongest patterns for Sotto's situation,
 and anti-patterns to avoid. State explicitly where proprietary internals are unknown.

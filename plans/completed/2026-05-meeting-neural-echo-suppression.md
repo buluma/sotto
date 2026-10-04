@@ -21,7 +21,7 @@ safety net is hardened; the LocalVQE validation experiment is unblocked:
   test would have under-reported the model's real quality.
 - Reference delay is implemented: a reference-history ring serves the frame at
   stream position `p` reference audio from `p - delay`, configured via
-  `MACPARAKEET_MEETING_ECHO_REFERENCE_DELAY_MS` (default 0). This is the
+  `SOTTO_MEETING_ECHO_REFERENCE_DELAY_MS` (default 0). This is the
   "configured reference offset" step; the cross-correlation estimator remains
   future work if live tests show residual delay mismatch.
 - `MicConditioning.flush()` drains held samples; `CaptureOrchestrator` drains
@@ -56,7 +56,7 @@ The previous macOS Voice Processing I/O approach reduced bleed but created a
 higher-risk failure mode: it could affect the live microphone path used by Zoom,
 Meet, Teams, and similar apps. Meeting recording must not change how the other
 participants hear the user. The shipped baseline should stay raw/call-safe, with
-echo suppression implemented inside MacParakeet's meeting pipeline.
+echo suppression implemented inside Sotto's meeting pipeline.
 
 ## Goals
 
