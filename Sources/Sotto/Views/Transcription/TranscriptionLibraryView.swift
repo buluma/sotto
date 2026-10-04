@@ -21,7 +21,7 @@ struct TranscriptionLibraryView: View {
     var onAskSelected: (([UUID]) -> Void)? = nil
     var onReviewAskConversations: (() -> Void)? = nil
     var emptyTitle: String = "No transcriptions yet"
-    var emptyMessage: String = "Transcribe a file or video link to get started."
+    var emptyMessage: String = "Just a vast, empty void where your words should be. Drop in a file or video link and let’s turn that audiovisual chaos into actual words, Morty."
     var onSelect: (Transcription) -> Void
 
     @State private var pendingDelete: Transcription?
@@ -1165,7 +1165,7 @@ struct TranscriptionLibraryView: View {
             return isMeetingContext ? "No meetings match these labels" : "No transcriptions match these labels"
         }
         if !viewModel.searchText.isEmpty { return "No matching transcriptions" }
-        return isMeetingContext ? "No meetings recorded yet" : emptyTitle
+        return isMeetingContext ? "No meetings recorded yet. Lucky you." : emptyTitle
     }
 
     private var emptyStateMessage: String {

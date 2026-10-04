@@ -88,7 +88,7 @@ struct VoiceProfilesSheet: View {
     /// product bug: nothing else in the app explains where voices come from.
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
-            Text("No voices saved yet")
+            Text("No voices saved yet. Everybody sounds like Jerry.")
                 .font(DesignSystem.Typography.body.weight(.semibold))
             Text(
                 "Rename a speaker in a meeting transcript, then choose \"Remember\" when Sotto offers. Saved voices are suggested in later meetings, and never applied without your confirmation."

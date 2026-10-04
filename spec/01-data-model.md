@@ -863,7 +863,7 @@ CREATE TABLE daily_dictation_stats (
 - Hot-path increment lives in `DictationRepository.save()` inside the same write transaction as `lifetime_dictation_stats`. Uses `INSERT … ON CONFLICT(day) DO UPDATE` (UPSERT) — the row's absence is the expected initial state.
 - Edit-transcript path (`(.completed, .completed)` save) calls `applyDailyDelta` against `prior.createdAt`'s day so the delta lands on the day that was originally counted.
 - Backfilled on migration from existing completed `dictations` rows. Grouping done in Swift so it matches `Calendar.current` exactly.
-- Per-app aggregation lives elsewhere (read directly from `dictations.pastedToApp` for the "Where you dictate" card). Only the heatmap is privileged with rollup-table preservation; top-apps clears with history by design.
+- Per-app aggregation lives elsewhere (read directly from `dictations.pastedToApp` for the "Where you ramble into the void" card). Only the heatmap is privileged with rollup-table preservation; top-apps clears with history by design.
 
 ---
 

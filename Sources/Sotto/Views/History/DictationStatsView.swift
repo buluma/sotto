@@ -33,7 +33,7 @@ struct DictationStatsView: View {
             MeditativeMerkabaView(size: 72, revolutionDuration: 8.0, tintColor: DesignSystem.Colors.accent)
                 .opacity(0.4)
             VStack(spacing: DesignSystem.Spacing.sm) {
-                Text("Your stats will appear here.")
+                Text("Nothing here yet. Go dictate something, Morty.")
                     .font(DesignSystem.Typography.pageTitle)
                     .foregroundStyle(.primary)
                 Text(HotkeyTrigger.current.isDisabled
@@ -204,7 +204,7 @@ struct DictationStatsView: View {
         let maxCount = viewModel.topApps.map(\.count).max() ?? 1
         return VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Where you dictate")
+                Text("Where you ramble into the void")
                     .font(.system(size: 18, weight: .semibold, design: .rounded))
                 Spacer()
                 Text("Top \(viewModel.topApps.count) app\(viewModel.topApps.count == 1 ? "" : "s")")
@@ -702,7 +702,7 @@ private struct TopAppRow: View {
         )
         // Instant detail popover, centered above the row by default and
         // flipped below for the top row so it doesn't clip against the card
-        // edge or the "Where you dictate" section title. Mirrors the
+        // edge or the "Where you ramble into the void" section title. Mirrors the
         // heatmap's hover pattern (no system tooltip delay, no system arrow).
         .overlay(alignment: showAbove ? .top : .bottom) {
             if isHovered {

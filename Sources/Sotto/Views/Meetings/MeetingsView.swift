@@ -382,7 +382,7 @@ struct MeetingsView: View {
                     if viewModel.upcomingEvents.isEmpty {
                         MeetingsInlineState(
                             icon: "calendar",
-                            title: "No upcoming meetings",
+                            title: "No upcoming meetings. Enjoy it while it lasts.",
                             detail: calendarEmptyDetail(for: mode),
                             actionTitle: "Refresh",
                             actionIcon: "arrow.clockwise",
@@ -889,7 +889,7 @@ struct MeetingsView: View {
     }
 
     private var recentMeetingsEmptyTitle: String {
-        recentMeetingsSearchText.isEmpty ? "No meetings recorded yet" : "No matching meetings"
+        recentMeetingsSearchText.isEmpty ? "No meetings recorded yet. Lucky you." : "No matching meetings"
     }
 
     private var recentMeetingsEmptyDetail: String {

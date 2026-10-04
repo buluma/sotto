@@ -27,7 +27,7 @@ struct SharedSharesView: View {
             if let error = model.errorMessage { Text(error).foregroundStyle(DesignSystem.Colors.errorRed) }
             if model.publications.isEmpty {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("No shared pages on this Mac").font(DesignSystem.Typography.sectionTitle)
+                    Text("No shared pages on this Mac. Nobody's reading your stuff, Morty.").font(DesignSystem.Typography.sectionTitle)
                     Text(
                         "Open a transcript and choose Share to preview exactly what you want to publish. If you shared from another installation, restore management with your recovery code."
                     )

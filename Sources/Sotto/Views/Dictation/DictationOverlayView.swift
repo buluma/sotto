@@ -900,7 +900,7 @@ struct DictationOverlayView: View {
         }
         if lower.contains("couldn't hear") || lower.contains("empty")
             || lower.contains("too short") || lower.contains("insufficient") {
-            return ("No Speech Detected", "Try speaking louder or holding a bit longer.")
+            return ("No Speech Detected", "Speak up, Morty. I can't transcribe mumbling. Try louder or hold a bit longer.")
         }
         if lower.contains("copied to clipboard") || lower.contains("cmd+v") {
             return ("Copied to Clipboard", "Auto-paste wasn't available. Press Cmd+V where you want the text.")
