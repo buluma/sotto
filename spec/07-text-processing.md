@@ -1,0 +1,219 @@
+# 07 - Text Processing
+
+> Status: **ACTIVE** - Authoritative, current
+
+Text processing transforms raw STT output into polished text. MacParakeet offers a deterministic pipeline for fast, predictable results.
+
+---
+
+## Deterministic Pipeline (v0.2)
+
+A 5-step pipeline that runs in sub-millisecond time. Pure function: same input always produces the same output and optional post-paste action.
+
+```
+Raw STT Text → Filler Removal → Custom Words → Trailing Action Extraction → Snippet Expansion → Whitespace Cleanup → Clean Text
+```
+
+### Step 1: Filler Removal
+
+Removes hesitation sounds that are safe for English Clean processing:
+
+- Always: "uh", "umm", "uhh"
+- By default: "um" (English hesitation). Turn **Also remove “um”** off in
+  Vocabulary if you dictate Portuguese or German, where `um` is a real word.
+
+Implementation uses `NSRegularExpression` with word boundaries (`\b`) to avoid partial matches. Words like "like", "so", "right", and phrases like "you know" are intentionally not stripped because they can carry meaning.
+
+### Step 2: Custom Word Replacements
+
+User-defined word corrections applied with case-insensitive matching and whole-word boundaries.
+
+Two categories:
+
+| Type | Purpose | Example |
+|------|---------|---------|
+| Vocabulary anchors | Enforce correct casing | "kubernetes" → "Kubernetes" |
+| Corrections | Fix common STT errors | "aye pee eye" → "API" |
+
+- Matching is **case-insensitive** with **whole-word boundaries**
+- **Disabled** words are skipped (user can toggle without deleting)
+- Applied in the order they appear in the database
+
+**Meetings (REQ-PIPE-003):** these custom-word corrections also run on
+finalized meeting transcripts — applied to both the plain text and the
+per-word timestamp tokens that drive the speaker-segmented transcript view and
+the SRT/VTT/speaker-paragraph exports. Meeting correction is **always-on**,
+independent of the Raw/Clean processing mode (custom words a user entered are
+intentional corrections, and the default mode is Raw). Only this custom-word
+step is reused; filler removal, snippet expansion, and insertion styling stay
+dictation-only so the verbatim meeting record is preserved. The shared
+matching logic lives in `CustomWordReplacer`; the meeting entry point is
+`MeetingTranscriptVocabularyApplier`.
+
+### Step 3: Trailing Action Extraction
+
+If the user's text ends with an enabled action-snippet trigger, the trigger is stripped and the action is returned through `TextProcessingResult.postPasteAction`. This is how Voice Return-style behavior can simulate Return after paste without leaving a configured trigger phrase such as "press return" or "zatwierdź" in the transcript.
+
+- Action snippets are matched longest-first, case-insensitive, and punctuation-tolerant at the end of the text.
+- Voice Return can inject multiple configured trigger phrases for the same Return action.
+- Extraction happens before normal snippet expansion so a plain snippet cannot consume or rewrite the action trigger.
+- Raw mode skips the full clean pipeline, but still performs this terminal action extraction so Voice Return works in both Raw and Clean.
+
+### Step 4: Snippet Expansion
+
+Trigger phrases are replaced with their full expansion text.
+
+- **Triggers are natural language phrases**, not abbreviations — because Parakeet STT outputs natural speech, users will say "my signature" not "sig". Triggers must match what the STT actually produces.
+- Snippets are **sorted by trigger length descending** (longest first) to prevent partial matches when one trigger is a prefix of another
+- Matching is **case-insensitive** with **whole-phrase boundaries**
+- Expanded snippet IDs are tracked so use counts can be updated after processing
+- Example: `"my signature"` → `"Best regards, David"`
+- After user snippets, Clean mode optionally converts spoken punctuation
+  commands (`question mark` → `?`, `exclamation mark` / `exclamation point` → `!`,
+  plus DE/ES/FR/PT/PL aliases). Prefix `literal` (or `wörtlich` / `littéral` /
+  `dosłownie`) keeps the words. User snippets of the same trigger still win.
+  Default on; Vocabulary and `config set spoken-punctuation` can opt out.
+  This runs on dictation only; `vocab process` also applies it because it
+  previews the dictation Clean pipeline on typed text. File, URL, and meeting
+  transcripts keep the words, because recorded speech that mentions "a
+  question mark" means them.
+
+### Step 5: Whitespace Cleanup + Insertion Style
+
+Final normalization pass:
+
+1. **Collapse multiple spaces** — `"hello   world"` → `"hello world"`
+2. **Remove space before punctuation** — `"hello ."` → `"hello."`
+3. **Trim** — strip leading/trailing whitespace
+4. **Apply insertion style**:
+   - **Sentence** (default): capitalize the first letter and keep final sentence punctuation.
+   - **Inline**: remove terminal sentence punctuation (`.`, `!`, `?`) and lowercase ordinary sentence-initial capitalization so the result can replace selected text, fill fields, or append to typed text. Acronyms, camelCase, custom vocabulary, and expanded snippet casing are preserved.
+
+---
+
+## Processing Modes
+
+| Mode | Processing | Engine | Latency |
+|------|-----------|--------|---------|
+| Raw (default) | Configured terminal action extraction only | TextProcessingPipeline | Not separately measured |
+| Clean | Deterministic pipeline | TextProcessingPipeline | <1ms |
+
+### Mode Details
+
+**Raw** (default): Skip cleanup and insertion styling. Preserve engine output except for configured trailing action extraction, so Voice Return works without enabling Clean processing.
+
+**Clean** (opt-in): Run the deterministic 5-step pipeline, including trailing action extraction.
+
+Clean dictation also has an insertion-style preference. Sentence style keeps
+the historical sentence-shaped output. Inline style keeps the same deterministic
+pipeline but shapes the final output for selected-text replacement, search
+fields, forms, terminal commands, and hybrid typing.
+
+Clean filler removal includes standalone `um` by default (English hesitation).
+Portuguese and German speakers can turn **Also remove “um”** off in Vocabulary
+so counting words and prepositions stay in the transcript.
+
+---
+
+## Database Tables
+
+### custom_words
+
+Stores user-defined vocabulary anchors and corrections.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| word | TEXT | The word/phrase to match (case-insensitive) |
+| replacement | TEXT | The corrected word/phrase (nullable = vocabulary anchor) |
+| source | TEXT | `.manual` (user-created) or `.learned` (auto-detected, future) |
+| isEnabled | BOOLEAN | Whether this word is active |
+| createdAt | DATETIME | When created |
+| updatedAt | DATETIME | When last modified |
+
+Custom word management supports confirmed deletion of selected rules, including
+all search matches. Deletion changes future vocabulary application; it does not
+rewrite existing transcripts or delete other user data. See the
+[deletion contract](contracts/custom-word-deletion.md).
+
+### text_snippets
+
+Stores trigger-to-expansion mappings.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| trigger | TEXT | Natural language trigger phrase (e.g., "my address") |
+| expansion | TEXT | The full expansion text |
+| action | TEXT | Optional post-paste action; non-null rows are action snippets, not text-expansion snippets |
+| useCount | INTEGER | Number of times expanded |
+| isEnabled | BOOLEAN | Whether this snippet is active |
+| createdAt | DATETIME | When created |
+| updatedAt | DATETIME | When last modified |
+
+---
+
+## Optional AI Formatting
+
+AI formatting runs after deterministic cleanup. The complete rendered system and
+user messages must fit the selected provider's existing round-trip character
+budget, including repeated transcript placeholders and appended transcript
+separators. Oversized requests fail before calling the provider; formatting never
+truncates or chunks the transcript. Responses ending in `length` or `max_tokens`,
+and detailed results marked as having truncated input, also fail formatting.
+
+These failures preserve the full deterministic cleanup result. A failed attempt
+is recorded without provider output or successful prompt-profile attribution.
+Existing transcription lane caps, cancellation, and lifecycle notifications remain
+unchanged.
+
+---
+
+## CLI Commands
+
+### Text Processing
+
+```bash
+# Run clean processing on text
+macparakeet-cli vocab process "uh hello kubernetes is great"
+# → "Hello Kubernetes is great."
+
+# Process and copy to clipboard
+macparakeet-cli vocab process "text here" --copy
+
+# Transcribe with processing
+macparakeet-cli transcribe recording.wav --mode clean
+macparakeet-cli transcribe recording.wav --mode raw
+```
+
+### Custom Words
+
+```bash
+# List all custom words
+macparakeet-cli vocab words list
+
+# Add a vocabulary anchor
+macparakeet-cli vocab words add "kubernetes" "Kubernetes"
+
+# Add a correction
+macparakeet-cli vocab words add "aye pee eye" "API"
+
+# Delete a custom word
+macparakeet-cli vocab words delete <id>
+```
+
+### Text Snippets
+
+```bash
+# List all snippets
+macparakeet-cli vocab snippets list
+
+# Add a snippet (trigger is a natural phrase, not an abbreviation)
+macparakeet-cli vocab snippets add "my signature" "Best regards, David"
+
+# Edit a snippet
+macparakeet-cli vocab snippets edit <id> --trigger "my signature" --expansion "Best regards, Daniel"
+
+# Delete a snippet
+macparakeet-cli vocab snippets delete <id>
+```

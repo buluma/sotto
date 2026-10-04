@@ -1,0 +1,594 @@
+import XCTest
+@testable import MacParakeetCore
+
+final class CrashReporterTests: XCTestCase {
+
+    private var testDir: String!
+
+    override func setUp() {
+        super.setUp()
+        testDir = NSTemporaryDirectory() + "CrashReporterTests-\(UUID().uuidString)"
+        try! FileManager.default.createDirectory(atPath: testDir, withIntermediateDirectories: true)
+    }
+
+    override func tearDown() {
+        try? FileManager.default.removeItem(atPath: testDir)
+        super.tearDown()
+    }
+
+    private var testCrashPath: String { testDir + "/crash_report.txt" }
+
+    // MARK: - Signal Crash Parsing
+
+    func testLoadPendingReportParsesValidSignalCrash() {
+        let content = """
+        crash_type: signal
+        signal: 11
+        name: SIGSEGV
+        timestamp: 1711900000
+        app_ver: 0.5.1
+        os_ver: 15.3.1
+        uuid: A1B2C3D4-E5F6-7890-ABCD-EF1234567890
+        slide: 0x100000
+        --- stack ---
+        0x00000001a2f3b4c0
+        0x00000001a2f3b4d8
+        0x00000001a2f3b500
+        """
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+        let report = CrashReporter.loadPendingReport(from: testCrashPath)
+        XCTAssertNotNil(report)
+        XCTAssertEqual(report?.crashType, "signal")
+        XCTAssertEqual(report?.signal, "11")
+        XCTAssertEqual(report?.name, "SIGSEGV")
+        XCTAssertEqual(report?.timestamp, "1711900000")
+        XCTAssertEqual(report?.appVersion, "0.5.1")
+        XCTAssertEqual(report?.osVersion, "15.3.1")
+        XCTAssertEqual(report?.uuid, "A1B2C3D4-E5F6-7890-ABCD-EF1234567890")
+        XCTAssertEqual(report?.slide, "0x100000")
+        XCTAssertNil(report?.reason)
+        XCTAssertEqual(report?.stackTrace.count, 3)
+        XCTAssertEqual(report?.stackTrace.first, "0x00000001a2f3b4c0")
+    }
+
+    // MARK: - Exception Crash Parsing
+
+    func testLoadPendingReportParsesExceptionCrash() {
+        let content = """
+        crash_type: exception
+        signal: exception
+        name: NSInvalidArgumentException
+        timestamp: 1711900000
+        app_ver: 0.5.1
+        os_ver: 15.3.1
+        uuid: A1B2C3D4-E5F6-7890-ABCD-EF1234567890
+        slide: 0x0
+        reason: unrecognized selector sent to instance
+        --- stack ---
+        0x00000001a2f3b4c0
+        0x00000001a2f3b4d8
+        """
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+        let report = CrashReporter.loadPendingReport(from: testCrashPath)
+        XCTAssertNotNil(report)
+        XCTAssertEqual(report?.crashType, "exception")
+        XCTAssertEqual(report?.name, "NSInvalidArgumentException")
+        XCTAssertEqual(report?.reason, "unrecognized selector sent to instance")
+        XCTAssertEqual(report?.stackTrace.count, 2)
+    }
+
+    // MARK: - Edge Cases
+
+    func testLoadPendingReportReturnsNilForMissingFile() {
+        let report = CrashReporter.loadPendingReport(from: testDir + "/nonexistent.txt")
+        XCTAssertNil(report)
+    }
+
+    func testLoadPendingReportReturnsNilForEmptyFile() {
+        try! "".write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+        let report = CrashReporter.loadPendingReport(from: testCrashPath)
+        XCTAssertNil(report)
+    }
+
+    func testLoadPendingReportHandlesMalformedFile() {
+        try! "garbage data\nno structure here".write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+        let report = CrashReporter.loadPendingReport(from: testCrashPath)
+        XCTAssertNil(report) // Missing required fields
+    }
+
+    func testLoadPendingReportHandlesPartialFile() {
+        // Only some fields — simulates interrupted write
+        let content = """
+        crash_type: signal
+        signal: 6
+        name: SIGABRT
+        timestamp: 1711900000
+        app_ver: 0.5.1
+        """
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+        let report = CrashReporter.loadPendingReport(from: testCrashPath)
+        XCTAssertNotNil(report) // Has required fields
+        XCTAssertEqual(report?.signal, "6")
+        XCTAssertEqual(report?.name, "SIGABRT")
+        XCTAssertTrue(report?.stackTrace.isEmpty ?? false)
+    }
+
+    // MARK: - Telemetry Integration
+
+    func testSendPendingReportSendsEventAndDeletesFile() async {
+        let content = """
+        crash_type: signal
+        signal: 11
+        name: SIGSEGV
+        timestamp: 1711900000
+        app_ver: 0.5.1
+        os_ver: 15.3.1
+        uuid: TESTID
+        slide: 0x100000
+        --- stack ---
+        0x1234
+        0x5678
+        """
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+        let mock = MockTelemetryService()
+        await CrashReporter.sendPendingReport(via: mock, from: testCrashPath)
+
+        // Verify event was sent
+        XCTAssertEqual(mock.sentEvents.count, 1)
+        if case .crashOccurred(let crashType, let signal, let name, _, _, _, _, _, _, _, _, _, _, _) = mock.sentEvents.first {
+            XCTAssertEqual(crashType, "signal")
+            XCTAssertEqual(signal, "11")
+            XCTAssertEqual(name, "SIGSEGV")
+        } else {
+            XCTFail("Expected crashOccurred event")
+        }
+
+        // Verify file was deleted
+        XCTAssertFalse(FileManager.default.fileExists(atPath: testCrashPath))
+    }
+
+    func testSendPendingReportDeletesFileEvenWhenTelemetryDisabled() async {
+        let content = "crash_type: signal\nsignal: 6\nname: SIGABRT\ntimestamp: 0\napp_ver: 0.1\n"
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+        // NoOp explicitly reports the event as handled so disabled telemetry drops do not retry forever.
+        let noop = NoOpTelemetryService()
+        await CrashReporter.sendPendingReport(via: noop, from: testCrashPath)
+
+        // File should still be deleted
+        XCTAssertFalse(FileManager.default.fileExists(atPath: testCrashPath))
+    }
+
+    func testSendPendingReportNoOpWithoutCrashFile() async {
+        let mock = MockTelemetryService()
+        await CrashReporter.sendPendingReport(via: mock, from: testDir + "/nonexistent.txt")
+        XCTAssertTrue(mock.sentEvents.isEmpty)
+    }
+
+    func testSendPendingReportKeepsFileWhenTelemetryFlushFails() async {
+        let content = "crash_type: signal\nsignal: 6\nname: SIGABRT\ntimestamp: 0\napp_ver: 0.1\n"
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+        let mock = MockTelemetryService()
+        mock.sendAndFlushResult = false
+
+        await CrashReporter.sendPendingReport(via: mock, from: testCrashPath)
+
+        XCTAssertEqual(mock.sentEvents.count, 1)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: testCrashPath))
+    }
+
+    // MARK: - Reviewer-Flagged Edge Cases
+
+    func testReasonFieldWithColonsPreservesFullValue() {
+        let content = """
+        crash_type: exception
+        signal: exception
+        name: NSInvalidArgumentException
+        timestamp: 1711900000
+        app_ver: 0.5.1
+        reason: Cannot decode: key "url": no such key
+        --- stack ---
+        0x1234
+        """
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+        let report = CrashReporter.loadPendingReport(from: testCrashPath)
+        XCTAssertEqual(report?.reason, "Cannot decode: key \"url\": no such key")
+    }
+
+    func testNoStackSectionReturnsEmptyStackTrace() {
+        let content = """
+        crash_type: signal
+        signal: 11
+        name: SIGSEGV
+        timestamp: 1711900000
+        app_ver: 0.5.1
+        """
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+        let report = CrashReporter.loadPendingReport(from: testCrashPath)
+        XCTAssertNotNil(report)
+        XCTAssertTrue(report?.stackTrace.isEmpty ?? false)
+    }
+
+    func testNonHexLinesInStackSectionAreSkipped() {
+        let content = """
+        crash_type: signal
+        signal: 11
+        name: SIGSEGV
+        timestamp: 1711900000
+        app_ver: 0.5.1
+        --- stack ---
+        0x1234
+        garbage line
+        not a hex address
+        0x5678
+        """
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+        let report = CrashReporter.loadPendingReport(from: testCrashPath)
+        XCTAssertEqual(report?.stackTrace, ["0x1234", "0x5678"])
+    }
+
+    func testStackTraceCappedAt256Frames() {
+        var lines = [
+            "crash_type: signal", "signal: 11", "name: SIGSEGV",
+            "timestamp: 1711900000", "app_ver: 0.5.1", "--- stack ---"
+        ]
+        for i in 0..<300 {
+            lines.append("0x\(String(i, radix: 16))")
+        }
+        let content = lines.joined(separator: "\n")
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+        let report = CrashReporter.loadPendingReport(from: testCrashPath)
+        XCTAssertEqual(report?.stackTrace.count, 256)
+    }
+
+    func testMissingOptionalFieldsDefaultToEmptyString() {
+        let content = "crash_type: signal\nsignal: 11\nname: SIGSEGV\ntimestamp: 0\napp_ver: 0.1\n"
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+        let report = CrashReporter.loadPendingReport(from: testCrashPath)
+        XCTAssertNotNil(report)
+        XCTAssertEqual(report?.osVersion, "")
+        XCTAssertEqual(report?.uuid, "")
+        XCTAssertEqual(report?.slide, "")
+        XCTAssertNil(report?.reason)
+        // Old-file compatibility: reports written before si_code/pc/fault_addr
+        // existed simply lack the keys, and parse with those fields absent.
+        XCTAssertNil(report?.siCode)
+        XCTAssertNil(report?.pc)
+        XCTAssertNil(report?.faultAddr)
+    }
+
+    // MARK: - Signal Context Fields (si_code / pc / fault_addr)
+
+    func testLoadPendingReportParsesValidSignalContextFields() {
+        let content = """
+        crash_type: signal
+        signal: 11
+        name: SIGSEGV
+        timestamp: 1711900000
+        app_ver: 0.8.0
+        si_code: 2
+        fault_addr: 0x0
+        pc: 0x1040a84b0
+        """
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+        let report = CrashReporter.loadPendingReport(from: testCrashPath)
+        XCTAssertEqual(report?.siCode, "2")
+        XCTAssertEqual(report?.faultAddr, "0x0")
+        XCTAssertEqual(report?.pc, "0x1040a84b0")
+    }
+
+    func testLoadPendingExceptionReportDropsSignalOnlyContext() {
+        let content = """
+        crash_type: exception
+        signal: 0
+        name: NSInvalidArgumentException
+        timestamp: 1711900000
+        app_ver: 0.8.0
+        si_code: 2
+        fault_addr: 0x0
+        pc: 0x1040a84b0
+        """
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+        let report = CrashReporter.loadPendingReport(from: testCrashPath)
+        XCTAssertNotNil(report)
+        XCTAssertNil(report?.siCode)
+        XCTAssertNil(report?.pc)
+        XCTAssertNil(report?.faultAddr)
+    }
+
+    func testLoadPendingReportDropsMalformedSignalContextFields() {
+        let content = """
+        crash_type: signal
+        signal: 11
+        name: SIGSEGV
+        timestamp: 1711900000
+        app_ver: 0.8.0
+        si_code: not-a-number
+        fault_addr: not-hex
+        pc: 0xZZZZ
+        """
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+        let report = CrashReporter.loadPendingReport(from: testCrashPath)
+        XCTAssertNotNil(report)
+        XCTAssertNil(report?.siCode)
+        XCTAssertNil(report?.faultAddr)
+        XCTAssertNil(report?.pc)
+    }
+
+    func testLoadPendingReportDropsNonASCIIHexAddresses() throws {
+        for malformed in ["0xＦＦ", "0x１２", "0x1Ａ"] {
+            let content = """
+            crash_type: signal
+            signal: 11
+            name: SIGSEGV
+            timestamp: 1711900000
+            app_ver: 0.8.0
+            pc: \(malformed)
+            fault_addr: \(malformed)
+            """
+            try content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+            let report = try XCTUnwrap(CrashReporter.loadPendingReport(from: testCrashPath))
+            XCTAssertNil(report.pc, malformed)
+            XCTAssertNil(report.faultAddr, malformed)
+        }
+    }
+
+    func testLoadPendingReportParsesSiCodeAtInt32Boundaries() {
+        // si_code is a signed 32-bit value; the parser must accept the full
+        // range, including both boundary values, without signed overflow.
+        for boundary in ["-2147483648", "2147483647", "0", "-1"] {
+            let content = """
+            crash_type: signal
+            signal: 11
+            name: SIGSEGV
+            timestamp: 1711900000
+            app_ver: 0.8.0
+            si_code: \(boundary)
+            """
+            try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+            let report = CrashReporter.loadPendingReport(from: testCrashPath)
+            XCTAssertEqual(report?.siCode, boundary, "si_code \(boundary) should round-trip as a valid Int32")
+        }
+    }
+
+    func testLoadPendingReportDropsSiCodeJustOutsideInt32Range() {
+        // One past each Int32 boundary must be dropped, not silently clamped
+        // or wrapped.
+        for outOfRange in ["-2147483649", "2147483648"] {
+            let content = """
+            crash_type: signal
+            signal: 11
+            name: SIGSEGV
+            timestamp: 1711900000
+            app_ver: 0.8.0
+            si_code: \(outOfRange)
+            """
+            try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+            let report = CrashReporter.loadPendingReport(from: testCrashPath)
+            XCTAssertNil(report?.siCode, "si_code \(outOfRange) is outside Int32 range and must be dropped")
+        }
+    }
+
+    func testLoadPendingReportDropsSiCodeWithLeadingPlusOrNonIntegerText() {
+        // Field values are already trimmed of surrounding whitespace by the
+        // key/value line parser, so the interesting rejected shapes here are
+        // a leading `+` (only `-` is a valid sign) and non-integer text.
+        for malformed in ["+2", "1.0", "2a", "--2", "٢", "２", "00000000000"] {
+            let content = """
+            crash_type: signal
+            signal: 11
+            name: SIGSEGV
+            timestamp: 1711900000
+            app_ver: 0.8.0
+            si_code: \(malformed)
+            """
+            try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+            let report = CrashReporter.loadPendingReport(from: testCrashPath)
+            XCTAssertNil(report?.siCode, "si_code \(malformed.debugDescription) must be rejected")
+        }
+    }
+
+    func testLoadPendingReportDropsOversizedSignalContextFields() {
+        let content = """
+        crash_type: signal
+        signal: 11
+        name: SIGSEGV
+        timestamp: 1711900000
+        app_ver: 0.8.0
+        si_code: 123456789012345
+        fault_addr: 0x00000000000000000000000000001234
+        """
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+        let report = CrashReporter.loadPendingReport(from: testCrashPath)
+        XCTAssertNil(report?.siCode)
+        XCTAssertNil(report?.faultAddr)
+    }
+
+    func testSendPendingReportForwardsSignalContextFieldsToTelemetry() async {
+        let content = """
+        crash_type: signal
+        signal: 11
+        name: SIGSEGV
+        timestamp: 1711900000
+        app_ver: 0.8.0
+        si_code: 2
+        fault_addr: 0x0
+        pc: 0x1040a84b0
+        --- stack ---
+        0x1234
+        """
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+        let mock = MockTelemetryService()
+        await CrashReporter.sendPendingReport(via: mock, from: testCrashPath)
+
+        guard case .crashOccurred(_, _, _, _, _, _, _, _, _, _, let siCode, let pc, let faultAddr, _) = mock.sentEvents.first else {
+            XCTFail("Expected crashOccurred event")
+            return
+        }
+        XCTAssertEqual(siCode, "2")
+        XCTAssertEqual(pc, "0x1040a84b0")
+        XCTAssertEqual(faultAddr, "0x0")
+
+        let props = mock.sentEvents.first?.props ?? [:]
+        XCTAssertEqual(props["si_code"], "2")
+        XCTAssertEqual(props["pc"], "0x1040a84b0")
+        XCTAssertEqual(props["fault_addr"], "0x0")
+    }
+
+    func testSendPendingReportOmitsAbsentSignalContextFieldsFromProps() async {
+        // Old-format file: no si_code/pc/fault_addr keys at all.
+        let content = "crash_type: signal\nsignal: 6\nname: SIGABRT\ntimestamp: 0\napp_ver: 0.5.0\n"
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+        let mock = MockTelemetryService()
+        await CrashReporter.sendPendingReport(via: mock, from: testCrashPath)
+
+        let props = mock.sentEvents.first?.props ?? [:]
+        XCTAssertNil(props["si_code"])
+        XCTAssertNil(props["pc"])
+        XCTAssertNil(props["fault_addr"])
+    }
+
+    func testStackTraceMarkerWithTrailingWhitespace() {
+        let content = "crash_type: signal\nsignal: 11\nname: SIGSEGV\ntimestamp: 0\napp_ver: 0.1\n--- stack ---  \n0xABCD\n"
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+        let report = CrashReporter.loadPendingReport(from: testCrashPath)
+        XCTAssertEqual(report?.stackTrace, ["0xABCD"])
+    }
+
+    func testSendPendingReportIncludesStackTraceInProps() async {
+        let content = """
+        crash_type: signal
+        signal: 11
+        name: SIGSEGV
+        timestamp: 1711900000
+        app_ver: 0.5.1
+        os_ver: 15.3
+        uuid: TEST-UUID
+        slide: 0x100000
+        --- stack ---
+        0xAAAA
+        0xBBBB
+        0xCCCC
+        """
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+        let mock = MockTelemetryService()
+        await CrashReporter.sendPendingReport(via: mock, from: testCrashPath)
+
+        if case .crashOccurred(_, _, _, _, let appVer, let osVer, let uuid, let slide, let reason, let stackTrace, _, _, _, _) = mock.sentEvents.first {
+            XCTAssertEqual(appVer, "0.5.1")
+            XCTAssertEqual(osVer, "15.3")
+            XCTAssertEqual(uuid, "TEST-UUID")
+            XCTAssertEqual(slide, "0x100000")
+            XCTAssertNil(reason)
+            XCTAssertEqual(stackTrace, "0xAAAA\n0xBBBB\n0xCCCC")
+        } else {
+            XCTFail("Expected crashOccurred event")
+        }
+    }
+
+    func testExceptionReasonWithNewlinesIsPreserved() async {
+        let content = """
+        crash_type: exception
+        signal: exception
+        name: NSRangeException
+        timestamp: 1711900000
+        app_ver: 0.5.1
+        reason: index 5 beyond bounds [0..3]\\nmore context here
+        --- stack ---
+        0x1234
+        """
+        try! content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+
+        let mock = MockTelemetryService()
+        await CrashReporter.sendPendingReport(via: mock, from: testCrashPath)
+
+        if case .crashOccurred(_, _, _, _, _, _, _, _, let reason, _, _, _, _, _) = mock.sentEvents.first {
+            XCTAssertEqual(reason, "index 5 beyond bounds [0..3]\nmore context here")
+        } else {
+            XCTFail("Expected crashOccurred event with reason")
+        }
+    }
+    func testOriginalProcessMetadataIsValidatedAndRawBreadcrumbsStayLocal() throws {
+        let content = """
+        crash_type: signal
+        signal: 6
+        name: SIGABRT
+        timestamp: 123
+        app_ver: 0.8.9
+        crash_id: A17E1881-3D55-4AB8-AF5F-32DEDD0571C4
+        crash_session: 57B2573A-8629-4D7E-8C24-42304D44D388
+        crash_os_build: 25G83
+        shared_cache_uuid: F2E86C53-6052-388B-BA71-5A0C9B569413
+        shared_cache_slide: 0x8490000
+        crash_context_version: 1
+        crash_registered_consumers: 3
+        crash_breadcrumbs_dropped: 2
+        crash_breadcrumbs_incomplete: 1
+        breadcrumb: 1,0x123
+        breadcrumb: 2,0x456
+        --- stack ---
+        0x1234
+        """
+        try content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+        let parsed = try XCTUnwrap(CrashReporter.loadPendingReport(from: testCrashPath))
+        let props = try XCTUnwrap(parsed.diagnosticMetadata).props
+        XCTAssertEqual(props["crash_id"], "a17e1881-3d55-4ab8-af5f-32dedd0571c4")
+        XCTAssertEqual(props["crash_session"], "57b2573a-8629-4d7e-8c24-42304d44d388")
+        XCTAssertEqual(props["crash_registered_consumers"], "both")
+        XCTAssertEqual(props["crash_os_build"], "25G83")
+        XCTAssertNil(props["breadcrumb"])
+        XCTAssertEqual(parsed.stackTrace, ["0x1234"])
+    }
+
+    func testLegacyReportHasNoInventedOriginalIdentity() throws {
+        let content = "crash_type: signal\nsignal: 6\nname: SIGABRT\ntimestamp: 123\napp_ver: 0.8.7\n"
+        try content.write(toFile: testCrashPath, atomically: true, encoding: .utf8)
+        let parsed = try XCTUnwrap(CrashReporter.loadPendingReport(from: testCrashPath))
+        XCTAssertNil(parsed.diagnosticMetadata)
+    }
+
+}
+
+// MARK: - Mock Telemetry Service
+
+private final class MockTelemetryService: TelemetryServiceProtocol, @unchecked Sendable {
+    var sentEvents = [TelemetryEventSpec]()
+    var sendAndFlushResult = true
+
+    func send(_ event: TelemetryEventSpec) {
+        sentEvents.append(event)
+    }
+
+    func sendAndFlush(_ event: TelemetryEventSpec) async -> Bool {
+        send(event)
+        return sendAndFlushResult
+    }
+
+    func flush() async {}
+    func clearQueue() {
+        sentEvents.removeAll()
+    }
+    func flushForTermination() {}
+}
+
+// NoOpTelemetryService is imported from MacParakeetCore via @testable import

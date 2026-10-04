@@ -1,0 +1,107 @@
+# ADR-012: Self-Hosted Telemetry via Cloudflare
+
+> Status: **Accepted**
+> Date: 2026-03-13
+
+## Context
+
+MacParakeet launched with a "zero telemetry" stance as a privacy selling point. In practice, this leaves us blind to:
+
+- How many people actively use the app
+- Which features are popular vs unused
+- What errors users encounter
+- Performance characteristics across different hardware
+- Onboarding drop-off rates
+- Whether the LLM integration is worth maintaining
+
+Without observability, we can't make informed product decisions or debug issues users don't bother reporting.
+
+### Options Considered
+
+| Option | Pros | Cons |
+|---|---|---|
+| **TelemetryDeck** (SaaS) | Free tier (100K signals/mo), privacy-first, Swift SDK, zero setup | Closed-source backend, no self-hosting, ~110 DAU limit on free tier |
+| **Aptabase** (open source) | Self-hostable, privacy-first, Swift SDK | Extra infra to maintain, smaller community |
+| **PostHog** (open source) | Feature-rich (funnels, session replay, A/B testing) | Overkill for indie app, heavy infra (ClickHouse, Kafka, Redis) |
+| **Sentry** (SaaS) | Best-in-class crash reporting | Focused on errors, not product analytics |
+| **Self-hosted on Cloudflare** | Own the stack, $0 cost, already have Cloudflare infra, full control | Must build dashboard, no pre-built funnels |
+
+### Decision
+
+**Self-hosted on Cloudflare (Worker + D1).** Reasons:
+
+1. **We already have Cloudflare infra** — Website, feedback worker, R2 downloads, DNS. Adding a Worker + D1 database is incremental, not new infrastructure.
+2. **Full control over privacy guarantees** — We can make architectural promises (no persistent IDs, no IP storage) and verify them in our own code.
+3. **$0 at our scale** — D1 free tier supports ~3,300 DAU before needing the $5/mo paid tier.
+4. **Dashboard is no longer the bottleneck** — AI-assisted development makes building a simple dashboard trivial.
+5. **Simplicity** — A typed Swift client plus one Cloudflare Worker. No vendor SDK and no third-party analytics dependency in the app binary; we own the whole pipeline. (The typed event catalog has grown substantially since launch, but the architecture and dependency footprint are unchanged.)
+
+### Privacy Model
+
+The system is designed as **non-identifying, session-scoped telemetry**:
+
+- **No persistent user ID** — Session UUID resets every app launch
+- **No device fingerprint** — No hardware ID, serial number, or UDID
+- **No IP storage** — Cloudflare processes requests but we don't store IP addresses
+- **Country only** — Derived from Cloudflare's `CF-IPCountry` header, not from IP geolocation we perform
+- **No content** — Transcription text, custom words, file names, URLs, LLM prompts are never sent
+- **Idempotent** — Client-generated event UUIDs prevent double-counting
+- **Structured errors** — The typed client omits free-form `error_detail`, `error_occurred.description`, and crash `reason`. Keep error categories, safe domain/numeric codes, and crash symbolication fields. The paired website ingestion change discards these text fields from older clients too; public stats scrub historical snapshots before serving them. Regex cannot establish that arbitrary error text is content-free. See [the telemetry contract](../contracts/telemetry-v1.md).
+- **Opt-out** — Discard queued events and invalidate retries and waiting batches. A request already in flight may finish; only the explicit final opt-out event can bypass the disabled preference.
+
+This is not "anonymous" in the strict GDPR sense (session + chip + locale + country + timestamps could theoretically single out users). It is non-identifying: we have no mechanism to map any event to any person, and we don't try.
+
+### What We Collect
+
+The live source of truth for event types is the `TelemetryEventName`
+enum (`Sources/MacParakeetCore/Services/Telemetry/TelemetryEvent.swift`) and the
+catalog in `docs/telemetry.md`. They span app lifecycle, dictation,
+transcription, speaker diarization, meeting recording + crash recovery, calendar
+auto-start, feature adoption, settings, licensing (retained but mostly unfired in
+free builds), performance/model lifecycle, permissions, errors/crashes, and CLI
+usage. The catalog pairs lightweight breadcrumb events with wide per-operation
+outcome events (`*_operation`) for product-health analysis.
+
+The development source also emits `audio_engine_lifecycle` as bounded
+shared microphone diagnostics: at most one five-second slow checkpoint and one terminal
+snapshot, with fast prepare/stop snapshots suppressed. Its random `attempt_id`
+belongs to that lifecycle call. When a meeting or dictation owns capture, the
+same snapshot also carries that workflow's `workflow_id` and `consumer` so it
+can be joined to the parent `*_operation` without treating the engine attempt
+as a product failure. It adds no product-health denominator and does not turn
+delay into a failure verdict or audio timeout. Both local and consent-gated
+network sinks run asynchronously and remain best effort. Safe phase/route
+categories and classified errors follow
+the [telemetry contract](../contracts/telemetry-v1.md#microphone-engine-lifecycle-observation).
+Queued events also carry `git_commit` and `build_number` in props so agents can
+group by exact binary. Stable-channel availability requires the paired server
+deployment before the app release.
+
+### What We Don't Collect
+
+Transcription content, audio, file paths, YouTube URLs, LLM prompts/responses, custom words/snippets, persistent identifiers, IP addresses.
+
+## Consequences
+
+### Positive
+
+- **Product decisions backed by data** — Know which features matter, what's breaking, where onboarding drops off
+- **No vendor dependency** — Own the full pipeline, no third-party SDK in the app binary
+- **Privacy by architecture** — Can make and verify strong privacy claims
+- **Zero cost** — Free tier covers early growth comfortably
+
+### Negative
+
+- **Must build and maintain dashboard** — No pre-built analytics UI (mitigated: simple SQL queries, AI-assisted development)
+- **Best-effort metrics** — Dropped on network failure, biased against short/crash sessions (acceptable for product analytics)
+- **No advanced analytics** — No built-in funnels, cohorts, or retention curves (can build with SQL if needed)
+
+### Risks
+
+- **Endpoint abuse** — Mitigated with event name allowlist, rate limiting, field validation
+- **Schema evolution** — Props are JSON, so new props and new event shapes on an existing event name do not require D1 migrations or website allowlist changes. Every new `TelemetryEventName`, including `audio_engine_lifecycle`, must be added to `ALLOWED_EVENTS` in the **separate** `macparakeet-website` repo and deployed before the client ships. An unknown event causes HTTP 400 for the entire batch; the client's permanent-rejection policy discards valid co-batched events too and reports the transport failure locally. `scripts/ci/check-telemetry-allowlist.sh` diffs the Swift enum against that allowlist; CI skips rather than fails when the private website repo is unreachable. App tests do not verify the deployed server. Unknown `audio_engine_lifecycle` keys are dropped silently, so new diagnostic fields on that event also need a website deploy first.
+
+## References
+
+- Full design: `docs/telemetry.md`
+- Feedback worker (same pattern): `macparakeet-website/functions/api/feedback.ts`

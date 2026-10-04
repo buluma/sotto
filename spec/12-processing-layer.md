@@ -1,0 +1,542 @@
+# 12 - Processing Layer: Prompt Library + Multi-Summary
+
+> Status: **ACTIVE** — Authoritative, current
+> Related: [spec/11-llm-integration.md](11-llm-integration.md) (LLM providers), [spec/13-agent-workflows.md](13-agent-workflows.md) (future workflows, agents, voice control), [ADR-011](adr/011-llm-cloud-and-local-providers.md) (cloud + local providers), [ADR-013](adr/013-prompt-library-multi-summary.md) (prompt library + multi-summary), [ADR-022](adr/022-transforms-system-wide-rewrite.md) (Transforms)
+> Triggered by: [GitHub issue #51](https://github.com/moona3k/macparakeet/issues/51), [VoiceInk PR #600](https://github.com/Beingpax/VoiceInk/pull/600) by @mitsuhiko
+
+This spec defines MacParakeet's current processing layer: the Prompt Library, multi-summary system, and the shared prompt-storage contract that productized Transforms use. Summary/result behavior remains the main focus here; ADR-022 owns the system-wide Transform interaction model. The persisted summary table is still named `summaries`; the Swift model is now `PromptResult`.
+
+> **2026-09-07 amendment — versioned prompts and transcription labels:** The
+> historical row shape and management sheet documented below describe the
+> pre-versioning implementation. The following accepted rules supersede any
+> conflicting older wording in this file.
+>
+> - `prompts` owns identity and mutable metadata. `prompt_versions` exclusively
+>   owns Markdown content, typed inference settings, and an optional
+>   active-provider model override; `prompts.activeVersionId` selects the
+>   current immutable version.
+> - Creating a prompt creates V1. Saving changed versioned values creates and
+>   activates one new monotonically numbered version. A no-op creates none.
+>   Restoring copies an old version into a new version; history is never
+>   rewritten. Name, organization collection, visibility, routing, ordering,
+>   Transform shortcut, and running label are not versioned.
+> - `PromptRepository` performs the active-version join and returns a resolved
+>   domain prompt. Runtime callers never join tables or maintain a permanent
+>   `content`/`inferenceSettings` mirror on `prompts`.
+> - Built-in and user-created prompts have identical edit, configuration,
+>   organization, routing, soft-delete, and restore rights. `isBuiltIn` is
+>   provenance only. A bundled canonical update applies automatically only to
+>   a prompt proven untouched and not deleted; customized prompts can compare
+>   and explicitly adopt the bundled candidate.
+> - The Prompts surface prioritizes a single searchable, filterable list. New
+>   prompt and collection management open separate sheets. Editing retains
+>   Markdown source/preview, typed settings, history, deterministic source/settings
+>   diff, and restore-as-new-version. See [UI patterns](04-ui-patterns.md#prompts).
+> - Labels classify every transcription source. Legacy meeting types remain
+>   compatibility metadata, not runtime routing authority.
+> - `PromptLabelApplicabilityResolver` rejects hidden/non-result prompts. No
+>   policies means available everywhere. Matching explicit label policies take
+>   precedence (any available match wins); otherwise an all-label fallback
+>   applies, or the prompt is unavailable. Availability gates source-aware
+>   auto-run. Manual selection, auto-run, and CLI share these rules. Already
+>   queued work retains its captured prompt/version/settings after label edits.
+> - SQLite is canonical for mutable classification. Meeting artifacts expose
+>   additive type/label snapshots and are refreshed after classification
+>   changes; capture metadata remains provenance.
+
+---
+
+## Goals
+
+1. Give users control over how AI processes their transcripts — starting with summaries.
+2. Support **multiple summaries per transcript** — different prompts produce different outputs, all navigable.
+3. Establish a reusable **Prompt Library** that serves summaries and Transforms today, and can serve chat system prompts and workflow steps tomorrow.
+4. Leave a clean extension point for future actions, workflows, and agent features without over-designing them now.
+5. Avoid premature abstraction — build only what's needed now, but don't foreclose future capabilities.
+
+## Non-Goals (for now)
+
+1. Building a workflow engine or step chaining.
+2. CLI action execution from the summary tab.
+3. Post-dictation automation triggers.
+4. Running multiple prompts in parallel against one transcript.
+5. Defining agent profiles, desktop-control context, or voice-control automation. Those are explored in [spec/13-agent-workflows.md](13-agent-workflows.md), not locked here.
+
+---
+
+## Architecture
+
+### Current Scope
+
+The processing layer currently consists of a reusable Prompt Library, saved prompt results with immutable generation receipts, and Transform prompt rows.
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  Prompt Library ← IMPLEMENTED                             │
+│  Prompt { id, name, content, category, visibility,        │
+│           keyboardShortcut?, runningLabel?, ... }         │
+└──────────────────────────────┬─────────────────────────────┘
+                               │ snapshot
+                               ▼
+┌────────────────────────────────────────────────────────────┐
+│  summaries table / PromptResult model                     │
+│  PromptResult { id, transcriptionId, promptName,          │
+│            promptContent, extraInstructions, content, ... }│
+└────────────────────────────────────────────────────────────┘
+```
+
+Prompts are reusable templates. Summaries are historical outputs that snapshot the prompt content used at generation time.
+
+Transform prompts (`category == .transform`) are saved prompt rows with shortcut/progress metadata. They do not create `summaries` rows; completed GUI Transform runs can be recorded in `transform_history`. See ADR-022 for selection capture, replacement, and history semantics.
+
+### Data Model Relationships
+
+```
+prompts
+  │
+  └──snapshot──→ summaries.promptContent
+```
+
+The Prompt Library is intentionally general-purpose. This spec locks summary/result behavior plus the shared prompt-row shape used by Transforms; ADR-022 locks Transform-specific interaction details. Future actions, workflows, and agent-driven automation are tracked separately in [spec/13-agent-workflows.md](13-agent-workflows.md).
+
+### Prompt Categories
+
+`Prompt.Category` currently supports:
+
+- `.result` — used by the summary pane today; stored as `"summary"` for compatibility (the former Swift name was `.summary`)
+- `.transform` — productized Transforms (ADR-022), managed by the Transforms tab and `macparakeet-cli transforms`
+
+Additional categories are future schema decisions and are not part of this spec.
+
+### Dictation AI Formatter Profiles
+
+Dictation AI Formatter app/category profile code is deliberately separate from
+the Prompt Library, but `AppFeatures.aiFormatterProfilesEnabled = false` keeps
+its routing and management out of the normal product surface. The
+`ai_formatter_profiles` table still migrates. When enabled, profiles resolve
+through `AIFormatterProfileMatcher`; otherwise dictation uses the dictation
+formatter prompt.
+
+Reasoning:
+
+- The AI Formatter fallback prompts (transcript vs dictation) are runtime
+  preferences, not Prompt Library rows.
+- Formatter profiles are keyed by local app context, not by a reusable
+  summary/transform prompt card.
+- Transform prompts already use `Prompt.Category.transform`; future per-app
+  Transform variants can reuse `AppPromptContext` and matcher concepts without
+  forcing Dictation Formatter storage into `prompts`.
+
+See [spec/11-llm-integration.md](11-llm-integration.md) for provider behavior
+and [spec/01-data-model.md](01-data-model.md) for the profile table.
+
+---
+
+## Prompt Library + Multi-Summary
+
+### Concept
+
+A **Prompt** is a named, reusable instruction template that tells an LLM how to process text. Called "Prompt" (not "Summary Preset") because the data model is general-purpose — the same table serves summaries and Transforms today, and can serve workflow steps later.
+
+A **Summary** is a generated output tied to a specific transcript. Each transcript can have multiple summaries, including multiple runs of the same prompt with different per-run instructions. Summaries snapshot the prompt that created them — they're self-contained records, not live references.
+
+### Data Model: Prompt
+
+The following row and SQL excerpts show the pre-versioning shape. Current
+version ownership, migrations, and result provenance are defined in the
+[data model](01-data-model.md#versioned-prompts-and-meeting-classification-2026-09-05).
+
+```swift
+public struct Prompt: Codable, Identifiable, Sendable {
+    public var id: UUID
+    public var name: String          // "Summary", "Action Items & Decisions"
+    public var content: String       // The actual instruction text
+    public var category: Category    // .result stored as "summary" (extensible)
+    public var isBuiltIn: Bool       // built-in provenance, same mutation rights
+    public var isVisible: Bool       // false = hidden from picker
+    public var isAutoRun: Bool       // true = auto-generate for new transcriptions
+    public var sortOrder: Int        // display ordering
+    public var createdAt: Date
+    public var updatedAt: Date
+    public var keyboardShortcut: String?  // transform-only encoded shortcut
+    public var runningLabel: String?       // transform-only progress label
+    public var inferenceSettings: PromptInferenceSettings?  // result-only typed settings; nil = MacParakeet defaults
+    public var includeMeetingNotes: Bool  // result-only automatic context opt-in; defaults false
+
+    public enum Category: String, Codable, Sendable {
+        case result = "summary"
+        case transform
+    }
+}
+```
+
+```sql
+CREATE TABLE prompts (
+    id        TEXT PRIMARY KEY,
+    name      TEXT NOT NULL,
+    content   TEXT NOT NULL,
+    category  TEXT NOT NULL DEFAULT 'summary',
+    isBuiltIn INTEGER NOT NULL DEFAULT 0,
+    isVisible INTEGER NOT NULL DEFAULT 1,
+    isAutoRun INTEGER NOT NULL DEFAULT 0,
+    sortOrder INTEGER NOT NULL DEFAULT 0,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL,
+    keyboardShortcut TEXT,
+    runningLabel TEXT,
+    inferenceSettings TEXT,
+    includeMeetingNotes INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE UNIQUE INDEX idx_prompts_name ON prompts(name COLLATE NOCASE);
+```
+
+### Data Model: PromptResult
+
+```swift
+public struct PromptResult: Codable, Identifiable, Sendable {
+    public var id: UUID
+    public var transcriptionId: UUID
+    public var promptName: String         // snapshot: "Summary"
+    public var promptContent: String      // snapshot: the full prompt used
+    public var extraInstructions: String?  // user's extra instructions (if any)
+    public var content: String            // saved result text, generated or imported
+    public var userNotesSnapshot: String?  // exact bounded notes value supplied to assembly
+    public var includeMeetingNotesSnapshot: Bool  // captured automatic-context opt-in
+    public var inferenceSettingsSnapshot: PromptInferenceSettings?  // normalized effective settings sent
+    public var outputLanguagePolicySnapshot: String?  // follow-transcript or language code
+    public var sourceCorrectionRevision: Int?  // source correction receipt
+    public var sourceTranscriptHash: String?  // source text receipt
+    public var contentEditedAt: Date?  // last in-place user edit; nil = no recorded edit
+    public var createdAt: Date
+    public var updatedAt: Date
+}
+```
+
+Each generated result stores `sourceCorrectionRevision` plus a SHA-256
+`sourceTranscriptHash` of cue words when an unedited transcript has timed cues,
+otherwise trimmed canonical `cleanTranscript` (falling back to `rawTranscript`
+when automatic clean text is empty). The text receipt catches retranscription
+even when the new transcript's correction revision resets to zero. Plain/rich
+context display settings and recording metadata do not affect this hash.
+Existing rows keep a `NULL` receipt in migration v0.48 because their source
+text cannot be proven from the current transcript. Missing receipts alone do
+not show a freshness banner: the normal Regenerate action explains the missing
+tracking in its help text. Only a known hash or correction-revision mismatch
+shows a transcript-change notice, using “result” for every prompt type.
+Regenerate replaces the result using the current transcript; it does not merely
+check freshness. Automation freshness fields retain their conservative unknown
+semantics.
+
+Regeneration occupies the original result's tab position while queued,
+streaming, or failed. Success replaces that tab in place for the current visit,
+including same-recording reloads; reopening a recording uses creation order.
+Cancellation or dismissing a failure restores the saved result. The saved row
+remains intact until conditional replacement succeeds; external edits and
+source deletion still fail safely. Independent generations append new tabs.
+
+```sql
+CREATE TABLE summaries (
+    id                TEXT PRIMARY KEY,
+    transcriptionId   TEXT NOT NULL REFERENCES transcriptions(id) ON DELETE CASCADE,
+    promptName        TEXT NOT NULL,
+    promptContent     TEXT NOT NULL,
+    extraInstructions TEXT,
+    content           TEXT NOT NULL,
+    userNotesSnapshot TEXT,
+    includeMeetingNotesSnapshot INTEGER NOT NULL DEFAULT 0,
+    inferenceSettingsSnapshot TEXT,
+    outputLanguagePolicySnapshot TEXT,
+    sourceCorrectionRevision INTEGER,
+    sourceTranscriptHash TEXT,
+    contentEditedAt   TEXT,
+    createdAt         TEXT NOT NULL,
+    updatedAt         TEXT NOT NULL
+);
+
+CREATE INDEX idx_summaries_transcription_id ON summaries(transcriptionId);
+```
+
+**Why snapshot instead of reference:** Prompts can be edited or deleted after a result is generated. The result should always know exactly what instructions produced it. `promptName` is for display; `promptContent`, `userNotesSnapshot`, `includeMeetingNotesSnapshot`, `inferenceSettingsSnapshot`, and `outputLanguagePolicySnapshot` are request provenance, not a promise of identical future AI output. In-place user edits of `content` set `contentEditedAt` and do not rewrite those snapshots. The settings snapshot records the effective provider/model-filtered receipt. The Boolean remains meaningful when the generation had no notes, because regenerate can apply that captured preference to notes added later. The language snapshot records the meeting AI output-language policy used for that run; omitted/NULL means no policy was recorded, including earlier and imported results, and regeneration uses the current setting.
+
+Result and Transform prompts may carry typed generation settings. The active immutable version
+stores the requested `PromptInferenceSettings`; a queued generation copies that
+value together with the prompt text and per-run instructions, so later edits do
+not mutate work already queued. A completed `PromptResult` stores the
+provider/model-filtered effective settings actually sent. Retry reuses its
+queue snapshot, while regenerate reuses the selected result's stored settings
+receipt. The queue captures the selected model; execution resolves the current provider. Requested settings and unsupported-field metadata
+are not persisted on results. The CLI reads, preserves, and runs saved settings;
+`prompts set` configures or clears overrides through the same immutable-version
+editing service. Collection membership is mutable organization metadata and
+can be managed through `prompts collections` and prompt collection flags
+without creating a version. Transform execution also uses saved settings. Repository writes and
+execution independently reject invalid numeric values. Blank settings inherit
+the current MacParakeet prompt-result and adapter defaults. See
+[spec/14-per-prompt-inference-settings.md](14-per-prompt-inference-settings.md).
+
+**Migration from existing data:** Existing `transcriptions.summary` values migrate into the `summaries` table with classic `Summary` prompt metadata. The legacy `transcriptions.summary` column is dropped by `v0.7.6-drop-legacy-transcription-summary`.
+
+### Community Prompts
+
+The current implementation seeds built-in/community prompts from `Prompt.builtInPrompts()` in Swift. `Sources/MacParakeetCore/Resources/community-prompts.json` exists as a contribution/reference file, but it is not yet the runtime source of truth for prompt seeding.
+
+`Summary` is the auto-run default and the classic built-in fallback. The shipped built-in list is defined in code and currently includes `Summary`, `Action Items & Decisions`, `Chapter Breakdown`, `Study Guide`, `Blog Post`, and `What Stood Out`. The `PromptTemplateRenderer` still exposes `{{userNotes}}` and `{{transcript}}` for advanced custom prompts; no built-in references `{{userNotes}}` today (the "Memo-Steered Notes" built-in was reverted on 2026-05-02; see ADR-020). The implemented replacement is a separate `includeMeetingNotes` checkbox on every result prompt, default false; it does not restore or rewrite a built-in prompt.
+
+### System Prompt Assembly
+
+When generating a result, the system prompt is assembled from the selected prompt, optional meeting-notes context, and optional extra instructions. `PromptTemplateRenderer` substitutes `{{transcript}}` and `{{userNotes}}` in one pass before the LLM call:
+
+```
+{prompt.content}
+
+{delimited_meeting_notes_context}  ← only for enabled result prompts with notes and no {{userNotes}} token
+
+{outputLanguagePolicy}    ← follow-transcript by default, or a fixed language
+
+{extraInstructions}       ← only if user provided extra instructions; last so they can override language
+```
+
+For meeting recordings, `Transcription.userNotes` is normalized and capped only
+for prompt input (8,000-word soft cap); the stored notes are not truncated. The
+same effective value is supplied to assembly and stored in
+`PromptResult.userNotesSnapshot`. The queued request also captures
+`Prompt.includeMeetingNotes`; the completed result persists it as
+`includeMeetingNotesSnapshot`. The queued request also captures the current
+AI output-language policy; the completed result persists it as
+`outputLanguagePolicySnapshot`. Extra instructions are appended last so they
+can ask the model to override that language request. This is prompt text, not
+a guaranteed runtime filter. Language is inferred from transcript text when
+following the transcript; Parakeet detected-language metadata is not used.
+
+Automatic notes context is opt-in and result-prompt-only. Existing, built-in,
+and new prompts default false; Transforms cannot enable it. Assembly follows
+this decision table:
+
+| Notes | Checkbox | Template contains `{{userNotes}}` | Result |
+|-------|----------|------------------------------------|--------|
+| Empty | Off/On | No | Existing prompt, byte-identical |
+| Empty | Off/On | Yes | Existing empty substitution |
+| Present | Off | No | Existing prompt, no notes sent |
+| Present | Off | Yes | Substitute notes at token |
+| Present | On | No | Append one delimited context block |
+| Present | On | Yes | Substitute at token; do not append |
+
+The automatic block labels notes as user-authored source material rather than
+instructions and says that the transcript wins factual conflicts. Retry reuses
+the failed queue snapshot. Regenerate reuses the result's checkbox snapshot
+with the meeting's current committed notes. Chat/Ask has a separate existing
+assembly path and remains unchanged.
+
+The checkbox, new columns, and automatic block were implemented and locally
+verified on 2026-09-05. Release availability follows the normal channel
+process.
+
+Edge cases:
+
+| Prompt | Extra Instructions | Result |
+|--------|--------------------|--------|
+| Selected | None | Prompt content only (most common case) |
+| Selected | Provided | Prompt content + blank line + extra instructions |
+| None | Provided | Minimal framing + extra instructions (see below) |
+| None | None | Default community prompt (backward compatible) |
+
+Minimal framing when only extra instructions are provided:
+```
+You are a helpful assistant that processes transcripts. Follow the user's instructions below.
+
+{extraInstructions}
+```
+
+### Auto-Run Behavior
+
+Prompt cards may be marked `isAutoRun = true` in the prompt library.
+
+- When a new transcription finishes and `llmAvailable && transcript` is not empty/whitespace-only, the app auto-generates results for available prompts whose source-aware auto-run setting includes that transcription source.
+- Multiple auto-run prompt cards are allowed.
+- Zero auto-run prompt cards is a valid configuration. In that state, transcription and chat still work, and users generate prompt tabs manually from the summary UI.
+- Auto-run prompt cards are forced visible while auto-run is enabled.
+- If prompt data cannot be loaded at all, the runtime falls back to `Summary`.
+
+---
+
+## UI
+
+### Summary Pane
+
+The summary experience is tab-based rather than card-based.
+
+- `Transcript` remains the first tab.
+- Each completed summary gets its own tab.
+- A new (non-replacing) generation gets its own tab immediately; a
+  regeneration instead occupies its source result's existing tab position (see
+  Completed Summary Tabs).
+- `Chat` remains the final tab.
+- A dedicated `Summarize` affordance opens the generation popover.
+
+If no prompt cards are marked auto-run, this summary affordance is how users add prompt tabs manually after transcription.
+
+#### Generation Popover
+
+The generation popover contains:
+
+- prompt chips for visible summary prompts
+- a manage button that opens the prompt-library sheet
+- model selector for the resolved analysis route; changes update its override
+  when present, or Default AI when analysis inherits
+- extra instructions field
+- queue status text when generations are pending
+- generate button
+
+#### Queued Summary Pipeline
+
+Summary generation uses a **single-worker queue**:
+
+- one summary may actively stream at a time
+- additional user-triggered generations are accepted immediately and appended to the queue
+- queued generations appear immediately, as a new tab unless they replace a
+  saved result, in which case they occupy that result's existing tab position
+- when the active generation finishes, the next queued generation starts automatically
+- the app does **not** run multiple summary streams in parallel
+
+#### Pending Generation Tabs
+
+Pending generation tabs render in one of two states:
+
+- `Streaming`: live markdown fill with cancel support
+- `Queued`: waiting state with remove support
+
+When a generation completes:
+
+- if the user is currently viewing that generation tab, it transitions into the completed summary tab
+- otherwise the current tab stays put and the completed summary receives a badge
+
+#### Completed Summary Tabs
+
+- completed summaries render through the shared rich Markdown surface
+- generate appends a new completed summary tab every time
+- regenerate occupies its source result's tab position from the moment it's
+  queued, through streaming and any failure; the slot's content swaps to the
+  new result only once it is durably saved, and cancelling or dismissing a
+  failure restores the saved result (see Data Model: PromptResult above)
+- regeneration compares the original result's content and edit timestamp inside the replacement transaction; if either changed while generation ran, the user edit remains saved and replacement fails visibly
+- editing another saved result cannot replace a dirty draft; return to the
+  original result and Save or Cancel first. Re-entering the same edit retains
+  its draft. Switching result tabs alone does not discard it.
+- reloading the same recording preserves the draft's original content precondition;
+  an external edit or deletion must not silently become its new save baseline.
+  A stale save retains the draft and reports a conflict.
+- if an external deletion removes the edited result's tab, the result header
+  offers Copy Draft and Discard Draft so the retained draft remains recoverable.
+- copy is available from both the pane and tab context menu
+- delete requires confirmation
+
+#### Rich Markdown Result Rendering
+
+Prompt Results, saved assistant Chat messages, and live Ask responses share
+`MarkdownContentView`. The stored `PromptResult.content` and chat content remain
+the unchanged Markdown source; rendering is presentation-only and never rewrites
+saved results or export payloads.
+
+The supported result dialect covers headings, paragraphs, emphasis,
+strikethrough, links, inline and fenced code, block quotes, thematic breaks,
+ordered/unordered/nested lists, display-only task lists, and GFM pipe tables.
+Wide tables and code blocks manage their own horizontal overflow. Streaming
+surfaces re-render the latest complete text snapshot and may animate appended
+text; completed and partial results use the same parser and styling.
+
+The renderer is isolated to the GUI target. Core processing and the CLI remain
+independent of the UI dependency.
+
+### Management surface
+
+The prompt manager opens as a sheet from the Library header **Prompts** button,
+from the generation popover's **Manage Prompts** action, and from Meetings'
+**After each meeting** card. The initial view is one searchable list of
+transcript prompts with an optional collection filter. Built-in provenance is row metadata rather than a separate CRUD model.
+**New prompt** and **Manage collections** open separate sheets, leaving browsing
+and editing as the main page's purpose.
+
+The editor retains Markdown source/preview, collection assignment, notes context,
+optional model override and typed generation settings, and label availability.
+Version history stays in a disclosure with source/settings comparisons and an
+explicit restore action that creates a new version. Empty searches distinguish
+no matching prompts from a library with no prompts. Deleted prompts remain
+recoverable. Existing visibility and source auto-run remain in the manager;
+Transform shortcuts remain in the Transforms editor and collection ordering in
+Manage collections. Prompt order and running-label metadata survive edits.
+The layout adds no prompt duplication, prompt-reordering control, or running-label
+editor; moving navigation does not change persistence or execution semantics.
+
+See [UI patterns](04-ui-patterns.md#prompts) for the current presentation contract.
+
+---
+
+## Relationship to Existing Specs
+
+### spec/11-llm-integration.md
+
+spec/11 §1 (Transcript Summary) describes a single-summary model with a hardcoded prompt. **This spec supersedes that section** — summaries now use the Prompt Library and support multiple outputs per transcript.
+
+spec/11 §3's original Custom Transforms sketch described transforms stored in UserDefaults. **The Prompt Library superseded this concept** — productized Transforms are prompts with `category: .transform`, plus `keyboardShortcut` and `runningLabel` metadata per ADR-022.
+
+spec/11 §2 (Chat with Transcript) and all provider/protocol/CLI sections remain unchanged.
+
+### ADR-011
+
+Provider architecture is unchanged. The Prompt Library changes what goes into the system prompt, not how the LLM is called.
+
+---
+
+## Boundaries & Sequencing
+
+| Implemented | Explore Later |
+|------------------|---------------|
+| `prompts` table + community prompt seeds | Action types beyond prompt-driven summarization |
+| `summaries` table / `PromptResult` model (one-to-many) | Workflow engine / step chaining |
+| Prompt model + repository, including Transform prompt rows | Generalized triggered workflows (the existing post-meeting hook is narrower) |
+| PromptResult model + repository | Agent profiles / agent handoff |
+| Gated Dictation AI Formatter profile code/storage (not public-enabled) | Browser hostname/domain matching |
+| Prompt chips + generation popover | Desktop-context collection |
+| Extra instructions field | Apple Shortcuts / App Intents integration |
+| Multi-summary tab navigation + queued pipeline | |
+| Prompt management (uniform CRUD, versions and recovery) | |
+| PromptResultsViewModel (extracted from TranscriptionVM) | |
+| LLMService accepts custom system prompt | |
+| Migration from `transcriptions.summary` → `summaries` | |
+
+The future design space for actions, workflows, agents, and voice control is documented in [spec/13-agent-workflows.md](13-agent-workflows.md). That document is exploratory and does not override the implementation contract defined here.
+
+---
+
+## Testing
+
+### Unit Tests
+
+1. **PromptRepository:** CRUD operations, community prompt seeding verification, visibility toggle, name uniqueness constraint, `restoreDefaults`, `fetchVisible` filtering by category, and optional inference-settings round trips without built-in reconciliation overwriting them.
+2. **PromptResultRepository:** CRUD operations, `fetchAll` ordering (newest first), cascade delete when transcription deleted, `hasSummaries` check, and effective-settings receipt round trips.
+3. **LLMService:** Custom system prompt flows through to the message array; default prompt used when nil; detailed prompt-result generation carries an adapter-owned effective-settings receipt.
+4. **PromptsViewModel:** CRUD operations, visibility toggle, validation (empty fields, duplicate names), restore defaults.
+5. **PromptResultsViewModel:** Generation flow (prompt assembly → detailed stream → terminal receipt → persist), multi-summary state, settings snapshots for manual/auto-run/retry/regenerate, delete, auto-run with selected prompt cards, and zero-auto-run behavior.
+
+### What We Skip
+
+- Visual layout of summary tabs and queued states (test ViewModels instead).
+- Actual LLM output quality (depends on external model).
+- Prompt effectiveness (subjective, depends on transcript content).
+
+---
+
+## Acceptance Criteria
+
+1. User can select a prompt from chips in the generation popover on the summary tab.
+2. Generating a summary creates a new summary record (does not overwrite previous summaries).
+3. Multiple summaries per transcript are displayed as tabs, with pending generations appearing immediately.
+4. User can add extra instructions that layer on top of the selected prompt.
+5. Community prompts are available on first launch from `Prompt.builtInPrompts()` Swift seeds; the bundled JSON is contribution/reference material, not the runtime loader.
+6. Built-in and custom prompts share edit, hide, version, and recoverable delete rights.
+7. Custom prompts can be created, edited, and deleted via the management sheet.
+8. Prompt management is accessible from the sidebar and generation popover.
+9. Auto-run after transcription uses available prompts whose source-aware auto-run includes the source, and zero auto-run cards is a supported state.
+10. Existing transcriptions with summaries display migrated data correctly.
+11. `swift test` passes with all new tests.

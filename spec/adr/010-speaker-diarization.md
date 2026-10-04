@@ -1,0 +1,617 @@
+# ADR-010: Speaker Diarization via FluidAudio Offline Pipeline
+
+> Status: **Accepted**
+> Date: 2026-03-04
+> Current scope (2026-09-25): post-ASR file/URL transcription and isolated system-track meeting refinement. The Nemotron amendment below governs the default and FluidAudio 0.17.4 pin. Earlier model comparisons, throughput claims and Community-1-only decisions remain historical context. This development decision does not describe the stable DMG.
+
+## Nemotron default decision (2026-09-25)
+
+Use **Nemotron 3 `fast128` through FluidAudio 0.17.4** for automatic speaker
+detection after recording. Keep the existing Community-1/WeSpeaker/VBx service
+for explicit Exact/Range choices and experimental voice-profile builds, whose
+identity embeddings Nemotron does not provide. The shared factory supplies the
+app, CLI transcription/retranscription, health and model preparation paths.
+
+Nemotron has eight activity channels per analyzed source. This is an accepted
+limit for the default meeting use case, not a way to detect or correctly split
+an arbitrary number of participants. Choosing an explicit speaker count keeps
+the existing Community-1 behavior, including counts above eight. Automatic
+calendar bounds remain advisory inputs: a natural Nemotron count within the
+bounds is accepted; a nonempty result outside them takes the existing constrained
+Community-1 path. If that advisory fallback is unavailable, retain the successful
+Nemotron result and log the unapplied bound; cancellation still propagates.
+Explicit count failures retain their existing behavior. Silence stays empty
+rather than inventing a minimum speaker.
+
+The microphone track remains **Me**. Only isolated system audio is diarized in
+meetings. Neither live transcription, ASR selection, source reconciliation nor
+speaker-word smoothing changes. Nemotron preserves overlapping acoustic intervals
+and brief activity at the service boundary; words still receive one label through
+the existing merger. A model's overlapping output is not itself source separation
+or proof that simultaneous speech was transcribed correctly.
+
+Model assets are pinned to CoreML export revision
+`1b0b133f6f8820292010afd776d8f9fbc9fca17e`, with size and SHA-256 verification in
+an app-owned cache. The `fast128` download is approximately 199 MB. Setup also prepares the existing
+Community-1 assets for explicit count choices; cached/ready status covers both.
+Ordinary automatic inference needs only the Nemotron model. An upgrade from an
+unmarked 0.15.7 Community-1 cache needs one connected setup: the SDK now requires
+a matching revision marker. Readiness rejects old markers, and PLDA metadata
+repair uses the same pinned revision. Preparation
+runs outside the inference gate, shares one retryable load, and does not cancel
+other callers when one waiter cancels. Queued inference is cancellable; active
+inference checks cancellation between one-second feeds and runs off the service
+actor. Samples are staged in a temporary memory-mapped file, matching
+Community-1's memory profile, rather than a whole-recording array. A fresh diarizer resets stream
+state for every recording. macOS 14 uses CPU/GPU routing; the `offline` preset
+also uses CPU/GPU and is retained only for evaluation, not as a user setting.
+
+The [matched evaluation](../../benchmarks/diarization/2026-09-25-nemotron-evaluation.md)
+records separate AMI manual/forced-reference results, AliMeeting conditions,
+ASR regression controls and product E2E evidence. The earlier evaluation-only
+Nemotron licensing note is superseded by the final model's OpenMDW-1.1 license;
+attribution and its full license accompany the app. FluidAudio itself uses
+Apache-2.0. No new runtime or cloud speech service is introduced.
+
+### Implementation qualification (2026-10-02 audit)
+
+The [October audit](../../docs/audits/2026-10-02-app-audit/diarization.md)
+re-executed both current backends on the public `wibky` and `ouvtt` regression
+fixtures with network access denied and cloned, hash-verified model caches.
+Nemotron returned one and three speakers against one and two reference
+speakers; Community-1 returned two and four. The audit records DER components,
+the exact scoring region and Debug-runtime limits. VoxConverse is in
+Nemotron's disclosed training data, so these are regression checks, not
+held-out generalization evidence or a replacement for the matched evaluation.
+
+The same audit passed the real-ASR meeting/file persistence and silence-reset
+test on a 180-second public crop with a separate microphone fixture. In its
+fixed-ASR diagnostic, Nemotron's 491 eligible word midpoints agreed with the
+reference speaker 487 times before smoothing and 486 afterwards. This is a
+narrow diagnostic excluding overlap and ASR errors, not cpWER. The meeting
+also retained a source-only `Others` word alongside two detected remote
+identities; today's roster count includes that fallback bucket as an entry.
+Neither result supports presenting roster size as a verified number of people.
+
+Three implementation boundaries remain material:
+
+- The existing word merger can replace a real one-word reply with the
+  surrounding speaker and fill unknown gaps. This is deliberate smoothing,
+  tested as current behavior, not a guarantee of correct word attribution.
+  A policy change needs final-word evaluation, not only better acoustic DER.
+- A diarization failure preserves successful ASR, but the nonblocking warning
+  specified below is not yet implemented as a durable per-run GUI/CLI outcome.
+  Current completion telemetry also omits the actual backend and fallback
+  result; `speaker_prior` describes the requested policy and may be unapplied
+  when advisory fallback fails. Preserve the warning requirement rather than
+  presenting it as already shipped.
+- Files retain raw acoustic `diarizationSegments`; captured meetings rebuild
+  them from recognized words, and manual reassignment can also rebuild them.
+  They are therefore not a uniform acoustic-activity timeline. The separate
+  [audio speaker timeline contract](../contracts/audio-speaker-timeline-v1.md)
+  remains the intended boundary for preserving that evidence.
+
+## Context (original decision)
+
+MacParakeet v0.4 adds speaker diarization to file transcription (F13). Users who transcribe interviews, podcasts, and meetings need to know "who said what" — not just the raw text.
+
+### What is diarization?
+
+Speaker diarization answers "who spoke when" in an audio recording. It is a three-stage problem:
+
+1. **Segmentation** — detect when speech starts/stops and where speaker changes occur
+2. **Embedding extraction** — produce a voice fingerprint for each speech segment
+3. **Clustering** — group segments by voice similarity to assign consistent speaker IDs
+
+These are distinct subproblems. No single model solves all three.
+
+### FluidAudio already ships diarization
+
+FluidAudio (our existing STT dependency, ADR-007) bundles a complete diarization pipeline with no additional SwiftPM dependencies required. It offers three approaches:
+
+| Approach | Pipeline | DER | Speed | Speaker Limit | Streaming |
+|----------|----------|-----|-------|---------------|-----------|
+| **Offline** | Pyannote community-1 segmentation + WeSpeaker v2 embeddings + VBx clustering | ~15% (VoxConverse), ~17.7% (AMI) | 64-122x RTF | Unlimited | No |
+| **Streaming (Pyannote)** | Legacy pyannote 3.1 segmentation + WeSpeaker v2 embeddings, chunk-by-chunk with SpeakerManager | ~26-50% (config-dependent) | 51-392x RTF | Unlimited | Yes |
+| **Sortformer** | NVIDIA's end-to-end neural diarizer | ~32% (AMI SDM) | ~127x RTF | **4 max (hard limit)** | Yes |
+
+### Competitive landscape
+
+Pyannote community-1 is widely considered the best open-source diarization pipeline as of early 2026:
+
+- **PyannoteAI (commercial)**: ~8.5% DER (precision-2 on VoxConverse) — best overall, but requires a paid API
+- **Pyannote community-1 (PyTorch reference)**: ~11.2% DER on VoxConverse — best open-source model. FluidAudio's CoreML port: ~15% DER due to fp16 quantization (significant improvement over legacy 3.1 in speaker counting and assignment)
+- **DiariZen**: 13.3% DER — competitive open-source alternative, but no CoreML/ANE port exists
+- **NVIDIA Sortformer**: Real-time capable, but 4-speaker hard limit and ~32% DER
+
+FluidAudio's offline pipeline uses pyannote community-1 converted to CoreML, running on the ANE at 64-122x realtime. pyannote's commercial `precision-2` is a distinct model, not this pipeline with proprietary tuning (see the 2026-09-06 amendment).
+
+## Decision
+
+**Use FluidAudio's offline diarization pipeline (pyannote community-1 + WeSpeaker + VBx) for file/URL transcription and isolated system-track refinement after meeting capture. Do not use Sortformer or streaming diarization in the current product path.**
+
+### Scope
+
+- **File transcription**: Run diarization after ASR on the same audio. Merge speaker segments with word-level timestamps.
+- **Dictation**: No diarization. Single-speaker by definition.
+- **YouTube transcription**: Diarization applies (same as file transcription).
+- **Meeting finalization**: Diarize the isolated system-audio side when enabled and supported; the microphone remains the local speaker track. Do not diarize the mixed playback artifact.
+
+### Integration approach
+
+Run ASR and diarization on the same audio, then merge results by timestamp alignment:
+
+```
+Audio file
+  ├─→ AsrManager.transcribe()          → word timestamps + text
+  └─→ OfflineDiarizerManager.process() → speaker segments + IDs
+                    ↓
+         Merge by time overlap
+                    ↓
+         Speaker-attributed transcript
+```
+
+ASR and diarization can potentially run in parallel since they use different models (Parakeet TDT for ASR, pyannote/WeSpeaker for diarization), but sequential is simpler and correctness is more important than shaving seconds. Start sequential, optimize later if needed.
+
+### Model details
+
+| Component | Model | Size | License | Runs on |
+|-----------|-------|------|---------|---------|
+| Segmentation | Pyannote community-1 (powerset) | ~50 MB | CC-BY-4.0 | ANE |
+| Embeddings | WeSpeaker v2 (256-dim) | ~40 MB | Apache 2.0 | ANE |
+| Filter bank | Fbank feature extractor | ~1 MB | Apache 2.0 | CPU |
+| PLDA scoring | PLDA rho model + psi parameters | ~10 MB | Apache 2.0 | CPU |
+| Clustering | VBx + AHC warm start | N/A (algorithmic) | N/A | CPU |
+
+**Total additional download**: ~130 MB (one-time, cached alongside ASR models)
+
+### API usage
+
+```swift
+// DiarizationService.highAccuracyConfig (2026-09-06 amendment)
+var config = OfflineDiarizerConfig.default
+config.segmentation.stepRatio = 0.1
+config.embedding.minSegmentDurationSeconds = 0
+config.zeroVoteReembed = .init(enabled: true)
+
+let models = try await OfflineDiarizerModels.load(from: modelsDirectory)
+let manager = OfflineDiarizerManager(config: config.withSpeakers(min: 1, max: 4))
+manager.initialize(models: models)
+
+let result = try await manager.process(url)
+for segment in result.segments {
+    // segment.speakerId, segment.startTimeSeconds, segment.endTimeSeconds
+}
+```
+
+### Data model impact
+
+- `WordTimestamp` gains a `speakerId: String?` field storing **stable raw IDs** (`"S1"`, `"S2"`) from the diarization pipeline — not display labels
+- `Transcription.speakers` stores a JSON mapping with stable IDs and display names: `[{"id":"S1","label":"Speaker 1"},{"id":"S2","label":"Speaker 2"}]`. Rename updates the mapping only, not every word.
+- New `diarizationSegments` JSON column on `Transcription` stores the raw diarization output for accurate speaking time analytics and future features (timeline view, skip-to-speaker)
+- `Transcription.speakerCount` populated from diarization result
+- Existing transcriptions without diarization remain valid (all fields nullable)
+
+### Diarization is non-fatal
+
+If diarization fails (e.g. `noSpeechDetected`, model error, timeout), the ASR result **must still be persisted**. Diarization failure should:
+- Log the error
+- Leave `speakerCount`/`speakers`/`diarizationSegments` as nil
+- Leave all `WordTimestamp.speakerId` as nil
+- Show a non-blocking notice in the UI ("Speaker detection unavailable for this file")
+- Never prevent the user from viewing, exporting, or using the transcript
+
+### UI impact
+
+- Speaker labels in transcript view with color differentiation
+- Speaker rename (click label to assign real name)
+- Per-speaker analytics (speaking time, word count)
+- All export formats include speaker labels when available
+- Progress: "Identifying speakers..." sublabel with time estimate during diarization phase
+- Settings toggle to enable/disable diarization (on by default where supported; explicit off remains respected — see the 2026-07-03 amendment)
+
+### Always-on vs opt-in
+
+> **Amendment (2026-04-02):** The original decision was "always-on, no global toggle." This has been revised to **a Settings toggle (on by default)**. See rationale below.
+
+~~For file transcription, always run it — users transcribing files almost always want to know who said what.~~ **Revised:** Diarization is controlled by a "Speaker detection" toggle in Settings (on by default). Users who don't need speaker attribution can disable it for faster transcriptions.
+
+**Why the change:** The original decision was "always-on, no toggle." A Settings toggle gives users explicit control over the accuracy/speed tradeoff. The toggle detail text sets expectations without quoting an accuracy figure (the earlier "~85% accurate" copy was not derivable from any DER measurement and is retired; see the 2026-09-06 amendment).
+
+**Progress UX:** When enabled, show "Transcribing..." during ASR, then "Identifying speakers..." during diarization. When disabled, the diarization step is skipped entirely (no progress indicator for it).
+
+~~**No global toggle.**~~ **Settings toggles added.** Separate "Speaker detection" toggles in Settings → Transcription and Settings → Meeting Recording control whether diarization runs for file/URL transcription and meeting recordings. The original concern about "why don't I see speakers?" confusion is addressed by the toggles being clearly labeled and discoverable in the relevant capture workflow.
+
+Skip diarization for: dictation (single speaker by design), or when the corresponding Settings toggle is off.
+
+**CLI:** `macparakeet-cli transcribe` follows the saved file/URL speaker-detection preference; `macparakeet-cli retranscribe --kind meeting` follows the saved meeting speaker-detection preference when `--speaker-detection app-default` is used. When unset, both preferences default to on where supported. Use `--no-diarize` / `--speaker-detection off` to skip for one run, or a speaker-count constraint to force it on. Text output shows speaker labels at turn changes; JSON output includes all speaker data via Codable.
+
+**Readiness contract:** Diarization remains a separate service from the STT scheduler, but when speaker detection is enabled (on by default where supported — see the 2026-07-03 amendment) the onboarding/ready-state path must account for diarization-model readiness before claiming file transcription is fully ready.
+
+> **Amendment (2026-06-14):** Two corrections to keep this ADR faithful to the
+> shipped code at that point. The default-off correction below was superseded
+> by the 2026-07-03 amendment.
+>
+> **1. The shipped default was OFF, not on.** The "Speaker detection" toggle
+> defaults to off across the app — Settings, runtime preferences
+> (`AppRuntimePreferences.speakerDiarization`), and the CLI all resolve to off
+> unless the user opts in. The default was deliberately flipped on→off in commit
+> `4a1d25133` ("Polish AI settings defaults"); the Settings copy reflects it
+> ("Optional. Adds speaker labels when audio is clear; leave off if labels are
+> unreliable."). Consequences: (a) `macparakeet-cli transcribe` does **not**
+> diarize by default — it diarizes only when the stored preference is on, when
+> `--speaker-detection on` is passed, or when a speaker-count constraint
+> (`--speaker-count` / `--speaker-min` / `--speaker-max`) is given; `--no-diarize`
+> forces it off. (b) The readiness contract above applies only when the user has
+> enabled speaker detection — default onboarding does not fetch the ~130 MB
+> diarization assets.
+>
+> **Amendment (2026-07-03):** Meeting-corpus capture restored the default to
+> **ON where supported**. The `speakerDiarization` preference remains
+> UserDefaults-backed and user-controllable; an absent key resolves to on, while
+> an explicit stored `false` continues to disable speaker detection. Meetings
+> still only run diarization when a system-audio track exists, because the
+> meeting pipeline diarizes the isolated system side after capture. This aligns
+> with ADR-027's private speech-memory direction: speaker structure is only
+> recoverable while raw meeting audio exists, so capture-time diarization is the
+> last chance to preserve speaker labels in the corpus.
+>
+> **Amendment (2026-07-05):** The single saved value was split by workflow.
+> File and URL transcription continue to use the `speakerDiarization`
+> preference. Meeting recording now uses the independent
+> `meetingSpeakerDiarization` preference, also UserDefaults-backed and default
+> on where supported. Meetings still diarize only the isolated system-audio
+> track after capture; microphone words remain source-labeled as `Me`.
+>
+> **2. The FluidAudio dependency surface has grown.** The core decision above
+> still stands — MacParakeet ships only the offline batch pipeline and uses
+> neither Sortformer nor streaming diarization. But the pinned FluidAudio now
+> also exposes streaming diarizers (`LSEENDDiarizer`, `SortformerDiarizer`) and
+> speaker-enrollment APIs. None are shipped. They are surveyed as a *future*
+> tentative-live / speaker-memory option in
+> `docs/research/speaker-diarization-frontier-2026-06.md` and
+> `docs/plans/2026-06-14-002-speaker-diarization-world-class-architecture.md`.
+
+> **Amendment (2026-09-06, issue #972):** Four corrections after the
+> speaker-attribution research in
+> `docs/research/2026-09-06-speaker-diarization-claude/`.
+>
+> **1. The pinned 0.15.4 pipeline was not a faithful community-1 port.** Its
+> clustering stage converted the AHC threshold with `sqrt(2 - 2t)` although the
+> config documents a Euclidean distance (so the default 0.6 ran as a cut of
+> 0.894 and raising the knob split more instead of merging more), compared
+> speaker-count constraints against the AHC warm-start count instead of the
+> clusters VBx kept, had no constrained assignment of local speakers that share
+> a segmentation chunk, and seeded K-Means re-clustering from `UInt64.random`.
+> FluidAudio fixed all four in 0.15.5 (PR #735) and 0.15.6 (PR #802). The
+> app then pinned `exact: "0.15.6"` (superseded by the 2026-09-13 pin). The
+> claim above that this is "the same
+> pipeline pyannote's commercial API uses" was unsupported and is withdrawn:
+> `precision-2` is a distinct model, 4 to 10 DER points better on pyannote's
+> own table. The `~17.7% AMI` figure in the table above was produced by
+> FluidAudio under the inverted threshold semantics and is flagged upstream
+> for re-benchmark; treat it as historical. The "~85% accurate" Settings copy
+> is retired because no DER figure supports it.
+>
+> **2. Async runs use the high-accuracy configuration.** Diarization always
+> runs after transcription, so `DiarizationService.highAccuracyConfig` takes
+> FluidAudio's slower preset: `stepRatio 0.1` (1 s hop instead of 2 s),
+> `minSegmentDurationSeconds 0` (short turns keep their own embedding and
+> segment), and zero-vote re-embedding on. FluidAudio's own VoxConverse table
+> (collar 0.25 s, overlap ignored), published for 0.15.4 and not yet re-run
+> under 0.15.6's corrected clustering, put this preset at 13.89% versus 15.07%
+> DER for about half the throughput; treat those as historical, not as a
+> measurement of the pinned build. `clustering.threshold` stays at the library default
+> (the app never tuned it, so the semantic change needs no remap),
+> `constrainedAssignment` stays at its new default (on), and K-Means
+> re-clustering is deterministic in 0.15.6 (`baseSeed 0`, `nInit 10`).
+> The CLI `--speaker-count` / `--speaker-min` / `--speaker-max` flags map to
+> `withSpeakers(exactly:)` / `withSpeakers(min:max:)` unchanged; under the
+> corrected semantics a bound binds only when the auto-detected count falls
+> outside it.
+>
+> **3. Meetings feed the calendar attendee count in as a prior that can only
+> cap.** The finalizer derives `MeetingSpeakerPrior` from
+> `calendarEventSnapshot`, whose attendee list already excludes the user;
+> attendees captured as `declined` and participants captured as a `room`,
+> `resource`, or `group` are excluded too (`MeetingCalendarPerson.status` and
+> `.kind`, optional fields added 2026-09-06; older snapshots count every
+> attendee). With `n` countable remote attendees the system-track diarizer
+> receives bounds `min = 1`, `max = n + 1`, never an exact count and never a
+> minimum above 1. Issue #972 asked for `min = max(1, n - 1)`; that was
+> narrowed deliberately: declined, tentative, and resource attendees, no-shows,
+> and uninvited joiners make the invite an unreliable count, and FluidAudio's
+> `minSpeakers` binds only by forcing K-Means re-clustering upward, so a wrong
+> minimum splits real speakers while a generous maximum only caps the
+> over-splitting users actually report (#542). A 1:1 invite therefore still
+> runs the diarizer with `max 2` instead of skipping clustering. No snapshot,
+> no countable attendee, or more than eight attendees leaves clustering
+> unconstrained. An explicit CLI speaker constraint wins over the calendar
+> prior. The effective policy is recorded as `speaker_prior` on
+> `diarization_completed` (`explicit_cli`, `bounds_1_<n+1>`,
+> `unconstrained_no_attendee_count`, `unconstrained_large_attendee_count`) and
+> in the local capture diagnostics; it carries no attendee identity.
+>
+> **4. Not changed here (follow-ups in the research synthesis):**
+> embedding-based consolidation of over-split clusters, `SpeakerMerger`
+> smoothing and nearest-turn fallback for sub-second words, stable speaker IDs
+> across re-runs, in-person meeting detection, voiceprints, and Nemotron-3
+> Diarization (evaluation-only license). FluidAudio issue #878 (a
+> deterministic BNNS crash of the offline diarizer on macOS 14) predates the
+> upgrade and is unchanged; `ANEInferenceGate` still serializes the
+> diarizer's Neural Engine work on macOS 14.
+
+> **Amendment (2026-09-13, issue #1023):** The app pins `exact: "0.15.7"`.
+> FluidAudio 0.15.7 (#891) holds Exact / `maxSpeakers` against both the argmax
+> cluster census and the π (`pi > 1e-7`) census. 0.15.6 could skip K-Means when
+> argmax already looked in-bounds and then revive the extra component. The
+> published counterexample is synthetic; the 7-file VoxConverse v0.3 test
+> slice in `benchmarks/diarization` already bound Exact 1 and max 2 on 0.15.6.
+> Follow-up Exact 1 on a 1-speaker over-split (`wibky` 2→1) and Exact 2 on
+> over-split 2-/3-speaker files also bound on both pins. Unconstrained rosters
+> were identical on 0.15.7 (over-split did not move). LibriSpeech `test-clean`
+> 200 utterances (stride), Parakeet v3, simple normalizer: 2.56% WER on the
+> kept 0.15.6 CLI vs 2.23% on 0.15.7 (192/200 identical hypotheses).
+> `DiarizationService.pipelineRevision` is `fluidaudio-0.15.7`. Full tables:
+> `benchmarks/diarization/2026-09-13-fluidaudio-0.15.7-eval.md`. This does not
+> close Auto 1:1 over-splits (#944); `MeetingSpeakerPrior` is still
+> `max = n + 1`.
+
+> **Amendment (2026-09-15, issue #1046):** `SpeakerMerger` now collapses
+> a singleton word (or an unlabeled run) when both neighboring runs share
+> a speaker. A short between two different speakers remains assigned by
+> overlap or unlabeled; transcript edges and multi-word speaker runs are
+> unchanged. This presentation-layer post-pass does not change FluidAudio
+> clusters, speaker rosters, `clustering.threshold`, or voice-profile
+> behavior.
+>
+> Centroid consolidation at the independently frozen voiceprint tau 0.25
+> was evaluated and rejected for this change. It changed zero rosters on
+> the seven-file VoxConverse Auto gate. The one-speaker `wibky` over-split
+> centroids were distance 0.474, so making that pair merge would require
+> entering the measured different-speaker range (0.47–0.84). The threshold
+> was not fitted to the gate. Benchmark and diagnostic details:
+> `benchmarks/diarization/2026-09-15-issue-1046-baseline.md`.
+>
+> Remaining follow-ups from the 2026-09-06 list: nearest-turn fallback for
+> sub-second words that are not isolated flips, a safer over-split
+> consolidation signal, stable IDs across re-runs, in-person microphone
+> diarization, and Nemotron-3 Diarization.
+
+**Model preparation (2026-09-07):** The service shares one model-loading task
+across speaker constraints and initializes each configured manager from those
+models. Downloads and loading run outside `ANEInferenceGate`; the service
+does not call FluidAudio's combined download-and-prewarm `prepareModels` API.
+Eager prewarming is skipped, so the first prediction happens inside the gated
+`process` call. This prevents a slow speaker-model download from blocking
+dictation on macOS 14. Cancelling one caller stops that caller's wait without
+cancelling the shared load. A failed load can be retried by a later caller.
+FluidAudio retains compiled-model recovery. An existing malformed PLDA metadata
+file is replaced atomically only after a valid replacement is downloaded;
+offline mode, cancellation, and failed downloads preserve the cached file and
+model bundles.
+
+> **Amendment (2026-09-05):** Automatic diarization is now an immutable
+> baseline beneath a transcript-scoped speaker-correction layer. Add, rename,
+> assign, split, merge, remove, reset, Undo, and Redo operations are persisted
+> separately and resolved into one effective attribution; they never rewrite
+> raw word/source evidence. Effective attribution is the contract for the app,
+> search, exports, meeting artifacts, cards, LLM context, and CLI. Replacement transcript evidence is fingerprinted again; a changed fingerprint
+> resets the effective correction cursor. Failed retranscription leaves the prior
+> transcript and corrections intact. Attribution reads are scoped to the selected transcript snapshot,
+> including same-ID completion and refresh; older asynchronous reads cannot
+> replace a newer snapshot. Rich AI context caches include both the selected
+> transcript revision and speaker-correction revision, including the transition
+> from loading to resolved attribution. A correction during context preparation
+> invalidates that request before submission. After saving notes, AI actions
+> await the corresponding attribution read before preparing context. Automatic
+> nil word assignments inherit the preceding speaker in timed presentation
+> and retrieval, matching the original segmenter; explicit Unassigned corrections
+> stay independent. With no active corrections, export projections preserve the
+> original stored word assignments. TXT/Markdown paragraphs keep nil assignments
+> separate (including automatic gaps) and label them Unassigned when named
+> speakers exist. Chunked cards
+> retain the complete logical turn for speaker actions. Notes, meeting rename,
+> and speaker edits serialize their artifact refreshes per meeting and reread
+> canonical data after earlier writes complete. Search derivation version 4
+> rebuilds inherited speaker runs and excludes blank edge tokens from citation
+> timestamps. CLI prompt input uses the shared rich renderer, and TXT stdout
+> uses the same speaker-aware renderer as file export. Explicitly unassigned words remain
+> separate from
+> named speakers in TXT/Markdown exports and appear under an Unassigned label
+> when the transcript has named speakers. See
+> `plans/active/2026-09-05-speaker-attribution-editing.md` and
+> `spec/01-data-model.md` for the command and persistence contracts.
+
+> **Amendment (2026-09-13):** [ADR-031](031-timed-transcript-corrections.md)
+> extends the same correction journal and Undo/Redo cursor with timed-line text
+> replacement and adjacent same-speaker line merge. Corrected text is aligned
+> only to its effective segment envelope. Automatic word text/timing and raw
+> diarization evidence remain unchanged, so this does not alter the diarization
+> model or claim per-word timing for rewritten text.
+
+## Audio speaker timeline decision (2026-09-14)
+
+**Accepted direction; implementation pending ([issue #836](https://github.com/moona3k/macparakeet/issues/836)).**
+Preserve detected audio turns independently of word timing and expose a read-only timeline with playback navigation.
+This extends the audio-navigation intent above to Cohere and other wordless results; it does not make their text speaker-attributed.
+The [Audio Speaker Timeline v1 contract](../contracts/audio-speaker-timeline-v1.md) owns the planned payload, coverage, lifecycle, and consumer behavior.
+The [implementation plan](../../docs/plans/2026-09-14-2147-feat-audio-speaker-timeline-plan.md) records the source investigation and verification gates.
+
+Use a separate optional `audioSpeakerTimeline` with its own automatic roster.
+Although this ADR originally described `diarizationSegments` as raw audio evidence, current meeting finalization derives that field from words, and effective correction projections can rebuild it from corrected assignments.
+Reinterpreting it as authoritative audio turns would mislabel legacy records and entangle the timeline with text corrections.
+Keep those existing semantics and text correction fingerprints intact; do not backfill audio evidence from them.
+
+Existing archived-source meetings cover only isolated system audio, shifted onto playback time once.
+Canonical-only saved/imported/split meetings retain their existing single-file analysis path and must identify coverage as canonical recording audio, not isolated system audio.
+This clarifies the earlier mixed-playback prohibition: do not substitute the mixed artifact when isolated archived sources exist.
+No microphone speech intervals are inferred from untimed text or channel duration.
+
+Keep the existing offline service, model readiness, inference serialization, preferences, and speaker-count policy.
+Initial timeline interaction is read-only; audio-cluster correction and text alignment remain follow-ups.
+This decision changes neither voiceprint consent/eligibility nor audio-retention policy.
+Source analysis establishes feasibility; real-audio and native-playback qualification are still required before claiming reliability or availability.
+
+## Rationale
+
+### Why the offline pipeline, not Sortformer
+
+| Factor | Offline (Pyannote community-1) | Sortformer |
+|--------|-------------------------------|------------|
+| DER | ~15% (VoxConverse) | ~32% (AMI SDM) |
+| Speaker limit | Unlimited | 4 max (hard architectural limit) |
+| Cross-recording recognition | Possible, but not via `SpeakerManager` (see the 2026-09 amendment) | Not supported |
+| Noise robustness | Good | Better |
+| Overlapping speech | Exclusive (overlaps trimmed by default) | Better (models overlap natively) |
+| Quiet/distant speech | Good | Poor (trained to ignore background) |
+| Maturity | Battle-tested (pyannote is the industry standard) | Newer, less proven |
+
+Sortformer's 4-speaker cap is a non-starter. It's baked into the model architecture (static CoreML tensor shapes) — not a tuning parameter. A podcast with 5 guests, a panel discussion, or a meeting with 5+ people would silently miss or merge speakers. The offline pipeline has no such limit.
+
+Sortformer's strengths (noise robustness, overlapping speech) matter most for real-time meeting recording — Oatmeal's domain, not MacParakeet's. For file transcription of pre-recorded audio, the offline pipeline's higher accuracy and unlimited speakers are strictly better.
+
+### Why not streaming diarization (original rationale)
+
+MacParakeet's file transcription is batch by nature — the entire audio file is available upfront. Streaming diarization trades 10-15% DER for latency benefits we don't need. The offline pipeline processes faster than realtime anyway (64-122x RTF), so there's no UX benefit to streaming.
+
+The original file-only rationale predates MacParakeet meeting recording. Current meetings still use offline final speaker assignment; tentative live diarization remains research, as recorded in the later amendments.
+
+### Why not a separate dependency
+
+FluidAudio already includes the diarization pipeline. Adding a separate diarization library would mean:
+- A new SwiftPM dependency to vet and maintain
+- Potentially different audio preprocessing requirements
+- No CoreML/ANE optimization (most alternatives are Python-only)
+- Duplicating models that FluidAudio already provides
+
+Using FluidAudio's built-in pipeline means zero new dependencies, shared model infrastructure, and a tested CoreML path.
+
+### Accuracy tradeoffs
+
+FluidAudio's CoreML port loses ~2-4% DER compared to the PyTorch reference (~11% DER for pyannote community-1). This is due to fp16 quantization required for ANE execution. The tradeoff is 60-120x speed improvement. For a desktop transcription app, 15% DER is more than sufficient — commercial APIs like AssemblyAI and Deepgram operate in a similar range.
+
+The most common error types:
+- **Miss**: Speech not detected (~9% of total DER)
+- **Speaker error**: Speech attributed to wrong speaker (~3-5%)
+- **False alarm**: Silence classified as speech (~1-4%)
+
+Users can correct misattributions by renaming speakers. Missed speech is visible in the transcript (unlabeled segments).
+
+## Consequences
+
+### Positive
+
+- Speaker-attributed transcripts for file transcription and YouTube
+- No new dependencies — uses existing FluidAudio
+- ~130 MB additional model download (one-time, small vs 6 GB ASR models)
+- Unlimited speakers (no artificial cap)
+- ~15% DER — competitive with commercial solutions
+- 64-122x RTF — diarization adds negligible time to transcription
+
+### Negative
+
+- ~130 MB additional model download for default-on speaker detection where supported (see the 2026-07-03 amendment)
+- ~2-4% DER loss vs PyTorch reference due to CoreML fp16 quantization
+- Overlapping speech regions are trimmed (exclusive output) — words in overlap zones may get `speakerId = nil`
+- No cross-file speaker identity (Speaker 1 in file A is not linked to Speaker 1 in file B)
+- No real-time streaming diarization (by design — that's Oatmeal)
+- Platform-specific quirk: iOS has audio conversion issues with stereo files (macOS-only is fine for us, per FluidAudio's investigation report)
+
+### Future possibilities (not committed)
+
+- ~~Cross-file speaker recognition via SpeakerManager enrollment~~ — experimental meeting implementation follows a different route; see the amendment below
+- Speaker-aware search ("show me everything Sarah said")
+- Diarization-informed audio player (skip to next speaker)
+- Parallel ASR + diarization for faster processing
+
+## Alternatives Considered
+
+### NVIDIA Sortformer only
+
+Rejected. 4-speaker hard limit and 32% DER. The architectural cap means 5+ speaker recordings silently fail. Not acceptable for a general-purpose transcription tool.
+
+### Sortformer for streaming + offline for batch (hybrid)
+
+Rejected. Unnecessary complexity. MacParakeet doesn't need streaming diarization — all audio is available upfront for file transcription. One pipeline is simpler.
+
+### WhisperX (combined ASR + diarization)
+
+Rejected. Python-based, no CoreML/ANE support. We already have Parakeet TDT for default ASR (better accuracy, faster). WhisperX bundles Whisper + pyannote in Python — we'd gain nothing and lose our native Swift architecture. ADR-021's later optional WhisperKit support uses a native local Swift path and does not change this diarization decision.
+
+### pyannote Python directly
+
+Rejected. Would require reintroducing the Python subprocess we eliminated in ADR-007. FluidAudio already provides the same models converted to CoreML.
+
+### No diarization (defer indefinitely)
+
+Rejected. Speaker attribution is a core expectation for file transcription. Every competitor (MacWhisper, Superwhisper, VoiceInk) either has it or is adding it. Without it, MacParakeet's file transcription is incomplete for multi-speaker recordings.
+
+## References
+
+- [FluidAudio GitHub](https://github.com/FluidInference/FluidAudio) — SDK with built-in diarization
+- [FluidAudio Diarization Docs](https://github.com/FluidInference/FluidAudio/tree/main/Documentation/Diarization)
+- [FluidAudio Benchmarks](https://github.com/FluidInference/FluidAudio/blob/main/Documentation/Benchmarks.md)
+- [Pyannote community-1 announcement](https://www.pyannote.ai/blog/community-1)
+- [Pyannote benchmark comparison](https://www.pyannote.ai/benchmark)
+- [NVIDIA Sortformer paper](https://arxiv.org/abs/2409.06656)
+- [NVIDIA Sortformer model card](https://huggingface.co/nvidia/diar_streaming_sortformer_4spk-v2)
+- [FluidInference/speaker-diarization-coreml](https://huggingface.co/FluidInference/speaker-diarization-coreml)
+- [Best Speaker Diarization Models Compared (2026)](https://brasstranscripts.com/blog/speaker-diarization-models-comparison)
+- [ADR-007: FluidAudio CoreML Migration](./007-fluidaudio-coreml-migration.md)
+- [F13: Speaker Diarization spec](../02-features.md)
+
+## Amendment (2026-09-12): experimental cross-recording recognition uses another route
+
+Two claims above are now wrong, and this records why.
+
+**`SpeakerManager` is not the route.** It is in-memory only and explicitly
+unsupported with `OfflineDiarizerManager`, the only manager the app instantiates.
+The comparison table's "possible via SpeakerManager" was never actionable for us.
+
+**The route that works is post-hoc matching on `speakerDatabase`.** The offline
+result already carries one 256-d vector per detected speaker, which the adapter
+used to discard. Enrolled voices are stored as exemplars and scored against it
+after the transcript is saved. No additional embedding model is introduced. Matching and persistence add work
+after transcription; their latency still needs measurement. Diarization itself is untouched — a cluster that cannot be matched is
+simply left as `Others N`.
+
+Two facts made this harder than the old line suggests:
+
+- `speakerDatabase` holds the **VBx clustering centroid**, un-normalized, not a
+  mean of per-segment embeddings. A bare dot product scales distance by
+  `‖a‖·‖b‖`, and that bias grows with intra-cluster dispersion — so it penalizes
+  hardest exactly the recordings worth rescuing. Vectors are normalized once, at
+  the adapter boundary.
+- The centroid moves with the clustering configuration, not only with the model.
+  Two identities are stored: `embeddingModelId` (a mismatch makes vectors
+  incomparable) and `aggregationProfileId` (a mismatch stays comparable at a
+  tightened threshold).
+
+Speaker ids remain positional. Nothing here changes that, which is why every
+stored decision is scoped by transcript fingerprint: after re-diarization, `S1`
+can be someone else.
+
+Scope, gating and the release conditions live in
+[F13a](../02-features.md) and
+[the plan](../../plans/active/2026-07-03-speaker-voiceprints.md). The internal
+boundary is [`spec/contracts/speaker-voiceprints.md`](../contracts/speaker-voiceprints.md).
+
+## Cancellation boundary amendment (2026-10-02)
+
+Optional speaker-detection failure remains non-fatal only while its owning task
+is not cancelled. After SDK/native inference returns, adapters check the task
+before accepting success, interpreting no-speech as empty success, or forwarding
+a generic backend error. Advisory fallback follows the same rule. Active
+native work is still awaited under its inference permit; this does not promise
+immediate interruption of a CoreML kernel.
+
+File and meeting orchestration also check cancellation before interpreting
+optional detection outcomes and after awaited post-processing. The last check
+precedes search invalidation and canonical transcript publication. Cancellation
+observed there preserves an existing retranscription and its index; cancellation
+arriving after that boundary may commit and does not roll back saved work.
+The [regression record](../../docs/audits/2026-10-02-diarization-cancellation.md)
+covers late backend, formatter and title outcomes plus uncancelled controls.
+Durable speaker-detection outcome/provenance remains a
+[separate planned slice](../../plans/active/2026-10-02-diarization-outcomes.md).
