@@ -27,7 +27,7 @@ concurrency:
 jobs:
   behavior:
     name: Tests and Swift 6 (${{ matrix.test_group }})
-    runs-on: macos-14
+    runs-on: macos-26
     timeout-minutes: 75
     strategy:
       fail-fast: false
@@ -37,12 +37,12 @@ jobs:
       AUDIO_TEST_FILTER: 'MeetingEcho(DelayEstimator|SuppressionRuntime|Suppressor)Tests'
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: "16.1"
+          xcode-version: latest-stable
 
       # The Meeting Process Recovery step below exercises the real audio
       # conversion path (not a mock), so it needs a real ffmpeg on PATH;
@@ -106,7 +106,7 @@ jobs:
       # architecture, package graph and workflow. Always build after restore:
       # SwiftPM must reconcile changed/deleted sources before --skip-build tests.
       - name: Cache SwiftPM Build State
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             .build
@@ -262,7 +262,7 @@ jobs:
       # architecture, package graph and workflow. Always build after restore:
       # SwiftPM must reconcile changed/deleted sources before --skip-build tests.
       - name: Cache SwiftPM Build State
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             .build
@@ -279,7 +279,7 @@ jobs:
           echo "fingerprint=$fingerprint" >> "$GITHUB_OUTPUT"
 
       - name: Cache Xcode Build State
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ${{ runner.temp }}/sotto-xcode-dist
           key: xcode-v1-${{ steps.xcode_cache.outputs.fingerprint }}-${{ github.sha }}
@@ -391,12 +391,12 @@ jobs:
           xcode=$(bash scripts/ci/xcode-cache-key.sh)
           echo "swift=$swift" >> "$GITHUB_OUTPUT"
           echo "xcode=$xcode" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache/restore@v5
+      - uses: actions/cache/restore@v6
         with:
           path: .build
           key: swiftpm-v1-distribution-${{ steps.cache.outputs.swift }}-${{ github.sha }}
           fail-on-cache-miss: true
-      - uses: actions/cache/restore@v5
+      - uses: actions/cache/restore@v6
         with:
           path: ${{ runner.temp }}/sotto-xcode-dist
           key: xcode-v1-${{ steps.cache.outputs.xcode }}-${{ github.sha }}
