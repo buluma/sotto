@@ -24,7 +24,7 @@ struct TranscribeView: View {
     ///
     /// Typed as `LocalizedStringKey` so `Text(_:)` uses the localization-aware
     /// initializer rather than the raw `String` overload.
-    private static let inspirationQuote: LocalizedStringKey = "Be the change you wish to see in the world."
+    private static let inspirationQuote: LocalizedStringKey = "Wubba Lubba Dub-Dub!"
 
     private enum PipelineStep: CaseIterable {
         case download
