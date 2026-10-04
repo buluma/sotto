@@ -111,7 +111,7 @@ struct MainWindowView: View {
 
                     Section {
                         ForEach(SidebarItem.configItems) { item in
-                            Label(item.rawValue, systemImage: item.icon)
+                            SidebarItemLabel(item: item)
                                 .tag(item)
                         }
                     }
@@ -596,7 +596,16 @@ private struct TransformEditorSheetHost: View {
 private struct SidebarItemLabel: View {
     let item: SidebarItem
 
+    /// SF Symbols differ in width (`person.2.wave.2` is far wider than
+    /// `waveform`), so a fixed icon slot keeps every title on one leading edge.
+    private static let iconSlotWidth: CGFloat = 22
+
     var body: some View {
-        Label(item.rawValue, systemImage: item.icon)
+        Label {
+            Text(item.rawValue)
+        } icon: {
+            Image(systemName: item.icon)
+                .frame(width: Self.iconSlotWidth, alignment: .center)
+        }
     }
 }
