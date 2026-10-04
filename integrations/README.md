@@ -41,29 +41,20 @@ The principle: if a use case can be automated, scripted, or driven by an agent, 
 
 ## Install
 
-**Recommended for agents/headless Macs:**
+Install [Sotto](https://github.com/buluma/sotto) from a release DMG. The CLI ships inside the app bundle:
 
 ```bash
-brew install buluma/tap/sotto-cli
-sotto-cli --version
-sotto-cli health --json
+/Applications/Sotto.app/Contents/MacOS/sotto-cli --version
+/Applications/Sotto.app/Contents/MacOS/sotto-cli health --json
 ```
 
-This installs the standalone CLI plus its Homebrew-managed `ffmpeg` and `yt-dlp` runtime dependencies. It does not require `Sotto.app`. Parakeet, Nemotron, and Cohere CoreML caches are managed by FluidAudio. WhisperKit model downloads live under `~/Library/Application Support/Sotto/models/stt/whisper/`.
+The bundle includes the `ffmpeg` and `yt-dlp` runtime helpers. Parakeet, Nemotron, and Cohere CoreML caches are managed by FluidAudio. WhisperKit model downloads live under `~/Library/Application Support/Sotto/models/stt/whisper/`.
 
-**Bundled app alternative:** after installing [Sotto](https://github.com/buluma/sotto), the same CLI surface is available at:
-
-```bash
-/Applications/Sotto.app/Contents/MacOS/sotto-cli --help
-```
-
-Sotto deliberately does not modify your shell configuration or install files into package-manager directories. If you want the bundled executable under the shorter `sotto-cli` command, use the Homebrew installation above or configure your own shell alias, PATH entry, or symlink. First check whether another copy is already available:
+Sotto deliberately does not modify your shell configuration or install files into package-manager directories. If you want the bundled executable under the shorter `sotto-cli` command, configure your own shell alias, PATH entry, or symlink. First check whether another copy is already available:
 
 ```bash
 command -v sotto-cli
 ```
-
-The Homebrew CLI and the app-bundled CLI are released independently, so their versions can differ. Use `command -v sotto-cli` and `sotto-cli --version` to confirm which executable Terminal will run. Do not replace a Homebrew-managed link with an app-managed link.
 
 ## Why Apple Silicon specifically
 

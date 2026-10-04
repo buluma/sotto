@@ -161,8 +161,7 @@ Sotto captures meetings with system audio, microphone audio, or both, transcribe
 ## CTA Conventions
 
 - **Primary URL:** `macparakeet.com`
-- **GitHub:** `github.com/moona3k/macparakeet`
-- **Homebrew (official cask, live since 2026-06-06):** `brew install --cask sotto`
+- **GitHub:** `github.com/buluma/sotto`
 - **Never use:** "Get started today," "Try it free," "Sign up." There is no signup. The app downloads and runs.
 
 ## Production Stack

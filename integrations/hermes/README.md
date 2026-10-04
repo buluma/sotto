@@ -5,19 +5,19 @@ A thin packaging entry point for Hermes Agent on macOS 14.2+ with Apple Silicon.
 ## Install and discover
 
 ```bash
-brew install buluma/tap/sotto-cli
-sotto-cli --version
-sotto-cli spec --json
-sotto-cli health --json
+SOTTO=/Applications/Sotto.app/Contents/MacOS/sotto-cli
+"$SOTTO" --version
+"$SOTTO" spec --json
+"$SOTTO" health --json
 ```
 
-An installed app also bundles the CLI at `/Applications/Sotto.app/Contents/MacOS/sotto-cli`. Use the installed binary's catalog and health component statuses; do not assume it matches this checkout's unreleased candidate or automatically repair missing optional components.
+The CLI ships inside the installed app. Use the installed binary's catalog and health component statuses; do not assume it matches this checkout's unreleased candidate or automatically repair missing optional components.
 
 ## Package for Hermes
 
 - Adapt the existing [`sotto-stt` skill directory](../skill/sotto-stt/SKILL.md) instead of maintaining another YAML command catalog or prompt sketch.
 - Verify the current Hermes skill format and `awesome-hermes-agent` submission requirements at registration time. This entry point does not claim a registry-specific manifest is validated.
-- Declare the macOS/Apple Silicon host requirement and `sotto-cli` executable dependency. The Homebrew tap installs the host binary and its media-helper dependencies; speech-model setup is described in the canonical guide.
+- Declare the macOS/Apple Silicon host requirement and `sotto-cli` executable dependency. The app bundle includes the host binary and its media helpers; speech-model setup is described in the canonical guide.
 - Keep the skill's explicit authorization rules for writes, generated output, provider use, and shared preferences. Do not treat `--database` or `--no-history` as a complete sandbox.
 
 ## Canonical references

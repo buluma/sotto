@@ -147,7 +147,7 @@ plutil -p scripts/dist/Sotto.entitlements
 
 Decide on the version number (see Version bumping below).
 
-Do not ship new CLI behavior under a previously published CLI version. The standalone Homebrew formula may remain on the prior version until its matching signed/notarized archive is published, but the CLI embedded in a new app bundle must report the promoted semver from `Sources/CLI/CHANGELOG.md`.
+Do not ship new CLI behavior under a previously published CLI version. The CLI embedded in a new app bundle must report the promoted semver from `Sources/CLI/CHANGELOG.md`.
 
 ### Version bumping
 

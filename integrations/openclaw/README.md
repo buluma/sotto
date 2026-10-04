@@ -5,19 +5,19 @@ A thin packaging entry point for an OpenClaw agent running on macOS 14.2+ with A
 ## Install and discover
 
 ```bash
-brew install buluma/tap/sotto-cli
-sotto-cli --version
-sotto-cli spec --json
-sotto-cli health --json
+SOTTO=/Applications/Sotto.app/Contents/MacOS/sotto-cli
+"$SOTTO" --version
+"$SOTTO" spec --json
+"$SOTTO" health --json
 ```
 
-An installed app also bundles the CLI at `/Applications/Sotto.app/Contents/MacOS/sotto-cli`. Inspect that binary's version and catalog rather than assuming it matches Homebrew or this checkout's unreleased candidate. Model readiness and optional repairs are covered by the canonical integration guide; do not download or change shared defaults merely to initialize a skill.
+The CLI ships inside the installed app. Inspect that binary's version and catalog rather than assuming it matches this checkout's unreleased candidate. Model readiness and optional repairs are covered by the canonical integration guide; do not download or change shared defaults merely to initialize a skill.
 
 ## Package for ClawHub
 
 - Adapt the existing [`sotto-stt` skill directory](../skill/sotto-stt/SKILL.md), rather than maintaining a second command catalog or prompt here.
 - Use `SKILL.md` with frontmatter, not `SOUL.md`. Verify ClawHub's current [skill format](https://docs.openclaw.ai/clawhub/skill-format) and publishing instructions before registration; this repository does not pin an external registry manifest or publication command.
-- Declare the macOS/Apple Silicon host requirement and `sotto-cli` executable dependency. The host binary is available through the [`buluma/tap` Homebrew tap](https://github.com/buluma/homebrew-tap).
+- Declare the macOS/Apple Silicon host requirement and `sotto-cli` executable dependency. The host binary ships inside `Sotto.app`.
 - Preserve the skill's consent, evidence, privacy, and isolation guidance. Optional provider credentials are not prerequisites for local speech recognition or deterministic transcript retrieval.
 
 ## Canonical references
