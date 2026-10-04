@@ -132,17 +132,15 @@ struct TranscribeView: View {
                 Spacer()
 
                 VStack(spacing: DesignSystem.Spacing.xl) {
-                    HStack(alignment: .top, spacing: DesignSystem.Spacing.lg) {
-                        youTubeCard
-                        PortalDropZone(
-                            isDragging: $viewModel.isDragging,
-                            onDrop: { providers in
-                                viewModel.handleFileDrop(providers: providers) {
-                                    SoundManager.shared.play(.fileDropped)
-                                }
-                            },
-                            onBrowse: { openFilePicker() }
-                        )
+                    ViewThatFits(in: .horizontal) {
+                        HStack(alignment: .top, spacing: DesignSystem.Spacing.lg) {
+                            youTubeCard.frame(minWidth: 320)
+                            fileDropCard.frame(minWidth: 320)
+                        }
+                        VStack(spacing: DesignSystem.Spacing.lg) {
+                            youTubeCard
+                            fileDropCard
+                        }
                     }
                     .padding(.horizontal, DesignSystem.Spacing.xl)
 
@@ -181,6 +179,18 @@ struct TranscribeView: View {
     }
 
     // MARK: - YouTube Card
+
+    private var fileDropCard: some View {
+        PortalDropZone(
+            isDragging: $viewModel.isDragging,
+            onDrop: { providers in
+                viewModel.handleFileDrop(providers: providers) {
+                    SoundManager.shared.play(.fileDropped)
+                }
+            },
+            onBrowse: { openFilePicker() }
+        )
+    }
 
     private var youTubeCard: some View {
         ZStack {
