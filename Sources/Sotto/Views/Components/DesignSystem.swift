@@ -1,34 +1,34 @@
 import SwiftUI
 
 /// Centralized design tokens for consistent styling across the app.
-/// Sotto design system — violet accent, generous spacing, rounded headlines.
+/// Sotto design system — portal-green accents, deep space surfaces, rounded headlines.
 enum DesignSystem {
     // MARK: - Colors
 
     enum Colors {
-        // Accent — Sotto violet
-        static let accent = Color(light: .init(red: 0.43, green: 0.31, blue: 0.76),
-                                  dark: .init(red: 0.72, green: 0.62, blue: 1.0))
-        static let accentLight = Color(light: .init(red: 0.95, green: 0.93, blue: 1.0),
-                                       dark: .init(red: 0.72, green: 0.62, blue: 1.0).opacity(0.12))
-        static let accentDark = Color(light: .init(red: 0.34, green: 0.23, blue: 0.64),
-                                      dark: .init(red: 0.43, green: 0.31, blue: 0.76))
+        // Acid green and portal cyan set a playful sci-fi tone while keeping controls readable.
+        static let accent = Color(light: .init(red: 0.12, green: 0.48, blue: 0.34),
+                                  dark: .init(red: 0.55, green: 0.96, blue: 0.32))
+        static let accentLight = Color(light: .init(red: 0.88, green: 0.98, blue: 0.82),
+                                       dark: .init(red: 0.55, green: 0.96, blue: 0.32).opacity(0.14))
+        static let accentDark = Color(light: .init(red: 0.08, green: 0.34, blue: 0.27),
+                                      dark: .init(red: 0.22, green: 0.70, blue: 0.62))
 
-        // Backgrounds — warm off-whites, not pure white
-        static let background = Color(light: .init(red: 0.98, green: 0.98, blue: 0.97),
-                                      dark: .init(red: 0.11, green: 0.11, blue: 0.12))
-        static let surface = Color(light: .white,
-                                   dark: .init(red: 0.17, green: 0.17, blue: 0.18))
-        static let surfaceElevated = Color(light: .init(red: 0.96, green: 0.96, blue: 0.94),
-                                           dark: .init(red: 0.23, green: 0.23, blue: 0.24))
+        // Mint paper by day; inky blue-green ship interiors by night.
+        static let background = Color(light: .init(red: 0.95, green: 0.98, blue: 0.94),
+                                      dark: .init(red: 0.035, green: 0.075, blue: 0.09))
+        static let surface = Color(light: .init(red: 0.99, green: 1.0, blue: 0.98),
+                                   dark: .init(red: 0.065, green: 0.12, blue: 0.14))
+        static let surfaceElevated = Color(light: .init(red: 0.90, green: 0.96, blue: 0.90),
+                                           dark: .init(red: 0.10, green: 0.18, blue: 0.19))
 
         // Text — high contrast primaries
-        static let textPrimary = Color(light: .init(red: 0.10, green: 0.10, blue: 0.10),
-                                       dark: .white)
-        static let textSecondary = Color(light: .init(red: 0.42, green: 0.42, blue: 0.42),
-                                         dark: .init(red: 0.63, green: 0.63, blue: 0.65))
-        static let textTertiary = Color(light: .init(red: 0.61, green: 0.61, blue: 0.61),
-                                        dark: .init(red: 0.39, green: 0.39, blue: 0.40))
+        static let textPrimary = Color(light: .init(red: 0.07, green: 0.14, blue: 0.12),
+                                       dark: .init(red: 0.91, green: 0.98, blue: 0.91))
+        static let textSecondary = Color(light: .init(red: 0.31, green: 0.42, blue: 0.37),
+                                         dark: .init(red: 0.64, green: 0.78, blue: 0.73))
+        static let textTertiary = Color(light: .init(red: 0.48, green: 0.58, blue: 0.52),
+                                        dark: .init(red: 0.42, green: 0.57, blue: 0.54))
 
         /// Neutral label tint — for `.bordered` buttons that should NOT carry
         /// brand color. Resolves to the system label color (white in dark mode,
@@ -45,16 +45,16 @@ enum DesignSystem {
         static let onAccent = Color.white
 
         // Borders & dividers
-        static let border = Color(light: .init(red: 0.91, green: 0.91, blue: 0.88),
-                                  dark: .init(red: 0.30, green: 0.30, blue: 0.32))
-        static let divider = Color(light: .init(red: 0.94, green: 0.94, blue: 0.91),
-                                   dark: .init(red: 0.25, green: 0.25, blue: 0.27))
+        static let border = Color(light: .init(red: 0.82, green: 0.90, blue: 0.82),
+                                  dark: .init(red: 0.16, green: 0.28, blue: 0.28))
+        static let divider = Color(light: .init(red: 0.88, green: 0.93, blue: 0.87),
+                                   dark: .init(red: 0.12, green: 0.22, blue: 0.23))
 
         // Interactive
-        static let rowHoverBackground = Color(light: .init(red: 0.96, green: 0.96, blue: 0.94),
+        static let rowHoverBackground = Color(light: .init(red: 0.89, green: 0.96, blue: 0.87),
                                               dark: .primary.opacity(0.06))
-        static let cardBackground = Color(light: .white,
-                                          dark: .init(red: 0.17, green: 0.17, blue: 0.18))
+        static let cardBackground = Color(light: .init(red: 0.99, green: 1.0, blue: 0.98),
+                                          dark: .init(red: 0.065, green: 0.12, blue: 0.14))
 
         // Playback
         static let playbackTrack = Color.primary.opacity(0.08)

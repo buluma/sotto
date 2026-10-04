@@ -2,10 +2,8 @@
 
 This is a personal local fork. Do not publish, push, create public PRs, or configure upstream telemetry/auto-updates. Preserve original legal notices. Use manual source updates and local validation. Historical release statements refer to upstream, not a distributed Sotto build.
 
-> Canonical startup guide for coding agents working in this repo. Claude Code
-> also reads [`CLAUDE.md`](./CLAUDE.md), which is a small Claude-specific
-> overlay. Agents outside this repo that want to call `sotto-cli` should
-> start with [`integrations/README.md`](./integrations/README.md).
+> Canonical startup guide for coding agents working in this repo. Claude Code also reads [`CLAUDE.md`](./CLAUDE.md), which is a small Claude-specific overlay.
+> Agents outside this repo that want to call `sotto-cli` should start with [`integrations/README.md`](./integrations/README.md).
 
 ## Project Shape
 

@@ -118,6 +118,9 @@ struct MainWindowView: View {
                 }
                 .listStyle(.sidebar)
                 .tint(DesignSystem.Colors.accent)
+                .safeAreaInset(edge: .top, spacing: 0) {
+                    PortalSidebarHeader()
+                }
                 .safeAreaInset(edge: .bottom, spacing: 0) {
                     if settingsViewModel.showDiscover {
                         DiscoverSidebarCard(
@@ -596,16 +599,68 @@ private struct TransformEditorSheetHost: View {
 private struct SidebarItemLabel: View {
     let item: SidebarItem
 
-    /// SF Symbols differ in width (`person.2.wave.2` is far wider than
-    /// `waveform`), so a fixed icon slot keeps every title on one leading edge.
-    private static let iconSlotWidth: CGFloat = 22
+    /// Keep a clear visual gutter between each symbol and its label, independent
+    /// of the width of the SF Symbol itself.
+    private static let iconSlotWidth: CGFloat = 24
 
     var body: some View {
-        Label {
-            Text(item.rawValue)
-        } icon: {
+        HStack(spacing: 10) {
             Image(systemName: item.icon)
                 .frame(width: Self.iconSlotWidth, alignment: .center)
+            Text(item.rawValue)
+            Spacer(minLength: 0)
+        }
+    }
+}
+
+private struct PortalSidebarHeader: View {
+    var body: some View {
+        HStack(spacing: 11) {
+            ZStack {
+                Circle()
+                    .stroke(DesignSystem.Colors.accent.opacity(0.24), lineWidth: 5)
+                    .frame(width: 32, height: 32)
+                Circle()
+                    .stroke(
+                        LinearGradient(
+                            colors: [DesignSystem.Colors.accent, DesignSystem.Colors.accentDark],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 2
+                    )
+                    .frame(width: 24, height: 24)
+                Image(systemName: "waveform")
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundStyle(DesignSystem.Colors.accent)
+            }
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text("SOTTO")
+                    .font(.system(size: 13, weight: .black, design: .rounded))
+                    .tracking(1.4)
+                    .foregroundStyle(DesignSystem.Colors.textPrimary)
+                Text("LOCAL VOICE LAB")
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .tracking(1.1)
+                    .foregroundStyle(DesignSystem.Colors.textTertiary)
+            }
+            Spacer(minLength: 0)
+            Circle()
+                .fill(DesignSystem.Colors.successGreen)
+                .frame(width: 6, height: 6)
+                .shadow(color: DesignSystem.Colors.successGreen.opacity(0.65), radius: 4)
+                .accessibilityLabel("Local processing")
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 14)
+        .padding(.bottom, 10)
+        .background(DesignSystem.Colors.background.opacity(0.92))
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(DesignSystem.Colors.accent.opacity(0.14))
+                .frame(height: 1)
+                .padding(.horizontal, 14)
         }
     }
 }

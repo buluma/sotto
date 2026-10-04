@@ -1,6 +1,6 @@
 # Sotto
 
-A personal, local-first voice workspace for Apple Silicon Macs, based on [MacParakeet by Daniel Moon](https://github.com/moona3k/macparakeet).
+A personal, local-first voice workspace for Apple Silicon Macs.
 
 Sotto provides system-wide dictation, file/media transcription, meeting recording, a local transcript library, selected-text Transforms, and optional configured AI. Speech recognition runs locally using Parakeet, Nemotron, WhisperKit, or Cohere. Parakeet is the model name, independent of the Sotto app identity.
 
