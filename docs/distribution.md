@@ -255,3 +255,9 @@ UNIVERSAL=1 scripts/dist/build_app_bundle.sh
 - `Sotto` requests microphone permission. The app bundle `Info.plist` includes `NSMicrophoneUsageDescription`.
 - **Users must install to /Applications before launching.** Running directly from a mounted DMG (`/Volumes/Sotto/`) will not register with macOS TCC — the app won't appear in System Settings > Privacy & Security > Microphone, and permission requests will silently fail. The DMG includes an Applications symlink for drag-to-install.
 - If a user's microphone permission gets stuck as "Denied", reset it with: `tccutil reset Microphone com.sotto.Sotto`
+
+## Fork CI release gate
+
+Before publishing a release, require the latest CI workflow and aggregate `swift-test` check for the exact source commit with `GH_REPO=buluma/sotto bash scripts/dist/require_ci.sh <commit>`. The DMG workflow repeats this check before building and uploading artifacts; it waits up to 80 minutes for a queued or running check and fails on unsuccessful completion. A published release whose source fails CI will have no new DMG attached by this workflow.
+
+CI splits the full XCTest selection into complementary general and meeting-echo groups with independent logs. Both groups are required by the aggregate check. Test commands run in their own process groups with an internal deadline shorter than the Actions deadline so XCTest and helper descendants are terminated before later qualification commands acquire SwiftPM build locks.

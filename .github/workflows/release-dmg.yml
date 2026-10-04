@@ -15,9 +15,11 @@ jobs:
   dmg:
     name: Build Apple Silicon DMG
     runs-on: macos-14
-    timeout-minutes: 60
+    timeout-minutes: 120
     permissions:
       contents: write
+      checks: read
+      actions: read
     env:
       RELEASE_TAG: ${{ github.event.release.tag_name }}
       BUILD_SYSTEM: xcodebuild
@@ -29,6 +31,13 @@ jobs:
         with:
           ref: ${{ github.event.release.tag_name }}
           persist-credentials: false
+
+      - name: Require source commit CI
+        timeout-minutes: 81
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: bash scripts/dist/require_ci.sh "$(git rev-parse HEAD)" --wait
 
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1

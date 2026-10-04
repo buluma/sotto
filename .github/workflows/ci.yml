@@ -26,9 +26,15 @@ concurrency:
 
 jobs:
   behavior:
-    name: Tests and Swift 6
+    name: Tests and Swift 6 (${{ matrix.test_group }})
     runs-on: macos-14
-    timeout-minutes: 45
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        test_group: [general, audio]
+    env:
+      AUDIO_TEST_FILTER: 'MeetingEcho(DelayEstimator|SuppressionRuntime|Suppressor)Tests'
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -130,13 +136,18 @@ jobs:
 
       - name: Swift Test
         id: tests
-        timeout-minutes: 20
+        timeout-minutes: 32
         env:
           SOTTO_ASK_TEST_NODE: ${{ github.workspace }}/.build/ask-runtime/node
         run: |
           set -o pipefail
           export SOTTO_CLI_TEST_EXECUTABLE="$PWD/.build/debug/sotto-cli"
-          swift test --skip-build --parallel -Xswiftc -warn-concurrency --xunit-output ci-logs/swift-tests.xml 2>&1 | tee ci-logs/swift-test.log
+          selection=(--skip "$AUDIO_TEST_FILTER")
+          if [ "${{ matrix.test_group }}" = audio ]; then
+            selection=(--filter "$AUDIO_TEST_FILTER")
+          fi
+          python3 scripts/ci/run-test-process.py --timeout 1800 -- \
+            swift test --skip-build --parallel "${selection[@]}" -Xswiftc -warn-concurrency --xunit-output ci-logs/swift-tests.xml 2>&1 | tee ci-logs/swift-test.log
 
       - name: Test Summary
         if: ${{ !cancelled() && steps.tests.outcome != 'skipped' && steps.tests.outcome != '' }}
@@ -145,6 +156,7 @@ jobs:
           python3 scripts/ci/summarize-tests.py ci-logs/swift-tests.xml ci-logs/swift-test.log | tee ci-logs/test-summary.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Ask CLI Qualification
+        if: ${{ matrix.test_group == 'general' && success() }}
         timeout-minutes: 5
         env:
           CLI_BINARY: ${{ github.workspace }}/.build/debug/sotto-cli
@@ -163,24 +175,25 @@ jobs:
             --output-dir ci-logs/ask-qualification
 
       - name: CLI Persistence Smoke
-        if: ${{ !cancelled() && steps.test_build.outcome == 'success' }}
+        if: ${{ matrix.test_group == 'general' && !cancelled() && steps.test_build.outcome == 'success' }}
         timeout-minutes: 2
         run: |
           set -o pipefail
           python3 scripts/ci/cli-persistence-smoke.py "$PWD/.build/debug/sotto-cli" 2>&1 | tee ci-logs/cli-persistence-smoke.log
 
       - name: Meeting Process Recovery
-        if: ${{ !cancelled() && steps.test_build.outcome == 'success' }}
+        if: ${{ matrix.test_group == 'general' && !cancelled() && steps.test_build.outcome == 'success' }}
         timeout-minutes: 4
         env:
           SOTTO_CRASH_RECOVERY_TESTS: "1"
           SOTTO_TELEMETRY: "0"
         run: |
           set -o pipefail
-          swift test --skip-build -Xswiftc -warn-concurrency --filter 'MeetingRecordingCrashRecoveryTests/(testKillNineMidRecordingProducesPlayableFiles|testKilledRecordingRecoversInFreshProcessAndRemainsIdempotent)' 2>&1 | tee ci-logs/meeting-process-recovery.log
+          python3 scripts/ci/run-test-process.py --timeout 180 -- \
+            swift test --skip-build -Xswiftc -warn-concurrency --filter 'MeetingRecordingCrashRecoveryTests/(testKillNineMidRecordingProducesPlayableFiles|testKilledRecordingRecoversInFreshProcessAndRemainsIdempotent)' 2>&1 | tee ci-logs/meeting-process-recovery.log
 
       - name: Swift 6 Language Mode
-        if: ${{ !cancelled() && steps.test_build.outcome == 'success' }}
+        if: ${{ matrix.test_group == 'general' && !cancelled() && steps.test_build.outcome == 'success' }}
         timeout-minutes: 15
         env:
           # Argmax/WhisperKit v0.18.0 is required for real builds but is not
@@ -197,7 +210,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: swift-test-evidence
+          name: swift-test-evidence-${{ matrix.test_group }}
           path: ci-logs/
           if-no-files-found: error
           retention-days: 7
