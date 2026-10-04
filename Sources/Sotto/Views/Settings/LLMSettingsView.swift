@@ -262,6 +262,17 @@ struct LLMSettingsView: View {
                     .font(DesignSystem.Typography.caption)
                     .foregroundStyle(DesignSystem.Colors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
+                if viewModel.isConfigured {
+                    ForEach(viewModel.configuredTaskRouteDetails, id: \.self) { route in
+                        Text(route)
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(DesignSystem.Colors.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Text("This overview shows saved settings. Save changes before testing the route you intend to use.")
+                        .font(DesignSystem.Typography.micro)
+                        .foregroundStyle(DesignSystem.Colors.textTertiary)
+                }
             }
 
             Spacer(minLength: DesignSystem.Spacing.md)
@@ -2212,17 +2223,23 @@ struct LLMSettingsView: View {
                 Text(viewModel.connectionSuccessMessage)
                     .font(DesignSystem.Typography.caption)
                     .foregroundStyle(DesignSystem.Colors.successGreen)
-                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         case .error(let message):
             HStack(spacing: 4) {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 12))
                     .foregroundStyle(DesignSystem.Colors.errorRed)
-                Text(message)
-                    .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(DesignSystem.Colors.errorRed)
-                    .lineLimit(2)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(message)
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.errorRed)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("Check the model and connection settings. For a server, confirm it is running; for a CLI tool, check installation and sign-in.")
+                        .font(DesignSystem.Typography.micro)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
     }

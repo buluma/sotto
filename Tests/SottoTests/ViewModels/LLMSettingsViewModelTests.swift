@@ -11,6 +11,15 @@ final class LLMSettingsViewModelTests: XCTestCase {
     var defaults: UserDefaults!
     var defaultsSuiteName: String!
 
+    func testRouteLocationDoesNotMistakeRemoteLocalServerForOnDeviceProcessing() {
+        let remote = LLMProviderConfig(id: .ollama, baseURL: URL(string: "http://192.168.1.10:11434")!, apiKey: nil, modelName: "model", isLocal: true)
+        let loopback = LLMProviderConfig(id: .ollama, baseURL: URL(string: "http://localhost:11434")!, apiKey: nil, modelName: "model", isLocal: true)
+        XCTAssertEqual(LLMSettingsViewModel.routeLocationDescription(remote), "Text sent to a remote endpoint")
+        XCTAssertEqual(LLMSettingsViewModel.routeLocationDescription(loopback), "Local server on this Mac")
+        let cli = LLMProviderConfig(id: .localCLI, baseURL: URL(string: "http://localhost")!, apiKey: nil, modelName: "", isLocal: true)
+        XCTAssertEqual(LLMSettingsViewModel.routeLocationDescription(cli), "Processing depends on the CLI tool's configuration")
+    }
+
     override func setUp() {
         defaultsSuiteName = makeIsolatedDefaultsSuite("test.llmsettings.")
         routeLockURL = FileManager.default.temporaryDirectory.appendingPathComponent(defaultsSuiteName)

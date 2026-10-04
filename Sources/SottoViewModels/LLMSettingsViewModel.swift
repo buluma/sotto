@@ -315,6 +315,36 @@ public final class LLMSettingsViewModel {
         }.joined(separator: " ")
     }
 
+    /// Saved routes, so the overview describes what requests will actually use.
+    public var configuredTaskRouteDetails: [String] {
+        let routes: [(LLMTaskGroup, String)] = [
+            (.cleanup, "Dictation & cleanup"), (.analysis, "Meetings & library"), (.transform, "Transforms"),
+        ]
+        return routes.map { task, title in
+            do {
+                guard let config = try configStore?.loadRouteMetadata(for: task)?.config else { return "\(title): Off" }
+                let model = config.modelName.isEmpty ? "Automatic model" : config.modelName
+                return "\(title): \(config.id.displayName) · \(model) · \(Self.routeLocationDescription(config))"
+            } catch {
+                return "\(title): Unable to read saved configuration"
+            }
+        }
+    }
+
+    static func routeLocationDescription(_ config: LLMProviderConfig) -> String {
+        switch config.id {
+        case .inProcessLocal: return "On this Mac"
+        case .localCLI: return "Processing depends on the CLI tool's configuration"
+        case .appleIntelligence: return "Managed by macOS"
+        default:
+            let host = config.baseURL.host?.lowercased() ?? ""
+            if ["localhost", "127.0.0.1", "::1", "[::1]"].contains(host) {
+                return "Local server on this Mac"
+            }
+            return "Text sent to a remote endpoint"
+        }
+    }
+
     public var setupStatus: AISetupStatus {
         if case .error(let message) = connectionTestState,
             !isConfigured || !hasUnsavedChanges
