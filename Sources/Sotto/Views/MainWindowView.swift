@@ -102,7 +102,7 @@ struct MainWindowView: View {
                 List(selection: $state.selectedItem) {
                     Section {
                         ForEach(SidebarItem.primaryItems) { item in
-                            SidebarItemLabel(item: item)
+                            SidebarItemLabel(item: item, isSelected: state.selectedItem == item)
                                 .tag(item)
                                 .accessibilityIdentifier("sidebar-\(item.rawValue)")
                                 .accessibilityAction { state.selectedItem = item }
@@ -111,7 +111,7 @@ struct MainWindowView: View {
 
                     Section {
                         ForEach(SidebarItem.configItems) { item in
-                            SidebarItemLabel(item: item)
+                            SidebarItemLabel(item: item, isSelected: state.selectedItem == item)
                                 .tag(item)
                         }
                     }
@@ -595,17 +595,25 @@ private struct TransformEditorSheetHost: View {
 
 private struct SidebarItemLabel: View {
     let item: SidebarItem
+    let isSelected: Bool
 
-    /// SF Symbols differ in width (`person.2.wave.2` is far wider than
-    /// `waveform`), so a fixed icon slot keeps every title on one leading edge.
-    private static let iconSlotWidth: CGFloat = 22
+    // Reserve room for wide symbols, then add an explicit gap so macOS's
+    // sidebar Label style cannot crowd the title against the icon.
+    private static let iconSlotWidth: CGFloat = 26
+    private static let iconTitleSpacing: CGFloat = 12
 
     var body: some View {
-        Label {
-            Text(item.rawValue)
-        } icon: {
+        HStack(spacing: Self.iconTitleSpacing) {
             Image(systemName: item.icon)
+                .foregroundStyle(isSelected ? Color.white : DesignSystem.Colors.accent)
                 .frame(width: Self.iconSlotWidth, alignment: .center)
+                .accessibilityHidden(true)
+
+            Text(item.rawValue)
+                .lineLimit(1)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 }
