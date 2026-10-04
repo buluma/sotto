@@ -14,19 +14,19 @@ The locked human-readable spec lives at [`docs/marketing.md`](../../docs/marketi
 A traditional video editor (Final Cut, Premiere, Screen Studio's editor)
 freezes the script at export time. Re-recording when copy changes is hours
 of work. With Remotion, every change to `script.ts` re-renders the video
-on the next `npm run render`. Marketing moves at engineering velocity.
+on the next `bun run render`. Marketing moves at engineering velocity.
 
 ## Setup
 
 ```sh
 cd marketing/video
-npm install
+bun install
 cp .env.example .env   # optional — defaults are sane
 ```
 
-Requires Node 20+.
+Requires Bun 1.1.39+ and Node 20+ for supported package locking and rendering tools. `bun.lock` is the install lockfile. `package-lock.json` is kept in sync as a GitHub Dependabot compatibility file because GitHub currently lists Bun lock parsing without Dependabot version/security update support. After changing dependency versions with Bun, refresh that mirror with `npm install --package-lock-only --ignore-scripts`.
 
-The Kokoro model (~80MB at q8) downloads on first `npm run voice`. No
+The Kokoro model (~80MB at q8) downloads on first `bun run voice`. No
 account, no API key.
 
 For the Higgs Audio V2 premium upgrade, also run:
@@ -44,27 +44,27 @@ correctly. Install it once via `curl -LsSf https://astral.sh/uv/install.sh | sh`
 
 ```sh
 # Interactive preview in the browser (Remotion Studio)
-npm run preview
+bun run preview
 
 # Audition Kokoro voices — generates ~8 short test clips you can listen to
-npm run audition
+bun run audition
 
 # Generate full voiceover from the locked script (Kokoro, pure Node)
-npm run voice
-npm run voice -- master-demo            # only one scene
+bun run voice
+bun run voice -- master-demo            # only one scene
 
 # Premium upgrade — Higgs Audio V2 (Python via uv)
-npm run voice:hq
+bun run voice:hq
 
 # Render compositions — 1080p
-npm run render:hook         # 5s validation spike
-npm run render:hero         # 30s autoplay-muted hero loop
-npm run render:demo         # 60s master demo
+bun run render:hook         # 5s validation spike
+bun run render:hero         # 30s autoplay-muted hero loop
+bun run render:demo         # 60s master demo
 
 # 4K variants
-npm run render:hook-4k
-npm run render:hero-4k
-npm run render:demo-4k
+bun run render:hook-4k
+bun run render:hero-4k
+bun run render:demo-4k
 ```
 
 Outputs: `public/audio/*.wav` for voice, `out/*.mp4` for video. Both
@@ -80,7 +80,7 @@ brand voice ("calm, confident, minimal, slight warmth"). Generates ~30s
 of audio in under a second on M-series CPUs.
 
 Audition voices from the catalog at the top of `scripts/generate-voice.ts`.
-Switch with `KOKORO_VOICE=af_sarah npm run voice`.
+Switch with `KOKORO_VOICE=af_sarah bun run voice`.
 
 ### Premium upgrade — Higgs Audio V2
 
@@ -92,7 +92,7 @@ pretrained on 10M+ hours of audio, naturalness 9.5/10).
 
 ```sh
 pip install -r scripts/requirements.txt   # one-time, downloads ~6-10GB model
-npm run voice:hq                          # uses Higgs instead of Kokoro
+bun run voice:hq                          # uses Higgs instead of Kokoro
 ```
 
 Runs on Apple Silicon via PyTorch MPS. Generation is slower than Kokoro
@@ -112,10 +112,12 @@ TTS pipeline can produce the same set of WAV files.
 ```
 marketing/video/
 ├── package.json
+├── bun.lock                   # Bun install lockfile
+├── package-lock.json          # Dependabot compatibility mirror
 ├── pyproject.toml              # uv config for the Higgs Audio HQ path
 ├── remotion.config.ts          # quality defaults (CRF 16, h264, 60fps)
 ├── public/                     # gitignored — Remotion staticFile() root
-│   ├── audio/                  # voice WAVs (npm run voice)
+│   ├── audio/                  # voice WAVs (bun run voice)
 │   └── screencasts/            # raw screen captures (Screen Studio)
 ├── src/
 │   ├── index.ts                # Remotion entrypoint

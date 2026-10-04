@@ -7,7 +7,7 @@
  * authoritative when they disagree.
  *
  * Changing one string here updates every rendered video on the next
- * `npm run render:*`.
+ * `bun run render:*`.
  */
 
 export const SCRIPT = {

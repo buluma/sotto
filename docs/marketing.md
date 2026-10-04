@@ -196,7 +196,7 @@ The marketing-production pipeline favors local, free, and open tooling where pra
 
 ## Iteration Discipline
 
-Every change to copy lives here first. Then `marketing/video/src/content/script.ts` is updated to match. Then voices are regenerated (`npm run voice`, or `npm run voice:hq` for the Higgs upgrade). Then videos are re-rendered. This is a one-way flow: **docs → code → audio → video**. Never edit a `.mp4` directly.
+Every change to copy lives here first. Then `marketing/video/src/content/script.ts` is updated to match. Then voices are regenerated (`bun run voice`, or `bun run voice:hq` for the Higgs upgrade). Then videos are re-rendered. This is a one-way flow: **docs → code → audio → video**. Never edit a `.mp4` directly.
 
 The local TTS choice is deliberate: regeneration is free and offline, so iteration cost is zero. Tweaking a single word in a VO line does not cost an API call or a recording session — it costs about a second of CPU time.
 

@@ -26,7 +26,7 @@ Usage:
     python scripts/generate-voice-hq.py                  # all scenes
     python scripts/generate-voice-hq.py master-demo      # one scene
 
-Reads from a JSON dump of SCRIPT — run `npm run script:dump` first, or
+Reads from a JSON dump of SCRIPT — run `bun run script:dump` first, or
 the script will auto-invoke tsx to extract it.
 """
 

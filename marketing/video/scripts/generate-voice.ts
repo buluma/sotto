@@ -18,9 +18,9 @@
  * gitignored — regenerate on demand whenever the script changes.
  *
  * Usage:
- *   npm run voice                         # generate every scene
- *   npm run voice -- mode-dictation       # only one scene
- *   npm run voice -- master-demo          # only the long-form master VO
+ *   bun run voice                         # generate every scene
+ *   bun run voice -- mode-dictation       # only one scene
+ *   bun run voice -- master-demo          # only the long-form master VO
  *
  * Voice direction:
  *   Default voice is `af_bella` — warm, calm, professional. Override via

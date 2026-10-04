@@ -26,22 +26,30 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@remotion/bundler": "^4.0.0",
-    "@remotion/cli": "^4.0.0",
-    "@remotion/renderer": "^4.0.0",
-    "kokoro-js": "^1.2.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "remotion": "^4.0.0"
+    "@remotion/bundler": "^4.0.532",
+    "@remotion/cli": "^4.0.532",
+    "@remotion/renderer": "^4.0.532",
+    "kokoro-js": "^1.2.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.532"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
-    "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
+    "@types/node": "^20.19.43",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=20"
-  }
+  },
+  "packageManager": "bun@1.4.3",
+  "overrides": {
+    "sharp": "^0.35.5"
+  },
+  "trustedDependencies": [
+    "esbuild",
+    "onnxruntime-node"
+  ]
 }

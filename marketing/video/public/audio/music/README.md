@@ -21,7 +21,7 @@ libraries and are sourced once per project.
 If the files are missing and the composition is rendered with
 `audioReady=false` (default), the brand film renders silently — no
 errors, no broken sequences. Flip `audioReady=true` in the render
-command (`npm run render:brand-audio`) once the files are in place.
+command (`bun run render:brand-audio`) once the files are in place.
 
 ## Brand voice for the music
 

@@ -7,7 +7,7 @@
  * so you can listen and pick.
  *
  * Usage:
- *   npm run audition
+ *   bun run audition
  *
  * Then play each .wav in the output dir and decide. Lock your choice in
  * `.env` via:

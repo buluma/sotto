@@ -10,7 +10,7 @@ import { palette } from '../theme/tokens';
  * Mirrors `brand-assets/compositions/warhol-3x4.svg` exactly: 12 tiles,
  * 3 columns × 4 rows, every brand-validated pair shown once. No motion,
  * no marquee, no entrance — designed to be rendered as a still PNG via
- * `npm run still:keyart` for use as:
+ * `bun run still:keyart` for use as:
  *
  *   - App Store hero / press kit cover
  *   - GitHub social card / X header
