@@ -24,7 +24,7 @@ bun install
 cp .env.example .env   # optional — defaults are sane
 ```
 
-Requires Bun 1.1.39+ and Node 20+ for supported package locking and rendering tools. `bun.lock` is the only lockfile. Dependabot uses its `bun` ecosystem, which opens version-update PRs but does not support security updates.
+Requires Bun 1.1.39+ and Node 20+ for supported package locking and rendering tools. `bun.lock` is the install lockfile. `package-lock.json` is kept in sync as a GitHub Dependabot compatibility file because GitHub currently lists Bun lock parsing without Dependabot version/security update support. After changing dependency versions with Bun, refresh that mirror with `npm install --package-lock-only --ignore-scripts`.
 
 The Kokoro model (~80MB at q8) downloads on first `bun run voice`. No
 account, no API key.
@@ -113,6 +113,7 @@ TTS pipeline can produce the same set of WAV files.
 marketing/video/
 ├── package.json
 ├── bun.lock                   # Bun install lockfile
+├── package-lock.json          # Dependabot compatibility mirror
 ├── pyproject.toml              # uv config for the Higgs Audio HQ path
 ├── remotion.config.ts          # quality defaults (CRF 16, h264, 60fps)
 ├── public/                     # gitignored — Remotion staticFile() root
