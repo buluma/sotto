@@ -12,7 +12,7 @@ struct DiscoverSidebarCard: View {
     var body: some View {
         if let item = viewModel.sidebarItem {
             Button(action: onTap) {
-                HStack(spacing: DesignSystem.Spacing.sm) {
+                HStack(alignment: .top, spacing: DesignSystem.Spacing.sm) {
                     Image(systemName: item.icon.isEmpty ? "sparkles" : item.icon)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(DesignSystem.Colors.accent)
@@ -22,10 +22,10 @@ struct DiscoverSidebarCard: View {
                                 .fill(DesignSystem.Colors.accent.opacity(0.12))
                         )
 
-                    Text(item.title)
-                        .font(DesignSystem.Typography.caption.weight(.semibold))
-                        .lineLimit(2)
-                        .foregroundStyle(.primary)
+                    Text(item.body.isEmpty ? item.title : item.body)
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(DesignSystem.Spacing.sm)
                 .frame(maxWidth: .infinity, alignment: .leading)
