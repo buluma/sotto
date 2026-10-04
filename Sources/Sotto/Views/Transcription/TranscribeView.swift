@@ -339,7 +339,7 @@ struct TranscribeView: View {
                     .font(.system(size: 13))
                 Text(truncateErrorMessage(error))
                     .font(DesignSystem.Typography.caption)
-                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
                     .textSelection(.enabled)
                 Spacer()
                 Button {
@@ -363,7 +363,14 @@ struct TranscribeView: View {
             }
             .foregroundStyle(DesignSystem.Colors.errorRed)
 
-            Text("Click copy icon for full error details. Report persistent issues via **Feedback** in the sidebar.")
+            if viewModel.canRetryTranscription {
+                Button("Retry Transcription") { viewModel.retryFailedTranscription() }
+                    .sottoAction(.primary)
+            }
+
+            Text(viewModel.canRetryTranscription
+                 ? "Retry uses the same source file or link. Your original file is unchanged."
+                 : "Copy the error details if the problem continues.")
                 .font(DesignSystem.Typography.micro)
                 .foregroundStyle(DesignSystem.Colors.textTertiary)
         }

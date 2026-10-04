@@ -174,6 +174,29 @@ public final class TranscriptionViewModel {
     /// The error-banner headline. Mutated only via `setError`/`clearError` so it
     /// can never drift out of sync with `errorDetail`.
     public private(set) var errorMessage: String?
+    private enum RetryRequest {
+        case file(URL, TelemetryTranscriptionSource, Int?)
+        case mediaURL(String)
+    }
+    private var activeRetryRequest: RetryRequest?
+    private var failedRetryRequest: RetryRequest?
+
+    public var canRetryTranscription: Bool {
+        failedRetryRequest != nil && canStartTranscription
+    }
+
+    public func retryFailedTranscription() {
+        guard canRetryTranscription, let request = failedRetryRequest else { return }
+        clearError()
+        switch request {
+        case .file(let url, let source, let ordinal):
+            startTranscribingFile(url: url, source: source, audioTrackOrdinal: ordinal)
+        case .mediaURL(let url):
+            urlInput = url
+            transcribeURL()
+        }
+    }
+
     private var currentErrorID = UUID()
     private var meetingNotesErrorID: UUID?
     private var meetingNotesErrorMeetingID: UUID?
@@ -197,6 +220,7 @@ public final class TranscriptionViewModel {
     /// in sync (the copy button reads `errorDetail ?? errorMessage`).
     public func setError(message: String?, detail: String? = nil) {
         currentErrorID = UUID()
+        failedRetryRequest = nil
         errorMessage = message
         errorDetail = detail
     }
@@ -497,6 +521,7 @@ public final class TranscriptionViewModel {
             return
         }
         let taskID = beginNewTranscription(source: .localFile, fileName: url.lastPathComponent)
+        activeRetryRequest = .file(url, source, audioTrackOrdinal)
 
         transcriptionTask = Task { @MainActor [weak self] in
             guard let self else { return }
@@ -805,6 +830,7 @@ public final class TranscriptionViewModel {
         }
 
         let taskID = beginNewTranscription(source: source, fileName: placeholderName)
+        activeRetryRequest = .mediaURL(url)
         urlInput = ""
 
         transcriptionTask = Task { @MainActor [weak self] in
@@ -1348,6 +1374,7 @@ public final class TranscriptionViewModel {
             progressSpeechEngine.engine == .nemotron
             ? SpeechEnginePreference.nemotronModelVariant(defaults: defaults)
             : nil
+        activeRetryRequest = nil
         transcribingFileName = fileName
         beginTranscription(source: source)
 
@@ -1526,6 +1553,8 @@ public final class TranscriptionViewModel {
     /// and batch failures pass `nil` and keep the plain headline as the copy text.
     private func completeFailedTranscription(taskID: UUID, error: Error, failedURL: String? = nil) {
         guard activeTranscriptionTaskID == taskID else { return }
+        let retryRequest = activeRetryRequest
+        activeRetryRequest = nil
         transcriptionTask = nil
         activeTranscriptionTaskID = nil
         endTranscription()
@@ -1546,6 +1575,7 @@ public final class TranscriptionViewModel {
                 detail: failedURL.map {
                     Self.urlFailureDiagnostic(message: message, url: $0, platform: MediaPlatform.recognize($0))
                 })
+            failedRetryRequest = retryRequest
             loadTranscriptions()
         }
     }
@@ -1598,6 +1628,7 @@ public final class TranscriptionViewModel {
     }
 
     private func endTranscription() {
+        activeRetryRequest = nil
         isTranscribing = false
         onTranscribingChanged?(false)
         progress = ""
@@ -1704,8 +1735,8 @@ public final class TranscriptionViewModel {
             }
         case .preparingSpeechModel:
             return engine == .whisper
-                ? "First use may take several minutes while Core ML optimizes Whisper."
-                : nil
+                ? "Preparing Whisper on this Mac. First use may take several minutes. Transcription starts automatically when ready."
+                : "Loading the speech model on this Mac. Transcription starts automatically when ready."
         case .transcribing:
             switch engine {
             case .parakeet:

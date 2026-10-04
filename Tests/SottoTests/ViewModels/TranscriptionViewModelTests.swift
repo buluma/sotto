@@ -218,6 +218,13 @@ final class TranscriptionViewModelTests: XCTestCase {
         XCTAssertNotNil(viewModel.errorMessage, "Error message should be set")
         XCTAssertEqual(viewModel.errorMessage, "Transcription failed")
         XCTAssertNil(viewModel.currentTranscription, "No transcription on error")
+        XCTAssertTrue(viewModel.canRetryTranscription)
+        viewModel.retryFailedTranscription()
+        XCTAssertTrue(viewModel.isTranscribing)
+        XCTAssertEqual(viewModel.transcribingFileName, url.lastPathComponent)
+        try await waitUntil { !self.viewModel.isTranscribing }
+        viewModel.clearError()
+        XCTAssertFalse(viewModel.canRetryTranscription)
         XCTAssertNil(
             viewModel.errorDetail,
             "File failures carry no source link, so the copy button falls back to the headline"
@@ -293,6 +300,13 @@ final class TranscriptionViewModelTests: XCTestCase {
         XCTAssertTrue(detail.hasPrefix("Download failed:"))
         XCTAssertTrue(detail.contains("URL: \(link)"), "Diagnostic should carry the source link")
         XCTAssertTrue(detail.contains("Platform: TikTok"))
+        XCTAssertTrue(viewModel.canRetryTranscription)
+        viewModel.urlInput = "https://www.youtube.com/watch?v=other"
+        viewModel.retryFailedTranscription()
+        try await waitUntil { !self.viewModel.isTranscribing }
+        XCTAssertTrue(try XCTUnwrap(viewModel.errorDetail).contains("URL: \(link)"))
+        viewModel.clearError()
+        XCTAssertFalse(viewModel.canRetryTranscription)
     }
 
     func testNonURLErrorAfterURLFailureClearsStaleDetail() async throws {
@@ -317,6 +331,7 @@ final class TranscriptionViewModelTests: XCTestCase {
         try await waitUntil { !self.viewModel.isDiscoveringFiles }
         XCTAssertNotNil(viewModel.errorMessage, "Unsupported-drop headline is shown")
         XCTAssertNil(viewModel.errorDetail, "Stale URL diagnostic must be cleared")
+        XCTAssertFalse(viewModel.canRetryTranscription, "An unrelated error must not retry the old source")
     }
 
     func testTranscribeFileProgressMessage() async throws {
@@ -369,7 +384,7 @@ final class TranscriptionViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.progressHeadline, "Preparing speech model")
         XCTAssertEqual(
             viewModel.progressSubline,
-            "First use may take several minutes while Core ML optimizes Whisper."
+            "Preparing Whisper on this Mac. First use may take several minutes. Transcription starts automatically when ready."
         )
         XCTAssertNil(viewModel.transcriptionProgress)
 
