@@ -312,12 +312,12 @@ final class TextProcessingPipelineTests: XCTestCase {
 
     func testInlineInsertionStylePreservesCamelCaseCasing() {
         let result = pipeline.process(
-            text: "Sotto works.",
+            text: "SottoCLI works.",
             customWords: [],
             snippets: [],
             insertionStyle: .inline
         )
-        XCTAssertEqual(result.text, "Sotto works")
+        XCTAssertEqual(result.text, "SottoCLI works")
     }
 
     func testInlineInsertionStylePreservesPronounI() {

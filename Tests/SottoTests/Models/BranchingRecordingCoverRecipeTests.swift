@@ -12,7 +12,7 @@ final class BranchingRecordingCoverRecipeTests: XCTestCase {
         )
         XCTAssertEqual(
             BranchingRecordingCoverRecipe.stableSeed(for: id, domain: "geometry"),
-            0x3044_DA66_0D98_BF10
+            0xBEC7_883A_BC2C_9573
         )
     }
 
@@ -25,18 +25,19 @@ final class BranchingRecordingCoverRecipeTests: XCTestCase {
         )
     }
 
+    // Snapshots pin the Sotto namespace as well as the v2 recipe.
     func testRepresentativeUUIDPinsV2SeedGeometryAndInk() throws {
         let id = try XCTUnwrap(UUID(uuidString: "85B4897C-4F5D-4ED1-94EB-C0B5841B1EF5"))
         let recipe = BranchingRecordingCoverRecipe(recordingID: id)
 
         XCTAssertEqual(BranchingRecordingCoverRecipe.version, 2)
-        XCTAssertEqual(quantized(recipe.center.x), 499_299)
-        XCTAssertEqual(quantized(recipe.center.y), 398_408)
-        XCTAssertEqual(quantized(recipe.radius), 136_002)
-        XCTAssertEqual(quantized(recipe.rotation), 390_388)
-        XCTAssertEqual(recipe.litRingIndexes, [5, 6])
-        XCTAssertEqual(quantized(recipe.hueShiftDegrees), 11_053_110)
-        XCTAssertEqual(recipeDigest(recipe), 0x449C_A376_7EE5_1680)
+        XCTAssertEqual(quantized(recipe.center.x), 507_955)
+        XCTAssertEqual(quantized(recipe.center.y), 401_771)
+        XCTAssertEqual(quantized(recipe.radius), 134_334)
+        XCTAssertEqual(quantized(recipe.rotation), 32_438)
+        XCTAssertEqual(recipe.litRingIndexes, [1, 2])
+        XCTAssertEqual(quantized(recipe.hueShiftDegrees), -6_670_569)
+        XCTAssertEqual(recipeDigest(recipe), 0x320D_86A1_A802_34E9)
     }
 
     func testRepresentativeUUIDsProduceDistinctBoundedSeedGeometry() throws {
