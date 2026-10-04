@@ -1490,35 +1490,55 @@ private struct MeetingsInlineState: View {
     let action: (() -> Void)?
 
     var body: some View {
-        HStack(alignment: .center, spacing: DesignSystem.Spacing.md) {
-            Image(systemName: icon)
-                .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(DesignSystem.Colors.textTertiary)
-                .frame(width: 24)
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title)
-                    .font(DesignSystem.Typography.body.weight(.semibold))
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-                    .lineLimit(2)
-                Text(detail)
-                    .font(DesignSystem.Typography.bodySmall)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .center, spacing: DesignSystem.Spacing.md) {
+                stateIcon
+                stateText.frame(minWidth: 220, maxWidth: .infinity, alignment: .leading)
+                stateAction
             }
 
-            Spacer(minLength: DesignSystem.Spacing.md)
-
-            if let actionTitle, let actionIcon, let action {
-                Button(action: action) {
-                    Label(actionTitle, systemImage: actionIcon)
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+                HStack(alignment: .top, spacing: DesignSystem.Spacing.md) {
+                    stateIcon
+                    stateText.frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .sottoAction(.secondary)
-                .fixedSize()
+                stateAction.padding(.leading, 24 + DesignSystem.Spacing.md)
             }
         }
         .padding(DesignSystem.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var stateIcon: some View {
+        Image(systemName: icon)
+            .font(.system(size: 18, weight: .medium))
+            .foregroundStyle(DesignSystem.Colors.textTertiary)
+            .frame(width: 24)
+            .accessibilityHidden(true)
+    }
+
+    private var stateText: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title)
+                .font(DesignSystem.Typography.body.weight(.semibold))
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(detail)
+                .font(DesignSystem.Typography.bodySmall)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    @ViewBuilder
+    private var stateAction: some View {
+        if let actionTitle, let actionIcon, let action {
+            Button(action: action) {
+                Label(actionTitle, systemImage: actionIcon)
+            }
+            .sottoAction(.secondary)
+            .fixedSize()
+        }
     }
 }
 
