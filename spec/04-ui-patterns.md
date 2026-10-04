@@ -1479,3 +1479,11 @@ Expanding activity shows bounded search queries, selected-source titles, returne
 Scrolling follows content growth while the reader stays at the bottom. Moving up suspends following; Jump to latest resumes it. Submitting a new question returns to the latest turn. Disclosure motion and explicit jumps respect Reduce Motion; streaming growth does not queue scrolling animations. Activity text and controls use native type, dynamic system colors, and the shared button styles.
 
 Activity is stored locally with the answer and exposed through the CLI contract. It contains no copied transcript passages, raw provider errors, or model reasoning. See [Ask contract](contracts/ask-workspace.md) for bounds and interruption semantics.
+
+## Sotto fork workflow polish
+
+Sidebar tips display their full body directly, including multiline banter, with no fixed line limit. Meeting setup cards place actions below their descriptions when the horizontal row would crowd the text. Prominent brand buttons use the palette's `onAccent` foreground for light and dark appearances.
+
+AI Settings shows each saved task route's provider, model, and processing location. Loopback servers are identified as running on this Mac; other HTTP endpoints are remote regardless of provider name. CLI processing depends on the selected tool's configuration, and Apple Intelligence is managed by macOS. The existing connection test applies to the current default-provider draft; the route overview describes saved configurations.
+
+Single file and media-link transcription failures offer Retry Transcription using the original input and audio-track selection. Unrelated errors and dismissed errors clear that retry action; batch and existing-record retranscription retain their existing recovery flows. Model preparation explains that transcription starts automatically when ready.
