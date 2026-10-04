@@ -255,7 +255,6 @@ final class SpecCommandTests: XCTestCase {
                 "cards",
                 "config",
                 "export",
-                "feedback",
                 "health",
                 "history",
                 "llm",
@@ -345,7 +344,6 @@ final class SpecCommandTests: XCTestCase {
             ["stats"],
             ["export"],
             ["calendar", "upcoming"],
-            ["feedback"],
             ["meetings", "corrections", "rename"],
             ["meetings", "corrections", "assign"],
             ["meetings", "corrections", "merge-speakers"],
@@ -574,9 +572,7 @@ final class SpecCommandTests: XCTestCase {
         let healthOptions = try XCTUnwrap(health["options"] as? [[String: Any]])
         XCTAssertTrue(healthOptions.contains { ($0["name"] as? String) == "--repair-attempts" })
 
-        let feedback = try XCTUnwrap(commands.first { ($0["path"] as? [String]) == ["feedback"] })
-        XCTAssertEqual(feedback["readOnly"] as? Bool, false)
-        XCTAssertEqual(feedback["jsonMode"] as? String, "none")
+        XCTAssertFalse(commands.contains { ($0["path"] as? [String]) == ["feedback"] })
     }
 
     func testSpecDocumentsJSONForDestructiveMutators() throws {

@@ -11,7 +11,6 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     case meetings = "Meetings"
     case transforms = "Transforms"
     case vocabulary = "Vocabulary"
-    case feedback = "Feedback"
     case settings = "Settings"
     case discover = "Discover"
 
@@ -27,7 +26,6 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         case .dictations: return "clock.arrow.circlepath"
         case .transforms: return "wand.and.stars"
         case .vocabulary: return "book.fill"
-        case .feedback: return "bubble.left.and.text.bubble.right"
         case .settings: return "gearshape"
         case .discover: return "sparkles"
         }
@@ -52,7 +50,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     /// Transcript prompts are managed from Library and completed transcripts;
     /// Live Ask questions are managed from Meetings.
     static var configItems: [SidebarItem] {
-        var items: [SidebarItem] = [.vocabulary, .feedback, .settings]
+        var items: [SidebarItem] = [.vocabulary, .settings]
         if AppFeatures.transformsEnabled {
             items.insert(.transforms, at: 0)
         }
@@ -82,7 +80,6 @@ struct MainWindowView: View {
     let customWordsViewModel: CustomWordsViewModel
     let textSnippetsViewModel: TextSnippetsViewModel
     let vocabularyBackupViewModel: VocabularyBackupViewModel
-    let feedbackViewModel: FeedbackViewModel
     let discoverViewModel: DiscoverViewModel
     let libraryViewModel: TranscriptionLibraryViewModel
     let askWorkspaceViewModel: AskWorkspaceViewModel
@@ -321,8 +318,6 @@ struct MainWindowView: View {
                             textSnippetsViewModel: textSnippetsViewModel,
                             backupViewModel: vocabularyBackupViewModel
                         )
-                    case .feedback:
-                        FeedbackView(viewModel: feedbackViewModel)
                     case .settings:
                         SettingsView(
                             viewModel: settingsViewModel,

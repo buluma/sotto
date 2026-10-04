@@ -202,11 +202,12 @@ surface is offered after a failed read, since hiding it would leave stored
 biometric data unreachable.
 
 Outward-boundary verification must exercise populated voiceprint tables against
-the app and CLI export projections. Inspect feedback and diagnostic builders for
+the app and CLI export projections. Inspect diagnostic builders for
 database access and attachment selection, and run their existing tests. If these
 builders gain library-storage inputs, add populated-table exclusion fixtures at
 that boundary. Relevant suites include `SpeakerVoiceprintExportTests`,
-`ExportServiceTests`, `ExportCommandTests` and `FeedbackServiceTests`. A release
+`ExportServiceTests` and `ExportCommandTests`. Upstream feedback submission is
+removed in the personal Sotto fork. A release
 review must record which surfaces were tested and which were only inspected.
 Tests listed here are required coverage, not a claim that every release surface
 or real-audio scenario has already passed.

@@ -1001,11 +1001,9 @@ OpenClaw, Hermes, or another local agent framework.
   downloads/warm-up/repair, helper repair, media URL and podcast directory/RSS/
   enclosure downloads, explicitly configured LLM calls (including
   `cards generate`, prompt/Transform execution, and cloud-backed Local CLI
-  commands), explicit feedback submission, and CLI telemetry below.
-  The app also checks Sparkle updates and refreshes Discover's public feed
-  at launch when **Show Discover in the sidebar** is enabled (the default),
-  independently of telemetry. Turning that preference off cancels pending
-  feed requests and prevents new loads; the CLI does not launch the feed refresh. No captured audio is sent to an LLM by Sotto.
+  commands). Feedback submission, remote telemetry, hosted sharing, automatic app
+  updates, and Discover feed requests are removed in this personal fork. Discover
+  uses bundled offline cards. No captured audio is sent to an LLM by Sotto.
   Legacy activation validation can also contact LemonSqueezy during app setup
   or CLI `transcribe --enforce-entitlements` when stored activation state needs
   refresh; current free builds remain unlocked regardless of that result.

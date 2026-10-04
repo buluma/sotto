@@ -2360,7 +2360,7 @@ Sotto's brand is privacy. These are non-negotiable.
 | No accounts | No email, no login, no registration |
 | No cloud STT | All speech recognition runs locally on Apple Silicon; Parakeet is default and Nemotron/Cohere/WhisperKit are optional |
 | User-controlled storage | Saved audio follows the relevant dictation/file/media/meeting storage setting; meeting audio is retained by default, with explicit deletion/retention choices |
-| Network surfaces | Model/helper setup, media/podcast imports, configured LLM features, explicit feedback, gated sharing and retained-license validation. Discover is local-only and app updates are manual. |
+| Network surfaces | Model/helper setup, media/podcast imports, configured LLM features, retained-license validation. Discover is local-only and app updates are manual. |
 
 **What local-first means:**
 - Parakeet, Nemotron, and Cohere STT run locally via FluidAudio CoreML; WhisperKit also runs locally when selected

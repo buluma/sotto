@@ -31,3 +31,17 @@ was attempted once. no-mistakes is not installed.
 
 The reduced build excludes WhisperKit and streaming Markdown; success does not
 qualify the normal app dependency graph or experimental feature gates.
+
+## Upstream connection removal — 2026-10-04
+
+- Removed feedback GUI/sidebar/menu, CLI command/spec entry, uploader, and related
+  view model. CLI version is 6.0.0 for the removed command.
+- Removed sharing's URLSession transport and upstream service origin. The default
+  transport always rejects requests; the app constructs neither sharing coordinator
+  nor sharing view model, and `--enable-share-links` cannot enable it.
+- Preserved local transcripts, recordings, share records, encryption formats, and
+  database migrations. Added gate/transport regression tests and updated CLI tests.
+- Reduced CLI build, CLI help/version/spec JSON/removed-command checks, source
+  parsing, focused Swift format lint, README reference checks, and diff checks passed.
+- Full `swift test` attempted once for this task: stopped before running tests due
+  to missing Xcode `actool` and `xcstringstool`. Native testing remains a CI gate.

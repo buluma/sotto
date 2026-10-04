@@ -17,17 +17,11 @@ public enum AppFeatures {
         #endif
     }
 
-    /// Encrypted text sharing remains opt-in for development until its separate
-    /// privacy, service and interoperability release gates are complete.
+    /// Hosted sharing is unavailable in this personal fork, including debug builds.
     public static let shareLinksEnabled = false
-    public static let shareLinksDeveloperLaunchArgument = "--enable-share-links"
 
     public static func isShareLinksAvailable(arguments: [String] = ProcessInfo.processInfo.arguments) -> Bool {
-        #if DEBUG
-        shareLinksEnabled || arguments.contains(shareLinksDeveloperLaunchArgument)
-        #else
-        shareLinksEnabled
-        #endif
+        false
     }
 
     /// Experimental native Voice Control. Disabled in stable releases until

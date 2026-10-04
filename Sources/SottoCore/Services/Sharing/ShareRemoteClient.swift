@@ -1,25 +1,17 @@
 import Foundation
 
-/// The build-approved network origin for the share service. Production
-/// builds only ever construct `.production`; a DEBUG-only factory lets tests
-/// and internal integration work point at a disposable origin without that
-/// path existing in a release binary at all, so a release build can never be
-/// redirected to a development origin through preferences or launch
-/// arguments.
+/// Inert origin retained for local sharing records and injected test transports.
 public struct ShareServiceOrigin: Sendable, Equatable {
     public let baseURL: URL
 
-    public static let production = ShareServiceOrigin(baseURL: URL(string: "https://share.macparakeet.com")!)
+    public static let disabled = ShareServiceOrigin(baseURL: URL(string: "https://sharing.invalid")!)
 
     private init(baseURL: URL) {
         self.baseURL = baseURL
     }
 
     #if DEBUG
-    /// Test/DEBUG-only. This factory does not exist in a release build, so
-    /// there is no compiled code path — launch argument, preference, or
-    /// otherwise — that can redirect a shipped app to a non-production
-    /// origin.
+    /// Test-only origin for injected fake transports; the default transport always refuses requests.
     public static func debugOverride(baseURL: URL) -> ShareServiceOrigin {
         ShareServiceOrigin(baseURL: baseURL)
     }
@@ -46,76 +38,15 @@ enum ShareTransportError: Error, Sendable, Equatable {
     case network
 }
 
-/// A small, `Sendable` seam between `ShareRemoteClient` and real networking,
-/// so tests never need a live `URLSession`.
+/// An injectable seam for local contract tests. The default implementation cannot connect.
 protocol ShareHTTPTransport: Sendable {
     func send(_ request: ShareHTTPRequest, origin: URL) async throws -> ShareHTTPResponse
 }
 
-/// The real transport. HTTPS-and-approved-origin is enforced on every
-/// request, and every redirect is refused outright — `Authorization` and
-/// `Recovery-Authorization` must never be replayed anywhere but the approved
-/// origin, and refusing every redirect is simpler to audit than trying to
-/// classify which ones are "credential-bearing".
-final class URLSessionShareHTTPTransport: NSObject, ShareHTTPTransport, @unchecked Sendable {
-    private let session: URLSession
-
-    override init() {
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.httpShouldSetCookies = false
-        configuration.urlCache = nil
-        session = URLSession(configuration: configuration)
-        super.init()
-    }
-
+/// No URLSession or network I/O exists in the personal fork's sharing transport.
+final class DisabledShareHTTPTransport: ShareHTTPTransport, Sendable {
     func send(_ request: ShareHTTPRequest, origin: URL) async throws -> ShareHTTPResponse {
-        guard origin.scheme == "https", origin.user == nil, origin.password == nil,
-            origin.query == nil, origin.fragment == nil, origin.path.isEmpty || origin.path == "/"
-        else {
-            throw ShareTransportError.unapprovedOrigin
-        }
-        guard let url = URL(string: request.path, relativeTo: origin) else {
-            throw ShareTransportError.unapprovedOrigin
-        }
-        guard url.scheme == "https", url.host == origin.host, url.port == origin.port,
-            url.user == nil, url.password == nil
-        else {
-            throw ShareTransportError.unapprovedOrigin
-        }
-
-        var urlRequest = URLRequest(url: url)
-        urlRequest.httpMethod = request.method
-        urlRequest.httpBody = request.body
-        urlRequest.cachePolicy = .reloadIgnoringLocalCacheData
-        for (name, value) in request.headers {
-            urlRequest.setValue(value, forHTTPHeaderField: name)
-        }
-        if request.body != nil, urlRequest.value(forHTTPHeaderField: "Content-Type") == nil {
-            urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        }
-
-        let data: Data
-        let response: URLResponse
-        do {
-            (data, response) = try await session.data(for: urlRequest, delegate: self)
-        } catch {
-            throw ShareTransportError.network
-        }
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw ShareTransportError.network
-        }
-        return ShareHTTPResponse(statusCode: httpResponse.statusCode, body: data)
-    }
-}
-
-extension URLSessionShareHTTPTransport: URLSessionTaskDelegate {
-    func urlSession(
-        _ session: URLSession,
-        task: URLSessionTask,
-        willPerformHTTPRedirection response: HTTPURLResponse,
-        newRequest request: URLRequest
-    ) async -> URLRequest? {
-        nil
+        throw ShareTransportError.unapprovedOrigin
     }
 }
 
@@ -247,7 +178,7 @@ final class ShareRemoteClient: ShareRemoteClientProtocol {
     }
 
     convenience init(origin: ShareServiceOrigin) {
-        self.init(origin: origin, transport: URLSessionShareHTTPTransport())
+        self.init(origin: origin, transport: DisabledShareHTTPTransport())
     }
 
     func sendPersistedOperation(_ operation: ShareOutboxOperation, shareId: String, deviceToken: ShareDeviceToken)

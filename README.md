@@ -20,6 +20,8 @@ Parakeet is the model name, independent of the Sotto app identity.
 - Remote analytics/crash telemetry transport is removed from the GUI and CLI.
   Local diagnostic logs remain. Legacy event hooks support local tests only;
   the legacy `config telemetry` preference cannot enable uploads.
+- Upstream feedback UI/CLI and hosted sharing connections are removed. Debug
+  arguments cannot enable sharing. Existing local records are preserved.
 - App auto-updates are removed. Update source manually, review upstream changes,
   retain the personal changes, and rebuild. There is no Sotto release feed.
 - Discover is a bundled, offline Rick-and-Morty-style banter feed, off by default.

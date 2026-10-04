@@ -342,7 +342,7 @@ Rick-and-Morty-style banter, off by default, with no cache, remote refresh or
 thought submission. See [Discover](../docs/discover.md).
 
 Other network surfaces include configured AI, model/helper/media downloads,
-explicit feedback and retained activation plumbing. Calendar reads local
+retained activation plumbing. Calendar reads local
 EventKit data. See the [local-only ADR](adr/002-local-only.md) for inherited
 boundaries; optional network integrations are independent of local Discover.
 

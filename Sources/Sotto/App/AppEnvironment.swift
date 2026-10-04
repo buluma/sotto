@@ -85,9 +85,7 @@ final class AppEnvironment {
     init(databaseManager: DatabaseManager) throws {
         SpeechEnginePreference.migrateMaterializedFinalTranscriptionOverrideIfNeeded()
         self.databaseManager = databaseManager
-        shareCoordinator =
-            AppFeatures.isShareLinksAvailable()
-            ? ShareCoordinator(dbQueue: databaseManager.dbQueue, origin: .production) : nil
+        shareCoordinator = nil
 
         // Repositories
         dictationRepo = DictationRepository(dbQueue: databaseManager.dbQueue)

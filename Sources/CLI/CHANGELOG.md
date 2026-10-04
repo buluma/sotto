@@ -9,6 +9,14 @@ depend on. Sotto is updated manually from source; app auto-updates and remote te
 The format is based on [Keep a Changelog](https://keepachangelog.com), and the
 CLI adheres to [Semantic Versioning](https://semver.org).
 
+## [6.0.0] — 2026-10-04 (personal Sotto fork)
+
+- Removed the `feedback` command and its support-service uploader. Existing scripts
+  invoking it now receive the standard unknown-command error; `spec --json` no
+  longer advertises it. This immediate removal is intentional for the personal fork.
+- Hosted sharing cannot be enabled, including by debug launch arguments. Its
+  HTTP transport has been removed; existing local sharing records remain intact.
+
 ## Compatibility policy
 
 The CLI surface is a public contract. We follow semver:

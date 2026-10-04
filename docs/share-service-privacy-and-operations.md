@@ -1,6 +1,9 @@
 # Share Service Privacy and Operations
 
-> Status: **Implemented privacy contract; public-enablement checks remain**
+> Personal Sotto fork: **Hosted sharing removed (2026-10-04).** The app does not
+> construct a sharing coordinator, debug arguments cannot enable sharing, and no
+> network transport remains. Local records and encryption formats are preserved.
+> The original design below is historical; it is not an active Sotto service.
 > Governing decision: [ADR-029](../spec/adr/029-encrypted-shareable-transcript-snapshots.md)
 > Wire contracts: [Share Link and Bundle v1](../spec/contracts/share-link-bundle-v1.md) and [Share Service v1](../spec/contracts/share-service-v1.md)
 

@@ -1,5 +1,12 @@
 # CLI JSON v1
 
+> Personal Sotto fork (2026-10-04): upstream feedback submission is removed from
+> the GUI and CLI (CLI 6.0.0). Hosted sharing is unavailable in every build; its
+> network transport is removed and debug arguments cannot enable it. Local sharing
+> records, encryption formats, and database migrations are retained for data integrity.
+> Historical service details below do not describe an active Sotto connection.
+
+
 > Status: ACTIVE - public automation contract for `sotto-cli`.
 
 ## Purpose

@@ -1333,18 +1333,6 @@ private extension CLISpecCommand {
             output: "Array of CalendarEvent objects when --json is used."
         ),
         CLISpecCommand(
-            ["feedback"],
-            summary: "Submit user feedback to Sotto support.",
-            readOnly: false,
-            jsonMode: "none",
-            arguments: [.argument("message", summary: "Feedback message.")],
-            options: [
-                CLISpecParameter.option("--category", valueName: "bug|feature|other", summary: "Feedback category."),
-                CLISpecParameter.option("--email", valueName: "EMAIL", summary: "Optional follow-up email."),
-            ],
-            output: "Human-readable submission progress."
-        ),
-        CLISpecCommand(
             ["meetings", "list"],
             summary: "List recent meeting recordings.",
             options: [

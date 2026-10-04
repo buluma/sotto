@@ -8,8 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var appEnvironment: AppEnvironment?
     private var shareStopObserver: NSObjectProtocol?
-    private let shareManagementViewModel: ShareManagementViewModel? =
-        AppFeatures.isShareLinksAvailable() ? ShareManagementViewModel() : nil
+    private let shareManagementViewModel: ShareManagementViewModel? = nil
     private var hotkeyCoordinator: AppHotkeyCoordinator?
     private var dictationFlowCoordinator: DictationFlowCoordinator?
     private var meetingRecordingFlowCoordinator: MeetingRecordingFlowCoordinator?
@@ -45,7 +44,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let customWordsViewModel = CustomWordsViewModel()
     private let textSnippetsViewModel = TextSnippetsViewModel()
     private let vocabularyBackupViewModel = VocabularyBackupViewModel()
-    private let feedbackViewModel = FeedbackViewModel()
     private let discoverViewModel = DiscoverViewModel()
     private let libraryViewModel = TranscriptionLibraryViewModel()
     private let askWorkspaceViewModel = AskWorkspaceViewModel()
@@ -201,7 +199,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         customWordsViewModel: customWordsViewModel,
         textSnippetsViewModel: textSnippetsViewModel,
         vocabularyBackupViewModel: vocabularyBackupViewModel,
-        feedbackViewModel: feedbackViewModel,
         discoverViewModel: discoverViewModel,
         libraryViewModel: libraryViewModel,
         askWorkspaceViewModel: askWorkspaceViewModel,

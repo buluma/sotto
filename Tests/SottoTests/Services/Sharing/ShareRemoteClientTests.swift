@@ -21,7 +21,7 @@ final class ShareRemoteClientTests: XCTestCase {
 
     override func setUp() {
         transport = FakeShareHTTPTransport()
-        client = ShareRemoteClient(origin: .production, transport: transport)
+        client = ShareRemoteClient(origin: .disabled, transport: transport)
     }
 
     private func jsonResponse(_ statusCode: Int, _ object: some Encodable) throws -> ShareHTTPResponse {
@@ -206,13 +206,13 @@ final class ShareRemoteClientTests: XCTestCase {
         }
     }
 
-    // MARK: - Origin enforcement (real transport, no network reached)
+    // MARK: - Disabled transport (no network implementation)
 
-    func testRealTransportRejectsAnUnapprovedOrigin() async {
-        let realTransport = URLSessionShareHTTPTransport()
+    func testDisabledTransportRejectsAnUnapprovedOrigin() async {
+        let disabledTransport = DisabledShareHTTPTransport()
         let request = ShareHTTPRequest(method: "GET", path: "/api/v1/capabilities")
         do {
-            _ = try await realTransport.send(request, origin: URL(string: "http://share.macparakeet.com")!)
+            _ = try await disabledTransport.send(request, origin: URL(string: "http://share.macparakeet.com")!)
             XCTFail("expected unapprovedOrigin for a non-HTTPS origin")
         } catch ShareTransportError.unapprovedOrigin {
             // expected — rejected before any network I/O
@@ -221,12 +221,12 @@ final class ShareRemoteClientTests: XCTestCase {
         }
     }
 
-    func testRealTransportRejectsARequestThatResolvesOffOrigin() async {
-        let realTransport = URLSessionShareHTTPTransport()
+    func testDisabledTransportRejectsARequestThatResolvesOffOrigin() async {
+        let disabledTransport = DisabledShareHTTPTransport()
         // An absolute path escaping to a different host must never be sent.
         let request = ShareHTTPRequest(method: "GET", path: "https://attacker.example/api/v1/capabilities")
         do {
-            _ = try await realTransport.send(request, origin: URL(string: "https://share.macparakeet.com")!)
+            _ = try await disabledTransport.send(request, origin: URL(string: "https://share.macparakeet.com")!)
             XCTFail("expected unapprovedOrigin")
         } catch ShareTransportError.unapprovedOrigin {
             // expected
