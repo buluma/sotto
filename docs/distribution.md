@@ -1,8 +1,16 @@
 # Distribution (Developer ID + Notarization)
 
-> Status: **ACTIVE** - Build, sign, notarize, and auto-update workflow
+> Personal Sotto fork: manual updates; release DMGs are ad-hoc signed. Developer ID signing and notarization remain optional manual tooling.
 
 This repo uses Swift packages. App distribution builds those packages through Xcode and assembles a `.app` bundle for Developer ID distribution. Xcode compiles asset catalogs and generates resource lookups that work after installation on another Mac. `BUILD_SYSTEM=swiftpm` is rejected for app distribution; ordinary `swift build`, `swift test`, and SwiftPM CLI builds remain supported.
+
+## GitHub release DMGs
+
+Publishing a GitHub release triggers `.github/workflows/release-dmg.yml`. Use a tag named `X.Y.Z` or `vX.Y.Z`, excluding `0.0.0`. The workflow checks out that exact tag, builds the Apple Silicon app with Xcode 16.1 and the normal bundled helpers and meeting echo assets, then attaches `Sotto-X.Y.Z-arm64.dmg` and its SHA-256 checksum to the release. Prereleases also trigger the workflow; draft releases do not trigger it until published. Publishing through another workflow using `GITHUB_TOKEN` does not trigger a new release workflow; use the GitHub UI or a separately authorized token for that publication.
+
+The DMG contains `Sotto.app` and an Applications shortcut. Packaging verifies the app signature, privacy surface, meeting echo assets, and disk image before uploading. No signing secrets are required: these personal builds are ad-hoc signed and are not Developer ID signed or notarized, so macOS Gatekeeper can require explicit approval when opening a downloaded build. App updates remain manual. Build logs are retained for seven days, including failed runs; rerunning the release job replaces its matching DMG and checksum assets.
+
+To package a local release bundle with the same personal signing path, run `scripts/dist/build_dmg.sh dist/Sotto.app dist/Sotto.dmg` after building it with `VERSION=X.Y.Z`.
 
 ## 1) Build the app bundle
 
