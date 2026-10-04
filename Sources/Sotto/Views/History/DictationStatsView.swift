@@ -204,7 +204,7 @@ struct DictationStatsView: View {
         let maxCount = viewModel.topApps.map(\.count).max() ?? 1
         return VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Where you ramble into the void.")
+                Text("Where you ramble into the void")
                     .font(.system(size: 18, weight: .semibold, design: .rounded))
                 Spacer()
                 Text("Top \(viewModel.topApps.count) app\(viewModel.topApps.count == 1 ? "" : "s")")
