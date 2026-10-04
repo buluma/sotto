@@ -43,6 +43,27 @@ public enum TelemetryErrorClassifier {
             }
         }
 
+        // Explicit closed case names preserve useful grouping without consulting
+        // descriptions, whose protocol checks can bridge through NSError.
+        if let audioError = error as? AudioProcessorError {
+            switch audioError {
+            case .microphonePermissionDenied: return "AudioProcessorError.microphonePermissionDenied"
+            case .microphoneNotAvailable: return "AudioProcessorError.microphoneNotAvailable"
+            case .insufficientSamples: return "AudioProcessorError.insufficientSamples"
+            default: break
+            }
+        }
+        if let dictationError = error as? DictationServiceError {
+            switch dictationError {
+            case .notRecording: return "DictationServiceError.notRecording"
+            case .notCancelled: return "DictationServiceError.notCancelled"
+            case .noPendingCancelledAudio: return "DictationServiceError.noPendingCancelledAudio"
+            case .emptyTranscript: return "DictationServiceError.emptyTranscript"
+            case .transcriptionFailedAudioSaved: return "DictationServiceError.transcriptionFailedAudioSaved"
+            case .failedDictationUnavailable: return "DictationServiceError.failedDictationUnavailable"
+            }
+        }
+
         // SharedMicrophoneStream currently crosses its queue boundary with the
         // localized NSError description. Preserve known CoreAudio domain/code
         // pairs without transmitting any of that message's free-form content.
@@ -62,17 +83,8 @@ public enum TelemetryErrorClassifier {
             if let caseName = mirror.children.first?.label {
                 return "\(typeName).\(caseName)"
             }
-            // A custom description can contain user content, even when it looks
-            // like a single identifier. Only the compiler's enum description is safe.
-            guard !(error is any CustomStringConvertible),
-                !(error is any CustomDebugStringConvertible)
-            else { return typeName }
-            let described = String(describing: error)
-            if described != typeName,
-                described.range(of: #"^[A-Za-z_][A-Za-z0-9_]*$"#, options: .regularExpression) != nil
-            {
-                return "\(typeName).\(described)"
-            }
+            // Descriptions may contain user content, even a single identifier.
+            // Payload-free enums without an explicit mapping stay at type level.
             return typeName
         }
 

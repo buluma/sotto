@@ -77,7 +77,14 @@ final class TranscriptDocumentLayoutTests: XCTestCase {
             contentRect: NSRect(x: -20_000, y: -20_000, width: 1_100, height: 650),
             styleMask: [.titled, .resizable], backing: .buffered, defer: false
         )
-        window.contentView = host
+        // Disable intrinsic window sizing and drive the pane proposal directly:
+        // hosted CI displays may constrain an off-screen NSWindow resize.
+        host.sizingOptions = []
+        let pane = NSView(frame: NSRect(x: 0, y: 0, width: 1_100, height: 650))
+        host.frame = pane.bounds
+        host.autoresizingMask = [.width, .height]
+        pane.addSubview(host)
+        window.contentView = pane
         window.orderFront(nil)
         defer { window.orderOut(nil) }
         host.layoutSubtreeIfNeeded()
@@ -90,19 +97,23 @@ final class TranscriptDocumentLayoutTests: XCTestCase {
         RunLoop.main.run(until: Date().addingTimeInterval(0.2))
         let editor = try XCTUnwrap(descendants(host).compactMap { $0 as? NSTextView }.first(where: \.isEditable))
         let smallHeight = try XCTUnwrap(editor.enclosingScrollView).contentView.bounds.height
-        window.setContentSize(NSSize(width: 1_100, height: 950))
+        pane.setFrameSize(NSSize(width: 1_100, height: 950))
         host.layoutSubtreeIfNeeded()
         RunLoop.main.run(until: Date().addingTimeInterval(0.2))
-        let largeHeight = try XCTUnwrap(editor.enclosingScrollView).contentView.bounds.height
+        XCTAssertEqual(host.bounds.height, 950, accuracy: 1)
+        // SwiftUI may replace the native text view during a layout update.
+        let resizedEditor = try XCTUnwrap(descendants(host).compactMap { $0 as? NSTextView }.first(where: \.isEditable))
+        let largeHeight = try XCTUnwrap(resizedEditor.enclosingScrollView).contentView.bounds.height
         print("Result editor viewport: \(smallHeight) -> \(largeHeight) for +300 pt window height")
         XCTAssertGreaterThan(
             largeHeight - smallHeight, 200,
             "The editor must grow with its pane instead of remaining a minimum-height field inside a scroll view")
-        window.setContentSize(NSSize(width: 500, height: 650))
+        pane.setFrameSize(NSSize(width: 500, height: 650))
         host.layoutSubtreeIfNeeded()
         RunLoop.main.run(until: Date().addingTimeInterval(0.2))
         XCTAssertLessThanOrEqual(host.bounds.width, 501)
-        let scroll = try XCTUnwrap(editor.enclosingScrollView)
+        let compactEditor = try XCTUnwrap(descendants(host).compactMap { $0 as? NSTextView }.first(where: \.isEditable))
+        let scroll = try XCTUnwrap(compactEditor.enclosingScrollView)
         let editorFrame = host.convert(scroll.bounds, from: scroll)
         XCTAssertGreaterThan(scroll.contentView.bounds.height, 120)
         XCTAssertGreaterThanOrEqual(editorFrame.minX, host.bounds.minX)

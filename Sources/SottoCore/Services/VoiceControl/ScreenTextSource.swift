@@ -1,6 +1,7 @@
 import AppKit
 import CoreGraphics
 import Foundation
+import ScreenCaptureKit
 import Vision
 
 /// One recognised line of on-screen text, in screen points (top-left origin, same space as AX frames).
@@ -72,8 +73,7 @@ public actor VisionScreenTextReader: ScreenTextReading {
             Self.note("screen-text: no unique window for pid \(processID) frame \(Self.rect(window)); \(Self.windowList(processID: processID))")
             return []
         }
-        guard let image = CGWindowListCreateImage(
-            .null, [.optionIncludingWindow], plan.windowID, [.bestResolution, .boundsIgnoreFraming]),
+        guard let image = await Self.captureImage(plan: plan, window: window, processID: processID),
             image.width > 0, image.height > 0, image.width <= 12_000, image.height <= 12_000,
             image.width * image.height <= 40_000_000
         else {
@@ -108,6 +108,49 @@ public actor VisionScreenTextReader: ScreenTextReading {
             "screen-text: \(blocks.count) blocks in \(milliseconds)ms window \(plan.windowID) exclusions \(plan.exclusions.count)"
         )
         return blocks
+    }
+
+    private static func captureImage(
+        plan: ScreenTextCapturePlan, window: CGRect, processID: Int32
+    ) async -> CGImage? {
+        do {
+            let content = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: true)
+            let matches = content.windows.filter {
+                $0.windowID == plan.windowID && $0.owningApplication?.processID == processID
+                    && $0.frame == window
+            }
+            guard matches.count == 1, let target = matches.first,
+                !Task.isCancelled, await foregroundPID() == processID,
+                capturePlan(window: window, processID: processID) == plan
+            else { return nil }
+            // A window-only filter cannot capture unrelated apps. Omit shadows
+            // and the cursor so the image maps directly to the verified AX frame.
+            let filter = SCContentFilter(desktopIndependentWindow: target)
+            guard filter.contentRect.size == window.size,
+                let size = capturePixelSize(window: window, scale: CGFloat(filter.pointPixelScale))
+            else { return nil }
+            let configuration = SCStreamConfiguration()
+            configuration.width = size.width
+            configuration.height = size.height
+            configuration.showsCursor = false
+            configuration.ignoreShadowsSingleWindow = true
+            return try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: configuration)
+        } catch {
+            // Screen Recording denial and disappearing windows fail closed.
+            // Do not log framework descriptions that might contain window text.
+            note("screen-text: ScreenCaptureKit capture failed")
+            return nil
+        }
+    }
+
+    static func capturePixelSize(window: CGRect, scale: CGFloat) -> (width: Int, height: Int)? {
+        guard ScreenTextMerge.validFrame(window), scale.isFinite, scale > 0 else { return nil }
+        let width = (window.width * scale).rounded(.up)
+        let height = (window.height * scale).rounded(.up)
+        guard width.isFinite, height.isFinite, width >= 1, height >= 1,
+            width <= 12_000, height <= 12_000, width * height <= 40_000_000
+        else { return nil }
+        return (Int(width), Int(height))
     }
 
     /// E2E only. Production stays quiet; the owned-fixture run needs the reason a read returned nothing.

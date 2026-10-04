@@ -87,6 +87,12 @@ struct TelemetryErrorClassifierTests {
         #expect(TelemetryErrorClassifier.classify(urlError) == "URLError.notConnectedToInternet")
     }
 
+    @Test("unmapped payload-free enums use the safe type-level fallback")
+    func payloadFreeEnumFallback() {
+        enum UnknownError: Error { case failed }
+        #expect(TelemetryErrorClassifier.classify(UnknownError.failed) == "UnknownError")
+    }
+
     @Test("does not classify arbitrary custom descriptions as error types")
     func customDescriptionsAreNotTelemetryDimensions() {
         enum DescribedError: Error, CustomStringConvertible {
