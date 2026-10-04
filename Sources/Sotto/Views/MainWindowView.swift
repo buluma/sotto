@@ -342,6 +342,7 @@ struct MainWindowView: View {
                     }
                 }
             }
+            .background(DesignSystem.Colors.background)
 
             if showGlobalProgressBar {
                 globalTranscriptionBottomBar
@@ -636,7 +637,7 @@ private struct PortalSidebarHeader: View {
             }
 
             VStack(alignment: .leading, spacing: 1) {
-                Text("SOTTO")
+                Text("C-137")
                     .font(.system(size: 13, weight: .black, design: .rounded))
                     .tracking(1.4)
                     .foregroundStyle(DesignSystem.Colors.textPrimary)

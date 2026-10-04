@@ -17,8 +17,16 @@ struct PortalDropZone: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: DesignSystem.Layout.dropZoneCornerRadius)
                         .strokeBorder(
-                            isDragging ? DesignSystem.Colors.accent.opacity(0.4) : Color.clear,
-                            lineWidth: 1
+                            LinearGradient(
+                                colors: [
+                                    DesignSystem.Colors.accent.opacity(isDragging ? 0.78 : 0.34),
+                                    DesignSystem.Colors.portalCyan.opacity(isDragging ? 0.58 : 0.18),
+                                    DesignSystem.Colors.accentDark.opacity(isDragging ? 0.5 : 0.22),
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: isDragging ? 1.5 : 0.8
                         )
                 )
                 .cardShadow(isDragging ? DesignSystem.Shadows.portalLift : DesignSystem.Shadows.cardRest)
@@ -27,6 +35,21 @@ struct PortalDropZone: View {
             VStack(spacing: DesignSystem.Spacing.md) {
                 // Merkaba — state-reactive
                 ZStack {
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [
+                                    DesignSystem.Colors.accent.opacity(isDragging ? 0.24 : 0.09),
+                                    DesignSystem.Colors.portalCyan.opacity(isDragging ? 0.12 : 0.035),
+                                    .clear,
+                                ],
+                                center: .center,
+                                startRadius: 3,
+                                endRadius: 58
+                            )
+                        )
+                        .frame(width: 120, height: 120)
+
                     if isDragging {
                         ParticleField(
                             particleCount: 6,

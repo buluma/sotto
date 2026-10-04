@@ -7,28 +7,30 @@ enum DesignSystem {
 
     enum Colors {
         // Acid green and portal cyan set a playful sci-fi tone while keeping controls readable.
-        static let accent = Color(light: .init(red: 0.12, green: 0.48, blue: 0.34),
-                                  dark: .init(red: 0.55, green: 0.96, blue: 0.32))
+        static let accent = Color(light: .init(red: 0.10, green: 0.46, blue: 0.32),
+                                  dark: .init(red: 0.70, green: 0.98, blue: 0.28))
         static let accentLight = Color(light: .init(red: 0.88, green: 0.98, blue: 0.82),
-                                       dark: .init(red: 0.55, green: 0.96, blue: 0.32).opacity(0.14))
+                                       dark: .init(red: 0.70, green: 0.98, blue: 0.28).opacity(0.14))
         static let accentDark = Color(light: .init(red: 0.08, green: 0.34, blue: 0.27),
-                                      dark: .init(red: 0.22, green: 0.70, blue: 0.62))
+                                      dark: .init(red: 0.22, green: 0.76, blue: 0.68))
+        static let portalCyan = Color(light: .init(red: 0.08, green: 0.48, blue: 0.48),
+                                      dark: .init(red: 0.30, green: 0.88, blue: 0.82))
 
         // Mint paper by day; inky blue-green ship interiors by night.
         static let background = Color(light: .init(red: 0.95, green: 0.98, blue: 0.94),
-                                      dark: .init(red: 0.035, green: 0.075, blue: 0.09))
+                                      dark: .init(red: 0.025, green: 0.055, blue: 0.065))
         static let surface = Color(light: .init(red: 0.99, green: 1.0, blue: 0.98),
-                                   dark: .init(red: 0.065, green: 0.12, blue: 0.14))
+                                   dark: .init(red: 0.055, green: 0.105, blue: 0.12))
         static let surfaceElevated = Color(light: .init(red: 0.90, green: 0.96, blue: 0.90),
-                                           dark: .init(red: 0.10, green: 0.18, blue: 0.19))
+                                           dark: .init(red: 0.085, green: 0.155, blue: 0.17))
 
         // Text — high contrast primaries
         static let textPrimary = Color(light: .init(red: 0.07, green: 0.14, blue: 0.12),
                                        dark: .init(red: 0.91, green: 0.98, blue: 0.91))
         static let textSecondary = Color(light: .init(red: 0.31, green: 0.42, blue: 0.37),
-                                         dark: .init(red: 0.64, green: 0.78, blue: 0.73))
+                                         dark: .init(red: 0.70, green: 0.81, blue: 0.77))
         static let textTertiary = Color(light: .init(red: 0.48, green: 0.58, blue: 0.52),
-                                        dark: .init(red: 0.42, green: 0.57, blue: 0.54))
+                                        dark: .init(red: 0.53, green: 0.67, blue: 0.63))
 
         /// Neutral label tint — for `.bordered` buttons that should NOT carry
         /// brand color. Resolves to the system label color (white in dark mode,
@@ -42,7 +44,7 @@ enum DesignSystem {
                                         dark: .init(red: 0.98, green: 0.75, blue: 0.14))
         static let errorRed = Color(light: .init(red: 0.90, green: 0.30, blue: 0.26),
                                     dark: .init(red: 0.97, green: 0.44, blue: 0.44))
-        static let onAccent = Color.white
+        static let onAccent = Color(light: .white, dark: .init(red: 0.04, green: 0.11, blue: 0.08))
 
         // Borders & dividers
         static let border = Color(light: .init(red: 0.82, green: 0.90, blue: 0.82),
@@ -58,7 +60,7 @@ enum DesignSystem {
 
         // Playback
         static let playbackTrack = Color.primary.opacity(0.08)
-        static let playbackFill = Color.accentColor
+        static let playbackFill = accent
 
         // Speaker diarization palette — distinct, readable in both light/dark
         static let transcriptSpeakerLabelAlpha: CGFloat = 0.85
@@ -127,7 +129,7 @@ enum DesignSystem {
         static let meetingPillBadgeBackground = Color.black.opacity(0.8)
 
         // Sidebar
-        static let contentBackground = Color(nsColor: .textBackgroundColor)
+        static let contentBackground = background
     }
 
     // MARK: - Spacing

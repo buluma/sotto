@@ -10,7 +10,7 @@ import SottoViewModels
 ///
 /// Visual continuity: rounded display type (no serif — we use
 /// `.rounded` system font, not a literal serif copy of the reference
-/// screenshots), warm coral accent only on the keycap badges + primary
+/// screenshots), portal-green accent only on the keycap badges + primary
 /// CTAs, generous whitespace, hover lift on cards via the existing
 /// `cardRest`/`cardHover` shadow tokens.
 struct TransformsView: View {

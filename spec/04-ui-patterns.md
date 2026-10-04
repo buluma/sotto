@@ -26,7 +26,7 @@ Design philosophy: **Simple, native, stays out of the way.** No chrome, no clutt
 ## Brand And Asset Sources
 
 - In-app brand surfaces use the canonical parakeet PNG through `BreathWaveIcon.brandMark` and `BreathWaveLogo`; see `docs/brand-identity.md` for sizing, tinting, and usage rules.
-- App chrome uses `DesignSystem.Colors.accent`, the warm coral-orange brand accent (`#E86B3B` in the light palette). System colors carry the rest of the UI.
+- App chrome uses `DesignSystem.Colors.accent`, the adaptive portal-green accent. Cyan is reserved for secondary portal highlights, with deep blue-green dark surfaces and mint-tinted text.
 - Promotional and editorial design uses `brand-assets/`: the recolorable `parakeet-line.svg`, Pop palette, composition templates, and generated PNG exports. The Pop palette is for campaigns, posters, social assets, and launch moments; it must not leak into app chrome.
 
 ---
@@ -138,7 +138,7 @@ While a Library refresh or Load More query is pending, a successful single-item 
 
 Thumbnail cards show transcription failure, stopped transcription, and pending background transcription independently of routine retained-audio state. Queued and running finalization both use the persisted `processing` status and the existing **Transcribing** presentation, never a completed claim. A stale or partial snippet must not hide a card's non-completed status. Missing audio, recovery, and partial-capture warnings remain explicit rather than being compressed into a routine state icon.
 
-When a grid card has locally cached or successfully loaded remote artwork, that real artwork remains first. A remote image that is still loading keeps its loading surface. When no artwork exists or remote loading fails, the 16:9 area shows a static Seed of Life cover derived only from the transcription UUID and fixed v2 recipe. Seven equal circles share one night field; the UUID rotates the figure, lights one or two rings, and shifts sage ink by at most 12°. The cover does not encode source, status, audio, transcript, confidence, title, duration, or time, and it does not use brand coral or a gold nucleus. The cover has no text or animation, so existing title, duration, source, and lifecycle chrome stay legible and authoritative outside the artwork. The construction and input rules are recorded in [`docs/design/2026-09-15-cover-geometry/philosophy.md`](../docs/design/2026-09-15-cover-geometry/philosophy.md). List rows retain their existing snippet-first preview behavior, including while a meeting with saved transcript text is being retranscribed.
+When a grid card has locally cached or successfully loaded remote artwork, that real artwork remains first. A remote image that is still loading keeps its loading surface. When no artwork exists or remote loading fails, the 16:9 area shows a static Seed of Life cover derived only from the transcription UUID and fixed v2 recipe. Seven equal circles share one night field; the UUID rotates the figure, lights one or two rings, and shifts sage ink by at most 12°. The cover does not encode source, status, audio, transcript, confidence, title, duration, or time, and it does not use the app accent or a gold nucleus. The cover has no text or animation, so existing title, duration, source, and lifecycle chrome stay legible and authoritative outside the artwork. The construction and input rules are recorded in [`docs/design/2026-09-15-cover-geometry/philosophy.md`](../docs/design/2026-09-15-cover-geometry/philosophy.md). List rows retain their existing snippet-first preview behavior, including while a meeting with saved transcript text is being retranscribed.
 
 Favorited Library items show a small filled amber star beside their title in grid, list, and transcript detail. It is a passive status marker with a **Favorite** tooltip and accessibility label; the existing item menu keeps the Add/Remove Favorite action. Unfavorited items show no empty star. The marker applies consistently to meetings, imports, and URLs without changing favorite persistence or filtering.
 
@@ -191,7 +191,7 @@ Meeting rename publishes the row returned by its database write; a missing recor
 
 Library offers a `Select Many...` secondary action when there are visible rows. Selection mode keeps actions in a contextual bar above the content: `Cancel`, `Select All` (which targets the loaded rows only, so deletion never reaches unloaded records), `Clear`, `Remove Audio Only...` for selected meetings with stored audio, and `Delete Items...` / `Delete Meetings...` for full deletion.
 
-Selected cards and meeting rows use the app accent/coral selected state. Destructive red is reserved for confirmation actions and destructive menu items, not for the selected state itself. Meeting full deletion removes the meeting row, transcript, stored audio, notes, AI results, and chats when those optional artifacts exist. `Remove Audio Only...` removes only stored meeting audio and leaves the transcript plus optional notes, AI results, and chats. Confirmation copy must state that playback and retranscription become unavailable unless the user saved a copy of the audio.
+Selected cards and meeting rows use the app accent selected state. Destructive red is reserved for confirmation actions and destructive menu items, not for the selected state itself. Meeting full deletion removes the meeting row, transcript, stored audio, notes, AI results, and chats when those optional artifacts exist. `Remove Audio Only...` removes only stored meeting audio and leaves the transcript plus optional notes, AI results, and chats. Confirmation copy must state that playback and retranscription become unavailable unless the user saved a copy of the audio.
 
 The dedicated Meetings workspace mirrors the Library meeting cleanup model for Recent Meetings, using the same top contextual action bar, keyboard handling, and confirmation copy.
 
@@ -436,7 +436,7 @@ coexist.
 - [seed of life]: Sacred geometry bloom — six coral petal circles growing in place from tiny vertex dots into a full Seed of Life, rotating continuously at ~10s/rev. Rendered by `FormatterVisualView`.
   - 6-fold symmetry matches the `.processing` Merkaba's six vertex lights so the cross-fade reads as "six things re-composing."
   - Petal outer edges reach `size * 0.44`, visually close to the Merkaba's outer-vertex radius of `size * 0.423` — same bounding ring on both states.
-  - Color: `DesignSystem.Colors.accent` (warm coral), signaling a different kind of work than the white `.processing` spinner.
+  - Color: `DesignSystem.Colors.accent` (portal green), signaling a different kind of work than the white `.processing` spinner.
   - Phases: Bud (0 → 0.15s, dots ignite) → Bloom (0.15 → 1.00s, petals grow in place) → Hold (1.00s → ∞, flower rotates and breathes until the formatter returns).
 - Pill size: same 46×46 as Processing — the state change is a hue/geometry evolution, not a resize.
 - Triggered by the `.sottoAIFormatterDidStart` notification (posted from `DictationService.formatTranscriptIfNeeded`) which the `DictationFlowCoordinator` observes to promote the overlay state from `.processing` → `.formatting`. Terminal transitions (cancellation, success, error) take precedence — the coordinator only promotes when currently in `.processing`.
@@ -592,7 +592,7 @@ Floating panel opened from the meeting recording pill. Shows live notes, live tr
 - **Dual audio level meters** — mic and system audio levels (visual feedback that both streams are capturing)
 - **Tabs** — Notes / Transcript / Ask, with ⌘1 / ⌘2 / ⌘3 shortcuts; Notes and Transcript are plain labels, Ask adds a streaming dot while `chatViewModel.isStreaming` and collapses that dot into the tooltip at narrow width
 - **Notes pane** — plaintext editor with slash commands, debounced auto-save through `MeetingRecordingService.updateNotes(_:)`, soft-cap warning at 7,500 words, and lock-file crash recovery
-- **Transcript pane** — scrolling live preview grouped into reading paragraphs, with one source label and timestamp per paragraph ([Me] = mic, [Them] = system audio); lag notice appears when preview chunks fall behind or are dropped. While listening, the empty state uses the slowly rotating seed-of-life. When live transcription is off (user opt-out or the live engine cannot preview), that mark sits still at rest pose with faded coral (no rotation or breathing pulse) so it does not read as "listening". Pause remains a full-color freeze of the living animation. "Live preview unavailable" (warm-up/runtime failure) keeps the living rosette. The Notes pane also keeps the living rosette because the meeting is still recording.
+- **Transcript pane** — scrolling live preview grouped into reading paragraphs, with one source label and timestamp per paragraph ([Me] = mic, [Them] = system audio); lag notice appears when preview chunks fall behind or are dropped. While listening, the empty state uses the slowly rotating seed-of-life. When live transcription is off (user opt-out or the live engine cannot preview), that mark sits still at rest pose with a faded accent (no rotation or breathing pulse) so it does not read as "listening". Pause remains a full-color freeze of the living animation. "Live preview unavailable" (warm-up/runtime failure) keeps the living rosette. The Notes pane also keeps the living rosette because the meeting is still recording.
 - **Ask pane** — live chat against the rolling transcript using the configured LLM provider; follow-up state is handed off after finalization
 - **Mute control** — meeting-local microphone mute in the header, separate from pause (system audio keeps recording). Hidden until mute can be toggled, except when Start meetings muted armed the session: then it is visible and disabled during `.starting` and becomes tappable once the microphone is ready.
 - **Stop button** — stops recording, triggers batch transcription, navigates to result
@@ -1130,7 +1130,7 @@ The Discover item is **not** part of the regular sidebar `List`. When `showDisco
 
 Card anatomy:
 - 28×28pt accent-tinted icon square (item.icon or "sparkles" fallback)
-- Title: caption.weight(.semibold), 2-line limit
+- Full item body: caption with natural wrapping; the rotating line is readable without opening Discover
 - Background: accentLight when selected, surfaceElevated on hover, clear otherwise
 - Accent strokeBorder (0.5pt, 40%) when selected
 - Tooltip: item.body
@@ -1235,44 +1235,46 @@ Buttons use the `sottoAction(_:)` modifier (in `Views/Components/SottoActionStyl
 
 | Role | Treatment | Usage |
 |------|-----------|-------|
-| `.primary` | bordered, brand coral tint | Primary action, non-prominent placement |
-| `.primaryProminent` | borderedProminent, brand coral tint | The single highest-priority CTA on a sheet/surface |
+| `.primary` | bordered, brand accent tint | Primary action, non-prominent placement |
+| `.primaryProminent` | borderedProminent, brand accent tint | The single highest-priority CTA on a sheet/surface |
 | `.secondary` | bordered, system label tint (neutral) | Default action weight; most chrome |
 | `.destructive` | bordered, system red tint | Irreversible action, non-prominent |
 | `.destructiveProminent` | borderedProminent, system red tint | Highest-priority irreversible action (e.g. "Delete account?") |
 | `.subtle` | borderless, secondary label color | Inline links, dense rows |
 
-Hard rules — coral is brand, not chrome:
+Hard rules — the accent is for purposeful emphasis, not blanket chrome:
 
 - One `.primary*` per surface. If you have two equally-weighted CTAs, both are `.secondary`.
 - Pair `.destructive*` with `Button(role: .destructive)` so VoiceOver carries the role too.
-- Never re-tint the SwiftUI environment with `.tint(coral)` at NSHostingView roots or sheet wrappers — `sottoAction` is the only place coral cascades from. Cascading tint overrides destructive role styling and erases the hierarchy `sottoAction` exists to provide.
+- Never re-tint the SwiftUI environment at NSHostingView roots or sheet wrappers — `sottoAction` is the intended place for action tint. Cascading tint overrides destructive role styling and erases the hierarchy `sottoAction` exists to provide.
 
 ### Colors
 
 | Token | Value | Usage |
 |-------|-------|-------|
 | **Brand** | | |
-| `accent` | warm coral-orange (`#E86B3B` light / `#FF8A5C` dark) | The single primary CTA per surface, recording state, brand mark |
-| `accentLight` | coral 92% / coral 12% | Hover/selection backgrounds tied to accent |
-| `accentDark` | deeper coral | Pressed states, accent variants |
+| `accent` | deep green (light) / acid green (dark) | The single primary CTA per surface, recording state, brand mark |
+| `accentLight` | pale mint (light) / translucent acid green (dark) | Hover/selection backgrounds tied to accent |
+| `accentDark` | deep forest (light) / portal teal (dark) | Pressed states, accent variants |
+| `portalCyan` | deep teal (light) / bright cyan (dark) | Secondary portal highlights and decorative edges |
+| `onAccent` | white (light) / deep green (dark) | Text and symbols on filled primary actions |
 | **Surfaces** | | |
-| `background` | warm off-white / near-black | App-level background |
-| `surface` | white / dark gray | Cards, sheet content |
-| `surfaceElevated` | warm cream / lighter dark | Elevated surfaces, hover targets |
-| `cardBackground` | white / dark gray | Card body fill |
-| `rowHoverBackground` | warm cream / primary 6% | List/row hover state |
+| `background` | pale mint / deep blue-green | App-level background |
+| `surface` | soft white / dark teal | Cards, sheet content |
+| `surfaceElevated` | mint / lifted blue-green | Elevated surfaces, hover targets |
+| `cardBackground` | soft white / dark teal | Card body fill |
+| `rowHoverBackground` | pale mint / primary 6% | List/row hover state |
 | **Text** | | |
-| `textPrimary` | near-black / white | Primary copy |
-| `textSecondary` | mid-gray | Subtitles, captions |
-| `textTertiary` | light-mid gray | Disabled, hints |
-| `tintNeutral` | system label color | `.secondary` button tint (coral-free chrome) |
+| `textPrimary` | deep green-black / soft mint-white | Primary copy |
+| `textSecondary` | green-gray / mint-gray | Subtitles, captions |
+| `textTertiary` | muted green-gray | Disabled, hints |
+| `tintNeutral` | system label color | `.secondary` button tint (neutral chrome) |
 | **Semantic** | | |
 | `successGreen` | green | Confirmations, completion |
 | `warningAmber` | amber | Cautions, "catching up" |
 | `errorRed` | red | Destructive actions, errors |
 | **Lines** | | |
-| `border` | warm gray / mid-dark gray | Card borders, dividers |
+| `border` | sage gray / dark teal | Card borders, dividers |
 | `divider` | softer warm gray | Inline dividers |
 | **Pills & overlays** | | |
 | `pillBackground` | black 70% | Dictation/idle pill backing |

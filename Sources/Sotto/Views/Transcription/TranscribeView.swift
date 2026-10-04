@@ -164,8 +164,12 @@ struct TranscribeView: View {
                     }
 
                     Text(Self.inspirationQuote)
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(.tertiary)
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(DesignSystem.Colors.accent)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .background(Capsule().fill(DesignSystem.Colors.accentLight))
+                        .overlay(Capsule().strokeBorder(DesignSystem.Colors.accent.opacity(0.18), lineWidth: 0.7))
                         .multilineTextAlignment(.center)
                 }
 
@@ -187,6 +191,21 @@ struct TranscribeView: View {
             // Card background — matches PortalDropZone styling
             RoundedRectangle(cornerRadius: DesignSystem.Layout.dropZoneCornerRadius)
                 .fill(DesignSystem.Colors.surfaceElevated)
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignSystem.Layout.dropZoneCornerRadius)
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [
+                                    DesignSystem.Colors.accent.opacity(0.30),
+                                    DesignSystem.Colors.portalCyan.opacity(0.16),
+                                    DesignSystem.Colors.accentDark.opacity(0.20),
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 0.8
+                        )
+                )
                 .cardShadow(DesignSystem.Shadows.cardRest)
 
             VStack(spacing: DesignSystem.Spacing.md) {

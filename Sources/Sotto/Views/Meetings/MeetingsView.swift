@@ -1490,31 +1490,35 @@ private struct MeetingsInlineState: View {
     let action: (() -> Void)?
 
     var body: some View {
-        HStack(alignment: .center, spacing: DesignSystem.Spacing.md) {
-            Image(systemName: icon)
-                .font(.system(size: 18, weight: .medium))
-                .foregroundStyle(DesignSystem.Colors.textTertiary)
-                .frame(width: 24)
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+            HStack(alignment: .top, spacing: DesignSystem.Spacing.md) {
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(DesignSystem.Colors.portalCyan)
+                    .frame(width: 24)
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title)
-                    .font(DesignSystem.Typography.body.weight(.semibold))
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-                    .lineLimit(2)
-                Text(detail)
-                    .font(DesignSystem.Typography.bodySmall)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(DesignSystem.Typography.body.weight(.semibold))
+                        .foregroundStyle(DesignSystem.Colors.textPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(detail)
+                        .font(DesignSystem.Typography.bodySmall)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
             }
 
-            Spacer(minLength: DesignSystem.Spacing.md)
-
             if let actionTitle, let actionIcon, let action {
-                Button(action: action) {
-                    Label(actionTitle, systemImage: actionIcon)
+                HStack {
+                    Spacer(minLength: 0)
+                    Button(action: action) {
+                        Label(actionTitle, systemImage: actionIcon)
+                    }
+                    .sottoAction(.secondary)
+                    .fixedSize()
                 }
-                .sottoAction(.secondary)
-                .fixedSize()
             }
         }
         .padding(DesignSystem.Spacing.md)
