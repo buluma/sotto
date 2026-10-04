@@ -2,9 +2,7 @@
 
 > Status: **ACTIVE PRODUCTION BRIEF** — source of truth for the demo/video
 > script. Current product, privacy, engine, and release claims remain governed
-> by `README.md` and `spec/README.md`; revalidate them before publishing. The
-> TypeScript mirror at `marketing/video/src/content/script.ts` must stay aligned
-> with any script changes in this document.
+> by `README.md` and `spec/README.md`; revalidate them before publishing.
 
 ## Locked Hook
 
@@ -174,7 +172,6 @@ The marketing-production pipeline favors local, free, and open tooling where pra
 | Layer | Tool | Cost |
 |---|---|---|
 | Native app capture | Screen Studio | Commercial; verify current pricing before purchase |
-| Composition + render | Remotion (`marketing/video/`) | Free for solo |
 | Voice (default) | **Kokoro-82M** via `kokoro-js` — MIT licensed, pure Node, ~80 MB | Free, local |
 | Voice (premium upgrade) | **Higgs Audio V2** via Python — optional multi-speaker render path | Free, local |
 | Voice (future) | **F5-TTS** voice clone of the actual founder's voice from a 5-15s reference | Free, local |
@@ -196,7 +193,7 @@ The marketing-production pipeline favors local, free, and open tooling where pra
 
 ## Iteration Discipline
 
-Every change to copy lives here first. Then `marketing/video/src/content/script.ts` is updated to match. Then voices are regenerated (`bun run voice`, or `bun run voice:hq` for the Higgs upgrade). Then videos are re-rendered. This is a one-way flow: **docs → code → audio → video**. Never edit a `.mp4` directly.
+Every change to copy lives here first. Then voices are regenerated, then videos are re-rendered. This is a one-way flow: **docs → audio → video**. Never edit a `.mp4` directly.
 
 The local TTS choice is deliberate: regeneration is free and offline, so iteration cost is zero. Tweaking a single word in a VO line does not cost an API call or a recording session — it costs about a second of CPU time.
 

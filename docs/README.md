@@ -11,10 +11,10 @@ Start with the [spec index](../spec/README.md) for product behavior, release cha
 | Build, package or release | [Distribution](distribution.md), [human QA](human-qa-guide.md), [release smoke](release-demo-smoke.md) |
 | Telemetry or local diagnostics | [Telemetry](telemetry.md), [privacy contract](../spec/contracts/telemetry-v1.md), [offline audio-log queries](local-audio-diagnostics-query.md) |
 | Brand and UI | [UI patterns](../spec/04-ui-patterns.md), [brand identity](brand-identity.md), [brand assets](../brand-assets/README.md) |
-| Planned or unfinished work | [Plan status board](../plans/README.md), [docs/plans](plans/) |
-| Dated verification | [QA packages](qa/), [audits](audits/) |
+| Planned or unfinished work | [docs/plans](plans/) |
+| Dated verification | [QA packages](qa/) |
 | Proposals and historical context | [Research](research/), [historical archive](historical/README.md) |
 
 ADRs preserve the reason for a decision; explicit amendments override older implementation descriptions. Active specs and contracts describe intended current behavior, with code/tests checked when they disagree. A proposal, old plan checkbox or accepted strategy does not establish shipped capability. Dated QA evidence applies only to its recorded candidate and environment.
 
-The [2026-09-07 documentation audit](audits/2026-09-07-documentation-alignment.md) records the current alignment pass. Its [follow-up ideas](research/2026-09-07-documentation-audit-followups.md) are separate from accepted decisions and release requirements.
+The [documentation audit follow-up ideas](research/2026-09-07-documentation-audit-followups.md) are separate from accepted decisions and release requirements.
