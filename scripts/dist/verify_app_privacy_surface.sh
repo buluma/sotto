@@ -5,6 +5,7 @@ APP_PATH="${1:-dist/Sotto.app}"
 EXPECTED_BUNDLE_ID="${EXPECTED_BUNDLE_ID:-com.sotto.Sotto}"
 EXPECTED_TEAM_ID="${EXPECTED_TEAM_ID:-FYAF2ZD7RM}"
 EXPECTED_AUTHORITY="${EXPECTED_AUTHORITY:-Developer ID Application: Daniel Moon (FYAF2ZD7RM)}"
+ALLOW_ADHOC_SIGNING="${ALLOW_ADHOC_SIGNING:-0}"
 
 fail() {
   echo "error: $*" >&2
@@ -49,13 +50,22 @@ if ! codesign -d --xml --entitlements - "$APP_PATH" >"$ENTITLEMENTS_PLIST" 2>"$C
 fi
 
 CODESIGN_DETAILS="$(codesign -dv --verbose=4 "$APP_PATH" 2>&1)"
-if ! grep -Fq "TeamIdentifier=$EXPECTED_TEAM_ID" <<<"$CODESIGN_DETAILS"; then
-  echo "$CODESIGN_DETAILS" >&2
-  fail "Unexpected signing team. Expected TeamIdentifier=$EXPECTED_TEAM_ID"
-fi
-if ! grep -Fq "Authority=$EXPECTED_AUTHORITY" <<<"$CODESIGN_DETAILS"; then
-  echo "$CODESIGN_DETAILS" >&2
-  fail "Unexpected signing authority. Expected Authority=$EXPECTED_AUTHORITY"
+if [[ "$ALLOW_ADHOC_SIGNING" == "1" ]]; then
+  if ! grep -Fq "Signature=adhoc" <<<"$CODESIGN_DETAILS" \
+    || ! grep -Fq "TeamIdentifier=not set" <<<"$CODESIGN_DETAILS" \
+    || grep -Fq "Authority=" <<<"$CODESIGN_DETAILS"; then
+    echo "$CODESIGN_DETAILS" >&2
+    fail "Expected an ad-hoc signature with no team or signing authority"
+  fi
+else
+  if ! grep -Fq "TeamIdentifier=$EXPECTED_TEAM_ID" <<<"$CODESIGN_DETAILS"; then
+    echo "$CODESIGN_DETAILS" >&2
+    fail "Unexpected signing team. Expected TeamIdentifier=$EXPECTED_TEAM_ID"
+  fi
+  if ! grep -Fq "Authority=$EXPECTED_AUTHORITY" <<<"$CODESIGN_DETAILS"; then
+    echo "$CODESIGN_DETAILS" >&2
+    fail "Unexpected signing authority. Expected Authority=$EXPECTED_AUTHORITY"
+  fi
 fi
 
 require_entitlement_true() {

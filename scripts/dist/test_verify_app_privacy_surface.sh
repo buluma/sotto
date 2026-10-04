@@ -32,7 +32,11 @@ if [[ " $* " == *" --entitlements "* ]]; then
 </plist>
 PLIST
 else
-  printf '%s\n' 'TeamIdentifier=TESTTEAM' 'Authority=Fixture Authority' >&2
+  if [[ "${FIXTURE_ADHOC:-0}" == "1" ]]; then
+    printf '%s\n' 'Signature=adhoc' 'TeamIdentifier=not set' >&2
+  else
+    printf '%s\n' 'TeamIdentifier=TESTTEAM' 'Authority=Fixture Authority' >&2
+  fi
 fi
 SCRIPT
 chmod +x "$FAKE_BIN/codesign"
@@ -78,15 +82,19 @@ run_verifier() {
     EXPECTED_BUNDLE_ID="com.sotto.fixture" \
     EXPECTED_TEAM_ID="TESTTEAM" \
     EXPECTED_AUTHORITY="Fixture Authority" \
+    ALLOW_ADHOC_SIGNING="${2:-0}" \
+    FIXTURE_ADHOC="${3:-0}" \
     "$VERIFY_SCRIPT" "$1" 2>&1
 }
 
 assert_pass() {
   local label="$1"
   local app_path="$2"
+  local allow_adhoc="${3:-0}"
+  local fixture_adhoc="${4:-0}"
   local output
 
-  if ! output="$(run_verifier "$app_path")"; then
+  if ! output="$(run_verifier "$app_path" "$allow_adhoc" "$fixture_adhoc")"; then
     printf 'FAIL: %s should pass\n%s\n' "$label" "$output" >&2
     exit 1
   fi
@@ -100,9 +108,11 @@ assert_fail_contains() {
   local label="$1"
   local app_path="$2"
   local expected="$3"
+  local allow_adhoc="${4:-0}"
+  local fixture_adhoc="${5:-0}"
   local output
 
-  if output="$(run_verifier "$app_path")"; then
+  if output="$(run_verifier "$app_path" "$allow_adhoc" "$fixture_adhoc")"; then
     printf 'FAIL: %s should fail\n%s\n' "$label" "$output" >&2
     exit 1
   fi
@@ -132,6 +142,11 @@ ATS_OVERPERMISSIVE_DOMAIN_ENTRY='{"NSAllowsLocalNetworking": true, "NSExceptionD
 
 assert_pass "exact approved ATS surface" "$(make_app allowed "$ATS_OK")"
 assert_pass "arbitrary-loads keys explicitly false" "$(make_app allowed_false_explicit "$ATS_ARBITRARY_EXPLICITLY_FALSE")"
+assert_pass "explicit ad-hoc signing mode" "$(make_app adhoc "$ATS_OK")" 1 1
+assert_fail_contains "ad-hoc signing rejected by default" "$(make_app adhoc_default "$ATS_OK")" \
+  "Unexpected signing team" 0 1
+assert_fail_contains "Developer ID rejected in ad-hoc mode" "$(make_app developer_id_adhoc_mode "$ATS_OK")" \
+  "Expected an ad-hoc signature" 1 0
 
 assert_fail_contains \
   "NSAppTransportSecurity key missing entirely" \

@@ -11,7 +11,7 @@ DMG_PATH="${2:-$ROOT_DIR/dist/Sotto.dmg}"
 # No hardened runtime is requested for this personal ad-hoc build.
 codesign --force --deep --sign - --entitlements "$ROOT_DIR/scripts/dist/Sotto.entitlements" "$APP_PATH"
 codesign --verify --deep --strict "$APP_PATH"
-"$ROOT_DIR/scripts/dist/verify_app_privacy_surface.sh" "$APP_PATH"
+ALLOW_ADHOC_SIGNING=1 "$ROOT_DIR/scripts/dist/verify_app_privacy_surface.sh" "$APP_PATH"
 VERIFY_CODE_SIGNATURES=1 "$ROOT_DIR/scripts/dist/verify_meeting_echo_assets.sh" "$APP_PATH"
 
 mkdir -p "$(dirname "$DMG_PATH")"
