@@ -10,16 +10,13 @@
 
 > **Dictate. Transcribe. Record meetings. One Mac app.**
 
-This hook leads with the **three-modes scope**. Privacy and local-first remain
-supporting claims in this specific demo structure; the product itself treats
-them as core commitments.
+This hook leads with the **three-modes scope**. Privacy and local-first remain supporting claims in this specific demo structure; the product itself treats them as core commitments.
 
 ## Locked Supporting Line
 
 > **Free. Open source. Built for Apple Silicon.**
 
-Three short, verifiable claims: the current public build is free and open
-source, and the supported runtime is Apple Silicon.
+Three short, verifiable claims: the current public build is free and open source, and the supported runtime is Apple Silicon.
 
 ## Voice & Tone
 
@@ -46,9 +43,7 @@ source, and the supported runtime is Apple Silicon.
 Render target: 1920×1080 @ 60fps. Voice via Kokoro-82M by default (or Higgs Audio V2 for premium renders) — both 100% local.
 
 ### 0:00 – 0:03 · Cold open (no narration)
-**Visual:** Tight shot of hands on MacBook keyboard. Fn key tap (visible). Cursor blinking in a Slack thread. Mid-sentence dictation appearing live, character by character.
-**Spoken in the recording:** *"Hey team, can you review the new pull request by end of day?"*
-**Sound:** quiet keyboard tap, soft synth swell rising.
+**Visual:** Tight shot of hands on MacBook keyboard. Fn key tap (visible). Cursor blinking in a Slack thread. Mid-sentence dictation appearing live, character by character. **Spoken in the recording:** *"Hey team, can you review the new pull request by end of day?"* **Sound:** quiet keyboard tap, soft synth swell rising.
 
 ### 0:03 – 0:06 · Hook
 **Visual:** Cut to paper-cream background. Coral parakeet mark fades in, settles with a gentle scale spring. Title text reveals in two beats:
@@ -160,9 +155,7 @@ Sotto brings system-wide dictation, file/media transcription, and meeting record
 
 ### Comparison table
 
-No static competitor table is canonical. Competitor features, licenses, and
-prices change too quickly for an active product document. Build and date-stamp
-a source-backed comparison at publication time if a campaign needs one.
+No static competitor table is canonical. Competitor features, licenses, and prices change too quickly for an active product document. Build and date-stamp a source-backed comparison at publication time if a campaign needs one.
 
 ### Body paragraph
 Sotto captures meetings with system audio, microphone audio, or both, transcribes locally, and keeps the result alongside a live notepad — while also handling system-wide dictation and file/media transcription. The three modes share one scheduler/runtime control plane so meeting recording and dictation can be coordinated safely. Parakeet v3 is the default for English and supported European languages; English-only Parakeet builds cover timestamped exports and readable live preview; Whisper handles broader-language files and retranscription; Nemotron is Beta live preview; and Cohere is local batch plain text.
@@ -176,8 +169,7 @@ Sotto captures meetings with system audio, microphone audio, or both, transcribe
 
 ## Production Stack
 
-The marketing-production pipeline favors local, free, and open tooling where
-practical. Product privacy claims are governed separately by the README/specs.
+The marketing-production pipeline favors local, free, and open tooling where practical. Product privacy claims are governed separately by the README/specs.
 
 | Layer | Tool | Cost |
 |---|---|---|

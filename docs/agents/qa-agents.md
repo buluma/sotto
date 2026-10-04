@@ -5,12 +5,7 @@
 
 ## Why this doc
 
-Every quarter someone pitches an "AI does QA" tool. Most are web-first or
-mobile-first. Sotto is a menu-bar macOS app with a non-activating
-`KeylessPanel` overlay, global dictation hotkeys, and TCC-gated
-microphone/screen-recording flows. The general AI-QA frontier doesn't speak
-our shape yet. This doc tracks who's close, where the real gaps are, and the
-hybrid 2026 play that actually works for us today.
+Every quarter someone pitches an "AI does QA" tool. Most are web-first or mobile-first. Sotto is a menu-bar macOS app with a non-activating `KeylessPanel` overlay, global dictation hotkeys, and TCC-gated microphone/screen-recording flows. The general AI-QA frontier doesn't speak our shape yet. This doc tracks who's close, where the real gaps are, and the hybrid 2026 play that actually works for us today.
 
 ## Landscape at a glance
 
@@ -26,16 +21,10 @@ hybrid 2026 play that actually works for us today.
 
 ### Backend / contract
 
-Mostly N/A for Sotto — we're not a REST product. Two slivers worth a
-beat:
+Mostly N/A for Sotto — we're not a REST product. Two slivers worth a beat:
 
-- **Schemathesis** (Apache-2.0, property-based fuzzing from OpenAPI) on the
-  Cloudflare Worker telemetry endpoint and feedback Pages Function would
-  catch the kind of allowlist drift that hit us per the
-  `feedback_telemetry_allowlist.md` memory.
-- **Prism** mocks of the LLM-provider HTTP shapes (OpenAI-compatible /
-  Anthropic / LM Studio / Ollama) would pin contracts MP consumes from
-  `OpenAICompatibleProvider`. Useful but not urgent.
+- **Schemathesis** (Apache-2.0, property-based fuzzing from OpenAPI) on the Cloudflare Worker telemetry endpoint and feedback Pages Function would catch the kind of allowlist drift that hit us per the `feedback_telemetry_allowlist.md` memory.
+- **Prism** mocks of the LLM-provider HTTP shapes (OpenAI-compatible / Anthropic / LM Studio / Ollama) would pin contracts MP consumes from `OpenAICompatibleProvider`. Useful but not urgent.
 
 ### Native macOS app QA — the gap frontier
 
@@ -52,76 +41,32 @@ beat:
 
 ## What blocks "describe a flow → agent verifies it" for Sotto today
 
-These are the seven concrete blockers no off-the-shelf tool solves end-to-end
-in 2026:
+These are the seven concrete blockers no off-the-shelf tool solves end-to-end in 2026:
 
-1. **Dictation overlay is a non-activating `KeylessPanel`.** XCUITest can
-   address it via the AX tree, but `canBecomeKey == false` plus
-   `.activeAlways` tracking-area workarounds make SwiftUI gestures and
-   inspectors flaky.
-2. **Global hotkeys, especially Fn and Fn+key chords.** XCUITest cannot generate
-   `CGEventTap`-level Fn presses outside the app under test. Hammerspoon's
-   `hs.eventtap` is the only reliable simulator — or bind to F18/F19 via
-   ADR-009 so a single keypress works.
-3. **TCC bootstrapping in CI.** Microphone, Accessibility, Screen Recording,
-   Input Monitoring all gate dictation + meeting recording. CI agents need a
-   pre-seeded TCC.db or a signed pkg with PPPC profiles. Nothing ships this
-   for you.
-4. **Menu-bar-only app** (`NSStatusItem`) — Appium and Computer Use can both
-   click it; Maestro/XCUITestAgent/AgentSkill don't target this surface.
-5. **Snapshot drift** — `swift-snapshot-testing` is the right tool but font
-   AA, locale, and animation timing differ between local Mac and CI VMs.
-   Need a single dedicated runner with pinned macOS + locale + font set.
-6. **Drag-drop into the file-transcription drop zone.** XCUITest's drag-drop
-   is documented flaky; Appium-mac2 has open issues; AX trees expose targets
-   but `NSDraggingSession` isn't fully scriptable. Hammerspoon synthesizes
-   drag events; AX-tree agents can't.
-7. **Audio I/O verification** — the actual point of Sotto. No AI
-   testing framework verifies dictation produces correct text. Our existing
-   `swift run sotto-cli transcribe` against fixtures is the right
-   primitive; the gap is wiring an agent loop on top (record → transcribe →
-   assert WER under threshold).
+1. **Dictation overlay is a non-activating `KeylessPanel`.** XCUITest can address it via the AX tree, but `canBecomeKey == false` plus `.activeAlways` tracking-area workarounds make SwiftUI gestures and inspectors flaky.
+2. **Global hotkeys, especially Fn and Fn+key chords.** XCUITest cannot generate `CGEventTap`-level Fn presses outside the app under test. Hammerspoon's `hs.eventtap` is the only reliable simulator — or bind to F18/F19 via ADR-009 so a single keypress works.
+3. **TCC bootstrapping in CI.** Microphone, Accessibility, Screen Recording, Input Monitoring all gate dictation + meeting recording. CI agents need a pre-seeded TCC.db or a signed pkg with PPPC profiles. Nothing ships this for you.
+4. **Menu-bar-only app** (`NSStatusItem`) — Appium and Computer Use can both click it; Maestro/XCUITestAgent/AgentSkill don't target this surface.
+5. **Snapshot drift** — `swift-snapshot-testing` is the right tool but font AA, locale, and animation timing differ between local Mac and CI VMs. Need a single dedicated runner with pinned macOS + locale + font set.
+6. **Drag-drop into the file-transcription drop zone.** XCUITest's drag-drop is documented flaky; Appium-mac2 has open issues; AX trees expose targets but `NSDraggingSession` isn't fully scriptable. Hammerspoon synthesizes drag events; AX-tree agents can't.
+7. **Audio I/O verification** — the actual point of Sotto. No AI testing framework verifies dictation produces correct text. Our existing `swift run sotto-cli transcribe` against fixtures is the right primitive; the gap is wiring an agent loop on top (record → transcribe → assert WER under threshold).
 
 ## The 2026 hybrid play
 
-For a Mac menu-bar app with global hotkeys and non-activating panels, the AI
-QA frontier is **12–18 months from a turnkey product**. The right move is a
-four-layer hybrid:
+For a Mac menu-bar app with global hotkeys and non-activating panels, the AI QA frontier is **12–18 months from a turnkey product**. The right move is a four-layer hybrid:
 
-1. **CLI as the primary verification surface.** `sotto-cli` is already
-   semver-tracked (see `Sources/CLI/CHANGELOG.md`). Most behavior changes
-   can be asserted headlessly through it.
-2. **`swift-snapshot-testing` on a pinned CI Mac** for the design-system
-   surfaces (`AssistantHead`, idle pill, dictation overlay, meetings panel).
-   `SottoViewModels` is already separated and snapshot-test-shaped.
-3. **`mcp-server-macos-use` + Claude Code** for exploratory/dogfooding
-   sessions. Closest thing to "describe a flow → agent verifies it" that
-   exists for Mac native today; speaks structured AX trees instead of slow
-   screenshots. ~90 minutes to wire up locally.
-4. **A small Hammerspoon harness** (~200 lines of Lua + osascript) as the
-   stopgap for the things AI agents can't do — Fn holds/chords, drag-drop,
-   menu-bar interaction. Buys 12–18 months until native-Mac AI test agents
-   mature.
+1. **CLI as the primary verification surface.** `sotto-cli` is already semver-tracked (see `Sources/CLI/CHANGELOG.md`). Most behavior changes can be asserted headlessly through it.
+2. **`swift-snapshot-testing` on a pinned CI Mac** for the design-system surfaces (`AssistantHead`, idle pill, dictation overlay, meetings panel). `SottoViewModels` is already separated and snapshot-test-shaped.
+3. **`mcp-server-macos-use` + Claude Code** for exploratory/dogfooding sessions. Closest thing to "describe a flow → agent verifies it" that exists for Mac native today; speaks structured AX trees instead of slow screenshots. ~90 minutes to wire up locally.
+4. **A small Hammerspoon harness** (~200 lines of Lua + osascript) as the stopgap for the things AI agents can't do — Fn holds/chords, drag-drop, menu-bar interaction. Buys 12–18 months until native-Mac AI test agents mature.
 
 ## Watch list
 
-1. **Playwright Test Agents architecture** — even though it's web-only, the
-   `planner / generator / healer` shape is the cleanest 2026 design pattern.
-   When porting to Mac, mirror it: an LLM that planner-explores via
-   `AXUIElement` tree, generator-emits XCUITest, healer-repairs broken
-   queries. Reference impl: [`microsoft/playwright-mcp`](https://github.com/microsoft/playwright-mcp).
-2. **`mediar-ai/mcp-server-macos-use`** — the strongest current-day attempt.
-   Track releases; bundled by Fazm v1.5.0 (Mar 27 2026).
-3. **`l-priebe/XCUITestAgent`** — small enough to read in an evening.
-   Pair-read with **AgentSkill**'s "patch the app to add missing
-   `accessibilityIdentifier`" idea, which directly attacks our
-   DesignSystem-views-have-no-IDs problem.
-4. **Xcode 26 / WWDC 26 announcements.** Apple's own developments in
-   parallel test suites, UI test record/replay, and on-device AI for test
-   authoring will likely shift the floor.
-5. **`OpenAdapt`-class record-replay tools** — when they handle window-drift
-   and modal-popup recovery deterministically, the bash-and-Lua scaffolding
-   in items 3–4 above collapses.
+1. **Playwright Test Agents architecture** — even though it's web-only, the `planner / generator / healer` shape is the cleanest 2026 design pattern. When porting to Mac, mirror it: an LLM that planner-explores via `AXUIElement` tree, generator-emits XCUITest, healer-repairs broken queries. Reference impl: [`microsoft/playwright-mcp`](https://github.com/microsoft/playwright-mcp).
+2. **`mediar-ai/mcp-server-macos-use`** — the strongest current-day attempt. Track releases; bundled by Fazm v1.5.0 (Mar 27 2026).
+3. **`l-priebe/XCUITestAgent`** — small enough to read in an evening. Pair-read with **AgentSkill**'s "patch the app to add missing `accessibilityIdentifier`" idea, which directly attacks our DesignSystem-views-have-no-IDs problem.
+4. **Xcode 26 / WWDC 26 announcements.** Apple's own developments in parallel test suites, UI test record/replay, and on-device AI for test authoring will likely shift the floor.
+5. **`OpenAdapt`-class record-replay tools** — when they handle window-drift and modal-popup recovery deterministically, the bash-and-Lua scaffolding in items 3–4 above collapses.
 
 ## References
 

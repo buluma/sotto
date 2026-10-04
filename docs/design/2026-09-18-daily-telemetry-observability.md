@@ -7,14 +7,9 @@
 > Date: 2026-09-18 (Pacific). Written after the Sparkle/GUI landscape pass
 > and two Fable 5.1 `claude -p` reviews (low + medium).
 
-The question this note answers: **what should we look at every morning, how
-do we look at it without inventing users, and what should interrupt vs.
-narrate?**
+The question this note answers: **what should we look at every morning, how do we look at it without inventing users, and what should interrupt vs. narrate?**
 
-We already have a public dashboard (`/stats`), 5-minute snapshots, daily
-rollups, and a deterministic health reviewer. What we do not have is a
-scheduled *product* briefing: reach, activation, mix, and “what changed,”
-with yesterday plus longer windows, written as a 2-minute HTML file.
+We already have a public dashboard (`/stats`), 5-minute snapshots, daily rollups, and a deterministic health reviewer. What we do not have is a scheduled *product* briefing: reach, activation, mix, and “what changed,” with yesterday plus longer windows, written as a 2-minute HTML file.
 
 ## Verdict
 
@@ -26,47 +21,25 @@ Build a **second artifact**, not a second warehouse.
 | **Briefing** | “Is the product healthy and moving?” Trends, funnels, mix, outliers | Manual D1 archaeology (this week) | `scripts/telemetry-briefing.mjs` → private HTML + JSON + MD |
 | **Live** | “What does the public page say right now?” | `/api/stats` every 5 min | Leave it. The briefing is yesterday’s closed UTC day. |
 
-Three things **page**. Everything else is a two-minute weekday read plus a
-Monday deep. Do not buy PostHog. ADR-012 already chose owning the pipeline;
-the defect is cadence and statistic choice, not missing a vendor.
+Three things **page**. Everything else is a two-minute weekday read plus a Monday deep. Do not buy PostHog. ADR-012 already chose owning the pipeline; the defect is cadence and statistic choice, not missing a vendor.
 
-Fable 5.1 low and medium independently landed on the same split: reviewer
-owns binary/thresholded health; briefing owns trends and judgment; HTML is
-static, self-contained, private first; Sparkle is a **floor**, never DAU;
-no cross-day identity.
+Fable 5.1 low and medium independently landed on the same split: reviewer owns binary/thresholded health; briefing owns trends and judgment; HTML is static, self-contained, private first; Sparkle is a **floor**, never DAU; no cross-day identity.
 
 ## Why this exists
 
-The 2026-09-18 investigation
-([Sparkle DAU](../research/2026-09-18-sparkle-dau-measurement.md),
-[user landscape](../research/2026-09-18-telemetry-user-landscape.md),
-[percentiles/gaps](../research/2026-09-15-telemetry-percentiles-and-observability.md))
-took hours of live D1 + GraphQL and found things a dashboard tile will
-never say out loud:
+The 2026-09-18 investigation ([Sparkle DAU](../research/2026-09-18-sparkle-dau-measurement.md), [user landscape](../research/2026-09-18-telemetry-user-landscape.md), [percentiles/gaps](../research/2026-09-15-telemetry-percentiles-and-observability.md)) took hours of live D1 + GraphQL and found things a dashboard tile will never say out loud:
 
-- Weekday GUI usage is still compounding (sessions +32% vs August weekdays).
-  Sparkle device-days fell 1,780 → ~1,130 because the 0.8.x firehose resets
-  Sparkle’s ~24h last-check, not because 40% of users left.
-- T0 activation (same-process `dictation_completed` after
-  `onboarding_completed`) decayed **45.2% Jun → 32.8% Sep**. That is the
-  product leak. Public 30d agrees (34.2%).
-- Screen recording is hostile (606 denied / 19 granted in Sep). Mic is fine.
-  Do not mix those funnels.
-- ~20–35% of Sparkle devices are invisible to GUI (opt-out + allowlist +
-  failed POSTs). Absolute GUI counts are a subset.
-- Two GB 0.8.4 sessions produced 16k lifecycle start/success events and
-  would have corrupted any un-capped “event volume” chart.
-- `dictation_failed` CancellationError is **0.7.3**, not 0.8.x. Version
-  split is mandatory.
-- Means lie. Dictation duration mean 26s vs p50 11s. Onboarding duration
-  mean is hours because people leave the window open.
-- License/trial/purchase events are allowlisted and **unwired**. Zero D1
-  rows, all time.
-- There is still **no pager**. Reviewer is manual. Website `origin/main`
-  has no `.github/workflows` for this.
+- Weekday GUI usage is still compounding (sessions +32% vs August weekdays). Sparkle device-days fell 1,780 → ~1,130 because the 0.8.x firehose resets Sparkle’s ~24h last-check, not because 40% of users left.
+- T0 activation (same-process `dictation_completed` after `onboarding_completed`) decayed **45.2% Jun → 32.8% Sep**. That is the product leak. Public 30d agrees (34.2%).
+- Screen recording is hostile (606 denied / 19 granted in Sep). Mic is fine. Do not mix those funnels.
+- ~20–35% of Sparkle devices are invisible to GUI (opt-out + allowlist + failed POSTs). Absolute GUI counts are a subset.
+- Two GB 0.8.4 sessions produced 16k lifecycle start/success events and would have corrupted any un-capped “event volume” chart.
+- `dictation_failed` CancellationError is **0.7.3**, not 0.8.x. Version split is mandatory.
+- Means lie. Dictation duration mean 26s vs p50 11s. Onboarding duration mean is hours because people leave the window open.
+- License/trial/purchase events are allowlisted and **unwired**. Zero D1 rows, all time.
+- There is still **no pager**. Reviewer is manual. Website `origin/main` has no `.github/workflows` for this.
 
-The briefing’s job is to make that investigation cheap enough to run every
-day, including the traps.
+The briefing’s job is to make that investigation cheap enough to run every day, including the traps.
 
 ## What already exists (do not rebuild)
 
@@ -106,26 +79,19 @@ Proposed addition, after the rollup lands:
 
 Copied from the contract so this spec cannot drift:
 
-- **No persistent user ID.** GUI `session` dies on process exit. Menu bar
-  left up overnight is one session. Relaunch is a new session.
-- Sparkle `session` is SHA-256(coarse IP + full UA including version + UTC
-  date + pepper). It **rotates daily**. Same-day 0.8.6 → 0.8.7 is two
-  fingerprints. Do not add days together.
+- **No persistent user ID.** GUI `session` dies on process exit. Menu bar left up overnight is one session. Relaunch is a new session.
+- Sparkle `session` is SHA-256(coarse IP + full UA including version + UTC date + pepper). It **rotates daily**. Same-day 0.8.6 → 0.8.7 is two fingerprints. Do not add days together.
 - Country is `CF-IPCountry` at ingest, not the client.
 - `ts` GUI = client ISO-8601 GMT. `ts` Sparkle = server now.
-- Audio, transcripts, prompts, filenames, IPs, device identities stay off
-  the wire.
-- Opt-out: default **on**. After disable, only `telemetry_opted_out`.
-  Sparkle still fires.
-- Debug / `0.0.0` / `dev-*` / `swiftpm-*` are transport-ineligible unless
-  `SOTTO_TELEMETRY=1`. Exclude `0.0.0` from every product number.
+- Audio, transcripts, prompts, filenames, IPs, device identities stay off the wire.
+- Opt-out: default **on**. After disable, only `telemetry_opted_out`. Sparkle still fires.
+- Debug / `0.0.0` / `dev-*` / `swiftpm-*` are transport-ineligible unless `SOTTO_TELEMETRY=1`. Exclude `0.0.0` from every product number.
 - CLI `cli_operation` = one session per invocation. Do not add CLI to DAU.
 
 **Forbidden metrics** (they look like PostHog and are fiction here):
 
 - D1 / D7 / D30 retention, returning users, stickiness, new vs dormant.
-- Unique humans ever. (Public `all_time.total_sessions` is distinct
-  **process IDs**, 55k as of Sep 18 — not humans.)
+- Unique humans ever. (Public `all_time.total_sessions` is distinct **process IDs**, 55k as of Sep 18 — not humans.)
 - Cross-day funnels or paths.
 - Session replay, person profiles, experiments, surveys.
 
@@ -135,17 +101,14 @@ Copied from the contract so this spec cannot drift:
 - GUI distinct session = **process-day**, often > devices.
 - Dictating session = process with ≥1 `dictation_completed`.
 - Same-process T0 = the only activation rate that is exact.
-- Dictations-per-session histogram + top-5% share = intensity / power-user
-  dependence (a retention proxy we can actually measure).
+- Dictations-per-session histogram + top-5% share = intensity / power-user dependence (a retention proxy we can actually measure).
 - Version adoption curve ≈ size of the updating base.
 
-Every rate prints its **denominator**. Every Sparkle comparison during a
-release in the last 48h is labeled **measurement hole**, not churn.
+Every rate prints its **denominator**. Every Sparkle comparison during a release in the last 48h is labeled **measurement hole**, not churn.
 
 ### Analyst SQL name traps
 
-Fable and other agents repeatedly invent columns and events. The briefing
-script must use the live names or it will silently return empty:
+Fable and other agents repeatedly invent columns and events. The briefing script must use the live names or it will silently return empty:
 
 | Invented | Live |
 |---|---|
@@ -158,59 +121,32 @@ script must use the live names or it will silently return empty:
 | `meeting_recording_completed` | `meeting_recording_completed` is live; confirm before aliasing |
 | `date(ts)` × GUI session as “one device-day” | Long-lived menu-bar processes span UTC days. Intensity = `date(ts)` × session (**session-days**), not one row per process. |
 
-Unknown `event` **400s the entire batch**. `audio_engine_lifecycle` is on
-website `origin/main` allowlist; a stale local website checkout (this
-machine’s `main` has been 70 commits behind) will not show it. Do not
-conclude “not ingested” from a dirty or behind worktree. Dead allowlist
-peers with no Swift enum: `app_updated`, `paywall_viewed`,
-`llm_summary_used`, `llm_summary_failed`.
+Unknown `event` **400s the entire batch**. `audio_engine_lifecycle` is on website `origin/main` allowlist; a stale local website checkout (this machine’s `main` has been 70 commits behind) will not show it. Do not conclude “not ingested” from a dirty or behind worktree. Dead allowlist peers with no Swift enum: `app_updated`, `paywall_viewed`, `llm_summary_used`, `llm_summary_failed`.
 
-`INSERT OR IGNORE` on `event_id` means retries do **not** inflate counts.
-Do not hunt `session||ts||props` “dupes” as a volume bug.
+`INSERT OR IGNORE` on `event_id` means retries do **not** inflate counts. Do not hunt `session||ts||props` “dupes” as a volume bug.
 
 ### Outcome traps (code, not SQL)
 
-- `dictation_failed` is the error path only. `CancellationError` on
-  start/stop/undo in current 0.8.x → `dictation_operation` `cancelled`,
-  **no** `dictation_failed`. Residual CancellationError rows are 0.7.3.
-- `dictation_cancelled` fires in `cancelRecording` **before** confirm.
-  `undoCancel` can still emit `dictation_completed` in the same process.
-  A cancel + later complete is undo, not abandon.
-- Empty / too-short audio → `dictation_empty` (`emptyTranscript` or
-  `insufficientSamples`). After the 0.8.6 PTT change, watch **empty
-  rate by version**, not cancelled.
-- `audio_engine_lifecycle`: `scope=shared_subscription_queue` success =
-  queue entry, not mic ready. `outcome=slow` is a 5s checkpoint, not a
-  failure. Native rates: scope absent/null, exclude `slow`.
-- `llm_provider_unavailable` is **instead of** `*_failed` when config
-  or reachability is the issue. `feature=knowledge_card` is not in the
-  website `LLM_FEATURES` allowlist and normalizes to `"unknown"`.
-- `model_download_started` is attempts (retries double-count).
-  `completed` fires once.
-- `processing_mode_changed` is its own event (`raw`/`clean`), not a
-  `setting_changed` row.
-- `voice_return` has no usage event; adoption is `setting_changed`
-  `setting='voice_return'` with **value** true/false. Counts without
-  direction can be flapping.
+- `dictation_failed` is the error path only. `CancellationError` on start/stop/undo in current 0.8.x → `dictation_operation` `cancelled`, **no** `dictation_failed`. Residual CancellationError rows are 0.7.3.
+- `dictation_cancelled` fires in `cancelRecording` **before** confirm. `undoCancel` can still emit `dictation_completed` in the same process. A cancel + later complete is undo, not abandon.
+- Empty / too-short audio → `dictation_empty` (`emptyTranscript` or `insufficientSamples`). After the 0.8.6 PTT change, watch **empty rate by version**, not cancelled.
+- `audio_engine_lifecycle`: `scope=shared_subscription_queue` success = queue entry, not mic ready. `outcome=slow` is a 5s checkpoint, not a failure. Native rates: scope absent/null, exclude `slow`.
+- `llm_provider_unavailable` is **instead of** `*_failed` when config or reachability is the issue. `feature=knowledge_card` is not in the website `LLM_FEATURES` allowlist and normalizes to `"unknown"`.
+- `model_download_started` is attempts (retries double-count). `completed` fires once.
+- `processing_mode_changed` is its own event (`raw`/`clean`), not a `setting_changed` row.
+- `voice_return` has no usage event; adoption is `setting_changed` `setting='voice_return'` with **value** true/false. Counts without direction can be flapping.
 
 ## Two jobs, one registry
 
-**Dividing line (Fable, both passes):** if a metric has a fixed threshold
-and a wrong answer should wake someone, it belongs in the reviewer. If it
-needs a denominator, a trendline, and a human, it belongs in the briefing.
+**Dividing line (Fable, both passes):** if a metric has a fixed threshold and a wrong answer should wake someone, it belongs in the reviewer. If it needs a denominator, a trendline, and a human, it belongs in the briefing.
 
-The briefing **embeds** the reviewer’s JSON verdict as one badge and a
-link. It never recomputes a failure rate or crash threshold.
+The briefing **embeds** the reviewer’s JSON verdict as one badge and a link. It never recomputes a failure rate or crash threshold.
 
-One shared **metric registry** (small YAML or JS map in the website repo)
-should name events, denominators, minimum-n, and “reviewer vs briefing”
-ownership so the two scripts cannot drift on `app_ver` vs `crash_app_ver`
-or `new_users` vs humans. That is the only coupling.
+One shared **metric registry** (small YAML or JS map in the website repo) should name events, denominators, minimum-n, and “reviewer vs briefing” ownership so the two scripts cannot drift on `app_ver` vs `crash_app_ver` or `new_users` vs humans. That is the only coupling.
 
 ## What PostHog-like products actually do here
 
-PostHog (and Mixpanel, Amplitude, Heap) sell a bundle. Mapped onto
-Sotto’s privacy model and D1 cost:
+PostHog (and Mixpanel, Amplitude, Heap) sell a bundle. Mapped onto Sotto’s privacy model and D1 cost:
 
 | PostHog surface | Verdict | Sotto shape |
 |---|---|---|
@@ -228,14 +164,11 @@ Sotto’s privacy model and D1 cost:
 | Autocapture | **Drop** | Typed allowlist is the product. |
 | SQL warehouse sync | **Drop** | D1 is the warehouse. Bounded queries + rollups. |
 
-The useful PostHog idea is not the product. It is the **operating loop**:
-a small set of trends, a couple of session funnels, a daily digest, and
-almost no pages.
+The useful PostHog idea is not the product. It is the **operating loop**: a small set of trends, a couple of session funnels, a daily digest, and almost no pages.
 
 ## Windows and comparisons
 
-Primary window: **yesterday UTC** (closed day). Generate after 01:30
-rollup, target **02:30 UTC**.
+Primary window: **yesterday UTC** (closed day). Generate after 01:30 rollup, target **02:30 UTC**.
 
 Always compute, even if the HTML hides some on weekdays:
 
@@ -248,17 +181,11 @@ Always compute, even if the HTML hides some on weekdays:
 | Trailing 14 days | Version adoption stacked |
 | Month-to-date vs prior month weekdays | Growth narrative (Monday only) |
 
-**Release annotation:** if any GUI tag published in the last 48h (or the
-comparison window overlaps a firehose week), Sparkle WoW is displayed
-with a yellow “last-check hole expected” chip. GUI sessions and
-dictations remain the growth series during those weeks.
+**Release annotation:** if any GUI tag published in the last 48h (or the comparison window overlaps a firehose week), Sparkle WoW is displayed with a yellow “last-check hole expected” chip. GUI sessions and dictations remain the growth series during those weeks.
 
 **Partial today:** never mix an open UTC day into averages.
 
-**Allowlist:** briefing product numbers use the same published-version
-filter as rollups / `/api/stats`, plus an explicit `0.0.0` drop on any
-raw scan. Sparkle has no allowlist (middleware). When comparing Sparkle
-to GUI, say so.
+**Allowlist:** briefing product numbers use the same published-version filter as rollups / `/api/stats`, plus an explicit `0.0.0` drop on any raw scan. Sparkle has no allowlist (middleware). When comparing Sparkle to GUI, say so.
 
 **CLI:** own appendix. Never in the six tiles.
 
@@ -272,49 +199,27 @@ to GUI, say so.
 | Three alerts only | Push / email with verdict line + file path | Same person |
 | After a stable DMG | Extra eye on latest-stable crash/fail in the reviewer section | Release |
 
-Weekend generation is load-bearing: D−7 for next Saturday is this
-Saturday. Skipping weekends poisons the comparison.
+Weekend generation is load-bearing: D−7 for next Saturday is this Saturday. Skipping weekends poisons the comparison.
 
-No Slack channel, no public page, no LLM required for v1. Templated
-“what changed” bullets are enough. An optional later agent pass may
-annotate the JSON; it must not recount.
+No Slack channel, no public page, no LLM required for v1. Templated “what changed” bullets are enough. An optional later agent pass may annotate the JSON; it must not recount.
 
 ## Three alerts (page) vs everything else (narrative)
 
 Inherited from the reviewer unless noted. Minimum-n always applies.
 
-1. **Ingestion sanity.** GUI session-days, Sparkle D1 checks, and CF
-   GraphQL appcast hits, each vs 7d median. **Any one down >50% while
-   the others hold** is a pipeline break, not churn. Also fires if
-   yesterday’s rollup row is missing or `stats_rollup_state.status` is
-   `failed`. Gates the rest of the report.
-2. **Latest-stable health (reviewer).** Existing thresholds: count ≥ 3,
-   sessions ≥ 2, rate ≥ 5%, +3pp, ×2. Status `watch` / `attention` on
-   the latest stable GUI version. Known watchlist buckets (CoreAudio
-   `-10868` on ≥0.6.1, etc.) still bypass. The briefing does not
-   re-derive this.
-3. **Outlier corruption.** One process accounts for **>20% of any
-   event’s daily count** (the GB 0.8.4 start-loop class). Exclude that
-   session from volume tiles and list it in the footer. Without this,
-   every other number in the report is a lie.
+1. **Ingestion sanity.** GUI session-days, Sparkle D1 checks, and CF GraphQL appcast hits, each vs 7d median. **Any one down >50% while the others hold** is a pipeline break, not churn. Also fires if yesterday’s rollup row is missing or `stats_rollup_state.status` is `failed`. Gates the rest of the report.
+2. **Latest-stable health (reviewer).** Existing thresholds: count ≥ 3, sessions ≥ 2, rate ≥ 5%, +3pp, ×2. Status `watch` / `attention` on the latest stable GUI version. Known watchlist buckets (CoreAudio `-10868` on ≥0.6.1, etc.) still bypass. The briefing does not re-derive this.
+3. **Outlier corruption.** One process accounts for **>20% of any event’s daily count** (the GB 0.8.4 start-loop class). Exclude that session from volume tiles and list it in the footer. Without this, every other number in the report is a lie.
 
-T0 may **graduate** to a reviewer threshold later: 7d success more than
-5pp below 28d with n > 50 onboardings, for three weekdays. Not in v1
-paging — it is a slow leak, not a pager.
+T0 may **graduate** to a reviewer threshold later: 7d success more than 5pp below 28d with n > 50 onboardings, for three weekdays. Not in v1 paging — it is a slow leak, not a pager.
 
-**Never page on:** Sparkle during a release train, weekend dips, country
-mix, engine mix, opt-out flow, p50 duration, LLM/transform volume, CLI
-volume.
+**Never page on:** Sparkle during a release train, weekend dips, country mix, engine mix, opt-out flow, p50 duration, LLM/transform volume, CLI volume.
 
 ## Monitor catalog
 
-Curation principle: **expansive inventory, ruthless daily surface.**
-Everything below is fair game for the appendix or Monday. Only the
-marked subset is above the fold.
+Curation principle: **expansive inventory, ruthless daily surface.** Everything below is fair game for the appendix or Monday. Only the marked subset is above the fold.
 
-Legend: **H** = headline daily, **A** = daily appendix, **W** = weekly
-deep, **R** = reviewer-owned (embed, don’t recompute), **X** = do not
-build.
+Legend: **H** = headline daily, **A** = daily appendix, **W** = weekly deep, **R** = reviewer-owned (embed, don’t recompute), **X** = do not build.
 
 ### A. Pipeline and data quality
 
@@ -356,10 +261,7 @@ build.
 
 ### C. Activation and onboarding (session funnels)
 
-Governing audit:
-[`docs/audits/2026-06-03-activation-metrics-cohort-caveats.md`](../audits/2026-06-03-activation-metrics-cohort-caveats.md).
-June ~45–48% in that audit is now a **fixed reference line**, not “the
-current number.”
+Governing audit: [`docs/audits/2026-06-03-activation-metrics-cohort-caveats.md`](../audits/2026-06-03-activation-metrics-cohort-caveats.md). June ~45–48% in that audit is now a **fixed reference line**, not “the current number.”
 
 | ID | Monitor | Cadence | Source | Notes |
 |---|---|---|---|---|
@@ -377,9 +279,7 @@ current number.”
 
 ### D. Reliability (headline only)
 
-Reviewer owns the rates. Briefing shows the **per-version table** so a
-new build’s first bad day is visible, and so 0.7.3 CancellationError
-cannot be read as an 0.8.x regression.
+Reviewer owns the rates. Briefing shows the **per-version table** so a new build’s first bad day is visible, and so 0.7.3 CancellationError cannot be read as an 0.8.x regression.
 
 | ID | Monitor | Cadence | Source | Notes |
 |---|---|---|---|---|
@@ -445,8 +345,7 @@ cannot be read as an 0.8.x regression.
 
 ## Insight rules (templated, no LLM)
 
-The generator fills **0–5** bullets. Empty is fine. Rank by how many
-comparison points they exceed, with min-n. Each bullet is one sentence.
+The generator fills **0–5** bullets. Empty is fine. Rank by how many comparison points they exceed, with min-n. Each bullet is one sentence.
 
 | If | Then say |
 |---|---|
@@ -467,9 +366,7 @@ comparison points they exceed, with min-n. Each bullet is one sentence.
 
 ## HTML report (2-minute top fold)
 
-Single self-contained file. Inline CSS, inline SVG sparklines, **no
-external JS**. Target: a phone or a mail.app preview. Same file can later
-be published under `/dev` without rewriting.
+Single self-contained file. Inline CSS, inline SVG sparklines, **no external JS**. Target: a phone or a mail.app preview. Same file can later be published under `/dev` without rewriting.
 
 Path (gitignored, private):
 
@@ -537,9 +434,7 @@ Plus:
 - Unwired events row
 - SQL keys / rollup columns used
 
-Monday extra (still in the same file, in a `weekly` section when
-`weekday === 'Mon'`): F1–F2, F5, E4–E6, E16 values, B8, G1–G3, G7,
-month-vs-month, license placeholder.
+Monday extra (still in the same file, in a `weekly` section when `weekday === 'Mon'`): F1–F2, F5, E4–E6, E16 values, B8, G1–G3, G7, month-vs-month, license placeholder.
 
 ## First implementation slice
 
@@ -550,68 +445,38 @@ Smallest useful job, website repo, next to the reviewer:
 **Slice 0 (one day of work, proves the rendering path):**
 
 - Read yesterday + 28d from `stats_daily_rollups` only.
-- Read the reviewer’s JSON if present (run reviewer first in the same
-  job).
+- Read the reviewer’s JSON if present (run reviewer first in the same job).
 - One CF GraphQL call for `/appcast.xml` Sparkle hits yesterday vs 7d.
-- Sparkle device-days: one bounded `COUNT(DISTINCT session)` per day for
-  28d on `event='sparkle_check'` (event index; 28 tiny queries or one
-  `GROUP BY date(ts)`).
-- GitHub `gh release list` for 14d annotation (or a static
-  `releases.json` refreshed by the same job).
-- Render Header, Row 1 (sessions, Sparkle floor, dictations, meetings;
-  T0 and crash tiles can wait), Row 2 (volume deltas only), Row 3, Row
-  4, hygiene footer.
+- Sparkle device-days: one bounded `COUNT(DISTINCT session)` per day for 28d on `event='sparkle_check'` (event index; 28 tiny queries or one `GROUP BY date(ts)`).
+- GitHub `gh release list` for 14d annotation (or a static `releases.json` refreshed by the same job).
+- Render Header, Row 1 (sessions, Sparkle floor, dictations, meetings; T0 and crash tiles can wait), Row 2 (volume deltas only), Row 3, Row 4, hygiene footer.
 - Write gitignored HTML/MD/JSON. No raw GUI event scans.
 
-**Slice 1:** T0 + onboarding funnel + screen-recording outcomes.
-Bounded `date(ts)` on the event index for yesterday and 7d **only**.
-`COUNT(DISTINCT session)` / `EXISTS`. Never JOIN two event types then
-`COUNT(*)`.
+**Slice 1:** T0 + onboarding funnel + screen-recording outcomes. Bounded `date(ts)` on the event index for yesterday and 7d **only**. `COUNT(DISTINCT session)` / `EXISTS`. Never JOIN two event types then `COUNT(*)`.
 
-**Slice 2:** version adoption 14d, failure mix by version, crash/1k
-table from reviewer exposure + crash events.
+**Slice 2:** version adoption 14d, failure mix by version, crash/1k table from reviewer exposure + crash events.
 
-**Slice 3:** outlier cap (per-process group-by, yesterday only),
-interesting-session classifier, concentration histogram.
+**Slice 3:** outlier cap (per-process group-by, yesterday only), interesting-session classifier, concentration histogram.
 
-**Slice 4:** schedule. GitHub Action in the website repo, or a fourth
-cron Worker writing to R2. 02:30 UTC. Reviewer then briefing. Page via
-email or GitHub issue only on the three alerts (reviewer already
-describes issue-on-`watch`/`attention`; keep that policy).
+**Slice 4:** schedule. GitHub Action in the website repo, or a fourth cron Worker writing to R2. 02:30 UTC. Reviewer then briefing. Page via email or GitHub issue only on the three alerts (reviewer already describes issue-on-`watch`/`attention`; keep that policy).
 
-**Slice 5 (rollups, so briefing stops touching raw events):** add daily
-columns or `stats_daily_dimensions` kinds for T0 try/success, permission
-outcomes, engine mix, version share, duration histogram buckets. Then
-the briefing is rollup-only plus GraphQL plus reviewer JSON.
+**Slice 5 (rollups, so briefing stops touching raw events):** add daily columns or `stats_daily_dimensions` kinds for T0 try/success, permission outcomes, engine mix, version share, duration histogram buckets. Then the briefing is rollup-only plus GraphQL plus reviewer JSON.
 
 **Later, only if asked:**
 
-- Redacted `/dev/telemetry/YYYY-MM-DD` after a month of private
-  stability. Strip interesting-session prefixes, country tables, and
-  any session-level row.
-- Wire `trialStarted` / `purchaseStarted` send sites, then replace the
-  placeholder.
-- Cloudflare notification on Pages 5xx `/api/telemetry` and snapshot
-  `freshness.reason=refresh_failed` > 30 min (pipeline, not product).
+- Redacted `/dev/telemetry/YYYY-MM-DD` after a month of private stability. Strip interesting-session prefixes, country tables, and any session-level row.
+- Wire `trialStarted` / `purchaseStarted` send sites, then replace the placeholder.
+- Cloudflare notification on Pages 5xx `/api/telemetry` and snapshot `freshness.reason=refresh_failed` > 30 min (pipeline, not product).
 - Shared metric registry; move reviewer onto it.
-- Dictation `e2e_ms` once the app ships it (percentiles research Phase
-  C). Allowlist must deploy first.
+- Dictation `e2e_ms` once the app ships it (percentiles research Phase C). Allowlist must deploy first.
 
-**Skip until asked:** live dashboard, HogQL, chart library, email
-digest beyond the three alerts, public page, any new identity, Workers
-Analytics Engine, Sentry, PostHog.
+**Skip until asked:** live dashboard, HogQL, chart library, email digest beyond the three alerts, public page, any new identity, Workers Analytics Engine, Sentry, PostHog.
 
 ## Query notes (copy for implementers)
 
-D1: `sotto-telemetry`
-`7372263e-6a0b-4c70-8188-8f1d6d16bf31`, account
-`1542b0baf1922ec403cc44ef3fd39233`. Zone `macparakeet.com`
-`4183d6a922545fb96269e3c24d1611a2`.
+D1: `sotto-telemetry` `7372263e-6a0b-4c70-8188-8f1d6d16bf31`, account `1542b0baf1922ec403cc44ef3fd39233`. Zone `macparakeet.com` `4183d6a922545fb96269e3c24d1611a2`.
 
-Prefer `event` + `ts` index. Bound every raw scan with
-`ts >= '{day}T00:00:00Z' AND ts < '{day+1}T00:00:00Z'`.
-`date(ts)` is ok for Sparkle (server timestamps). GUI `ts` is client
-GMT; UTC day is still the reporting grain.
+Prefer `event` + `ts` index. Bound every raw scan with `ts >= '{day}T00:00:00Z' AND ts < '{day+1}T00:00:00Z'`. `date(ts)` is ok for Sparkle (server timestamps). GUI `ts` is client GMT; UTC day is still the reporting grain.
 
 **T0 (never explode joins):**
 
@@ -662,56 +527,34 @@ ORDER BY n DESC
 LIMIT 20;
 ```
 
-A session with `n > 0.20 * (SELECT COUNT(*) FROM events WHERE event = ?
-AND ts range)` trips alert 3.
+A session with `n > 0.20 * (SELECT COUNT(*) FROM events WHERE event = ? AND ts range)` trips alert 3.
 
-**CF GraphQL** (hits, not devices): path `/appcast.xml`,
-`userAgent LIKE '%Sparkle%'`, `requestSource=eyeball`,
-`httpRequestsAdaptiveGroups`. Compare to D1 hits, not D1 devices.
+**CF GraphQL** (hits, not devices): path `/appcast.xml`, `userAgent LIKE '%Sparkle%'`, `requestSource=eyeball`, `httpRequestsAdaptiveGroups`. Compare to D1 hits, not D1 devices.
 
-**Crashes:** use `crash_app_ver` (reviewer already has
-`CRASH_ATTRIBUTED_VERSION_SQL`). Denominator = GUI distinct sessions
-for that version in the same window.
+**Crashes:** use `crash_app_ver` (reviewer already has `CRASH_ATTRIBUTED_VERSION_SQL`). Denominator = GUI distinct sessions for that version in the same window.
 
-**Failure rate:** attempts in the denominator, **exclude** cancelled.
-`dictation_failed` is not the attempt count; use started or
-`dictation_operation`.
+**Failure rate:** attempts in the denominator, **exclude** cancelled. `dictation_failed` is not the attempt count; use started or `dictation_operation`.
 
 ## Cost and safety
 
-- One briefing run per day. Bounded yesterday/7d/28d. No all-time
-  `ORDER BY` on JSON props.
-- Do not add window-function percentiles to the public snapshot path
-  until activation SQL is cheap (already a known 18M-row hog).
-- Briefing percentiles, if any, stay on yesterday’s partition (40–312 ms
-  in the Sep 15 research).
-- No production writes. Read-only `wrangler d1 execute --remote` / Worker
-  bind.
+- One briefing run per day. Bounded yesterday/7d/28d. No all-time `ORDER BY` on JSON props.
+- Do not add window-function percentiles to the public snapshot path until activation SQL is cheap (already a known 18M-row hog).
+- Briefing percentiles, if any, stay on yesterday’s partition (40–312 ms in the Sep 15 research).
+- No production writes. Read-only `wrangler d1 execute --remote` / Worker bind.
 - Journal is gitignored. Do not commit HTML with session prefixes.
-- Do not delete user databases, meeting artifacts, or D1 rows as part of
-  this work. Retention remains a separate, undeployed gate.
+- Do not delete user databases, meeting artifacts, or D1 rows as part of this work. Retention remains a separate, undeployed gate.
 
 ## Operating rules for humans and agents
 
-1. Sparkle down + GUI up + recent tag = measurement hole. Do not file
-   “we lost 40% of users.”
-2. Quote rates with denominators. 0.8.7 with 2 crashes / 48 sessions is
-   not a verdict.
-3. Locale is `Locale.current` (`en_DE`). Spoken language is the STT
-   `language` prop.
+1. Sparkle down + GUI up + recent tag = measurement hole. Do not file “we lost 40% of users.”
+2. Quote rates with denominators. 0.8.7 with 2 crashes / 48 sessions is not a verdict.
+3. Locale is `Locale.current` (`en_DE`). Spoken language is the STT `language` prop.
 4. `new_users` is onboardings. `all_time.total_sessions` is process IDs.
-5. `audio_engine_lifecycle` start/success volume is expected. Watch
-   per-session caps and native `slow` / failure, not the raw count.
-   Do not join Sparkle `session` to GUI onboarding/dictation.
-6. Do not divide `first_dictation_completed` by `onboarding_completed`
-   on mixed ship-date windows.
-7. Agents consume the JSON. They do not recount unless the report is
-   internally inconsistent. Judgment: real user impact? which version?
-   issue vs PR vs keep watching?
-8. Do not generalize from “interesting sessions.” Volume ranking finds
-   bugs and power users, never the median.
-9. Column is `app_ver`. Event is `crash_occurred`. Setting key is
-   `props.setting`. See Analyst SQL name traps.
+5. `audio_engine_lifecycle` start/success volume is expected. Watch per-session caps and native `slow` / failure, not the raw count. Do not join Sparkle `session` to GUI onboarding/dictation.
+6. Do not divide `first_dictation_completed` by `onboarding_completed` on mixed ship-date windows.
+7. Agents consume the JSON. They do not recount unless the report is internally inconsistent. Judgment: real user impact? which version? issue vs PR vs keep watching?
+8. Do not generalize from “interesting sessions.” Volume ranking finds bugs and power users, never the median.
+9. Column is `app_ver`. Event is `crash_occurred`. Setting key is `props.setting`. See Analyst SQL name traps.
 
 ## Related work (do not confuse)
 
@@ -730,18 +573,11 @@ for that version in the same window.
 | [`docs/audits/2026-07-04-onboarding-telemetry-review.md`](../audits/2026-07-04-onboarding-telemetry-review.md) | Speech-model blocker |
 | Public `/stats` | Live marketing dashboard |
 
-The Sep 16 “telemetry observability followthrough” row in
-`plans/README.md` (e2e timings, cheaper activation SQL, Pages
-observability, health probe) is **instrumentation**, not this briefing.
-Both should happen; they are not substitutes.
+The Sep 16 “telemetry observability followthrough” row in `plans/README.md` (e2e timings, cheaper activation SQL, Pages observability, health probe) is **instrumentation**, not this briefing. Both should happen; they are not substitutes.
 
 ## Fable 5.1 consultation (2026-09-18)
 
-`claude -p --model claude-fable-5-1` with `--effort low` and
-`--effort medium`, no tools, against the same brief. They agreed on the
-split, the three-alert cap, Sparkle-as-floor, same-session funnels only,
-static HTML, and “first slice = rollups + reviewer JSON.” Differences
-worth keeping:
+`claude -p --model claude-fable-5-1` with `--effort low` and `--effort medium`, no tools, against the same brief. They agreed on the split, the three-alert cap, Sparkle-as-floor, same-session funnels only, static HTML, and “first slice = rollups + reviewer JSON.” Differences worth keeping:
 
 | Topic | Low (ruthless) | Medium | This spec |
 |---|---|---|---|
@@ -754,44 +590,24 @@ worth keeping:
 | Public `/dev` | Skip | After a month, redacted | Skip until asked |
 | Shared registry | Implied | Explicit YAML/JS | Slice 5-adjacent; not blocking Slice 0 |
 
-Neither pass wanted a live dashboard, retention curves, or a new event
-for v1.
+Neither pass wanted a live dashboard, retention curves, or a new event for v1.
 
-A separate Fable 5.1 medium landscape pass (query ranking, not this
-briefing brief) plus a code-meaning review of send sites added the
-traps above: session-day intensity grain, empty-vs-cancelled after PTT,
-`mic_stall_detected` as a session ratio, settings **values**,
-batch-transcribe as a segment, never-quit 0.7.x as an update hole, and
-the allowlist/idempotency facts. Treat that pass’s SQL as a backlog of
-angles, not copy-paste — it used `app_version`, `crash`,
-`first_dictation`, `settings_changed`, and `mic_stall`.
+A separate Fable 5.1 medium landscape pass (query ranking, not this briefing brief) plus a code-meaning review of send sites added the traps above: session-day intensity grain, empty-vs-cancelled after PTT, `mic_stall_detected` as a session ratio, settings **values**, batch-transcribe as a segment, never-quit 0.7.x as an update hole, and the allowlist/idempotency facts. Treat that pass’s SQL as a backlog of angles, not copy-paste — it used `app_version`, `crash`, `first_dictation`, `settings_changed`, and `mic_stall`.
 
 ## Open decisions (not blocking Slice 0)
 
-- Notification path for the three alerts: GitHub issue (reviewer already
-  suggests this), email, or a local `osascript` banner on the machine
-  that runs the cron. Pick whichever is already in the operator’s loop.
-- Whether Slice 0 lives as a GitHub Action in `sotto-website` or a
-  launchd job on a trusted Mac. Action is better once
-  `CLOUDFLARE_API_TOKEN` + D1 execute are available to CI; until then a
-  local cron matching `pnpm telemetry:review` is honest.
-- Whether T0 belongs in `stats_daily_rollups` as columns (`t0_try`,
-  `t0_success`, `onboard_sessions`) in the same change that adds Slice 1,
-  or later in Slice 5. Prefer adding columns once the SQL is proven in
-  the briefing script.
-- June 45.2% reference: freeze as a constant in the registry, do not
-  re-query 2026-06 every morning.
+- Notification path for the three alerts: GitHub issue (reviewer already suggests this), email, or a local `osascript` banner on the machine that runs the cron. Pick whichever is already in the operator’s loop.
+- Whether Slice 0 lives as a GitHub Action in `sotto-website` or a launchd job on a trusted Mac. Action is better once `CLOUDFLARE_API_TOKEN` + D1 execute are available to CI; until then a local cron matching `pnpm telemetry:review` is honest.
+- Whether T0 belongs in `stats_daily_rollups` as columns (`t0_try`, `t0_success`, `onboard_sessions`) in the same change that adds Slice 1, or later in Slice 5. Prefer adding columns once the SQL is proven in the briefing script.
+- June 45.2% reference: freeze as a constant in the registry, do not re-query 2026-06 every morning.
 
 ## What “done” looks like for Slice 0
 
 A weekday morning you can open one HTML file and in two minutes know:
 
 1. Ingestion is alive (or you were already paged).
-2. Usage went up or down vs last Tuesday, with Sparkle labeled correctly
-   if a build shipped.
+2. Usage went up or down vs last Tuesday, with Sparkle labeled correctly if a build shipped.
 3. Latest stable is CLEAR/WATCH/ATTENTION, with a link to the counts.
 4. Nothing in the footer is eating the tiles (debug leak, start-loop).
 
-That is the whole product. The rest of this catalog exists so the Monday
-read, and the second week of implementation, do not have to rediscover
-what to query.
+That is the whole product. The rest of this catalog exists so the Monday read, and the second week of implementation, do not have to rediscover what to query.

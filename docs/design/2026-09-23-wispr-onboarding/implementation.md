@@ -1,9 +1,6 @@
 # First-run onboarding: implementation design
 
-Date: 2026-09-23. Status: **implemented** in the branch that adds this file.
-Governing decision: [ADR 005](../../../spec/adr/005-onboarding-first-run.md), amendment 2026-09-23.
-Visual spec: [note.md](./note.md) and its stills.
-Evidence: [onboarding activation leak](../../research/2026-09-18-onboarding-activation-leak.md).
+Date: 2026-09-23. Status: **implemented** in the branch that adds this file. Governing decision: [ADR 005](../../../spec/adr/005-onboarding-first-run.md), amendment 2026-09-23. Visual spec: [note.md](./note.md) and its stills. Evidence: [onboarding activation leak](../../research/2026-09-18-onboarding-activation-leak.md).
 
 This file records how the locked note became code, and the choices the note left open.
 

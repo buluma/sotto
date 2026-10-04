@@ -7,372 +7,129 @@
 
 ## Context
 
-A meeting recording captures two independent audio streams: the
-microphone ("You", via `SharedMicrophoneStream` / AVAudioEngine) and
-system audio ("Others", via `SystemAudioStream` / ScreenCaptureKit).
-ADR-019 made the *bytes* crash-resilient — each source is a fragmented
-MP4, playable up to the last 1-second fragment even after a kill-9. But
-two correctness gaps remain that ADR-019 does not touch:
+A meeting recording captures two independent audio streams: the microphone ("You", via `SharedMicrophoneStream` / AVAudioEngine) and system audio ("Others", via `SystemAudioStream` / ScreenCaptureKit). ADR-019 made the *bytes* crash-resilient — each source is a fragmented MP4, playable up to the last 1-second fragment even after a kill-9. But two correctness gaps remain that ADR-019 does not touch:
 
-1. **The mic can go silently dead mid-meeting and nothing notices.** A
-   real field incident: the microphone input tap delivered **zero audio
-   buffers for ~18 seconds** of held capture while the rest of the
-   system looked fine — the user lost their own side of the meeting and
-   had no idea until they played it back. This is the same class of
-   silent stall the dictation side is already hardening against (see
-   `journal/2026-05-03-dictation-silent-stall.md`, PR #210's diagnostic
-   package, issue #499's confirmed HAL-configuration-change root cause,
-   and `plans/active/2026-05-dictation-stall-integration-tests.md`). The
-   meeting path has the *same* `AVAudioEngine`/HAL exposure but **no
-   watchdog** — there is currently nothing that observes "the mic has
-   stopped delivering while the meeting is still live."
+1. **The mic can go silently dead mid-meeting and nothing notices.** A real field incident: the microphone input tap delivered **zero audio buffers for ~18 seconds** of held capture while the rest of the system looked fine — the user lost their own side of the meeting and had no idea until they played it back. This is the same class of silent stall the dictation side is already hardening against (see `journal/2026-05-03-dictation-silent-stall.md`, PR #210's diagnostic package, issue #499's confirmed HAL-configuration-change root cause, and `plans/active/2026-05-dictation-stall-integration-tests.md`). The meeting path has the *same* `AVAudioEngine`/HAL exposure but **no watchdog** — there is currently nothing that observes "the mic has stopped delivering while the meeting is still live."
 
-2. **The live-preview transcript is effectively the final transcript.**
-   Meeting transcription is built from live-preview chunks
-   (`SpeechBoundaryMeetingLiveAudioChunker` / the fixed 5s/1s
-   `AudioChunker`, per REQ-MEET-013) assembled by
-   `MeetingTranscriptAssembler`. If the live path drops a chunk — a
-   chunker hiccup, a momentary engine stall, a dropped buffer window —
-   that speech is **lost permanently**. There is no post-stop pass that
-   asks "does the saved transcript actually cover all the speech in the
-   retained audio?" The retained selected-source `.m4a` files hold the truth,
-   but nothing re-reads them for completeness.
+2. **The live-preview transcript is effectively the final transcript.** Meeting transcription is built from live-preview chunks (`SpeechBoundaryMeetingLiveAudioChunker` / the fixed 5s/1s `AudioChunker`, per REQ-MEET-013) assembled by `MeetingTranscriptAssembler`. If the live path drops a chunk — a chunker hiccup, a momentary engine stall, a dropped buffer window — that speech is **lost permanently**. There is no post-stop pass that asks "does the saved transcript actually cover all the speech in the retained audio?" The retained selected-source `.m4a` files hold the truth, but nothing re-reads them for completeness.
 
-This ADR hardens both. It is framed as a **reliability/correctness
-improvement that ships default-on**, not a user-facing feature toggle.
-The mic watchdog's only user-visible surface is a gentle in-meeting
-warning plus telemetry — never a blocking error. For staged rollout it
-may sit behind an `AppFeatures` kill-switch flag, but the intended
-end-state is "always on, invisible until something is wrong."
+This ADR hardens both. It is framed as a **reliability/correctness improvement that ships default-on**, not a user-facing feature toggle. The mic watchdog's only user-visible surface is a gentle in-meeting warning plus telemetry — never a blocking error. For staged rollout it may sit behind an `AppFeatures` kill-switch flag, but the intended end-state is "always on, invisible until something is wrong."
 
-Both halves share one design principle: **cross-source activity adds diagnostic
-context, and retained audio is the ground truth for transcript coverage.** During
-capture, system audio cannot prove the mic *should* be receiving signal.
-After stop, an offline VAD pass over the retained audio proves what
-speech the live transcript *should* have covered.
+Both halves share one design principle: **cross-source activity adds diagnostic context, and retained audio is the ground truth for transcript coverage.** During capture, system audio cannot prove the mic *should* be receiving signal. After stop, an offline VAD pass over the retained audio proves what speech the live transcript *should* have covered.
 
 ## Decision
 
 ### 2026-09-13 amendment: pending microphone lifecycle evidence
 
-The development source adds `AudioEngineLifecycleDiagnostics` to observe shared
-microphone start, prepare, recovery attempts, and stop independently of the
-platform queue. Existing phase-completion logs cannot explain a native call
-that never returns. The observer can report the last entered boundary while
-the call is pending, including `queue_wait` before native work begins.
+The development source adds `AudioEngineLifecycleDiagnostics` to observe shared microphone start, prepare, recovery attempts, and stop independently of the platform queue. Existing phase-completion logs cannot explain a native call that never returns. The observer can report the last entered boundary while the call is pending, including `queue_wait` before native work begins.
 
-Each lifecycle call can emit one slow checkpoint after five seconds and one
-terminal snapshot if it returns. Fast prepare/stop snapshots are suppressed,
-including failures; a slow call that finishes before the timer runs emits only
-its terminal snapshot with `was_slow=true`. The utility timer and asynchronous
-local/telemetry sinks are best effort. This is not a hard timeout, a new audio
-restart path, or a fix establishing the native root cause of issue #931.
-Callback-readiness and source-owned recovery retain their existing control
-semantics.
+Each lifecycle call can emit one slow checkpoint after five seconds and one terminal snapshot if it returns. Fast prepare/stop snapshots are suppressed, including failures; a slow call that finishes before the timer runs emits only its terminal snapshot with `was_slow=true`. The utility timer and asynchronous local/telemetry sinks are best effort. This is not a hard timeout, a new audio restart path, or a fix establishing the native root cause of issue #931. Callback-readiness and source-owned recovery retain their existing control semantics.
 
-`audio_engine_lifecycle` contains a fresh lifecycle `attempt_id`, phase timings,
-coarse route categories, and classified errors. The ID does not identify a
-meeting or product operation; these events do not change operation-health
-denominators. See the [telemetry contract](../contracts/telemetry-v1.md#microphone-engine-lifecycle-observation)
-for the bounded schema and server-first rollout. An app release and paired
-website deployment are separate from this source implementation.
-The [issue #931 investigation](../../docs/audits/2026-09-13-issue-931-startup-observability.md)
-records the incident evidence and unresolved native cause.
+`audio_engine_lifecycle` contains a fresh lifecycle `attempt_id`, phase timings, coarse route categories, and classified errors. The ID does not identify a meeting or product operation; these events do not change operation-health denominators. See the [telemetry contract](../contracts/telemetry-v1.md#microphone-engine-lifecycle-observation) for the bounded schema and server-first rollout. An app release and paired website deployment are separate from this source implementation. The [issue #931 investigation](../../docs/audits/2026-09-13-issue-931-startup-observability.md) records the incident evidence and unresolved native cause.
 
 ### 2026-09-14 regression amendment: silence is not engine death
 
-Issue #1032 on v0.8.0 shows repeated `zero_filled` recovery triggers despite
-`engine_is_running=true`, followed by terminal mic interruption while system
-audio continues. The shared-source classifier introduced with #862 conflated
-valid silent PCM and empty callbacks. Its two-second silence timeout could
-destroy a working Bluetooth stream and exhaust the recovery budget.
+Issue #1032 on v0.8.0 shows repeated `zero_filled` recovery triggers despite `engine_is_running=true`, followed by terminal mic interruption while system audio continues. The shared-source classifier introduced with #862 conflated valid silent PCM and empty callbacks. Its two-second silence timeout could destroy a working Bluetooth stream and exhaust the recovery budget.
 
-After startup successfully commits, valid silent PCM must reach consumers on
-every transport and must not trigger restart. Empty/invalid callbacks remain
-distinct failures, with a two-second bounded recovery threshold; stopped graphs
-and five-second callback gaps retain their existing recovery. Bluetooth and
-unresolved routes still require a nonzero microphone sample during startup.
-Bounded pre-filter counters distinguish silence, empty/invalid input, and signal
-resumption without logging audio or making native calls on the render thread.
+After startup successfully commits, valid silent PCM must reach consumers on every transport and must not trigger restart. Empty/invalid callbacks remain distinct failures, with a two-second bounded recovery threshold; stopped graphs and five-second callback gaps retain their existing recovery. Bluetooth and unresolved routes still require a nonzero microphone sample during startup. Bounded pre-filter counters distinguish silence, empty/invalid input, and signal resumption without logging audio or making native calls on the render thread.
 
-The reporter's physical trigger remains unknown: mute, noise suppression, and
-driver faults can all produce zeros. System-audio activity does not resolve that
-ambiguity: someone listening through headphones may legitimately have a silent
-microphone. Signal-level evidence therefore remains warning/diagnostic input,
-not authority to tear down an established source.
+The reporter's physical trigger remains unknown: mute, noise suppression, and driver faults can all produce zeros. System-audio activity does not resolve that ambiguity: someone listening through headphones may legitimately have a silent microphone. Signal-level evidence therefore remains warning/diagnostic input, not authority to tear down an established source.
 
 ### 2026-07-22 field-evidence amendment: microphone callback liveness
 
-Issue #820's opt-in diagnostic captured the exact source failure that the
-original recovery deferral was waiting for: after Bluetooth/default-input route
-churn, `AVAudioEngine` continued to report itself running while the input tap's
-callback counter froze after two or three buffers for the rest of capture.
-Issue #846 reports a compatible v0.7.3 symptom, but has no diagnostic log, so it
-is corroborating user evidence rather than proof of that session's route.
+Issue #820's opt-in diagnostic captured the exact source failure that the original recovery deferral was waiting for: after Bluetooth/default-input route churn, `AVAudioEngine` continued to report itself running while the input tap's callback counter froze after two or three buffers for the rest of capture. Issue #846 reports a compatible v0.7.3 symptom, but has no diagnostic log, so it is corroborating user evidence rather than proof of that session's route.
 
 Raw callback cessation is now a direct source-lifecycle failure:
 
-- After the tap has delivered its first real buffer, a five-second gap with no
-  callbacks triggers recovery even if `AVAudioEngine.isRunning` remains true.
-  This is not a signal-amplitude heuristic: a quiet source continues to deliver
-  buffers and remains healthy.
-- Callback stalls and physically stopped configuration-change graphs converge
-  on the same bounded fresh-engine recovery. Each attempt resolves the current
-  route and format, and no replacement succeeds until it delivers a real
-  buffer. Explicit Stop invalidates the episode and every queued retry.
-- The recovery belongs to the process-wide `SharedMicrophoneStream` platform,
-  so dictation and meeting capture share one owner instead of adding a second
-  meeting-consumer recovery loop.
+- After the tap has delivered its first real buffer, a five-second gap with no callbacks triggers recovery even if `AVAudioEngine.isRunning` remains true. This is not a signal-amplitude heuristic: a quiet source continues to deliver buffers and remains healthy.
+- Callback stalls and physically stopped configuration-change graphs converge on the same bounded fresh-engine recovery. Each attempt resolves the current route and format, and no replacement succeeds until it delivers a real buffer. Explicit Stop invalidates the episode and every queued retry.
+- The recovery belongs to the process-wide `SharedMicrophoneStream` platform, so dictation and meeting capture share one owner instead of adding a second meeting-consumer recovery loop.
 
-Amplitude- or cross-source-signal-inferred restarts remain deferred. The
-meeting health monitor continues to warn and instrument those signatures
-without changing the capture graph.
+Amplitude- or cross-source-signal-inferred restarts remain deferred. The meeting health monitor continues to warn and instrument those signatures without changing the capture graph.
 
 ### 2026-07-20 field-evidence amendment: final recording truth
 
-Issues #851–#853 supplied a concrete failure that the original transcript-VAD
-proposal did not cover: a 39:15 meeting finalized as `completed` even though
-both selected source files contained only about 68 seconds of frames. The
-writer already knew the exact frame totals, but finalization logged them and
-then persisted pause-adjusted wall-clock time as the recording duration. Any
-small decodable source file therefore looked like a full successful meeting.
+Issues #851–#853 supplied a concrete failure that the original transcript-VAD proposal did not cover: a 39:15 meeting finalized as `completed` even though both selected source files contained only about 68 seconds of frames. The writer already knew the exact frame totals, but finalization logged them and then persisted pause-adjusted wall-clock time as the recording duration. Any small decodable source file therefore looked like a full successful meeting.
 
 Finalized recording coverage is now a separate, implemented correctness layer:
 
-- Stop snapshots capture end before asynchronous shutdown, mixing, and artifact
-  I/O, then compares pause-adjusted elapsed time with exact selected-source
-  writer frames.
-- A pure `MeetingCaptureReport` records `healthy`/`partial` quality, playable
-  captured duration, elapsed duration, per-source written duration/coverage and
-  terminal status. Classification uses a 90% coverage threshold so short
-  meetings cannot lose most of their media under a fixed-duration grace;
-  explicit interruption/failure is always partial. If two healthy source files
-  cannot be combined, the report records which source became canonical playback
-  and marks that playback as partial without misclassifying either source
-  capture.
-- Writer finalization is a correctness boundary: a source that accepted real
-  frames but does not reach AVAssetWriter's completed state aborts settlement
-  and leaves the lock and source artifacts available for recovery. Pre-finish
-  frame counters are never promoted as healthy durable media after an encode or
-  storage failure.
-- `Transcription.durationMs` is playable captured duration. Elapsed session time
-  remains in the optional report, persisted in the canonical DB row and
-  additive meeting artifact metadata. Legacy absence means unknown, not healthy.
-- Source files preserve genuine host-time recovery gaps as silence while
-  removing intentional pauses from that timeline. Completed pause ranges are
-  retained for the session so delayed buffers remain exactly classifiable. If
-  capture begins with untimed buffers, the writer's
-  effective file origin accounts for that leading audio exactly once when
-  deriving cross-source alignment. Cross-source offsets require complete writer
-  timeline origins; incomplete timing remains zero/unknown rather than falling
-  back to raw host deltas that still contain intentional pauses.
-- Capture quality is orthogonal to transcription lifecycle: successfully
-  processed partial audio remains `completed` and receives a non-modal saved
-  “Partial audio” explanation rather than a misleading retranscription action.
+- Stop snapshots capture end before asynchronous shutdown, mixing, and artifact I/O, then compares pause-adjusted elapsed time with exact selected-source writer frames.
+- A pure `MeetingCaptureReport` records `healthy`/`partial` quality, playable captured duration, elapsed duration, per-source written duration/coverage and terminal status. Classification uses a 90% coverage threshold so short meetings cannot lose most of their media under a fixed-duration grace; explicit interruption/failure is always partial. If two healthy source files cannot be combined, the report records which source became canonical playback and marks that playback as partial without misclassifying either source capture.
+- Writer finalization is a correctness boundary: a source that accepted real frames but does not reach AVAssetWriter's completed state aborts settlement and leaves the lock and source artifacts available for recovery. Pre-finish frame counters are never promoted as healthy durable media after an encode or storage failure.
+- `Transcription.durationMs` is playable captured duration. Elapsed session time remains in the optional report, persisted in the canonical DB row and additive meeting artifact metadata. Legacy absence means unknown, not healthy.
+- Source files preserve genuine host-time recovery gaps as silence while removing intentional pauses from that timeline. Completed pause ranges are retained for the session so delayed buffers remain exactly classifiable. If capture begins with untimed buffers, the writer's effective file origin accounts for that leading audio exactly once when deriving cross-source alignment. Cross-source offsets require complete writer timeline origins; incomplete timing remains zero/unknown rather than falling back to raw host deltas that still contain intentional pauses.
+- Capture quality is orthogonal to transcription lifecycle: successfully processed partial audio remains `completed` and receives a non-modal saved “Partial audio” explanation rather than a misleading retranscription action.
 
-This frame-derived report answers **whether audio reached disk for the expected
-recording interval**. It does not inspect speech or transcript completeness and
-must not be conflated with §2's proposed offline-VAD transcript-gap repair.
-Selective/full VAD-driven transcript repair remains unimplemented.
+This frame-derived report answers **whether audio reached disk for the expected recording interval**. It does not inspect speech or transcript completeness and must not be conflated with §2's proposed offline-VAD transcript-gap repair. Selective/full VAD-driven transcript repair remains unimplemented.
 
 ### 2026-09-04 candidate amendment: silent saved system audio
 
-Frame coverage alone cannot detect a system stream that delivered only zeros.
-The candidate marks a selected system source `silent` only when it delivered
-buffers, successfully written converted PCM has an exact-zero peak absolute
-sample, microphone signal is nonzero, and pause-adjusted capture lasts at least
-30 seconds. The system writer's existing downmix/conversion supplies that
-metric, not input channel 0 or the UI RMS meter. Retained pre-pause audio counts;
-dropped paused audio does not. Quiet nonzero, short, and wholly silent sessions
-remain outside this verdict.
+Frame coverage alone cannot detect a system stream that delivered only zeros. The candidate marks a selected system source `silent` only when it delivered buffers, successfully written converted PCM has an exact-zero peak absolute sample, microphone signal is nonzero, and pause-adjusted capture lasts at least 30 seconds. The system writer's existing downmix/conversion supplies that metric, not input channel 0 or the UI RMS meter. Retained pre-pause audio counts; dropped paused audio does not. Quiet nonzero, short, and wholly silent sessions remain outside this verdict.
 
-The 2026-09-06 UI simplification keeps this durable verdict as diagnostic
-information, not a partial-audio explanation or a new UI warning. Silence is
-valid input: self-notes and one-sided meetings with sufficient written coverage
-are healthy. Recovery preserves a known `silent` verdict when coverage remains
-sufficient; interruption, capture failure, unavailable media, and coverage
-shortfall take precedence. Playback fallback remains a separate partial-quality
-reason. Older reports whose only degradation was silence normalize to healthy
-on decode; real degradation and the existing encoded shape are preserved.
-No signal measurement, capture control, or source audio is changed.
-The matching contracts are [meeting artifacts](../contracts/meeting-artifacts-v1.md)
-and [recovery ownership](../contracts/meeting-recovery-retention.md).
-Candidate writer timeouts use the latter contract's aggregate deadline and
-retained ownership, never destructive `cancelWriting()`.
+The 2026-09-06 UI simplification keeps this durable verdict as diagnostic information, not a partial-audio explanation or a new UI warning. Silence is valid input: self-notes and one-sided meetings with sufficient written coverage are healthy. Recovery preserves a known `silent` verdict when coverage remains sufficient; interruption, capture failure, unavailable media, and coverage shortfall take precedence. Playback fallback remains a separate partial-quality reason. Older reports whose only degradation was silence normalize to healthy on decode; real degradation and the existing encoded shape are preserved. No signal measurement, capture control, or source audio is changed. The matching contracts are [meeting artifacts](../contracts/meeting-artifacts-v1.md) and [recovery ownership](../contracts/meeting-recovery-retention.md). Candidate writer timeouts use the latter contract's aggregate deadline and retained ownership, never destructive `cancelWriting()`.
 
 ### 1. Mic-health watchdog: cross-source warning evidence (REQ-MEET-017)
 
-During an active meeting, **system-audio activity provides diagnostic context,
-not proof of microphone failure.** ScreenCaptureKit's system-audio tap and the
-mic's AVAudioEngine tap fail independently. Non-silent system audio alongside a
-silent mic can indicate a capture problem, but it also describes a quiet or
-muted local user listening to other participants. Signal comparison alone
-cannot distinguish those cases or authorize an established microphone restart.
+During an active meeting, **system-audio activity provides diagnostic context, not proof of microphone failure.** ScreenCaptureKit's system-audio tap and the mic's AVAudioEngine tap fail independently. Non-silent system audio alongside a silent mic can indicate a capture problem, but it also describes a quiet or muted local user listening to other participants. Signal comparison alone cannot distinguish those cases or authorize an established microphone restart.
 
-A pure `MeetingMicHealthMonitor` consumes timestamped liveness signals
-from both streams and detects three suspected-stall signatures:
+A pure `MeetingMicHealthMonitor` consumes timestamped liveness signals from both streams and detects three suspected-stall signatures:
 
-- **(a) Mic callbacks entirely missing** while system audio is active —
-  the monitor has no mic callbacks (as in the ~18s field incident).
-- **(b) Mic callbacks arriving but all-zero / near-silent** while system
-  audio is active — possible signal loss, quiet input, or mute. A dead graph
-  can report `AVAudioEngine.isRunning == true`, but this signature does not
-  establish that the graph is dead.
-- **(c) A mic-callback gap** — more than ~1 s since the last mic buffer while
-  system audio continues to deliver; this warning signature is separate from
-  the shared source's five-second recovery threshold.
+- **(a) Mic callbacks entirely missing** while system audio is active — the monitor has no mic callbacks (as in the ~18s field incident).
+- **(b) Mic callbacks arriving but all-zero / near-silent** while system audio is active — possible signal loss, quiet input, or mute. A dead graph can report `AVAudioEngine.isRunning == true`, but this signature does not establish that the graph is dead.
+- **(c) A mic-callback gap** — more than ~1 s since the last mic buffer while system audio continues to deliver; this warning signature is separate from the shared source's five-second recovery threshold.
 
-**Confirmation window before reporting suspicion.** The monitor requires
-**~3 s of continuous system-audio activity** (non-silent buffers) before emitting
-these legacy signatures. This window suppresses brief observations; it does
-not prove the mic should contain speech or rule out legitimate one-sided audio.
-A muted presenter listening to a long monologue can satisfy it. The resulting
-signature remains warning/diagnostic evidence, not a confirmed source failure.
+**Confirmation window before reporting suspicion.** The monitor requires **~3 s of continuous system-audio activity** (non-silent buffers) before emitting these legacy signatures. This window suppresses brief observations; it does not prove the mic should contain speech or rule out legitimate one-sided audio. A muted presenter listening to a long monologue can satisfy it. The resulting signature remains warning/diagnostic evidence, not a confirmed source failure.
 
 **On trip (v1 = detect + warn + instrument):**
 
-- Surface a **gentle, non-blocking in-meeting warning** on the recording
-  panel/pill: *"This meeting may be missing your side."* It does not
-  stop the recording, does not modal-block, and does not throw — the
-  meeting keeps capturing whatever it can.
-- Emit a privacy-safe `mic_stall_detected` telemetry event tagged with
-  the signature (a/b/c) and coarse timing. No audio, no transcript.
+- Surface a **gentle, non-blocking in-meeting warning** on the recording panel/pill: *"This meeting may be missing your side."* It does not stop the recording, does not modal-block, and does not throw — the meeting keeps capturing whatever it can.
+- Emit a privacy-safe `mic_stall_detected` telemetry event tagged with the signature (a/b/c) and coarse timing. No audio, no transcript.
 
-**Source-callback recovery is implemented; signal inference does not authorize
-recovery.** The #820 diagnostic confirmed that raw tap callbacks can stop while
-`AVAudioEngine.isRunning` stays true, so the shared microphone platform now
-treats a five-second post-start callback gap as a direct source-lifecycle
-failure. This decision uses callback delivery only; it does not promote
-amplitude, transcript, or cross-source inference into a restart trigger.
+**Source-callback recovery is implemented; signal inference does not authorize recovery.** The #820 diagnostic confirmed that raw tap callbacks can stop while `AVAudioEngine.isRunning` stays true, so the shared microphone platform now treats a five-second post-start callback gap as a direct source-lifecycle failure. This decision uses callback delivery only; it does not promote amplitude, transcript, or cross-source inference into a restart trigger.
 
-`MicrophoneEnginePlatform` owns bounded recovery for that callback stall,
-two seconds of continuous empty/invalid callbacks, and an
-`AVAudioEngineConfigurationChange` that physically stops the engine.
-Each attempt rebuilds against the current route and format, and recovery is not
-successful until the replacement passes startup readiness and the
-generation-checked running commit. Bluetooth and unresolved routes still
-require a nonzero microphone sample during startup; those routes accept valid
-silence only after startup successfully commits. Configuration-change
-notifications received during that readiness wait remain part of the same
-episode and consume its existing bounded retry budget rather than silently
-starting a fresh budget. Explicit Stop still cancels the episode and prevents a
-queued attempt from reviving capture. Meeting microphone Stop is itself an
-awaited lifecycle boundary: callback retirement and shared-stream
-unsubscription settle before a replacement meeting session can claim capture
-or its event stream.
+`MicrophoneEnginePlatform` owns bounded recovery for that callback stall, two seconds of continuous empty/invalid callbacks, and an `AVAudioEngineConfigurationChange` that physically stops the engine. Each attempt rebuilds against the current route and format, and recovery is not successful until the replacement passes startup readiness and the generation-checked running commit. Bluetooth and unresolved routes still require a nonzero microphone sample during startup; those routes accept valid silence only after startup successfully commits. Configuration-change notifications received during that readiness wait remain part of the same episode and consume its existing bounded retry budget rather than silently starting a fresh budget. Explicit Stop still cancels the episode and prevents a queued attempt from reviving capture. Meeting microphone Stop is itself an awaited lifecycle boundary: callback retirement and shared-stream unsubscription settle before a replacement meeting session can claim capture or its event stream.
 
 ### 1a. Typed system-audio stalls recover at the source boundary
 
-The deferred mic-health restart above applies to inferred mic stalls. A
-`SystemAudioStream` first-buffer timeout or heartbeat gap is different: it is a
-direct typed failure of the ScreenCaptureKit source. That source now recovers
-within `MeetingAudioCaptureService`, the layer that owns both its factory and
-its lifecycle:
+The deferred mic-health restart above applies to inferred mic stalls. A `SystemAudioStream` first-buffer timeout or heartbeat gap is different: it is a direct typed failure of the ScreenCaptureKit source. That source now recovers within `MeetingAudioCaptureService`, the layer that owns both its factory and its lifecycle:
 
-- Emit `.sourceRecoveryStarted(source: .system, error:)` once, retire the
-  stalled capture generation, and await its bounded teardown. The microphone
-  remains live and is never restarted as part of system recovery.
-- Retry with a **fresh** `SystemAudioStream` on every attempt. Six attempts use
-  23 seconds of cumulative scheduled backoff (`0, 1, 2, 4, 8, 8` seconds);
-  bounded stream lifecycle and first-buffer readiness waits are additional.
-  This extends beyond the approximately 17-second route-settlement interval
-  observed in the field without creating an unbounded restart loop.
-- Treat an attempt as successful only when the replacement delivers its first
-  valid buffer. Deliver that buffer, then emit
-  `.sourceRecovered(source: .system)`. A successful `start()` without audio is
-  not recovery. A failure racing immediately behind that first buffer is
-  classified before promotion: recoverable failure consumes another bounded
-  attempt; nonrecoverable failure terminates after teardown.
-- Map an unexpected `SCStreamDelegate.didStopWithError` callback to the same
-  typed recovery contract. ScreenCaptureKit's documented `userStopped` code is
-  intentional and nonrecoverable, so it retains terminal semantics rather than
-  entering a restart loop. A delegate failure racing the initial async start is
-  retained through an atomic start-to-running handoff; it fails and tears down
-  that start attempt rather than promoting a dead stream.
-- Coalesce duplicate stall callbacks. Generation checks reject late buffers or
-  errors from retired streams. Explicit Stop cancels and awaits the active
-  recovery task; Stop always wins and no queued retry may revive capture.
-- For nonrecoverable source failures, invalidate the callback generation first,
-  await the failed stream's bounded Stop, and only then publish the terminal
-  event. This prevents a dead stream from continuing to feed buffers while the
-  meeting records microphone-only.
-- Emit terminal `.sourceInterrupted(source: .system, error:)` (or `.error` for
-  system-only capture) only after the bounded attempts are exhausted.
+- Emit `.sourceRecoveryStarted(source: .system, error:)` once, retire the stalled capture generation, and await its bounded teardown. The microphone remains live and is never restarted as part of system recovery.
+- Retry with a **fresh** `SystemAudioStream` on every attempt. Six attempts use 23 seconds of cumulative scheduled backoff (`0, 1, 2, 4, 8, 8` seconds); bounded stream lifecycle and first-buffer readiness waits are additional. This extends beyond the approximately 17-second route-settlement interval observed in the field without creating an unbounded restart loop.
+- Treat an attempt as successful only when the replacement delivers its first valid buffer. Deliver that buffer, then emit `.sourceRecovered(source: .system)`. A successful `start()` without audio is not recovery. A failure racing immediately behind that first buffer is classified before promotion: recoverable failure consumes another bounded attempt; nonrecoverable failure terminates after teardown.
+- Map an unexpected `SCStreamDelegate.didStopWithError` callback to the same typed recovery contract. ScreenCaptureKit's documented `userStopped` code is intentional and nonrecoverable, so it retains terminal semantics rather than entering a restart loop. A delegate failure racing the initial async start is retained through an atomic start-to-running handoff; it fails and tears down that start attempt rather than promoting a dead stream.
+- Coalesce duplicate stall callbacks. Generation checks reject late buffers or errors from retired streams. Explicit Stop cancels and awaits the active recovery task; Stop always wins and no queued retry may revive capture.
+- For nonrecoverable source failures, invalidate the callback generation first, await the failed stream's bounded Stop, and only then publish the terminal event. This prevents a dead stream from continuing to feed buffers while the meeting records microphone-only.
+- Emit terminal `.sourceInterrupted(source: .system, error:)` (or `.error` for system-only capture) only after the bounded attempts are exhausted.
 
-This is deliberately source-specific lifecycle repair, not a second generic
-watchdog or string-matched error path. Other runtime failures keep their
-existing terminal semantics unless they gain an equally concrete typed
-recovery contract.
+This is deliberately source-specific lifecycle repair, not a second generic watchdog or string-matched error path. Other runtime failures keep their existing terminal semantics unless they gain an equally concrete typed recovery contract.
 
 ### 2. Post-stop coverage-based transcript repair (REQ-MEET-018)
 
-After the user stops (`MeetingRecordingService.stopRecording() async
-throws -> MeetingRecordingOutput`), and after the normal finalize pass
-produces the saved transcript, run a **completeness repair stage**:
+After the user stops (`MeetingRecordingService.stopRecording() async throws -> MeetingRecordingOutput`), and after the normal finalize pass produces the saved transcript, run a **completeness repair stage**:
 
-1. **Offline VAD pass** over the full retained selected-source `.m4a`
-   files (mic, system, or both depending on source mode; reusing the
-   `MeetingVADService` / Silero machinery already in the codebase, run offline
-   rather than streaming), producing the set of speech regions actually present
-   in the audio.
-2. **Compute the speech-coverage ratio** — how much VAD-detected speech
-   the live-captured transcript segments (from
-   `MeetingTranscriptAssembler`) actually cover.
-3. **Identify uncovered regions** — VAD speech regions ≥ ~0.8 s of
-   detected speech that the live transcript covers below a threshold.
+1. **Offline VAD pass** over the full retained selected-source `.m4a` files (mic, system, or both depending on source mode; reusing the `MeetingVADService` / Silero machinery already in the codebase, run offline rather than streaming), producing the set of speech regions actually present in the audio.
+2. **Compute the speech-coverage ratio** — how much VAD-detected speech the live-captured transcript segments (from `MeetingTranscriptAssembler`) actually cover.
+3. **Identify uncovered regions** — VAD speech regions ≥ ~0.8 s of detected speech that the live transcript covers below a threshold.
 4. **Apply a decision ladder:**
-   - **Accept** — coverage is high; the live transcript stands as final,
-     no STT re-run. (The common case; matches today's behavior.)
-   - **Selective repair** — coverage has gaps; re-transcribe *only* the
-     specific uncovered regions and splice the results back into the
-     saved transcript.
-   - **Full re-transcription fallback** — coverage is very low or the
-     pattern indicates systemic live-chunk failure (e.g. a long mid-
-     meeting blackout); re-run STT over the whole retained audio.
+   - **Accept** — coverage is high; the live transcript stands as final, no STT re-run. (The common case; matches today's behavior.)
+   - **Selective repair** — coverage has gaps; re-transcribe *only* the specific uncovered regions and splice the results back into the saved transcript.
+   - **Full re-transcription fallback** — coverage is very low or the pattern indicates systemic live-chunk failure (e.g. a long mid- meeting blackout); re-run STT over the whole retained audio.
 
-This converts "live preview = final, lossy on drop" into "live preview +
-guaranteed-complete final."
+This converts "live preview = final, lossy on drop" into "live preview + guaranteed-complete final."
 
-**Scheduling (ADR-016).** Every STT re-run in the repair stage MUST go
-through the `STTScheduler` on the **shared background slot** — never the
-reserved dictation slot. Repair is a background meeting-finalize-class
-job; it must never starve or preempt live dictation (ADR-015 keeps
-dictation working concurrently throughout). The repair runs
-**asynchronously**: it must not block the finalization UI longer than
-necessary. The meeting finalizes and lands in the library on the live
-transcript as it does today; the repaired transcript is written back
-when the repair completes, and the saved row updates in place.
+**Scheduling (ADR-016).** Every STT re-run in the repair stage MUST go through the `STTScheduler` on the **shared background slot** — never the reserved dictation slot. Repair is a background meeting-finalize-class job; it must never starve or preempt live dictation (ADR-015 keeps dictation working concurrently throughout). The repair runs **asynchronously**: it must not block the finalization UI longer than necessary. The meeting finalizes and lands in the library on the live transcript as it does today; the repaired transcript is written back when the repair completes, and the saved row updates in place.
 
 ### 3. Reconciliation with REQ-MEET-013
 
-REQ-MEET-013 currently states that meeting live-preview chunking may use
-VAD boundaries "while … **final post-stop transcription remains
-unchanged**." This ADR must not be read as contradicting that. The
-reconciliation:
+REQ-MEET-013 currently states that meeting live-preview chunking may use VAD boundaries "while … **final post-stop transcription remains unchanged**." This ADR must not be read as contradicting that. The reconciliation:
 
-- REQ-MEET-013's "final post-stop transcription remains unchanged" means
-  **the way an individual chunk is transcribed is identical whether or
-  not VAD-guided live chunking is on.** This ADR does not change that.
-  It does not alter per-chunk STT, the chunker, or the assembler.
-- This ADR **adds a new completeness-repair *stage*** that runs *on top
-  of* the existing per-chunk transcription. It re-runs STT **only for
-  speech the live path missed** — gaps, not chunks that already
-  succeeded. For a healthy meeting (coverage high → Accept), the repair
-  stage is a no-op and the final transcript is byte-identical to today's.
-- So the precise updated framing: *the per-chunk transcription is
-  unchanged; a coverage-repair stage may additionally re-transcribe
-  speech regions the live path failed to cover.* The old `REQ-MEET-*`
-  references are historical anchors only; current wording belongs in this
-  ADR and the narrative specs.
+- REQ-MEET-013's "final post-stop transcription remains unchanged" means **the way an individual chunk is transcribed is identical whether or not VAD-guided live chunking is on.** This ADR does not change that. It does not alter per-chunk STT, the chunker, or the assembler.
+- This ADR **adds a new completeness-repair *stage*** that runs *on top of* the existing per-chunk transcription. It re-runs STT **only for speech the live path missed** — gaps, not chunks that already succeeded. For a healthy meeting (coverage high → Accept), the repair stage is a no-op and the final transcript is byte-identical to today's.
+- So the precise updated framing: *the per-chunk transcription is unchanged; a coverage-repair stage may additionally re-transcribe speech regions the live path failed to cover.* The old `REQ-MEET-*` references are historical anchors only; current wording belongs in this ADR and the narrative specs.
 
 ### 4. Crash-recovery path benefits from the same repair (ADR-019)
 
-ADR-019's recovery flow re-runs the standard post-stop pipeline on a
-crash-recovered session's retained audio. Because the coverage-repair
-stage attaches to that same post-stop pipeline, recovered sessions get
-it for free in Phase D — and they are exactly the sessions most likely
-to have lossy/partial live transcripts (the live preview may have been
-cut off at the crash). Recovery + coverage repair compound cleanly.
+ADR-019's recovery flow re-runs the standard post-stop pipeline on a crash-recovered session's retained audio. Because the coverage-repair stage attaches to that same post-stop pipeline, recovered sessions get it for free in Phase D — and they are exactly the sessions most likely to have lossy/partial live transcripts (the live preview may have been cut off at the crash). Recovery + coverage repair compound cleanly.
 
 ## Architecture
 
@@ -417,185 +174,85 @@ cut off at the crash). Recovery + coverage repair compound cleanly.
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-**Purity boundary.** The deterministic decision logic —
-`MeetingMicHealthMonitor`'s signature/confirmation math and
-`MeetingTranscriptCoverageRepair`'s coverage/gap planning — is **pure
-and unit-tested with table tests**. State is passed in; no clocks, no
-AVAudioEngine, no CoreAudio, no STT calls inside the pure types. The
-thin service layer owns the AVAudioEngine/ScreenCaptureKit liveness taps
-and the actual STT/VAD invocations.
+**Purity boundary.** The deterministic decision logic — `MeetingMicHealthMonitor`'s signature/confirmation math and `MeetingTranscriptCoverageRepair`'s coverage/gap planning — is **pure and unit-tested with table tests**. State is passed in; no clocks, no AVAudioEngine, no CoreAudio, no STT calls inside the pure types. The thin service layer owns the AVAudioEngine/ScreenCaptureKit liveness taps and the actual STT/VAD invocations.
 
 ## Rationale
 
 ### Why use system audio as warning context rather than a liveness oracle?
 
-A bare "no usable mic signal for N seconds = stall" timeout cannot tell a dead
-mic from a genuinely quiet moment, so it either false-alarms during
-silence or sets N so high it misses real stalls (the field incident was
-~18 s). Cross-checking against system audio adds warning context, but does not
-prove microphone failure: remote participants can speak while the local user
-is quiet or muted. Both streams already flow through `MeetingAudioCaptureService`,
-so this context is useful for diagnostics, not a destructive restart decision.
+A bare "no usable mic signal for N seconds = stall" timeout cannot tell a dead mic from a genuinely quiet moment, so it either false-alarms during silence or sets N so high it misses real stalls (the field incident was ~18 s). Cross-checking against system audio adds warning context, but does not prove microphone failure: remote participants can speak while the local user is quiet or muted. Both streams already flow through `MeetingAudioCaptureService`, so this context is useful for diagnostics, not a destructive restart decision.
 
-Raw callback delivery is a separate liveness fact: quiet sources still deliver
-PCM buffers. Meeting health therefore warns when a selected source delivers no
-first buffer for 12 active seconds or stops delivering buffers for 5 active
-seconds. Paused time does not count, interruption/recovery states take
-precedence, and a fresh buffer clears the warning. That meeting-health timeout
-only changes warning state; the shared microphone platform independently owns
-the confirmed source-level callback recovery described above.
+Raw callback delivery is a separate liveness fact: quiet sources still deliver PCM buffers. Meeting health therefore warns when a selected source delivers no first buffer for 12 active seconds or stops delivering buffers for 5 active seconds. Paused time does not count, interruption/recovery states take precedence, and a fresh buffer clears the warning. That meeting-health timeout only changes warning state; the shared microphone platform independently owns the confirmed source-level callback recovery described above.
 
 ### Why does callback liveness recover while signal inference stays passive?
 
-The original detection-first gate remains the right discipline: a watchdog
-that acts on an unproven signal can destabilize healthy capture. Issue #820 now
-meets that gate for raw callback cessation without relying on amplitude or
-system-audio activity. Quiet microphones still produce callbacks, so the
-source-level fact is unambiguous. Continuous empty/invalid callbacks are also
-distinct from valid silence and retain their two-second recovery threshold.
-Amplitude and cross-source health remain warning/diagnostic evidence; neither
-can independently authorize an established-source restart.
+The original detection-first gate remains the right discipline: a watchdog that acts on an unproven signal can destabilize healthy capture. Issue #820 now meets that gate for raw callback cessation without relying on amplitude or system-audio activity. Quiet microphones still produce callbacks, so the source-level fact is unambiguous. Continuous empty/invalid callbacks are also distinct from valid silence and retain their two-second recovery threshold. Amplitude and cross-source health remain warning/diagnostic evidence; neither can independently authorize an established-source restart.
 
 ### Why coverage repair instead of always re-transcribing the whole file on stop?
 
-Always re-running full-file STT on stop would be the simplest "complete"
-guarantee, but it doubles STT cost for every meeting when the live
-transcript is already complete (the common case), and adds stop-time
-latency to a 40-minute recording for no gain. Coverage-driven selective
-repair pays STT cost **only for the speech that's actually missing**,
-and reserves the full re-run for the rare systemic-failure case. The VAD
-pass is cheap relative to STT; the coverage ratio is what makes the
-re-run *targeted*.
+Always re-running full-file STT on stop would be the simplest "complete" guarantee, but it doubles STT cost for every meeting when the live transcript is already complete (the common case), and adds stop-time latency to a 40-minute recording for no gain. Coverage-driven selective repair pays STT cost **only for the speech that's actually missing**, and reserves the full re-run for the rare systemic-failure case. The VAD pass is cheap relative to STT; the coverage ratio is what makes the re-run *targeted*.
 
 ### Why keep the pure planner separate from the service?
 
-The decision logic — "is this a stall?", "which regions are uncovered?",
-"accept / selective / full?" — is exactly the part that's easy to get
-wrong and easy to regress, and it's deterministic given its inputs.
-Pulling it into pure types with table tests means the threshold tuning
-(confirmation window, coverage threshold, ≥0.8s gap floor) is verifiable
-without a mic, a meeting, or an STT model. The audio/STT plumbing that
-*can't* be unit-tested stays thin.
+The decision logic — "is this a stall?", "which regions are uncovered?", "accept / selective / full?" — is exactly the part that's easy to get wrong and easy to regress, and it's deterministic given its inputs. Pulling it into pure types with table tests means the threshold tuning (confirmation window, coverage threshold, ≥0.8s gap floor) is verifiable without a mic, a meeting, or an STT model. The audio/STT plumbing that *can't* be unit-tested stays thin.
 
 ## Consequences
 
 ### Positive
 
-- The two highest-severity silent meeting-capture failures — a dead mic
-  nobody noticed, and live-dropped speech lost forever — both get a net.
+- The two highest-severity silent meeting-capture failures — a dead mic nobody noticed, and live-dropped speech lost forever — both get a net.
 - Default-on reliability; no new user decision, no toggle to discover.
-- Repair only **adds** coverage. The original live transcript and the
-  retained source audio are never destroyed (see Invariants).
+- Repair only **adds** coverage. The original live transcript and the retained source audio are never destroyed (see Invariants).
 - Crash-recovered sessions (ADR-019) inherit coverage repair for free.
 - Pure decision cores are table-testable; threshold tuning is auditable.
-- Reuses existing machinery (`MeetingVADService`, `STTScheduler`,
-  `MeetingTranscriptAssembler`) rather than inventing parallel systems.
+- Reuses existing machinery (`MeetingVADService`, `STTScheduler`, `MeetingTranscriptAssembler`) rather than inventing parallel systems.
 
 ### Negative
 
-- **New stop-time work.** Even when async, an offline VAD pass + possible
-  selective STT adds background load after stop. Mitigated by running on
-  the background slot and updating the saved row in place.
-- **Threshold tuning is empirical.** The confirmation window (~3 s),
-  coverage threshold, and ≥0.8 s gap floor are first guesses that will
-  need field telemetry to settle — same shape of risk as the
-  dictation-stall watchdog timing.
-- **Another floating-surface warning** to maintain on the meeting panel/
-  pill alongside the existing levels/state surfaces.
-- **Recovery must not confuse silence with source death.** The meeting health
-  monitor's signal-level checks remain detection-only. Source-level recovery
-  handles five-second post-start callback gaps, two seconds of continuous
-  empty/invalid callbacks, and physically stopped graphs, not valid silence
-  after successful startup commit.
+- **New stop-time work.** Even when async, an offline VAD pass + possible selective STT adds background load after stop. Mitigated by running on the background slot and updating the saved row in place.
+- **Threshold tuning is empirical.** The confirmation window (~3 s), coverage threshold, and ≥0.8 s gap floor are first guesses that will need field telemetry to settle — same shape of risk as the dictation-stall watchdog timing.
+- **Another floating-surface warning** to maintain on the meeting panel/ pill alongside the existing levels/state surfaces.
+- **Recovery must not confuse silence with source death.** The meeting health monitor's signal-level checks remain detection-only. Source-level recovery handles five-second post-start callback gaps, two seconds of continuous empty/invalid callbacks, and physically stopped graphs, not valid silence after successful startup commit.
 
 ### Invariants (must hold)
 
-- **Never lose user data.** Repair only *adds* coverage; the original
-  live transcript and the retained mic/system `.m4a` files are preserved
-  exactly as ADR-019 leaves them.
-- **Concurrent dictation is unaffected** (ADR-015). The watchdog observes;
-  the repair runs on the background slot.
-- **Repair never starves dictation** (ADR-016). The reserved dictation
-  slot is never used by repair; repair is background-class.
-- **Signal-inferred health never authorizes an established-source restart.**
-  Callback-stall and invalid-callback recovery is route-agnostic, bounded,
-  requires replacement startup readiness and a generation-checked running
-  commit, and must remain cancellable by Stop.
-- **Crash recovery still works** (ADR-019) and ideally benefits from the
-  same coverage repair on recovered audio.
+- **Never lose user data.** Repair only *adds* coverage; the original live transcript and the retained mic/system `.m4a` files are preserved exactly as ADR-019 leaves them.
+- **Concurrent dictation is unaffected** (ADR-015). The watchdog observes; the repair runs on the background slot.
+- **Repair never starves dictation** (ADR-016). The reserved dictation slot is never used by repair; repair is background-class.
+- **Signal-inferred health never authorizes an established-source restart.** Callback-stall and invalid-callback recovery is route-agnostic, bounded, requires replacement startup readiness and a generation-checked running commit, and must remain cancellable by Stop.
+- **Crash recovery still works** (ADR-019) and ideally benefits from the same coverage repair on recovered audio.
 
 ## Implementation Direction
 
 ### Core types (SottoCore)
 
-- `MeetingMicHealthMonitor` — pure. `ingest(micSignal:systemSignal:now:)
-  -> [HealthEvent]`; holds no clock, takes `now` in. Signatures
-  `.micMissing` / `.micSilent` / `.micGap`; ~3 s system-audio
-  confirmation gate; emits `.stallSuspected(signature:)` and a
-  `.recovered` event when the mic resumes.
-- `MeetingTranscriptCoverageRepair` — pure planner.
-  `plan(liveSegments:offlineVADSegments:) -> RepairPlan` where
-  `RepairPlan` is `.accept` / `.selective(gaps: [SpeechRegion])` /
-  `.fullReTranscribe`. Coverage-ratio math + ≥0.8 s gap detection live
-  here; no STT, no audio I/O.
-- New `Sources/SottoCore/Audio/MeetingMicHealthMonitor.swift` and
-  `Sources/SottoCore/Services/MeetingRecording/MeetingTranscriptCoverageRepair.swift`.
+- `MeetingMicHealthMonitor` — pure. `ingest(micSignal:systemSignal:now:) -> [HealthEvent]`; holds no clock, takes `now` in. Signatures `.micMissing` / `.micSilent` / `.micGap`; ~3 s system-audio confirmation gate; emits `.stallSuspected(signature:)` and a `.recovered` event when the mic resumes.
+- `MeetingTranscriptCoverageRepair` — pure planner. `plan(liveSegments:offlineVADSegments:) -> RepairPlan` where `RepairPlan` is `.accept` / `.selective(gaps: [SpeechRegion])` / `.fullReTranscribe`. Coverage-ratio math + ≥0.8 s gap detection live here; no STT, no audio I/O.
+- New `Sources/SottoCore/Audio/MeetingMicHealthMonitor.swift` and `Sources/SottoCore/Services/MeetingRecording/MeetingTranscriptCoverageRepair.swift`.
 
 ### Service layer (SottoCore)
 
-- `MicrophoneEnginePlatform` tracks five-second post-start callback gaps and
-  two seconds of continuous empty/invalid callbacks, converging those failures
-  and physically stopped graphs on bounded fresh-engine recovery. It owns the
-  clock/timer, route re-resolution, replacement startup readiness and generation
-  checks, and Stop cancellation once for every shared-stream consumer. Valid
-  silence after successful startup commit is not a recovery signal.
-- `MeetingAudioCaptureService` (`Sources/SottoCore/Audio/`) feeds
-  per-buffer liveness signals (arrival timestamp + non-silent flag for
-  mic, activity flag for system) into `MeetingMicHealthMonitor`. The
-  existing `MeetingAudioCaptureEvent` stream (`.microphoneBuffer` /
-  system) is the natural source; `SystemAudioStream` activity provides warning
-  and diagnostic context only, never independent restart authority.
-- `MeetingRecordingService.stopRecording()` — after the existing
-  finalize produces the saved transcript, kick off the coverage-repair
-  stage: offline `MeetingVADService` pass over the retained `.m4a`
-  files → `MeetingTranscriptCoverageRepair.plan(...)` → for non-`.accept`
-  plans enqueue selective/full STT on `STTScheduler`'s background slot →
-  write the repaired transcript back to the `Transcription` row.
-- Repair attaches to the same post-stop pipeline ADR-019's recovery
-  flow re-runs (`MeetingRecordingRecoveryService` /
-  `MeetingTranscriptFinalizer`), so recovered sessions get it in Phase D.
+- `MicrophoneEnginePlatform` tracks five-second post-start callback gaps and two seconds of continuous empty/invalid callbacks, converging those failures and physically stopped graphs on bounded fresh-engine recovery. It owns the clock/timer, route re-resolution, replacement startup readiness and generation checks, and Stop cancellation once for every shared-stream consumer. Valid silence after successful startup commit is not a recovery signal.
+- `MeetingAudioCaptureService` (`Sources/SottoCore/Audio/`) feeds per-buffer liveness signals (arrival timestamp + non-silent flag for mic, activity flag for system) into `MeetingMicHealthMonitor`. The existing `MeetingAudioCaptureEvent` stream (`.microphoneBuffer` / system) is the natural source; `SystemAudioStream` activity provides warning and diagnostic context only, never independent restart authority.
+- `MeetingRecordingService.stopRecording()` — after the existing finalize produces the saved transcript, kick off the coverage-repair stage: offline `MeetingVADService` pass over the retained `.m4a` files → `MeetingTranscriptCoverageRepair.plan(...)` → for non-`.accept` plans enqueue selective/full STT on `STTScheduler`'s background slot → write the repaired transcript back to the `Transcription` row.
+- Repair attaches to the same post-stop pipeline ADR-019's recovery flow re-runs (`MeetingRecordingRecoveryService` / `MeetingTranscriptFinalizer`), so recovered sessions get it in Phase D.
 
 ### App / ViewModels
 
-- `MeetingRecordingPanelViewModel` / `MeetingRecordingPillViewModel`
-  (`Sources/SottoViewModels/`) — add a non-blocking
-  `micHealthWarning` surface next to the existing `micLevel` /
-  `systemLevel`. Gentle copy, dismissible, never modal.
+- `MeetingRecordingPanelViewModel` / `MeetingRecordingPillViewModel` (`Sources/SottoViewModels/`) — add a non-blocking `micHealthWarning` surface next to the existing `micLevel` / `systemLevel`. Gentle copy, dismissible, never modal.
 
 ### Feature gate (staged rollout)
 
-- Add a single `AppFeatures.meetingCaptureReliabilityEnabled` kill-switch
-  (default-on intent) in `Sources/SottoCore/AppFeatures.swift`,
-  following the existing flag-doc style. When off, the watchdog does not
-  observe and the repair stage is skipped (the meeting finalizes exactly
-  as today). The pure types and tests stay intact either way.
+- Add a single `AppFeatures.meetingCaptureReliabilityEnabled` kill-switch (default-on intent) in `Sources/SottoCore/AppFeatures.swift`, following the existing flag-doc style. When off, the watchdog does not observe and the repair stage is skipped (the meeting finalizes exactly as today). The pure types and tests stay intact either way.
 
 ## Telemetry
 
 Implemented diagnostic events contain no audio or transcript content:
 
-- `mic_stall_detected` — props: `signature` (`mic_missing` /
-  `mic_silent` / `mic_gap`), coarse `elapsed_ms` since meeting start, and
-  `stall_count` on the first report. Repeated stalls are suppressed into
-  periodic/final summaries with `stall_count` and `total_stalled_seconds`.
-- `audio_engine_lifecycle` — development-source observer described above;
-  reports bounded phase evidence for the shared microphone across dictation,
-  meetings, and idle work. It has no meeting ID and is separate from
-  `meeting_operation` and signal-health telemetry.
+- `mic_stall_detected` — props: `signature` (`mic_missing` / `mic_silent` / `mic_gap`), coarse `elapsed_ms` since meeting start, and `stall_count` on the first report. Repeated stalls are suppressed into periodic/final summaries with `stall_count` and `total_stalled_seconds`.
+- `audio_engine_lifecycle` — development-source observer described above; reports bounded phase evidence for the shared microphone across dictation, meetings, and idle work. It has no meeting ID and is separate from `meeting_operation` and signal-health telemetry.
 
-`meeting_transcript_repair` remains proposed with the unimplemented repair stage:
-`decision` (`accept` / `selective` / `full`) and `gap_count`, once per finalized
-meeting after repair resolves. It is not part of the implemented event contract.
+`meeting_transcript_repair` remains proposed with the unimplemented repair stage: `decision` (`accept` / `selective` / `full`) and `gap_count`, once per finalized meeting after repair resolves. It is not part of the implemented event contract.
 
 > **Two-repo reminder.** Each new `TelemetryEventName` case MUST also be
 > added to `ALLOWED_EVENTS` in
@@ -606,55 +263,17 @@ meeting after repair resolves. It is not part of the implemented event contract.
 
 ## Phased Rollout
 
-Each phase is independently shippable and additive. Earlier phases
-deliver value without later ones.
+Each phase is independently shippable and additive. Earlier phases deliver value without later ones.
 
-1. **Phase A — Mic-health detection core (implemented 2026-06-14).** Pure
-   `MeetingMicHealthMonitor` with the three signatures + ~3 s
-   confirmation gate, table tests, and the `MeetingAudioCaptureService`
-   wiring that feeds liveness signals. Emits `mic_stall_detected`
-   telemetry. Amplitude- and cross-source-signal-inferred mic restart remains
-   deliberately absent until field evidence can distinguish a dead graph from
-   legitimate silence.
-2. **Phase B — Direct lifecycle recovery + actionable warnings (implemented
-   2026-07-20; extended 2026-07-22).** AVAudioEngine configuration-change
-   notifications and confirmed post-start callback stalls rebuild the mic on a
-   fresh route/format with bounded retries; typed ScreenCaptureKit stalls and
-   unexpected stops replace the system stream similarly. Recovery succeeds
-   only after a real replacement buffer. Recovering and terminal source states
-   surface gentle, non-blocking warnings even while routine health decoration
-   remains flag-hidden. Amplitude-inferred health remains detection-only.
-3. **Phase C — Coverage-based selective repair.** Pure
-   `MeetingTranscriptCoverageRepair` planner + table tests; offline
-   `MeetingVADService` wiring in the post-stop path; selective re-
-   transcription of uncovered gaps on the `STTScheduler` background slot;
-   write-back to the saved row; `meeting_transcript_repair` telemetry.
-   Reconcile the old REQ-MEET-013 framing in this ADR and the narrative
-   specs; the legacy requirements index is archived and no longer updated.
-4. **Phase D — Full-fallback tier + crash-recovery integration.** Add the
-   `.fullReTranscribe` tier for systemic-failure coverage, and apply the
-   coverage-repair stage to crash-recovered sessions (ADR-019). Optional:
-   gate amplitude- or cross-source-signal-inferred mic recovery behind a
-   confirmed-signature flag once `mic_stall_detected` data justifies it.
+1. **Phase A — Mic-health detection core (implemented 2026-06-14).** Pure `MeetingMicHealthMonitor` with the three signatures + ~3 s confirmation gate, table tests, and the `MeetingAudioCaptureService` wiring that feeds liveness signals. Emits `mic_stall_detected` telemetry. Amplitude- and cross-source-signal-inferred mic restart remains deliberately absent until field evidence can distinguish a dead graph from legitimate silence.
+2. **Phase B — Direct lifecycle recovery + actionable warnings (implemented 2026-07-20; extended 2026-07-22).** AVAudioEngine configuration-change notifications and confirmed post-start callback stalls rebuild the mic on a fresh route/format with bounded retries; typed ScreenCaptureKit stalls and unexpected stops replace the system stream similarly. Recovery succeeds only after a real replacement buffer. Recovering and terminal source states surface gentle, non-blocking warnings even while routine health decoration remains flag-hidden. Amplitude-inferred health remains detection-only.
+3. **Phase C — Coverage-based selective repair.** Pure `MeetingTranscriptCoverageRepair` planner + table tests; offline `MeetingVADService` wiring in the post-stop path; selective re- transcription of uncovered gaps on the `STTScheduler` background slot; write-back to the saved row; `meeting_transcript_repair` telemetry. Reconcile the old REQ-MEET-013 framing in this ADR and the narrative specs; the legacy requirements index is archived and no longer updated.
+4. **Phase D — Full-fallback tier + crash-recovery integration.** Add the `.fullReTranscribe` tier for systemic-failure coverage, and apply the coverage-repair stage to crash-recovered sessions (ADR-019). Optional: gate amplitude- or cross-source-signal-inferred mic recovery behind a confirmed-signature flag once `mic_stall_detected` data justifies it.
 
 ## Open Questions
 
-- **Confirmation window length.** Is ~3 s of system-audio activity the
-  right gate, or should it scale with how silent the mic is (a totally
-  dead mic could trip faster than a near-silent one)? Settle from
-  `mic_stall_detected` field timing before tuning.
-- **Coverage threshold + gap floor.** The ~0.8 s gap floor and the
-  per-region coverage threshold need a labeled corpus or replayed field
-  audio to tune. Start conservative (favor Accept) to avoid spurious
-  re-transcription, loosen on data.
-- **Where does the warning live?** Panel only, pill only, or both?
-  Both keep the existing `micLevel`/`systemLevel` surfaces in sync; the
-  warning should follow whichever surface the user is looking at.
-- **Signal-inferred recovery scope.** Raw callback cessation already uses the
-  shared source's bounded fresh-engine recovery. If amplitude-only evidence
-  later justifies recovery, should it use that same path or require additional
-  meeting-stream re-alignment? Defer until telemetry confirms the signature.
-- **Full-file re-transcription budget.** Should `.fullReTranscribe` be
-  unconditional on very-low coverage, or capped by meeting length to
-  bound background-slot time? Lean capped, with telemetry on how often
-  the cap binds.
+- **Confirmation window length.** Is ~3 s of system-audio activity the right gate, or should it scale with how silent the mic is (a totally dead mic could trip faster than a near-silent one)? Settle from `mic_stall_detected` field timing before tuning.
+- **Coverage threshold + gap floor.** The ~0.8 s gap floor and the per-region coverage threshold need a labeled corpus or replayed field audio to tune. Start conservative (favor Accept) to avoid spurious re-transcription, loosen on data.
+- **Where does the warning live?** Panel only, pill only, or both? Both keep the existing `micLevel`/`systemLevel` surfaces in sync; the warning should follow whichever surface the user is looking at.
+- **Signal-inferred recovery scope.** Raw callback cessation already uses the shared source's bounded fresh-engine recovery. If amplitude-only evidence later justifies recovery, should it use that same path or require additional meeting-stream re-alignment? Defer until telemetry confirms the signature.
+- **Full-file re-transcription budget.** Should `.fullReTranscribe` be unconditional on very-low coverage, or capped by meeting length to bound background-slot time? Lean capped, with telemetry on how often the cap binds.

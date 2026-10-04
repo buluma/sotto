@@ -2,15 +2,7 @@
 
 This project bundles or downloads third-party software components. The following attributions summarize the relevant source, license, and usage information for those components.
 
-The Markdown dependency graph below has verbatim copyright, license, and NOTICE
-material in [`MarkdownDependencies.txt`](Sources/MacParakeet/Resources/Legal/MarkdownDependencies.txt),
-also copied to `Contents/Resources/Legal/MarkdownDependencies.txt` in dev and
-distribution bundles. It includes Highlight.js and Latin Modern Math resource
-notices (GUST Font License and LPPL 1.3c), not just library names/links.
-The font notice also identifies the complete, unmodified Latin Modern Math 1.959
-distribution, since iosMath ships only a subset of that upstream package.
-Equatable and swift-syntax are build/macro support; including their licenses
-does not claim their compiler executables are redistributed in the app.
+The Markdown dependency graph below has verbatim copyright, license, and NOTICE material in [`MarkdownDependencies.txt`](Sources/MacParakeet/Resources/Legal/MarkdownDependencies.txt), also copied to `Contents/Resources/Legal/MarkdownDependencies.txt` in dev and distribution bundles. It includes Highlight.js and Latin Modern Math resource notices (GUST Font License and LPPL 1.3c), not just library names/links. The font notice also identifies the complete, unmodified Latin Modern Math 1.959 distribution, since iosMath ships only a subset of that upstream package. Equatable and swift-syntax are build/macro support; including their licenses does not claim their compiler executables are redistributed in the app.
 
 ## FFmpeg
 
@@ -33,19 +25,11 @@ does not claim their compiler executables are redistributed in the app.
 - License: Node.js license and the notices distributed with the official runtime
 - Source: <https://nodejs.org/>
 - Used for: yt-dlp JavaScript extractors and the private Ask agent helper
-- Notice location: the complete upstream `LICENSE` is copied beside the bundled
-  runtime in app and standalone CLI distributions; see `docs/distribution.md`.
+- Notice location: the complete upstream `LICENSE` is copied beside the bundled runtime in app and standalone CLI distributions; see `docs/distribution.md`.
 
 ## Ask agent helper and bundled npm packages
 
-Ask packages a private, app-supplied helper bundle built from the pinned
-`Sources/AskAgentHelper/package-lock.json`. It uses Pi agent core and Pi AI
-0.87.1; it does not bundle or run the Pi coding-agent CLI. Build output includes
-`AskAgentHelper/Legal/dependencies.json` (generated from the esbuild metafile)
-and the license/notice files found for each package under
-`AskAgentHelper/Legal/Dependencies/`. Keep that generated per-package manifest
-and all listed notices with both app and CLI bundles; this summary is not a
-replacement for those package notices.
+Ask packages a private, app-supplied helper bundle built from the pinned `Sources/AskAgentHelper/package-lock.json`. It uses Pi agent core and Pi AI 0.87.1; it does not bundle or run the Pi coding-agent CLI. Build output includes `AskAgentHelper/Legal/dependencies.json` (generated from the esbuild metafile) and the license/notice files found for each package under `AskAgentHelper/Legal/Dependencies/`. Keep that generated per-package manifest and all listed notices with both app and CLI bundles; this summary is not a replacement for those package notices.
 
 The current helper bundle includes these nine npm packages:
 
@@ -61,9 +45,7 @@ The current helper bundle includes these nine npm packages:
 | `typebox` | As recorded in generated manifest | MIT |
 | `yaml` | As recorded in generated manifest | ISC |
 
-Pi's four package license files are from the pinned published source tree's
-MIT license. Build-time packaging records each package's resolved version,
-declared license, and included license filenames in the generated manifest.
+Pi's four package license files are from the pinned published source tree's MIT license. Build-time packaging records each package's resolved version, declared license, and included license filenames in the generated manifest.
 
 ## LocalVQE
 

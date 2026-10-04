@@ -46,32 +46,9 @@ Two independent `AVAudioEngine` instances cannot escape this — VPIO state is p
 
 **Why a shared engine is also fine for lifecycle:** the original ADR worried that a long-running meeting engine would glitch when dictation start/stop touched it. In practice, dictation `subscribe`/`unsubscribe` calls are buffer-fanout list mutations behind a lock — they don't touch the running `AVAudioEngine`, don't reconfigure VPIO, and don't restart the engine. The engine starts on the first subscriber and stops on the last; mid-session subscribers join an already-running engine.
 
-Meeting lifecycle hardening preserves that independence. Selected meeting
-sources start independently and write available audio immediately. A meeting
-Stop retires its partial microphone subscription callbacks and settles its
-separate ScreenCaptureKit source without waiting indefinitely for microphone
-native work. The same microphone capture object remains leased until start and
-unsubscription both settle; new system-only meetings can bypass that lease,
-but no second mic engine or overlapping mic start may bypass it. Attempt
-generations prevent late meeting startup from reviving ended capture or
-touching a replacement session. Stop during Starting saves surviving audio;
-quit in that window offers save or discard. Dictation keeps its own state machine, readiness
-watchdog, and shared-stream subscription ownership. The two flows do not share
-a combined start/stop state machine.
+Meeting lifecycle hardening preserves that independence. Selected meeting sources start independently and write available audio immediately. A meeting Stop retires its partial microphone subscription callbacks and settles its separate ScreenCaptureKit source without waiting indefinitely for microphone native work. The same microphone capture object remains leased until start and unsubscription both settle; new system-only meetings can bypass that lease, but no second mic engine or overlapping mic start may bypass it. Attempt generations prevent late meeting startup from reviving ended capture or touching a replacement session. Stop during Starting saves surviving audio; quit in that window offers save or discard. Dictation keeps its own state machine, readiness watchdog, and shared-stream subscription ownership. The two flows do not share a combined start/stop state machine.
 
-Instant Dictation keeps that same topology. Its idle warm lease is passive:
-it can keep the engine running and maintain a small RAM-only pre-roll, but it
-is not a user-visible capture session. The warm lease is suppressed when the
-resolved input is Bluetooth, because holding an idle Bluetooth microphone open
-pins the headset in HFP/SCO and degrades playback; active dictation or meeting
-capture on that Bluetooth mic is still allowed and simply starts cold. When
-microphone-selection/default-input changes require a warm-capture refresh, the
-app debounces the refresh before restarting the passive subscriber so route
-change bursts collapse into one engine restart. If an explicit VPIO subscriber
-arrives while only the warm lease is present, the shared stream may promote to
-VPIO immediately. If active raw dictation or raw meeting capture is present,
-the existing deferral rule still protects that live session from a mid-stream
-format flip.
+Instant Dictation keeps that same topology. Its idle warm lease is passive: it can keep the engine running and maintain a small RAM-only pre-roll, but it is not a user-visible capture session. The warm lease is suppressed when the resolved input is Bluetooth, because holding an idle Bluetooth microphone open pins the headset in HFP/SCO and degrades playback; active dictation or meeting capture on that Bluetooth mic is still allowed and simply starts cold. When microphone-selection/default-input changes require a warm-capture refresh, the app debounces the refresh before restarting the passive subscriber so route change bursts collapse into one engine restart. If an explicit VPIO subscriber arrives while only the warm lease is present, the shared stream may promote to VPIO immediately. If active raw dictation or raw meeting capture is present, the existing deferral rule still protects that live session from a mid-stream format flip.
 
 ### 2. Shared STT runtime with explicit scheduling
 

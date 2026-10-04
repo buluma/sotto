@@ -1,16 +1,6 @@
 # CLI Testing Guide
 
-For saved-meeting splitting, run `swift test --filter 'MeetingSplit|SpecCommandTests'`.
-For external meeting import, run
-`swift test --filter 'MeetingImport|AudioFileConverterTests|SpecCommandTests'`.
-The tests use synthetic temporary audio and databases, not personal recordings.
-Check `meetings split --help`, `meetings import --help`, and `spec --json` for
-discovery. Split preview and `create --dry-run` must not initialize models,
-migrate the database, or write preferences. A split `committed` operation means
-audio was published; inspect each child's progress and exit status for processing
-success. Import progress belongs on stderr; stdout carries one final result.
-`partial` is usable and exits zero, while `needsRetry` prints the saved meeting
-before exiting one so verification does not create a duplicate by importing again.
+For saved-meeting splitting, run `swift test --filter 'MeetingSplit|SpecCommandTests'`. For external meeting import, run `swift test --filter 'MeetingImport|AudioFileConverterTests|SpecCommandTests'`. The tests use synthetic temporary audio and databases, not personal recordings. Check `meetings split --help`, `meetings import --help`, and `spec --json` for discovery. Split preview and `create --dry-run` must not initialize models, migrate the database, or write preferences. A split `committed` operation means audio was published; inspect each child's progress and exit status for processing success. Import progress belongs on stderr; stdout carries one final result. `partial` is usable and exits zero, while `needsRetry` prints the saved meeting before exiting one so verification does not create a duplicate by importing again.
 
 > Status: **ACTIVE** - CLI testing guide for core services
 
@@ -30,12 +20,7 @@ Always launch the GUI from repo source when validating new UI work:
 scripts/dev/run_app.sh
 ```
 
-This script builds the current workspace debug app with build identity metadata.
-Before rebuilding or re-signing, it requests ordinary quit for this worktree's
-existing dev executables and aborts if they do not exit safely. It does not
-force-kill the app or stop unrelated installed copies. See the
-[human QA guide](human-qa-guide.md#getting-a-testable-build) for shared-data
-and launch-environment limits.
+This script builds the current workspace debug app with build identity metadata. Before rebuilding or re-signing, it requests ordinary quit for this worktree's existing dev executables and aborts if they do not exit safely. It does not force-kill the app or stop unrelated installed copies. See the [human QA guide](human-qa-guide.md#getting-a-testable-build) for shared-data and launch-environment limits.
 
 ## Command Discovery
 
@@ -47,14 +32,9 @@ swift run sotto-cli spec --json
 swift run sotto-cli <command> --help
 ```
 
-The [integration guide](../integrations/README.md) contains supported operator
-workflows; [`cli-json-v1`](../spec/contracts/cli-json-v1.md) defines the stable
-automation contract. The examples below are focused verification scenarios, not
-an exhaustive option list.
+The [integration guide](../integrations/README.md) contains supported operator workflows; [`cli-json-v1`](../spec/contracts/cli-json-v1.md) defines the stable automation contract. The examples below are focused verification scenarios, not an exhaustive option list.
 
-`flow` is a deprecated compatibility alias for `vocab` and remains accepted
-until the next major CLI version. Use `vocab` in new scripts; removal requires
-a major-version contract change and a matching changelog entry.
+`flow` is a deprecated compatibility alias for `vocab` and remains accepted until the next major CLI version. Use `vocab` in new scripts; removal requires a major-version contract change and a matching changelog entry.
 
 > **JSON output convention**: any query command marked `[--json]` emits a single
 > JSON document on stdout (ISO-8601 dates, sorted keys, pretty-printed). Pipe to
@@ -77,13 +57,7 @@ a major-version contract change and a matching changelog entry.
 
 ### 1) App-Default Mode (recommended for behavior checks)
 
-Uses app defaults for processing mode, speech engine, speaker detection, and
-YouTube audio retention. This is the best CLI mode for checking GUI behavior
-without controlling the GUI, but it is not full GUI parity: the CLI does not
-exercise GUI-only windowing, playback, hotkeys, PDF/DOCX export, or optional
-AI formatter output. Bare `transcribe` already follows the app-default speaker
-detection setting; the explicit flag below keeps the behavior visible in test
-commands.
+Uses app defaults for processing mode, speech engine, speaker detection, and YouTube audio retention. This is the best CLI mode for checking GUI behavior without controlling the GUI, but it is not full GUI parity: the CLI does not exercise GUI-only windowing, playback, hotkeys, PDF/DOCX export, or optional AI formatter output. Bare `transcribe` already follows the app-default speaker detection setting; the explicit flag below keeps the behavior visible in test commands.
 
 ```bash
 swift run sotto-cli transcribe "<FILE_OR_MEDIA_URL>" \
@@ -121,34 +95,11 @@ swift run sotto-cli transcribe "<FILE_OR_MEDIA_URL>" \
   --media-audio-quality best-available
 ```
 
-`--media-audio-quality app-default` follows the GUI setting. `m4a` matches
-the app's default compatibility-first selector. `best-available` asks `yt-dlp`
-for the best audio stream and then lets the normal conversion pipeline prepare
-the STT input.
+`--media-audio-quality app-default` follows the GUI setting. `m4a` matches the app's default compatibility-first selector. `best-available` asks `yt-dlp` for the best audio stream and then lets the normal conversion pipeline prepare the STT input.
 
 ### Speech Engine Selection
 
-Parakeet remains the no-flag default for semver stability and ignores
-`--language`. Within Parakeet, v3 covers English plus supported European
-languages, v2 is the English timestamped build, Unified is readable English
-with word timestamps, and Orukeet is an optional multilingual preview that
-stays a Parakeet variant. Use
-`--parakeet-model app-default|v3|v2|unified|orukeet` for a single run, or
-`config set parakeet-model unified` / `models select parakeet-unified` to
-persist a build. Orukeet is explicit:
-`models download parakeet-orukeet`, then `config set parakeet-model orukeet`
-or `transcribe --parakeet-model orukeet`. It has no native streaming,
-tail-window preview, or recognition-time vocabulary boosting, and the default
-remains v3.
-Use `--engine app-default` when you want the CLI to follow the GUI's saved
-speech engine, Parakeet model, and Nemotron/Cohere/Whisper language defaults.
-Nemotron is an opt-in Beta engine with two builds: the multilingual build
-for broader live-preview coverage with variable quality, and an English-only
-streaming build. Use `--nemotron-model
-app-default|multilingual-1120ms|english-1120ms` for a single run, or
-`config set nemotron-model english-1120ms` / `models select
-nemotron-english-1120ms` to persist it. Download a build explicitly before
-selecting or running it:
+Parakeet remains the no-flag default for semver stability and ignores `--language`. Within Parakeet, v3 covers English plus supported European languages, v2 is the English timestamped build, Unified is readable English with word timestamps, and Orukeet is an optional multilingual preview that stays a Parakeet variant. Use `--parakeet-model app-default|v3|v2|unified|orukeet` for a single run, or `config set parakeet-model unified` / `models select parakeet-unified` to persist a build. Orukeet is explicit: `models download parakeet-orukeet`, then `config set parakeet-model orukeet` or `transcribe --parakeet-model orukeet`. It has no native streaming, tail-window preview, or recognition-time vocabulary boosting, and the default remains v3. Use `--engine app-default` when you want the CLI to follow the GUI's saved speech engine, Parakeet model, and Nemotron/Cohere/Whisper language defaults. Nemotron is an opt-in Beta engine with two builds: the multilingual build for broader live-preview coverage with variable quality, and an English-only streaming build. Use `--nemotron-model app-default|multilingual-1120ms|english-1120ms` for a single run, or `config set nemotron-model english-1120ms` / `models select nemotron-english-1120ms` to persist it. Download a build explicitly before selecting or running it:
 
 ```bash
 swift run sotto-cli models download nemotron-multilingual-1120ms
@@ -159,9 +110,7 @@ swift run sotto-cli transcribe "<FILE_OR_MEDIA_URL>" \
   --language auto
 ```
 
-Use Whisper explicitly for broad-language files, media, and saved-audio
-retranscription after downloading the local Whisper model. It provides word
-timestamps, but first use can be slow while Core ML prepares the model:
+Use Whisper explicitly for broad-language files, media, and saved-audio retranscription after downloading the local Whisper model. It provides word timestamps, but first use can be slow while Core ML prepares the model:
 
 ```bash
 swift run sotto-cli models download whisper-large-v3-v20240930-turbo-632MB
@@ -171,11 +120,7 @@ swift run sotto-cli transcribe "<FILE_OR_MEDIA_URL>" \
   --language ko
 ```
 
-Use Cohere explicitly for local batch plain-text runs after downloading the
-local Cohere model. Cohere requires a supported language hint or saved
-`cohere-language` default, which you can set or inspect with `config`. It has no
-live preview, word timestamps, speaker labels, diarization, or auto language
-detection:
+Use Cohere explicitly for local batch plain-text runs after downloading the local Cohere model. Cohere requires a supported language hint or saved `cohere-language` default, which you can set or inspect with `config`. It has no live preview, word timestamps, speaker labels, diarization, or auto language detection:
 
 ```bash
 swift run sotto-cli models download cohere-transcribe
@@ -187,16 +132,11 @@ swift run sotto-cli transcribe "<FILE_OR_MEDIA_URL>" \
   --language ja
 ```
 
-`--language auto` or omitting `--language` lets Nemotron or Whisper detect the
-language. Cohere has no auto-detect; `--engine cohere` uses the saved
-`cohere-language` default unless `--language` is passed. When `--engine
-app-default` resolves to Nemotron, Whisper, or Cohere, an explicit `--language`
-overrides the saved language for that invocation.
+`--language auto` or omitting `--language` lets Nemotron or Whisper detect the language. Cohere has no auto-detect; `--engine cohere` uses the saved `cohere-language` default unless `--language` is passed. When `--engine app-default` resolves to Nemotron, Whisper, or Cohere, an explicit `--language` overrides the saved language for that invocation.
 
 ### Retranscribe Existing Records
 
-Use `retranscribe` when a support or agent workflow needs to rerun STT against
-source audio that Sotto already retained for a saved row:
+Use `retranscribe` when a support or agent workflow needs to rerun STT against source audio that Sotto already retained for a saved row:
 
 ```bash
 swift run sotto-cli retranscribe "<ID_OR_TITLE>" --update --json
@@ -210,19 +150,11 @@ swift run sotto-cli retranscribe "<MEETING_ID>" \
   --envelope
 ```
 
-The command updates the existing row in place, so `--update` is required. It
-fails cleanly when source audio was not retained or has been deleted. Use
-a full UUID, or a longer UUID prefix for prefix matches, when a record
-identifier is ambiguous. Use `--kind dictation|transcription|meeting` only to
-disambiguate cross-kind matches. Speaker-detection flags apply to saved
-transcriptions and meetings; dictations reject those flags.
+The command updates the existing row in place, so `--update` is required. It fails cleanly when source audio was not retained or has been deleted. Use a full UUID, or a longer UUID prefix for prefix matches, when a record identifier is ambiguous. Use `--kind dictation|transcription|meeting` only to disambiguate cross-kind matches. Speaker-detection flags apply to saved transcriptions and meetings; dictations reject those flags.
 
 ### Speaker Diarization
 
-Speaker detection follows the workflow-specific saved app/CLI preference by
-default. A fresh preference store resolves to `on`, matching the GUI default
-where supported. Pin a run with the explicit option, or use the legacy alias to
-force it off:
+Speaker detection follows the workflow-specific saved app/CLI preference by default. A fresh preference store resolves to `on`, matching the GUI default where supported. Pin a run with the explicit option, or use the legacy alias to force it off:
 
 ```bash
 swift run sotto-cli transcribe "<FILE>" --speaker-detection on
@@ -232,24 +164,13 @@ swift run sotto-cli transcribe "<FILE>" --speaker-detection off
 swift run sotto-cli transcribe "<FILE>" --no-diarize
 ```
 
-`--speaker-count`, `--speaker-min`, and `--speaker-max` are per-run
-constraints. They imply speaker detection when `--speaker-detection` is left at
-`app-default`, and they cannot be combined with `--speaker-detection off` or
-`--no-diarize`. Use `--speaker-count` for an exact count, or `--speaker-min`
-and/or `--speaker-max` for bounds; values must be positive, and
-`--speaker-min` cannot exceed `--speaker-max`.
+`--speaker-count`, `--speaker-min`, and `--speaker-max` are per-run constraints. They imply speaker detection when `--speaker-detection` is left at `app-default`, and they cannot be combined with `--speaker-detection off` or `--no-diarize`. Use `--speaker-count` for an exact count, or `--speaker-min` and/or `--speaker-max` for bounds; values must be positive, and `--speaker-min` cannot exceed `--speaker-max`.
 
-`config get speaker-detection` reports the saved file/URL app-default value
-used by bare `transcribe` and transcription retranscription. `config get
-meeting-speaker-detection` reports the saved meeting app-default value used by
-meeting retranscription when `--speaker-detection` is left at `app-default`.
+`config get speaker-detection` reports the saved file/URL app-default value used by bare `transcribe` and transcription retranscription. `config get meeting-speaker-detection` reports the saved meeting app-default value used by meeting retranscription when `--speaker-detection` is left at `app-default`.
 
 ### Shared Config
 
-`config` writes the same UserDefaults suite the GUI reads. This lets agents set
-up deterministic or app-default state before running a smoke test. Treat it as
-pre-run setup: a running GUI may cache some settings until relaunch or an
-in-app change.
+`config` writes the same UserDefaults suite the GUI reads. This lets agents set up deterministic or app-default state before running a smoke test. Treat it as pre-run setup: a running GUI may cache some settings until relaunch or an in-app change.
 
 ```bash
 swift run sotto-cli config list
@@ -273,16 +194,7 @@ swift run sotto-cli config set voice-return-enabled on
 swift run sotto-cli config set voice-return-triggers "hey parakeet|okay parakeet"
 ```
 
-Supported keys: `telemetry`, `processing-mode`, `spoken-punctuation`, `remove-um-filler`, `speech-engine`,
-`parakeet-model`, `nemotron-model`, `nemotron-language`, `whisper-language`,
-`cohere-language`, `speaker-detection`, `meeting-speaker-detection`,
-`auto-meeting-titles`, `meeting-ai-output-language`, `save-transcription-audio`, `meeting-audio-retention`,
-`meeting-audio-source`, `start-meetings-muted`, `save-meeting-audio`, `youtube-audio-quality`,
-`meeting-artifacts-folder`, `meeting-hook-enabled`, `meeting-hook-path`,
-`meeting-hook-timeout`, `voice-return-enabled`, `voice-return-triggers`,
-`play-dictation-capture-sounds`, `escape-cancels-dictation`, `preserve-discarded-dictations`.
-Underscore aliases such as `youtube_audio_quality` are accepted on input; JSON
-output uses canonical hyphenated keys.
+Supported keys: `telemetry`, `processing-mode`, `spoken-punctuation`, `remove-um-filler`, `speech-engine`, `parakeet-model`, `nemotron-model`, `nemotron-language`, `whisper-language`, `cohere-language`, `speaker-detection`, `meeting-speaker-detection`, `auto-meeting-titles`, `meeting-ai-output-language`, `save-transcription-audio`, `meeting-audio-retention`, `meeting-audio-source`, `start-meetings-muted`, `save-meeting-audio`, `youtube-audio-quality`, `meeting-artifacts-folder`, `meeting-hook-enabled`, `meeting-hook-path`, `meeting-hook-timeout`, `voice-return-enabled`, `voice-return-triggers`, `play-dictation-capture-sounds`, `escape-cancels-dictation`, `preserve-discarded-dictations`. Underscore aliases such as `youtube_audio_quality` are accepted on input; JSON output uses canonical hyphenated keys.
 
 ### Output Formats
 
@@ -311,25 +223,13 @@ swift run sotto-cli transcribe lecture1.m4a lectures/ \
 swift run sotto-cli transcribe episode.mkv --audio-track 2 --format transcript
 ```
 
-`--audio-track` is an explicit per-run input decision, not a saved CLI/app
-preference. It applies the same ordinal to every local file expanded from the
-invocation and fails any file where that ordinal is absent; it is rejected for
-media URLs and podcast search/URL inputs.
+`--audio-track` is an explicit per-run input decision, not a saved CLI/app preference. It applies the same ordinal to every local file expanded from the invocation and fails any file where that ordinal is absent; it is rejected for media URLs and podcast search/URL inputs.
 
-`--format transcript` prints only `cleanTranscript` when present, otherwise
-`rawTranscript`. Status and progress messages stay on stderr, so stdout can be
-piped directly into `pbcopy`, `grep`, `tee`, or a local LLM command.
+`--format transcript` prints only `cleanTranscript` when present, otherwise `rawTranscript`. Status and progress messages stay on stderr, so stdout can be piped directly into `pbcopy`, `grep`, `tee`, or a local LLM command.
 
-`--format dapt` uses the shared DAPT renderer. Automatic aligned word timing and
-speaker IDs become timed script events and character agents. A corrected line
-becomes one event for its preserved segment envelope; its rewritten words do
-not inherit automatic per-word timing. Current display labels are used when
-available, otherwise the stored anonymous ID remains the alias. Missing honest
-alignment or diarization is omitted rather than synthesized.
+`--format dapt` uses the shared DAPT renderer. Automatic aligned word timing and speaker IDs become timed script events and character agents. A corrected line becomes one event for its preserved segment envelope; its rewritten words do not inherit automatic per-word timing. Current display labels are used when available, otherwise the stored anonymous ID remains the alias. Missing honest alignment or diarization is omitted rather than synthesized.
 
-`--no-history` uses the same transcription pipeline without retaining a completed
-history row. For media URL inputs, downloaded audio is temporary regardless of
-the shared audio-retention default.
+`--no-history` uses the same transcription pipeline without retaining a completed history row. For media URL inputs, downloaded audio is temporary regardless of the shared audio-retention default.
 
 ## Model Selection
 
@@ -350,13 +250,7 @@ swift run sotto-cli models select cohere-transcribe
 swift run sotto-cli models select whisper-large-v3-v20240930-turbo-632MB
 ```
 
-`models list` reports the selectable speech models Sotto exposes today:
-Parakeet v3, Parakeet v2, Parakeet Unified, the optional Orukeet preview
-(`parakeet-orukeet`), the two Nemotron Beta builds (multilingual and
-English-only), Cohere Transcribe, and the configured WhisperKit variant.
-`models select` writes
-the same shared default used by the GUI and `transcribe --engine app-default`;
-Nemotron, Cohere, and Whisper selection require the local model to be downloaded first.
+`models list` reports the selectable speech models Sotto exposes today: Parakeet v3, Parakeet v2, Parakeet Unified, the optional Orukeet preview (`parakeet-orukeet`), the two Nemotron Beta builds (multilingual and English-only), Cohere Transcribe, and the configured WhisperKit variant. `models select` writes the same shared default used by the GUI and `transcribe --engine app-default`; Nemotron, Cohere, and Whisper selection require the local model to be downloaded first.
 
 ## Retained Entitlements Parity
 
@@ -367,9 +261,7 @@ swift run sotto-cli transcribe "<FILE_OR_MEDIA_URL>" \
   --enforce-entitlements
 ```
 
-In the current public build, the app is effectively unlocked, so
-`--enforce-entitlements` should still pass unless you are explicitly validating
-retained purchase activation code.
+In the current public build, the app is effectively unlocked, so `--enforce-entitlements` should still pass unless you are explicitly validating retained purchase activation code.
 
 ## Export
 
@@ -392,10 +284,7 @@ swift run sotto-cli export <ID> --format srt --stdout
 swift run sotto-cli export <ID> --format dapt --stdout
 ```
 
-If `--output` is omitted, the file is written to the current directory with an
-auto-generated name. DAPT uses the compound `.dapt.xml` extension. It carries
-automatic word timing or corrected segment-envelope timing and optional speaker
-characters when present, and remains valid without either.
+If `--output` is omitted, the file is written to the current directory with an auto-generated name. DAPT uses the compound `.dapt.xml` extension. It carries automatic word timing or corrected segment-envelope timing and optional speaker characters when present, and remains valid without either.
 
 **Note:** PDF and DOCX export require AppKit and are only available in the GUI.
 
@@ -416,9 +305,7 @@ swift run sotto-cli transcript <ID> --around 00:05:00 --window 30s --json
 swift run sotto-cli transcript <ID> --around-seq 12 --context 2 --json
 ```
 
-Search query text is passed to FTS5. Han/Kana/Thai queries automatically use
-the substring fallback. `search-reindex` is idempotent derived-state
-maintenance and never mutates canonical transcript text.
+Search query text is passed to FTS5. Han/Kana/Thai queries automatically use the substring fallback. `search-reindex` is idempotent derived-state maintenance and never mutates canonical transcript text.
 
 ## History Management
 
@@ -438,8 +325,7 @@ swift run sotto-cli history delete-dictation <ID>
 swift run sotto-cli history delete-transcription <ID>
 ```
 
-IDs support UUID prefix matching with at least 4 characters (e.g., `3a7b` matches `3a7b1234-...`).
-Pass `--json` to get a machine-readable success object with the affected ID(s) instead of the human confirmation line.
+IDs support UUID prefix matching with at least 4 characters (e.g., `3a7b` matches `3a7b1234-...`). Pass `--json` to get a machine-readable success object with the affected ID(s) instead of the human confirmation line.
 
 ### Favorites
 
@@ -458,19 +344,9 @@ swift run sotto-cli health --repair-models --repair-attempts 3
 swift run sotto-cli health --repair-binaries
 ```
 
-`health --json` is a non-mutating readiness probe: it can report an existing
-managed or app-bundled `yt-dlp`, but it does not install or update helper
-binaries. `health --repair-binaries` explicitly fetches the latest managed
-`yt-dlp` copy. App-bundled CLI installs include a signed `yt-dlp` seed so
-media URL transcription works without a first-use helper download.
-It also reports missing, non-directory, or unwritable runtime paths without
-creating them. Existing databases are opened read-only; inspecting a database
-does not run pending migrations or reconcile seeds.
+`health --json` is a non-mutating readiness probe: it can report an existing managed or app-bundled `yt-dlp`, but it does not install or update helper binaries. `health --repair-binaries` explicitly fetches the latest managed `yt-dlp` copy. App-bundled CLI installs include a signed `yt-dlp` seed so media URL transcription works without a first-use helper download. It also reports missing, non-directory, or unwritable runtime paths without creating them. Existing databases are opened read-only; inspecting a database does not run pending migrations or reconcile seeds.
 
-The database probe reports `database.status` as `ok`, `missing`, `schema_skew`,
-or `error`. `schema_skew` means the shared database was migrated by a newer
-Sotto app than this CLI build understands — upgrade `sotto-cli`
-and retry. Never reset or delete the user database to make a health probe pass.
+The database probe reports `database.status` as `ok`, `missing`, `schema_skew`, or `error`. `schema_skew` means the shared database was migrated by a newer Sotto app than this CLI build understands — upgrade `sotto-cli` and retry. Never reset or delete the user database to make a health probe pass.
 
 For a DEBUG-only missing-state regression (after building the CLI):
 
@@ -481,18 +357,11 @@ SOTTO_DEBUG_APP_STATE_DIR="$state_parent/absent" \
 test ! -e "$state_parent/absent"
 ```
 
-Expect `directoriesOK: false` and `database.status: "missing"` with exit 0:
-health is a component report, not a single pass/fail verdict. The DEBUG state
-root does not isolate shared UserDefaults or Keychain; do not change configuration
-for this check. Release builds ignore this DEBUG override.
+Expect `directoriesOK: false` and `database.status: "missing"` with exit 0: health is a component report, not a single pass/fail verdict. The DEBUG state root does not isolate shared UserDefaults or Keychain; do not change configuration for this check. Release builds ignore this DEBUG override.
 
 ## Meetings
 
-Meeting commands operate on persisted `sourceType = meeting` transcriptions.
-`<meeting>` accepts a UUID, UUID prefix, or exact title. The CLI inspects and
-edits saved meeting artifacts after recording; live recording controls and
-post-stop in-flight transcription abort/delete confirmations are GUI surfaces on
-the Transcribe tile and floating pill.
+Meeting commands operate on persisted `sourceType = meeting` transcriptions. `<meeting>` accepts a UUID, UUID prefix, or exact title. The CLI inspects and edits saved meeting artifacts after recording; live recording controls and post-stop in-flight transcription abort/delete confirmations are GUI surfaces on the Transcribe tile and floating pill.
 
 ```bash
 swift run sotto-cli meetings list --limit 10
@@ -514,10 +383,7 @@ swift run sotto-cli meetings export <meeting> --format md --stdout
 
 Calendar commands inspect the same EventKit pipeline used by the calendar auto-start/reminder code, which is enabled (`AppFeatures.calendarEnabled = true`). This CLI surface remains useful for headless verification. Calendar permission must already be granted through the GUI calendar permission surface, a previous grant, or macOS Settings — the CLI is a separate TCC identity and won't prompt on its own.
 
-`--json` is a flat array of event objects. Additive fields are `skipped`
-(boolean) and `skipScope` (`"occurrence"`, `"event"`, or `null`). Recurrence
-is not exposed. List membership, `--filter`, and declined-fetch behavior are
-unchanged.
+`--json` is a flat array of event objects. Additive fields are `skipped` (boolean) and `skipScope` (`"occurrence"`, `"event"`, or `null`). Recurrence is not exposed. List membership, `--filter`, and declined-fetch behavior are unchanged.
 
 ```bash
 swift run sotto-cli calendar upcoming --days 1 --filter link
@@ -556,17 +422,9 @@ swift run sotto-cli models delete parakeet-v3 --force   # override the in-use gu
 swift run sotto-cli models clear
 ```
 
-`models warm-up` and `models repair` prepare the selected speech engine plus
-the diarization speech stack. Nemotron, Cohere, and Whisper are downloaded
-explicitly with `models download`. `models delete <id>` removes a single model - one
-Parakeet build, the Nemotron Beta model, Cohere Transcribe, or the Whisper
-variant - and protects the active model plus Parakeet's configured build unless `--force` is passed;
-`models clear` still wipes everything.
+`models warm-up` and `models repair` prepare the selected speech engine plus the diarization speech stack. Nemotron, Cohere, and Whisper are downloaded explicitly with `models download`. `models delete <id>` removes a single model - one Parakeet build, the Nemotron Beta model, Cohere Transcribe, or the Whisper variant - and protects the active model plus Parakeet's configured build unless `--force` is passed; `models clear` still wipes everything.
 
-When running with `SOTTO_DEBUG_APP_STATE_DIR` set, CLI state
-is scoped to that throwaway directory. This includes Sotto's app support
-files and FluidAudio's speech/speaker model cache, so destructive model commands
-such as `models delete` and `models clear` do not touch the real user cache.
+When running with `SOTTO_DEBUG_APP_STATE_DIR` set, CLI state is scoped to that throwaway directory. This includes Sotto's app support files and FluidAudio's speech/speaker model cache, so destructive model commands such as `models delete` and `models clear` do not touch the real user cache.
 
 ## Text Pipeline
 
@@ -587,10 +445,7 @@ swift run sotto-cli vocab snippets delete <ID>
 
 ## LLM Commands
 
-All LLM commands require `--provider`; `--api-key` is required only for providers
-that need one. Ollama, LM Studio, OpenAI-compatible local endpoints, and Local
-CLI can run without an API key; LM Studio also accepts an optional API token
-when its server-side authentication is enabled.
+All LLM commands require `--provider`; `--api-key` is required only for providers that need one. Ollama, LM Studio, OpenAI-compatible local endpoints, and Local CLI can run without an API key; LM Studio also accepts an optional API token when its server-side authentication is enabled.
 
 ### Supported Providers
 
@@ -661,11 +516,8 @@ swift run sotto-cli llm summarize transcript.txt --provider lmstudio --model qwe
 All LLM commands accept these additional options:
 
 - `--model <name>` — Override default model
-- `--base-url <url>` — Custom API endpoint. HTTPS is required for
-  non-local/non-loopback HTTP unless `--allow-insecure-http` is set.
-- `--allow-insecure-http` — Permit intentional non-loopback `http://` for
-  non-local providers. Emits a stderr warning because prompt content and API
-  keys may cross the network without TLS.
+- `--base-url <url>` — Custom API endpoint. HTTPS is required for non-local/non-loopback HTTP unless `--allow-insecure-http` is set.
+- `--allow-insecure-http` — Permit intentional non-loopback `http://` for non-local providers. Emits a stderr warning because prompt content and API keys may cross the network without TLS.
 - `--stream` — Stream response token-by-token (summarize, chat, transform)
 - `--command <cmd>` — CLI command template (Local CLI provider only)
 
@@ -687,9 +539,7 @@ swift run sotto-cli llm chat transcript.txt --provider cli --command "my-tool --
 
 ## Transforms
 
-`transforms` is the saved-prompt product surface from ADR-022. It operates on
-text passed to the CLI directly; AX selection capture and in-place replacement
-are GUI-only.
+`transforms` is the saved-prompt product surface from ADR-022. It operates on text passed to the CLI directly; AX selection capture and in-place replacement are GUI-only.
 
 ```bash
 # Inspect built-ins and custom Transforms
@@ -714,9 +564,7 @@ swift run sotto-cli transforms history show <id-prefix>
 
 ## Prompt Library
 
-The prompt library powers multi-summary results in the GUI. The CLI lets you
-seed test prompts, audit migration state, and exercise the summary write path
-without launching the app.
+The prompt library powers multi-summary results in the GUI. The CLI lets you seed test prompts, audit migration state, and exercise the summary write path without launching the app.
 
 ### List, show, add
 
@@ -740,8 +588,7 @@ cat ./prompt.md | swift run sotto-cli prompts add --name "Piped"
 
 ### Visibility / auto-run toggles
 
-`set` accepts mutually exclusive flag pairs. Hidden implies not auto-run; auto-run
-implies visible — these invariants are enforced.
+`set` accepts mutually exclusive flag pairs. Hidden implies not auto-run; auto-run implies visible — these invariants are enforced.
 
 ```bash
 swift run sotto-cli prompts set "Daily Notes" --auto-run
@@ -758,16 +605,11 @@ swift run sotto-cli prompts restore-defaults   # re-shows hidden built-in result
 swift run sotto-cli transforms restore-defaults --transform Polish --json
 ```
 
-Built-in result prompts cannot be deleted; the CLI surfaces a clear error and
-suggests `prompts set <name> --hidden` instead. Built-in Transforms reset
-through `transforms restore-defaults`, so prompt restore does not overwrite
-Transform prompt bodies or shortcuts.
+Built-in result prompts cannot be deleted; the CLI surfaces a clear error and suggests `prompts set <name> --hidden` instead. Built-in Transforms reset through `transforms restore-defaults`, so prompt restore does not overwrite Transform prompt bodies or shortcuts.
 
 ### Run a prompt against a transcription
 
-`prompts run` calls the configured LLM provider with the prompt as system message
-and the transcription text as input. By default it persists the result to the
-`summaries` table so the GUI sees it on the next reload.
+`prompts run` calls the configured LLM provider with the prompt as system message and the transcription text as input. By default it persists the result to the `summaries` table so the GUI sees it on the next reload.
 
 ```bash
 swift run sotto-cli prompts run "Summary" \
@@ -787,14 +629,11 @@ swift run sotto-cli prompts run "Blog Post" \
   --extra "Tone: warm and direct. Audience: engineers."
 ```
 
-`prompts run` writes the model output to **stdout** and the "Saved PromptResult X"
-confirmation to **stderr**, so `> result.txt` captures only the prompt output.
+`prompts run` writes the model output to **stdout** and the "Saved PromptResult X" confirmation to **stderr**, so `> result.txt` captures only the prompt output.
 
 ## Quick Prompts
 
-Quick prompts power the live meeting Ask tab shortcut pills. The CLI mirrors
-the GUI model so agents can seed, pin, hide, export, and import those prompts
-without launching the app.
+Quick prompts power the live meeting Ask tab shortcut pills. The CLI mirrors the GUI model so agents can seed, pin, hide, export, and import those prompts without launching the app.
 
 ```bash
 swift run sotto-cli quick-prompts list --visible-only

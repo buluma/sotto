@@ -2,8 +2,7 @@
 
 > Status: **HISTORICAL** - The on-device Qwen3-8B / MLX-Swift path documented here was removed 2026-02-23. Current LLM support uses external providers or local CLI instead.
 
-Last updated: 2026-02-13
-Owner: Core
+Last updated: 2026-02-13 Owner: Core
 
 ## Scope
 

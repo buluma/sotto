@@ -10,11 +10,7 @@
 
 **Fast, private, local-first voice for Mac. Fully local speech when you want it. No required cloud subscription for core speech.**
 
-That is the day-one promise. The destination it builds toward
-([ADR-027](adr/027-product-north-star.md)): **every word you speak or hear on
-your Mac becomes private, permanent, and useful — on your machine, owned by
-you, readable by you and your agents.** Sotto is the private speech
-memory of your Mac.
+That is the day-one promise. The destination it builds toward ([ADR-027](adr/027-product-north-star.md)): **every word you speak or hear on your Mac becomes private, permanent, and useful — on your machine, owned by you, readable by you and your agents.** Sotto is the private speech memory of your Mac.
 
 ```
 +-----------------------------------------------------------------------+
@@ -45,24 +41,13 @@ Everything else exists to make those capture modes and the selected-text rewrite
 
 ### Where This Is Going
 
-The modes converge ([ADR-027](adr/027-product-north-star.md)): dictation
-captures what you say, meetings capture what you discuss, files capture what
-you consume — and all of it lands in one local, searchable library that
-compounds in value the longer you use the app.
+The modes converge ([ADR-027](adr/027-product-north-star.md)): dictation captures what you say, meetings capture what you discuss, files capture what you consume — and all of it lands in one local, searchable library that compounds in value the longer you use the app.
 
-- **The Library becomes the center of gravity** — unified search across all
-  three modes, question-answering over your own corpus, and export. Scope
-  guard: search + QA + export, not a PKM.
-- **Agents are first-class consumers** — scriptable corpus operations belong
-  in `sotto-cli`'s versioned contract, not a mirror of every GUI affordance.
-  Current retrieval capabilities and limits live in the [integration guide](../integrations/README.md).
-- **Session-based, by design** — every capture is explicitly started by you.
-  Ambient/always-on capture is deliberately parked
-  ([ADR-027](adr/027-product-north-star.md) §4); cloud STT remains
-  permanently out ([ADR-002](adr/002-local-only.md)).
+- **The Library becomes the center of gravity** — unified search across all three modes, question-answering over your own corpus, and export. Scope guard: search + QA + export, not a PKM.
+- **Agents are first-class consumers** — scriptable corpus operations belong in `sotto-cli`'s versioned contract, not a mirror of every GUI affordance. Current retrieval capabilities and limits live in the [integration guide](../integrations/README.md).
+- **Session-based, by design** — every capture is explicitly started by you. Ambient/always-on capture is deliberately parked ([ADR-027](adr/027-product-north-star.md) §4); cloud STT remains permanently out ([ADR-002](adr/002-local-only.md)).
 
-Every feature must capture speech better, make the corpus more useful, or
-hand it safely to you and your agents — otherwise it does not ship.
+Every feature must capture speech better, make the corpus more useful, or hand it safely to you and your agents — otherwise it does not ship.
 
 ---
 
@@ -93,24 +78,15 @@ Speed changes behavior. When a short dictation returns quickly and predictably, 
 
 ### 2. Privacy Is the Brand
 
-Fully local speech is a core product property. Core workflows can run offline
-after model setup; this is not a guarantee that a connected app makes no
-network requests.
+Fully local speech is a core product property. Core workflows can run offline after model setup; this is not a guarantee that a connected app makes no network requests.
 
 - Local STT. No cloud speech processing, no accounts, no required backend for core speech.
 - Audio never leaves your Mac for dictation or transcription.
 - No email signup. No login. Optional self-hosted telemetry can be disabled in Settings.
 - Core capture and local-file speech workflows work in airplane-mode or air-gapped environments after the required models are installed. Media imports, models, updates, telemetry, and remote AI providers are separate network surfaces.
-- Discover requests its public feed at app launch by default, even with telemetry
-  disabled and without opening the Discover page. It has cached/bundled offline
-  content and an independent opt-out in Settings → System → Appearance. Turning
-  Discover off hides the card and cancels feed work; it is not a global network
-  switch. Explicit feedback/thought submissions also use the network.
+- Discover requests its public feed at app launch by default, even with telemetry disabled and without opening the Discover page. It has cached/bundled offline content and an independent opt-out in Settings → System → Appearance. Turning Discover off hides the card and cancels feed work; it is not a global network switch. Explicit feedback/thought submissions also use the network.
 
-This is privacy by architecture at the speech boundary: recognition has no
-server path. [ADR-002](adr/002-local-only.md) documents the distinct provider,
-telemetry, media, and app-content I/O boundaries; disabling one is not a global
-network opt-out.
+This is privacy by architecture at the speech boundary: recognition has no server path. [ADR-002](adr/002-local-only.md) documents the distinct provider, telemetry, media, and app-content I/O boundaries; disabling one is not a global network opt-out.
 
 ### 3. Simplicity Over Features
 
@@ -133,10 +109,7 @@ Simple does not mean basic. Sotto includes modern capabilities that cloud compet
 
 ### 5. Free and Open-Source, Monetizable Official Distribution
 
-The current public build has no paid feature limits or required subscription.
-Sotto is free and open-source (GPL-3.0). Development feature gates still
-keep unfinished or unreleased capabilities out of normal builds; see the
-[release/flag status](README.md#release-channels-and-feature-flags).
+The current public build has no paid feature limits or required subscription. Sotto is free and open-source (GPL-3.0). Development feature gates still keep unfinished or unreleased capabilities out of normal builds; see the [release/flag status](README.md#release-channels-and-feature-flags).
 
 That does not mean monetization is permanently forbidden. GPL permits charging for distribution, and Sotto may later sell official signed/notarized builds, support, hosted services, team features, or paid official distribution while preserving recipients' GPL rights. The old LemonSqueezy/trial entitlement plumbing is intentionally retained for that future option and must not be removed as dead code without explicit owner direction and an ADR/spec update.
 
@@ -273,22 +246,15 @@ That does not mean monetization is permanently forbidden. GPL permits charging f
 
 ### Primary: Developers and Power Users
 
-People who type quickly but prefer voice for long messages, thinking out loud,
-and dictating documentation. They care about low latency, clear privacy
-boundaries, automation, and avoiding a required subscription.
+People who type quickly but prefer voice for long messages, thinking out loud, and dictating documentation. They care about low latency, clear privacy boundaries, automation, and avoiding a required subscription.
 
 **What they want:** Fast dictation that works in VS Code, Terminal, Slack. No cloud, no subscription, no bloat.
 
 ### Secondary: Privacy-Conscious Professionals
 
-People who handle sensitive notes, interviews, research, or internal material
-and want speech recognition to stay on their Mac. Sotto does not itself
-certify a user's regulatory compliance; users must evaluate their complete
-workflow, device controls, enabled telemetry, and configured AI providers.
+People who handle sensitive notes, interviews, research, or internal material and want speech recognition to stay on their Mac. Sotto does not itself certify a user's regulatory compliance; users must evaluate their complete workflow, device controls, enabled telemetry, and configured AI providers.
 
-**What they want:** Understandable data boundaries, no required product
-account, local core speech, and the ability to disable telemetry and avoid
-remote AI providers.
+**What they want:** Understandable data boundaries, no required product account, local core speech, and the ability to disable telemetry and avoid remote AI providers.
 
 ### Tertiary: Subscription-Fatigued Users
 
@@ -360,11 +326,7 @@ Sotto is open-source under the **GPL-3.0** license. Current public builds are fr
 
 ## Relationship to Oatmeal
 
-The comparison below records the original separate-product positioning.
-[ADR-027](adr/027-product-north-star.md) now owns the boundary: Library search
-and corpus Q&A belong in Sotto's direction, while deeper entity/graph/team
-work stays outside its scope. Whether Oatmeal continues as a distinct product
-is open; the older comparison is not a reason to reject Sotto Library work.
+The comparison below records the original separate-product positioning. [ADR-027](adr/027-product-north-star.md) now owns the boundary: Library search and corpus Q&A belong in Sotto's direction, while deeper entity/graph/team work stays outside its scope. Whether Oatmeal continues as a distinct product is open; the older comparison is not a reason to reject Sotto Library work.
 
 ```
 +-----------------------------------------------------------------------+
@@ -441,8 +403,7 @@ A new user should be able to:
 4. See clean text appear at their cursor
 5. Think "this is better than anything I have tried"
 
-On first use, the user should reach this outcome as soon as the required model
-download and permission setup complete. No product account is required.
+On first use, the user should reach this outcome as soon as the required model download and permission setup complete. No product account is required.
 
 ---
 
@@ -498,32 +459,14 @@ Ship-quality polish. Direct distribution via notarized DMG.
 
 ### v0.7: Post-v0.6 polish
 
-- v0.7.3 added System Default microphone-routing repair, split live/final
-  speech-engine routes, bounded meeting-capture lifecycle handling, meeting
-  auto-save feedback, CLI 3.0, and post-v0.6 reliability polish.
-- Meeting echo cancellation ships as a fail-soft derived cleaned-microphone
-  artifact; activity-based auto-stop remains opt-in and activity-based meeting
-  detection remains gated.
-- Direction per [ADR-027](adr/027-product-north-star.md): continue Library
-  convergence and safe agent access through the CLI. Developer-gated local MLX
-  groundwork is not a normal-user v0.7 feature.
+- v0.7.3 added System Default microphone-routing repair, split live/final speech-engine routes, bounded meeting-capture lifecycle handling, meeting auto-save feedback, CLI 3.0, and post-v0.6 reliability polish.
+- Meeting echo cancellation ships as a fail-soft derived cleaned-microphone artifact; activity-based auto-stop remains opt-in and activity-based meeting detection remains gated.
+- Direction per [ADR-027](adr/027-product-north-star.md): continue Library convergence and safe agent access through the CLI. Developer-gated local MLX groundwork is not a normal-user v0.7 feature.
 
 ### v0.8: Library, meetings, and transcript workflow
 
-- Stable v0.8.7 is the current user-facing DMG. The train adds meeting import
-  and split, timed transcript corrections, live transcription during recording,
-  independent capture-source startup, per-event calendar skip, start-meetings-muted,
-  Microsoft 365/Exchange calendar setup, Library labels/layouts, Seed of Life covers,
-  Clean English “um” stripping, optional preserved discarded dictations, DAPT export,
-  skip-microphone onboarding for file-only users, AI Formatter off by default with
-  separate dictation and transcript prompts, optional streaming-cursor insert,
-  China-lab LLM providers, and CLI 4.4.0. 0.8.5 cleared a stuck Wrapping up tile
-  label after stop (status only; recordings were already saved). 0.8.6 kept
-  the Sonoma Parakeet encoder off ANE. 0.8.7 restores hold-to-talk when the
-  microphone is already granted, admits Fn while Caps Lock is latched, and
-  splits overlay insets so hold-to-talk stays 16pt while cancelled/Undo is 7pt.
-- Voice profiles, encrypted share links, activity-based meeting detection,
-  app-aware AI Formatter profiles, and in-process MLX remain gated.
+- Stable v0.8.7 is the current user-facing DMG. The train adds meeting import and split, timed transcript corrections, live transcription during recording, independent capture-source startup, per-event calendar skip, start-meetings-muted, Microsoft 365/Exchange calendar setup, Library labels/layouts, Seed of Life covers, Clean English “um” stripping, optional preserved discarded dictations, DAPT export, skip-microphone onboarding for file-only users, AI Formatter off by default with separate dictation and transcript prompts, optional streaming-cursor insert, China-lab LLM providers, and CLI 4.4.0. 0.8.5 cleared a stuck Wrapping up tile label after stop (status only; recordings were already saved). 0.8.6 kept the Sonoma Parakeet encoder off ANE. 0.8.7 restores hold-to-talk when the microphone is already granted, admits Fn while Caps Lock is latched, and splits overlay insets so hold-to-talk stays 16pt while cancelled/Undo is 7pt.
+- Voice profiles, encrypted share links, activity-based meeting detection, app-aware AI Formatter profiles, and in-process MLX remain gated.
 
 ---
 

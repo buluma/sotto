@@ -82,17 +82,7 @@ Existing `.modifier`, `.keyCode`, and `.chord` persisted values decode unchanged
 
 ## Amendment: Accessibility grant recovery (2026-09-07)
 
-A running app can fail to install its global event taps before Accessibility is
-granted. The shared permission refresh must notify the app when access changes
-from unavailable to granted, including the first successful check after startup.
-The app retries configured dictation, auxiliary and Transform shortcuts through
-their existing lifecycle methods. Repeated granted checks do not restart taps,
-and shortcut recording keeps production listeners suspended until it finishes.
-Permission status refreshes on application activation as well as the existing
-Settings polling. While Accessibility is denied, the app additionally re-checks
-only that permission on the Settings polling interval, so granting access while
-Sotto stays in the background with Settings closed still restores the
-shortcuts. The watch stops once access is granted and restarts if it is revoked.
+A running app can fail to install its global event taps before Accessibility is granted. The shared permission refresh must notify the app when access changes from unavailable to granted, including the first successful check after startup. The app retries configured dictation, auxiliary and Transform shortcuts through their existing lifecycle methods. Repeated granted checks do not restart taps, and shortcut recording keeps production listeners suspended until it finishes. Permission status refreshes on application activation as well as the existing Settings polling. While Accessibility is denied, the app additionally re-checks only that permission on the Settings polling interval, so granting access while Sotto stays in the background with Settings closed still restores the shortcuts. The watch stops once access is granted and restarts if it is revoked.
 
 ## Amendment: Optional Escape cancel (2026-09-21)
 
@@ -100,20 +90,10 @@ Escape stays blocked as a dictation hotkey. Cancel-on-Escape remains the default
 
 ## Amendment: Event taps off the main run loop (2026-09-24)
 
-macOS holds each keyboard event until a filtering tap's callback returns. With
-taps on the main run loop, a Sotto UI stall delayed typing in every other
-app (#1142). All `CGEvent` taps now run on one dedicated thread
-(`EventTapThread`, via `BackgroundEventTap`), which never waits on the main
-thread.
+macOS holds each keyboard event until a filtering tap's callback returns. With taps on the main run loop, a Sotto UI stall delayed typing in every other app (#1142). All `CGEvent` taps now run on one dedicated thread (`EventTapThread`, via `BackgroundEventTap`), which never waits on the main thread.
 
-- Auxiliary shortcuts and the Transforms registry match on the tap thread; their
-  triggers hop to the main actor.
-- `HotkeyManager` decides on the tap thread only whether to consume an event,
-  which depends on the trigger and the event stream alone. It forwards every
-  event to the main queue in order, where the gesture state machine, timers and
-  coordinator callbacks run unchanged. A per-start generation drops events a
-  stopped tap already queued.
+- Auxiliary shortcuts and the Transforms registry match on the tap thread; their triggers hop to the main actor.
+- `HotkeyManager` decides on the tap thread only whether to consume an event, which depends on the trigger and the event stream alone. It forwards every event to the main queue in order, where the gesture state machine, timers and coordinator callbacks run unchanged. A per-start generation drops events a stopped tap already queued.
 - The Transforms registry installs its tap only while a binding exists.
 
-Tap options, masks and consumed keys are unchanged. A main-thread stall now
-delays only gesture processing, not other apps' input.
+Tap options, masks and consumed keys are unchanged. A main-thread stall now delays only gesture processing, not other apps' input.

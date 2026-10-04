@@ -19,45 +19,22 @@ Version prefixes below identify database migrations, not product releases. `Data
 
 The versioned Prompt Manager extends the relational model with:
 
-- `prompt_versions`: immutable, monotonically numbered versions containing
-  Markdown content, optional typed inference settings, optional model override,
-  origin, note, and creation time. `prompts.activeVersionId` selects the active
-  row. The repository resolves this join for callers.
-- `prompt_collections`: optional user-facing organization for prompts. The
-  existing `Prompt.Category` remains the technical result/Transform kind.
-- soft deletion and canonical provenance on `prompts`; built-in provenance does
-  not confer different CRUD rights.
-- `meeting_labels` plus `transcription_meeting_labels`: reusable labels for
-  every transcription source, with a unique transcription/label pair. The
-  historical table names are retained for migration compatibility.
-- `prompt_label_policies`: label-specific or all-transcriptions prompt
-  availability. Matching labels use OR semantics; auto-run remains sourced
-  from prompt metadata and is gated by availability.
-- `meeting_types` and `prompt_meeting_policies`: legacy compatibility state,
-  migrated to labels by v0.37/v0.38 and no longer used by the primary UI or
-  runtime prompt resolver.
+- `prompt_versions`: immutable, monotonically numbered versions containing Markdown content, optional typed inference settings, optional model override, origin, note, and creation time. `prompts.activeVersionId` selects the active row. The repository resolves this join for callers.
+- `prompt_collections`: optional user-facing organization for prompts. The existing `Prompt.Category` remains the technical result/Transform kind.
+- soft deletion and canonical provenance on `prompts`; built-in provenance does not confer different CRUD rights.
+- `meeting_labels` plus `transcription_meeting_labels`: reusable labels for every transcription source, with a unique transcription/label pair. The historical table names are retained for migration compatibility.
+- `prompt_label_policies`: label-specific or all-transcriptions prompt availability. Matching labels use OR semantics; auto-run remains sourced from prompt metadata and is gated by availability.
+- `meeting_types` and `prompt_meeting_policies`: legacy compatibility state, migrated to labels by v0.37/v0.38 and no longer used by the primary UI or runtime prompt resolver.
 
-The v0.38 policy backfill copies prompt and label foreign keys in their
-existing SQLite representation. Legacy TEXT identifiers remain TEXT; UUID
-identifiers already stored as BLOBs retain their bytes. The migration does
-not rewrite parent identifiers or re-encode their references.
+The v0.38 policy backfill copies prompt and label foreign keys in their existing SQLite representation. Legacy TEXT identifiers remain TEXT; UUID identifiers already stored as BLOBs retain their bytes. The migration does not rewrite parent identifiers or re-encode their references.
 
-Prompt name and operational metadata stay on `prompts` and are not versioned.
-The historical `prompts.content` and `prompts.inferenceSettings` columns are
-copied into V1 during migration and dropped by
-`v0.36-drop-legacy-prompt-values`; only the active version owns those values. `summaries.promptContent` and
-`summaries.inferenceSettingsSnapshot` remain durable execution snapshots.
+Prompt name and operational metadata stay on `prompts` and are not versioned. The historical `prompts.content` and `prompts.inferenceSettings` columns are copied into V1 during migration and dropped by `v0.36-drop-legacy-prompt-values`; only the active version owns those values. `summaries.promptContent` and `summaries.inferenceSettingsSnapshot` remain durable execution snapshots.
 
-Classification names are local user data and are not telemetry dimensions.
-SQLite is the mutable source of truth; meeting artifact JSON and Markdown are
-materialized projections refreshed after classification changes.
+Classification names are local user data and are not telemetry dimensions. SQLite is the mutable source of truth; meeting artifact JSON and Markdown are materialized projections refreshed after classification changes.
 
 ## Experimental speaker identity memory (2026-09-10)
 
-Migrations v0.39–v0.41 add optional local voice profiles. The compiled release
-flag remains off; creating the schema does not opt the user into retaining voices.
-The [speaker voiceprint contract](contracts/speaker-voiceprints.md) governs
-consent, matching, retention, deletion and export exclusion.
+Migrations v0.39–v0.41 add optional local voice profiles. The compiled release flag remains off; creating the schema does not opt the user into retaining voices. The [speaker voiceprint contract](contracts/speaker-voiceprints.md) governs consent, matching, retention, deletion and export exclusion.
 
 | Table | Identity and constraints | Ownership |
 |-------|--------------------------|-----------|
@@ -67,25 +44,13 @@ consent, matching, retention, deletion and export exclusion.
 | `speaker_match_journal` (v0.40) | UUID `id`; transcript/speaker/fingerprint, nullable profile ID, decision outcome, distances, speech duration and creation time. No vector. | Transcription and profile references cascade on deletion. Rows expire after 90 days. |
 | `speaker_embedding_candidates` (v0.41) | UUID `id`; unique `(transcriptionId, speakerId, transcriptFingerprint)`; vector, duration, capture/model identity, creation and explicit expiry timestamps. | Transcription deletion cascades. Unnamed voices expire after seven days and are never matching references. |
 
-The exemplar count is enforced transactionally by the repository, with a current
-policy cap of ten. New-profile creation includes its first exemplar in the same
-transaction. Global voice-profile deletion clears all five tables atomically;
-it preserves transcripts, source audio and applied speaker labels. Cleanup runs
-at startup and hourly even when the feature is disabled.
+The exemplar count is enforced transactionally by the repository, with a current policy cap of ten. New-profile creation includes its first exemplar in the same transaction. Global voice-profile deletion clears all five tables atomically; it preserves transcripts, source audio and applied speaker labels. Cleanup runs at startup and hourly even when the feature is disabled.
 
-Transcription foreign keys reuse the parent's actual SQLite value: existing TEXT
-UUIDs and current BLOB UUIDs retain their representation. Voiceprint repositories
-resolve that value for writes and lookups without rewriting parent records.
-Automatic speaker rosters and transcript attribution remain on `transcriptions`
-and in the correction layer; profile identity is separate and excluded from
-exports, diagnostics, feedback, telemetry and external AI context.
+Transcription foreign keys reuse the parent's actual SQLite value: existing TEXT UUIDs and current BLOB UUIDs retain their representation. Voiceprint repositories resolve that value for writes and lookups without rewriting parent records. Automatic speaker rosters and transcript attribution remain on `transcriptions` and in the correction layer; profile identity is separate and excluded from exports, diagnostics, feedback, telemetry and external AI context.
 
 ## Split and transcribe operation receipts (2026-09-11)
 
-`v0.42-meeting-split-operations` adds the persistence for
-[Split and transcribe](contracts/meeting-splitting.md): every part, including
-the first, is a new saved meeting receiving its own first transcription; the
-source recording is never modified.
+`v0.42-meeting-split-operations` adds the persistence for [Split and transcribe](contracts/meeting-splitting.md): every part, including the first, is a new saved meeting receiving its own first transcription; the source recording is never modified.
 
 ```sql
 CREATE TABLE meeting_split_operations (
@@ -106,58 +71,16 @@ CREATE INDEX idx_meeting_split_operations_source ON meeting_split_operations(sou
 ```
 
 **Notes:**
-- `sourceId` and `childIds` deliberately have no foreign key to
-  `transcriptions`. The receipt is a durable audit record and idempotency
-  lookup key, not a live join: it must remain readable, and `begin`/`operation`
-  lookups must keep working, after the source or any child row is deleted.
-  `MeetingSplitRepository` never requires the source to exist to return a
-  previously committed receipt.
-- `request` freezes the caller's ordered cuts/titles and observed source
-  identity string at `begin` time. A second `begin` call with the same
-  `idempotencyKey` returns the existing operation (same fixed `childIds`) only
-  if its `request` is unchanged; a different request under the same key is a
-  conflict, not an overwrite.
-- `childIds` are minted by `begin`, before any audio file exists, so retrying
-  interrupted preparation reuses the same identities instead of creating
-  duplicates. `status` moves `preparing` → `committed` (permanent) or
-  `preparing` → `discarded` (permanent); a committed operation cannot be
-  discarded or resurrected, and repeated lookups keep returning its original
-  `childIds` even after every child row is deleted.
-- `publish` is one transaction: it revalidates a small source-row snapshot
-  (id, `createdAt`, paths, status, display title — not transcript/word/
-  correction content, which is never copied into a child), fresh-`INSERT`s
-  every child row (never upsert, so an id collision throws instead of
-  overwriting), and only then flips `status` to `committed`. Any failure,
-  including on the last child, rolls back the whole transaction; the source
-  row is never saved or updated by this feature.
-- `childProgress` tracks, per fixed child id, the furthest reached
-  `MeetingSplitChildStage` (`pendingTranscription` → `transcribing` →
-  `transcribed` → `automationPending` → `automationCompleted`) plus an
-  `outcome` (`none` / `failed` / `cancelled`) and optional error message. A
-  failure or cancellation only sets `outcome`; it never moves `stage`
-  backward, so an automation (e.g. summary) failure after a successful
-  transcript can retry automation alone without rerunning speech. This column
-  is the only place that distinguishes "audio saved, not yet transcribed"
-  from "first transcription completed" — `Transcription.status` is not
-  repurposed for that distinction. Progress updates never query
-  `transcriptions`, so a child deleted after commit remains fully describable
-  from this row alone instead of being reinserted.
-- `transcriptions.splitProvenance` (also added by this migration) is an
-  optional JSON `MeetingSplitProvenance` column set only on child rows:
-  operation id, source id, a source-title snapshot, the approved
-  start/end-ms cut, the child's ordinal among siblings, and the split
-  creation time. It is plain snapshot data with no foreign key, so it survives
-  deletion of the source or any sibling and needs no join to read. `NULL` for
-  every non-split row; existing readers are unaffected.
+- `sourceId` and `childIds` deliberately have no foreign key to `transcriptions`. The receipt is a durable audit record and idempotency lookup key, not a live join: it must remain readable, and `begin`/`operation` lookups must keep working, after the source or any child row is deleted. `MeetingSplitRepository` never requires the source to exist to return a previously committed receipt.
+- `request` freezes the caller's ordered cuts/titles and observed source identity string at `begin` time. A second `begin` call with the same `idempotencyKey` returns the existing operation (same fixed `childIds`) only if its `request` is unchanged; a different request under the same key is a conflict, not an overwrite.
+- `childIds` are minted by `begin`, before any audio file exists, so retrying interrupted preparation reuses the same identities instead of creating duplicates. `status` moves `preparing` → `committed` (permanent) or `preparing` → `discarded` (permanent); a committed operation cannot be discarded or resurrected, and repeated lookups keep returning its original `childIds` even after every child row is deleted.
+- `publish` is one transaction: it revalidates a small source-row snapshot (id, `createdAt`, paths, status, display title — not transcript/word/ correction content, which is never copied into a child), fresh-`INSERT`s every child row (never upsert, so an id collision throws instead of overwriting), and only then flips `status` to `committed`. Any failure, including on the last child, rolls back the whole transaction; the source row is never saved or updated by this feature.
+- `childProgress` tracks, per fixed child id, the furthest reached `MeetingSplitChildStage` (`pendingTranscription` → `transcribing` → `transcribed` → `automationPending` → `automationCompleted`) plus an `outcome` (`none` / `failed` / `cancelled`) and optional error message. A failure or cancellation only sets `outcome`; it never moves `stage` backward, so an automation (e.g. summary) failure after a successful transcript can retry automation alone without rerunning speech. This column is the only place that distinguishes "audio saved, not yet transcribed" from "first transcription completed" — `Transcription.status` is not repurposed for that distinction. Progress updates never query `transcriptions`, so a child deleted after commit remains fully describable from this row alone instead of being reinserted.
+- `transcriptions.splitProvenance` (also added by this migration) is an optional JSON `MeetingSplitProvenance` column set only on child rows: operation id, source id, a source-title snapshot, the approved start/end-ms cut, the child's ordinal among siblings, and the split creation time. It is plain snapshot data with no foreign key, so it survives deletion of the source or any sibling and needs no join to read. `NULL` for every non-split row; existing readers are unaffected.
 
 ## Ask Workspace Persistence (v0.49)
 
-`v0.49-ask-conversations` stores saved Ask threads independently from Library
-recordings. The JSON payload owns the ordered source-context sections, messages,
-draft, title and citation identities; SQL columns provide compare-and-swap
-revision and a cross-process run lease. The table deliberately has no foreign
-key to `transcriptions`, so removing a source leaves its conversation and
-historical messages intact. Deleting a conversation deletes only that Ask row.
+`v0.49-ask-conversations` stores saved Ask threads independently from Library recordings. The JSON payload owns the ordered source-context sections, messages, draft, title and citation identities; SQL columns provide compare-and-swap revision and a cross-process run lease. The table deliberately has no foreign key to `transcriptions`, so removing a source leaves its conversation and historical messages intact. Deleting a conversation deletes only that Ask row.
 
 ```sql
 CREATE TABLE ask_conversations (
@@ -173,14 +96,7 @@ CREATE INDEX idx_ask_conversations_updated_at
     ON ask_conversations(updatedAt);
 ```
 
-The repository accepts at most 32 unique source UUIDs per section and validates
-that message sections, source-revision maps and citations agree. A successful
-save increments `revision` only when `expectedRevision` still matches. Active
-runs use a 45-second maximum lease and renew every 15 seconds. A final completed
-answer supplies the source revision map to the same database write transaction,
-which rechecks current canonical transcript revisions before committing. See
-the [Ask workspace contract](contracts/ask-workspace.md) for retrieval and
-privacy behavior.
+The repository accepts at most 32 unique source UUIDs per section and validates that message sections, source-revision maps and citations agree. A successful save increments `revision` only when `expectedRevision` still matches. Active runs use a 45-second maximum lease and renew every 15 seconds. A final completed answer supplies the source revision map to the same database write transaction, which rechecks current canonical transcript revisions before committing. See the [Ask workspace contract](contracts/ask-workspace.md) for retrieval and privacy behavior.
 
 ## Relationship Diagram (selected domains)
 
@@ -229,13 +145,7 @@ privacy behavior.
 └───────────────────────┘
 ```
 
-Tables are self-contained domains except for derived or child records:
-`chat_conversations`, `summaries`, and `cards` have foreign keys to
-`transcriptions` with cascading delete, while `llm_runs` has nullable
-foreign-key columns back to the feature-owned source rows that triggered each
-LLM call. At least one `llm_runs` source link is required. The Swift model for
-`summaries` is `PromptResult`; the table name is retained for migration
-compatibility.
+Tables are self-contained domains except for derived or child records: `chat_conversations`, `summaries`, and `cards` have foreign keys to `transcriptions` with cascading delete, while `llm_runs` has nullable foreign-key columns back to the feature-owned source rows that triggered each LLM call. At least one `llm_runs` source link is required. The Swift model for `summaries` is `PromptResult`; the table name is retained for migration compatibility.
 
 ---
 
@@ -348,21 +258,9 @@ CREATE INDEX idx_transcriptions_status_created_at ON transcriptions(status, crea
 - `language` stores the normalized detected/specified STT language code when available. New transcription service rows start unknown and are filled from the STT result; legacy/default rows may still contain `en`.
 - `speakerCount` and `speakers` are nullable, populated only when diarization is available (v0.4).
 - `filePath` is nullable because the original file may be moved or deleted after transcription.
-- `audioTrackOrdinal` stores the zero-based ordinal among the source file's
-  audio streams when the user or CLI explicitly selected one. `NULL` preserves
-  legacy/automatic selection and is expected for single-track, URL, podcast,
-  dictation, and meeting rows. Retranscription reuses a stored ordinal.
+- `audioTrackOrdinal` stores the zero-based ordinal among the source file's audio streams when the user or CLI explicitly selected one. `NULL` preserves legacy/automatic selection and is expected for single-track, URL, podcast, dictation, and meeting rows. Retranscription reuses a stored ordinal.
 - For meeting recordings, `filePath` points to the mixed `meeting-playback.m4a` artifact used for playback/export while retained. `meetingArtifactFolderPath` points to the durable session folder, so artifact actions and CLI output survive audio deletion or retention. The selected-source `microphone-raw.m4a` and/or `system-raw.m4a`, plus the `meeting-recording-metadata.json` sidecar, remain inside that same session folder while retained. The sidecar may include additive `echoSuppression` provenance (`reasonCode` plus optional model, render-timing, delay, and probe-correlation fields) after the cleaned-mic readiness gate resolves, so shared folders identify whether final STT used cleaned or raw mic and why. `meetingStartContext` stores the one-shot local-only start snapshot for meeting rows: trigger kind, configured source mode, and the frontmost app bundle id/name read at recording start. `calendarEventSnapshot` stores local EventKit context captured at start time for confirmed or probable calendar meetings. The folder is the first-class local artifact contract for the session, including the deterministic `meeting.md` Markdown view; the canonical filename/schema contract lives in [`spec/contracts/meeting-artifacts-v1.md`](contracts/meeting-artifacts-v1.md). The DB row remains canonical; the folder is refreshed after meeting finalization, `sotto-cli meetings artifact`, meeting-note writes, and prompt-result writes.
-- `meetingCaptureReport` is an optional v0.30 JSON blob for meeting rows. It
-  records frame-derived `healthy`/`partial` quality, selected source mode,
-  pause-adjusted elapsed duration, playable captured duration, per-source
-  written duration/coverage/status, terminal interruptions, and runtime capture
-  failure. It also records an optional playback-fallback source when healthy
-  raw tracks could not be combined and canonical playback contains only one.
-  `NULL` means legacy/unknown, not healthy. Meeting `durationMs` is the actual
-  playable captured duration; elapsed session time stays in this report. Capture
-  quality is orthogonal to `status`, so a partial recording can still have
-  `status = 'completed'` when transcription itself succeeds.
+- `meetingCaptureReport` is an optional v0.30 JSON blob for meeting rows. It records frame-derived `healthy`/`partial` quality, selected source mode, pause-adjusted elapsed duration, playable captured duration, per-source written duration/coverage/status, terminal interruptions, and runtime capture failure. It also records an optional playback-fallback source when healthy raw tracks could not be combined and canonical playback contains only one. `NULL` means legacy/unknown, not healthy. Meeting `durationMs` is the actual playable captured duration; elapsed session time stays in this report. Capture quality is orthogonal to `status`, so a partial recording can still have `status = 'completed'` when transcription itself succeeds.
 - The meeting artifact root defaults to `~/Library/Application Support/Sotto/meeting-recordings`, and can be changed for future sessions through `sotto-cli config set meeting-artifacts-folder <absolute-path>`. Existing sessions keep their own folder path through `transcriptions.meetingArtifactFolderPath`, falling back to the parent of `transcriptions.filePath` for legacy rows.
 - Saved meeting retranscribes reconstruct the archived meeting from that folder when the sidecar exists, so the library path can reuse the same aligned dual-source finalization flow as the immediate post-stop path.
 - `sourceURL` distinguishes URL-sourced transcriptions (YouTube) from local file transcriptions. Added in v0.3.
@@ -371,10 +269,7 @@ CREATE INDEX idx_transcriptions_status_created_at ON transcriptions(status, crea
 - `sourceType` distinguishes the origin of a transcription: `'file'` (drag-drop), `'youtube'` (URL), `'podcast'` (Apple Podcasts URL or freetext search), or `'meeting'` (meeting recording). `sourceType` added in v0.6; `'podcast'` added 2026-06. Default `'file'` for backward compatibility. Existing rows with `sourceURL IS NOT NULL` are backfilled to `'youtube'`.
 - `recoveredFromCrash` marks meeting recordings recovered from an interrupted session. Added in v0.7.5.
 - `isTranscriptEdited` marks the legacy whole-transcript replacement path. Its text has no safe mapping to the automatic words and therefore has `untimed` alignment. Timed line corrections do not set this flag; they are journal commands projected through `transcriptSegments`. Added in v0.7.7.
-- `userNotes` stores the canonical free-form meeting notes. Live capture writes
-  it at finalize; the saved-meeting Notes tab autosaves to the same field. Prompt
-  generation snapshots the exact effective notes sent
-  to assembly on `summaries.userNotesSnapshot`. Added in v0.8.
+- `userNotes` stores the canonical free-form meeting notes. Live capture writes it at finalize; the saved-meeting Notes tab autosaves to the same field. Prompt generation snapshots the exact effective notes sent to assembly on `summaries.userNotesSnapshot`. Added in v0.8.
 - `engine` / `engineVariant` record the STT engine attribution for Parakeet, Nemotron Beta, Cohere, and optional WhisperKit paths. Added in v0.8; legacy rows keep `NULL`.
 - `calendarEventSnapshot` is a JSON blob for meeting rows only. It stores `confidence` (`confirmed` for calendar auto-start, `probable` for manual starts matched against the current poll cache), EventKit `eventIdentifier`, optional `externalId`, event title, scheduled start/end, attendee names/emails, organizer name/email, meeting URL/service, and capture timestamp. This is local user data and must not be sent in telemetry, including attendee counts. Added in v0.25.
 - `titleOverride` stores a user-authored display title for file transcriptions and durable explicit-title intent for meetings. File titles do not rename or move the external source or replace its original `fileName`. Meetings still display `fileName`; a meeting rename or explicit import title also sets the normalized override, preventing automatic title generation from replacing it on completion or Retry. Default/generated meeting names leave the override `NULL`. Blank overrides normalize to `NULL`. Added in v0.26; meeting intent applies with external import.
@@ -397,19 +292,11 @@ CREATE INDEX idx_transcriptions_status_created_at ON transcriptions(status, crea
 
 ### Planned independent audio timeline (#836)
 
-[Audio Speaker Timeline v1](contracts/audio-speaker-timeline-v1.md) specifies a proposed nullable `audioSpeakerTimeline` JSON column with independent analysis identity, source coverage, automatic roster, and audio turns.
-The column is not implemented or assigned a migration number by this document.
-It will coexist with the legacy speaker fields rather than reinterpret or backfill them.
-Missing timeline data must not change text alignment; an untimed Cohere transcript stays untimed.
-The contract defines lossless handling of unsupported optional JSON, replacement semantics, and separation from the existing text correction fingerprint.
+[Audio Speaker Timeline v1](contracts/audio-speaker-timeline-v1.md) specifies a proposed nullable `audioSpeakerTimeline` JSON column with independent analysis identity, source coverage, automatic roster, and audio turns. The column is not implemented or assigned a migration number by this document. It will coexist with the legacy speaker fields rather than reinterpret or backfill them. Missing timeline data must not change text alignment; an untimed Cohere transcript stays untimed. The contract defines lossless handling of unsupported optional JSON, replacement semantics, and separation from the existing text correction fingerprint.
 
 ### `speaker_corrections` + `speaker_correction_states` (v0.32, extended v0.43)
 
-Speaker attribution and timed-line text edits are one append-only correction
-layer over the automatic transcript. The automatic word text/timing, durable
-segment anchors, source attribution, and raw diarization ranges remain
-unchanged. The historical table and Swift type names are retained for storage
-compatibility.
+Speaker attribution and timed-line text edits are one append-only correction layer over the automatic transcript. The automatic word text/timing, durable segment anchors, source attribution, and raw diarization ranges remain unchanged. The historical table and Swift type names are retained for storage compatibility.
 
 ```sql
 CREATE TABLE speaker_corrections (
@@ -448,51 +335,21 @@ CREATE TABLE speaker_correction_states (
 );
 ```
 
-`parentId` defines the active replay chain. `headId` is the durable cursor;
-moving it implements transcript-scoped Undo/Redo across app launches.
-`revision` is the optimistic-concurrency token and advances for commands,
-Undo, Redo, Reset, and transcript-version resets. A new command after Undo
-marks the retained redo branch `abandoned` rather than deleting history.
-`transcriptFingerprint` binds every edit to the exact automatic transcript
-version so retranscription cannot silently replay stale ranges.
+`parentId` defines the active replay chain. `headId` is the durable cursor; moving it implements transcript-scoped Undo/Redo across app launches. `revision` is the optimistic-concurrency token and advances for commands, Undo, Redo, Reset, and transcript-version resets. A new command after Undo marks the retained redo branch `abandoned` rather than deleting history. `transcriptFingerprint` binds every edit to the exact automatic transcript version so retranscription cannot silently replay stale ranges.
 
-`editText` replaces one current non-empty displayed line while retaining its
-segment time envelope. `reviseText` (v0.46) is one reading-view save: each
-change replaces a current passage with non-empty text or omits that passage
-from the effective transcript. Omitted passages keep their automatic words.
-Undo restores the whole save. `mergeSegments` suppresses boundaries between adjacent
-current ranges with one effective speaker assignment. Both commands use the
-same cursor as speaker changes. Their effective projection derives
-`transcriptTextAlignment` as `segment`; an unchanged projection with automatic
-word timestamps is `automatic`, and a transcript without word timestamps or a
-legacy whole-text edit is `untimed`. Segment-aligned outputs
-may claim the line envelope but never reuse the automatic timestamps as timing
-for rewritten words.
+`editText` replaces one current non-empty displayed line while retaining its segment time envelope. `reviseText` (v0.46) is one reading-view save: each change replaces a current passage with non-empty text or omits that passage from the effective transcript. Omitted passages keep their automatic words. Undo restores the whole save. `mergeSegments` suppresses boundaries between adjacent current ranges with one effective speaker assignment. Both commands use the same cursor as speaker changes. Their effective projection derives `transcriptTextAlignment` as `segment`; an unchanged projection with automatic word timestamps is `automatic`, and a transcript without word timestamps or a legacy whole-text edit is `untimed`. Segment-aligned outputs may claim the line envelope but never reuse the automatic timestamps as timing for rewritten words.
 
-An effective segment retains its durable automatic `id` when one automatic
-segment contributes the same complete word range, including a text-only edit.
-Structural split/merge projections receive a deterministic effective `id` and
-publish additive `anchorTranscriptSegmentIDs` so citations can trace them back
-to their durable automatic segments.
+An effective segment retains its durable automatic `id` when one automatic segment contributes the same complete word range, including a text-only edit. Structural split/merge projections receive a deterministic effective `id` and publish additive `anchorTranscriptSegmentIDs` so citations can trace them back to their durable automatic segments.
 
-Migration `v0.44-timed-transcript-corrections` rebuilds both tables to widen
-the SQLite operation constraint, then copies all correction rows, parent links,
-and durable cursors before recreating the replay index. Migration
-`v0.46-reading-transcript-corrections` rebuilds them again to admit
-`reviseText`.
+Migration `v0.44-timed-transcript-corrections` rebuilds both tables to widen the SQLite operation constraint, then copies all correction rows, parent links, and durable cursors before recreating the replay index. Migration `v0.46-reading-transcript-corrections` rebuilds them again to admit `reviseText`.
 
-The state is deliberately not stored on `transcriptions`: whole-row saves of
-older `Transcription` values must not be able to overwrite correction history.
-Corrections, replacement retrieval `segments`, and knowledge-card invalidation
-commit in one GRDB transaction; meeting artifacts refresh only after commit.
+The state is deliberately not stored on `transcriptions`: whole-row saves of older `Transcription` values must not be able to overwrite correction history. Corrections, replacement retrieval `segments`, and knowledge-card invalidation commit in one GRDB transaction; meeting artifacts refresh only after commit.
 
 ---
 
 ### `segments` + `segments_fts` (v0.27)
 
-Normalized retrieval units for completed meeting and file/URL transcriptions.
-The table and external-content FTS5 index are derived and rebuildable; the
-canonical transcript remains the `transcriptions` row.
+Normalized retrieval units for completed meeting and file/URL transcriptions. The table and external-content FTS5 index are derived and rebuildable; the canonical transcript remains the `transcriptions` row.
 
 ```sql
 CREATE TABLE segments (
@@ -514,26 +371,13 @@ CREATE VIRTUAL TABLE segments_fts USING fts5(
 );
 ```
 
-INSERT/UPDATE/DELETE triggers keep the external-content index synchronized.
-`KnowledgeSegmenter.currentVersion` freezes deterministic derivation rules;
-legacy/no-timing pseudo-segmentation uses explicit Unicode-scalar boundaries
-without locale or NaturalLanguage dependencies. Dictations are not populated.
-`sotto-cli search-reindex` rebuilds both layers outside migrations.
-Version 2 fixed mixed word-token whitespace and punctuation joining. Version 3
-added effective-speaker run boundaries so one durable citation segment can yield
-multiple corrected retrieval rows without reminting its durable UUID;
-version 4 preserves automatic speaker inheritance while excluding blank edge
-tokens from corrected retrieval timestamps. Version 5 is current and derives
-corrected retrieval rows from effective timed-text segments while retaining
-their segment timing envelopes. Same-version rebuilds remain byte-identical.
+INSERT/UPDATE/DELETE triggers keep the external-content index synchronized. `KnowledgeSegmenter.currentVersion` freezes deterministic derivation rules; legacy/no-timing pseudo-segmentation uses explicit Unicode-scalar boundaries without locale or NaturalLanguage dependencies. Dictations are not populated. `sotto-cli search-reindex` rebuilds both layers outside migrations. Version 2 fixed mixed word-token whitespace and punctuation joining. Version 3 added effective-speaker run boundaries so one durable citation segment can yield multiple corrected retrieval rows without reminting its durable UUID; version 4 preserves automatic speaker inheritance while excluding blank edge tokens from corrected retrieval timestamps. Version 5 is current and derives corrected retrieval rows from effective timed-text segments while retaining their segment timing envelopes. Same-version rebuilds remain byte-identical.
 
 ---
 
 ### `cards` + `cards_fts` (v0.28)
 
-One compact, derived knowledge card per completed meeting or file/URL
-transcription. The transcription row remains canonical; cards are disposable
-and regenerated when their provenance tuple is stale.
+One compact, derived knowledge card per completed meeting or file/URL transcription. The transcription row remains canonical; cards are disposable and regenerated when their provenance tuple is stale.
 
 ```sql
 CREATE TABLE cards (
@@ -561,19 +405,7 @@ CREATE VIRTUAL TABLE cards_fts USING fts5(
 );
 ```
 
-`topics`, `decisions`, and `actions` are JSON text. Meeting decisions/actions
-are candidates with resolved segment sequence ranges; unresolvable model
-citations are dropped. File/URL cards store empty decision/action arrays.
-INSERT/UPDATE/DELETE triggers synchronize `cards_search_content` and
-`cards_fts`; the search-content row stores topics as space-joined plain text,
-while `cards.topics` remains JSON. The auxiliary external-content table makes
-FTS `rebuild` deterministic and is intended for the Phase 3 card-search verb.
-Staleness compares
-`transcriptHash`, `promptVersion`, `cardSchemaVersion`, and
-`segmenterVersion`; `model` and `generatedAt` are audit provenance but do not
-independently force regeneration. Writes enforce the approximate 350-token
-card budget, removing topics before truncating synopsis, and replace the old
-row only after a new card validates.
+`topics`, `decisions`, and `actions` are JSON text. Meeting decisions/actions are candidates with resolved segment sequence ranges; unresolvable model citations are dropped. File/URL cards store empty decision/action arrays. INSERT/UPDATE/DELETE triggers synchronize `cards_search_content` and `cards_fts`; the search-content row stores topics as space-joined plain text, while `cards.topics` remains JSON. The auxiliary external-content table makes FTS `rebuild` deterministic and is intended for the Phase 3 card-search verb. Staleness compares `transcriptHash`, `promptVersion`, `cardSchemaVersion`, and `segmenterVersion`; `model` and `generatedAt` are audit provenance but do not independently force regeneration. Writes enforce the approximate 350-token card budget, removing topics before truncating synopsis, and replace the old row only after a new card validates.
 
 ---
 
@@ -657,30 +489,15 @@ CREATE INDEX idx_chat_conversations_transcription_id ON chat_conversations(trans
 
 ### `ask_conversations` (v0.49)
 
-Stores an independent Ask workspace conversation, not a chat owned by its first
-transcript. Sections freeze the selected Library source UUIDs for each context
-period. A section change appends a new membership snapshot; existing messages
-remain history. The model only receives complete messages from the current
-section whose saved source revisions still match the current run snapshot.
+Stores an independent Ask workspace conversation, not a chat owned by its first transcript. Sections freeze the selected Library source UUIDs for each context period. A section change appends a new membership snapshot; existing messages remain history. The model only receives complete messages from the current section whose saved source revisions still match the current run snapshot.
 
-The single bounded payload is a Codable `AskConversation`. `revision`,
-`createdAt`, `updatedAt`, `runToken`, and `runLeaseUntil` remain indexed SQL
-columns so GUI and CLI processes can arbitrate without decoding competing
-payloads. Citations store `(sourceID, sourceRevision, segmentIndex)` plus
-optional source title/date snapshots, not a duplicate passage quote. Source
-records are validated when evidence is read. Recording deletion marks its
-historical citations unavailable without deleting the whole conversation.
+The single bounded payload is a Codable `AskConversation`. `revision`, `createdAt`, `updatedAt`, `runToken`, and `runLeaseUntil` remain indexed SQL columns so GUI and CLI processes can arbitrate without decoding competing payloads. Citations store `(sourceID, sourceRevision, segmentIndex)` plus optional source title/date snapshots, not a duplicate passage quote. Source records are validated when evidence is read. Recording deletion marks its historical citations unavailable without deleting the whole conversation.
 
 ### `prompts` (v0.7)
 
-Reusable prompt templates for LLM-powered transcript processing. Built-in and
-custom prompts share full editing, immutable versioning, recoverable
-soft-deletion rights. Result prompts also have configurable meeting-notes context.
+Reusable prompt templates for LLM-powered transcript processing. Built-in and custom prompts share full editing, immutable versioning, recoverable soft-deletion rights. Result prompts also have configurable meeting-notes context.
 
-The SQL below is the pre-versioning shape. Current migrations remove `content`
-and `inferenceSettings` from `prompts` after seeding V1, and add `activeVersionId`,
-`collectionId`, deletion metadata and canonical provenance. `prompt_versions`
-solely owns the versioned fields described above.
+The SQL below is the pre-versioning shape. Current migrations remove `content` and `inferenceSettings` from `prompts` after seeding V1, and add `activeVersionId`, `collectionId`, deletion metadata and canonical provenance. `prompt_versions` solely owns the versioned fields described above.
 
 ```sql
 CREATE TABLE prompts (
@@ -712,21 +529,8 @@ CREATE UNIQUE INDEX idx_prompts_name ON prompts(name COLLATE NOCASE);
 - Built-ins currently come from `Prompt.builtInPrompts()` in Swift. "Summary" is the lone auto-run built-in for users who have not disabled every auto-run prompt. ("Memo-Steered Notes" was a second auto-run built-in introduced in ADR-020 and reverted on 2026-05-02 — see ADR-020 amendment.)
 - `category = "transform"` rows use `keyboardShortcut` for global Transform bindings and `runningLabel` for the floating progress label. Summary/result prompts leave both fields `NULL`.
 - `appliesToSources` (v0.20) scopes auto-run to specific transcription sources (JSON-encoded `Set<Transcription.SourceType>`). `NULL` means "all sources" — the canonical unscoped form. The Meetings "After each meeting" card calls `PromptRepository.setAutoRun(id:source:.meeting)`. Enabling adds `.meeting` while preserving other enabled sources (a fully-off prompt becomes meeting-only `[.meeting]`); disabling removes only `.meeting`. It does not write `prompt_meeting_policies`. The global Prompt Library toggle, CLI `prompts set --auto-run`, and result-prompt default restore reset it to `NULL`. A set covering every source is normalized back to `NULL` so future `SourceType` cases are auto-included. Only consulted when `isAutoRun = true` (see `Prompt.autoRuns(for:)`). Chip on-state is `autoRuns(for: .meeting)` and current label availability.
-- `inferenceSettings` (v0.31) is nullable JSON for the transport-neutral
-  `PromptInferenceSettings` value (`temperature`, `topP`, `topK`, `maxTokens`,
-  `thinkingMode`, and optional `reasoningEffort`). The effort values are
-  `low`, `medium`, `high`, and `xhigh`; normalization clears the field unless
-  `thinkingMode` is `enabled`. The original v0.31 contract applied only to custom result prompts; current versioned settings apply to all result and Transform prompts. `NULL`
-  and an all-default object are normalized to the same meaning: inherit the
-  prompt-result operation's current Sotto and adapter defaults. They do
-  not mean "force the upstream provider to omit every parameter." The original column is migrated into `prompt_versions.inferenceSettings` and dropped by v0.36.
-  JSON decoding and repository writes independently reject invalid numeric
-  values with the settings validation error. Current Transform execution also uses its active version settings.
-- `includeMeetingNotes` is a result-prompt-only Boolean, defaulting to false
-  for migrated, built-in and new prompts. When enabled, non-empty meeting notes
-  are appended as context unless explicitly placed with `{{userNotes}}`.
-  Transform rows remain false. Migration `v0.33-prompt-meeting-notes-context`
-  adds this column and `summaries.includeMeetingNotesSnapshot`.
+- `inferenceSettings` (v0.31) is nullable JSON for the transport-neutral `PromptInferenceSettings` value (`temperature`, `topP`, `topK`, `maxTokens`, `thinkingMode`, and optional `reasoningEffort`). The effort values are `low`, `medium`, `high`, and `xhigh`; normalization clears the field unless `thinkingMode` is `enabled`. The original v0.31 contract applied only to custom result prompts; current versioned settings apply to all result and Transform prompts. `NULL` and an all-default object are normalized to the same meaning: inherit the prompt-result operation's current Sotto and adapter defaults. They do not mean "force the upstream provider to omit every parameter." The original column is migrated into `prompt_versions.inferenceSettings` and dropped by v0.36. JSON decoding and repository writes independently reject invalid numeric values with the settings validation error. Current Transform execution also uses its active version settings.
+- `includeMeetingNotes` is a result-prompt-only Boolean, defaulting to false for migrated, built-in and new prompts. When enabled, non-empty meeting notes are appended as context unless explicitly placed with `{{userNotes}}`. Transform rows remain false. Migration `v0.33-prompt-meeting-notes-context` adds this column and `summaries.includeMeetingNotesSnapshot`.
 
 ---
 
@@ -760,48 +564,13 @@ CREATE INDEX idx_summaries_transcription_id ON summaries(transcriptionId);
 **Notes:**
 - `transcriptionId` has a cascading delete — deleting a transcription removes all its prompt results.
 - `promptName` and `promptContent` are snapshots, not references to the `prompts` table. Editing or deleting a prompt after generation doesn't change the result's metadata.
-- `userNotesSnapshot` captures the exact normalized and 8,000-word-capped notes
-  value supplied to prompt assembly, not the unbounded canonical DB value, so
-  later note edits do not rewrite historical prompt results.
-- `contentEditedAt` (v0.45) is set when the user saves an in-place edit of
-  `content`. Prompt snapshots stay the generation receipt. `NULL` means no
-  in-place edit is recorded, including on generated, historical, and imported
-  rows; it does not establish who wrote the content.
-  Cancel discards the draft; Save persists and refreshes meeting artifacts.
-- `includeMeetingNotesSnapshot` records the opt-in preference captured for that
-  generation, including the meaningful case where it was enabled but no notes
-  existed yet. Retry reuses its queued snapshot; regenerate reuses this Boolean
-  receipt with the meeting's current committed notes. The column defaults false
-  for historical results and is installed by migration v0.33.
-- `outputLanguagePolicySnapshot` (v0.47) records the meeting AI output-language
-  policy used for that generation (`follow-transcript` or a language code).
-  `NULL` means no policy was recorded, including results created before the
-  policy existed and externally imported results. Regenerate then uses the
-  current Settings value. Extra instructions still override the injected
-  language request.
-- `sourceCorrectionRevision` (v0.45) records the transcript correction
-  revision captured with the transcript input before generation, including
-  CLI and saved-audio auto-prompt runs. `NULL` means the result predates the
-  receipt. A later transcript edit can then offer an update without
-  regenerating on its own.
-- `sourceTranscriptHash` (v0.48) is SHA-256 of cue words when an unedited
-  transcript has timed cues, otherwise trimmed canonical `cleanTranscript`
-  (falling back to `rawTranscript` when automatic clean text is empty). It
-  detects retranscription even when correction revision returns to zero,
-  without changing when titles, notes, or plain/rich context presentation
-  changes. Earlier rows keep `NULL` because a result may already have become
-  stale before migration. A `NULL` receipt alone does not surface a
-  transcript-change notice; see [spec/12-processing-layer.md](12-processing-layer.md#data-model-promptresult)
-  for the conditions that do.
-- `inferenceSettingsSnapshot` (v0.31) stores the normalized effective settings
-  actually sent after provider/model capability filtering, not merely the
-  settings requested on the prompt. `NULL` preserves historical rows and means
-  no effective receipt was recorded; it is not a request for upstream defaults.
-  Result repositories validate snapshots before saving or replacing a result,
-  preserving the previous result on failure. Requested settings and omitted
-  fields are not stored on each result. Regenerate reuses the effective receipt
-  rather than consulting an edited prompt; provider/model configuration is
-  resolved again when execution begins.
+- `userNotesSnapshot` captures the exact normalized and 8,000-word-capped notes value supplied to prompt assembly, not the unbounded canonical DB value, so later note edits do not rewrite historical prompt results.
+- `contentEditedAt` (v0.45) is set when the user saves an in-place edit of `content`. Prompt snapshots stay the generation receipt. `NULL` means no in-place edit is recorded, including on generated, historical, and imported rows; it does not establish who wrote the content. Cancel discards the draft; Save persists and refreshes meeting artifacts.
+- `includeMeetingNotesSnapshot` records the opt-in preference captured for that generation, including the meaningful case where it was enabled but no notes existed yet. Retry reuses its queued snapshot; regenerate reuses this Boolean receipt with the meeting's current committed notes. The column defaults false for historical results and is installed by migration v0.33.
+- `outputLanguagePolicySnapshot` (v0.47) records the meeting AI output-language policy used for that generation (`follow-transcript` or a language code). `NULL` means no policy was recorded, including results created before the policy existed and externally imported results. Regenerate then uses the current Settings value. Extra instructions still override the injected language request.
+- `sourceCorrectionRevision` (v0.45) records the transcript correction revision captured with the transcript input before generation, including CLI and saved-audio auto-prompt runs. `NULL` means the result predates the receipt. A later transcript edit can then offer an update without regenerating on its own.
+- `sourceTranscriptHash` (v0.48) is SHA-256 of cue words when an unedited transcript has timed cues, otherwise trimmed canonical `cleanTranscript` (falling back to `rawTranscript` when automatic clean text is empty). It detects retranscription even when correction revision returns to zero, without changing when titles, notes, or plain/rich context presentation changes. Earlier rows keep `NULL` because a result may already have become stale before migration. A `NULL` receipt alone does not surface a transcript-change notice; see [spec/12-processing-layer.md](12-processing-layer.md#data-model-promptresult) for the conditions that do.
+- `inferenceSettingsSnapshot` (v0.31) stores the normalized effective settings actually sent after provider/model capability filtering, not merely the settings requested on the prompt. `NULL` preserves historical rows and means no effective receipt was recorded; it is not a request for upstream defaults. Result repositories validate snapshots before saving or replacing a result, preserving the previous result on failure. Requested settings and omitted fields are not stored on each result. Regenerate reuses the effective receipt rather than consulting an edited prompt; provider/model configuration is resolved again when execution begins.
 - Migration from existing data: legacy `transcriptions.summary` values migrate into `summaries` with classic "Summary" prompt metadata, then the legacy column is dropped by `v0.7.6-drop-legacy-transcription-summary`.
 
 ---
@@ -839,9 +608,7 @@ CREATE INDEX idx_quick_prompts_pinned_sort ON quick_prompts(isPinned, sortOrder)
 
 ### `transform_history` (v0.14; recreated in v0.17)
 
-Local history of completed GUI Transform runs, represented by
-`TransformHistoryEntry`. This table contains user content and is distinct from
-the metadata-only `llm_runs` ledger.
+Local history of completed GUI Transform runs, represented by `TransformHistoryEntry`. This table contains user content and is distinct from the metadata-only `llm_runs` ledger.
 
 ```sql
 CREATE TABLE transform_history (
@@ -863,21 +630,13 @@ CREATE INDEX idx_transform_history_created_at ON transform_history(createdAt);
 CREATE INDEX idx_transform_history_transform_id ON transform_history(transformId);
 ```
 
-`transformId` is an optional provenance value, not a foreign key to `prompts`;
-history retains the name and input/output snapshot independently of later
-prompt edits. `llm_runs.transformHistoryId` can link a metadata receipt to this
-row. The removed `transform_profiles` and `writing_samples` workbench tables
-are migration history, not active schema.
+`transformId` is an optional provenance value, not a foreign key to `prompts`; history retains the name and input/output snapshot independently of later prompt edits. `llm_runs.transformHistoryId` can link a metadata receipt to this row. The removed `transform_profiles` and `writing_samples` workbench tables are migration history, not active schema.
 
 ---
 
 ### `llm_runs` (v0.18)
 
-Stores local metadata for persisted LLM operations. This table is for later
-local analytics, diagnostics, and feature-linked run history; it deliberately
-does **not** duplicate transcript text, prompt templates, chat messages,
-transform input/output, audio paths, or other user content. Those payloads
-remain in their feature-owned tables.
+Stores local metadata for persisted LLM operations. This table is for later local analytics, diagnostics, and feature-linked run history; it deliberately does **not** duplicate transcript text, prompt templates, chat messages, transform input/output, audio paths, or other user content. Those payloads remain in their feature-owned tables.
 
 ```sql
 CREATE TABLE llm_runs (
@@ -935,13 +694,7 @@ CREATE INDEX idx_llm_runs_transform_history_id ON llm_runs(transformHistoryId);
 
 ### `share_publications` + `share_outbox_operations` (v0.42)
 
-The local half of [Share Service v1](contracts/share-service-v1.md)'s "Local
-lifecycle invariant". `share_publications` is the only local record of a
-share's remote identity, locator, and confirmed lifecycle state;
-`share_outbox_operations` is its durable, ordered outbox. Neither table is
-cascaded from `transcriptions` — a source deletion must transactionally
-detach the row via `SharePublicationRepository.detachAndEnqueueTerminalOperations`
-before the source disappears, never rely on a cascade to do it.
+The local half of [Share Service v1](contracts/share-service-v1.md)'s "Local lifecycle invariant". `share_publications` is the only local record of a share's remote identity, locator, and confirmed lifecycle state; `share_outbox_operations` is its durable, ordered outbox. Neither table is cascaded from `transcriptions` — a source deletion must transactionally detach the row via `SharePublicationRepository.detachAndEnqueueTerminalOperations` before the source disappears, never rely on a cascade to do it.
 
 ```sql
 CREATE TABLE share_publications (
@@ -993,42 +746,21 @@ ON share_outbox_operations(sharePublicationId) WHERE kind = 'delete';
 ```
 
 **Notes:**
-- `share_outbox_operations` may safely cascade from `share_publications` — that
-  parent is the local ledger row itself, not the transcription. Only the
-  `transcriptionId` link on `share_publications` avoids cascading.
-- `version`/`accessState` are `NULL` until the service confirms a create
-  receipt; the coordinator drives every confirmed-vs-pending distinction from
-  that receipt, never from a guess.
-- The per-share content key lives only in the dedicated sharing Keychain
-  namespace (`ShareCredentialStore`), keyed by `remoteShareId`, never in this
-  table.
-- `isDetached` is distinct from `transcriptionId IS NULL`: a share that never
-  had a source association also has a `NULL` `transcriptionId`, but only a
-  detached share should ever trigger retrying Keychain content-key removal.
-- Receipt application and outbox completion occur in one transaction. Replay
-  sends the stored body, idempotency key, and original `If-Match` unchanged.
-- Detachment clears content-derived fields on the ledger and pending work,
-  including already-cleaned rows. An uncertain create retains only its encrypted
-  request body until reconciliation and permanent stop; it never retains the key.
-- New publication checks an associated source still exists in its intent
-  transaction, so a stale draft cannot recreate sharing after source deletion.
-- `lastAttemptAt` is written before network I/O, with an atomic first-attempt
-  result. A validation rejection of that first attempt can discard a never-
-  accepted create only while it remains unconfirmed and has no queued stop.
-  A rejection after an uncertain response is not equivalent evidence.
-- Pending recovery uses one Keychain record for the generated device secret,
-  replacement-verifier choice, and idempotency key. Resubmitting a same-owner
-  recovery code first probes that device, then retries the identical replacement
-  if needed. It never generates a different device during an unresolved attempt.
+- `share_outbox_operations` may safely cascade from `share_publications` — that parent is the local ledger row itself, not the transcription. Only the `transcriptionId` link on `share_publications` avoids cascading.
+- `version`/`accessState` are `NULL` until the service confirms a create receipt; the coordinator drives every confirmed-vs-pending distinction from that receipt, never from a guess.
+- The per-share content key lives only in the dedicated sharing Keychain namespace (`ShareCredentialStore`), keyed by `remoteShareId`, never in this table.
+- `isDetached` is distinct from `transcriptionId IS NULL`: a share that never had a source association also has a `NULL` `transcriptionId`, but only a detached share should ever trigger retrying Keychain content-key removal.
+- Receipt application and outbox completion occur in one transaction. Replay sends the stored body, idempotency key, and original `If-Match` unchanged.
+- Detachment clears content-derived fields on the ledger and pending work, including already-cleaned rows. An uncertain create retains only its encrypted request body until reconciliation and permanent stop; it never retains the key.
+- New publication checks an associated source still exists in its intent transaction, so a stale draft cannot recreate sharing after source deletion.
+- `lastAttemptAt` is written before network I/O, with an atomic first-attempt result. A validation rejection of that first attempt can discard a never- accepted create only while it remains unconfirmed and has no queued stop. A rejection after an uncertain response is not equivalent evidence.
+- Pending recovery uses one Keychain record for the generated device secret, replacement-verifier choice, and idempotency key. Resubmitting a same-owner recovery code first probes that device, then retries the identical replacement if needed. It never generates a different device during an unresolved attempt.
 
 ---
 
 ### `ai_formatter_profiles` (v0.21)
 
-Local profile table for Dictation AI Formatter prompt routing. Profiles match
-either an exact macOS bundle identifier or a coarse app category, then provide a
-prompt template that follows the same `{{TRANSCRIPT}}` contract as the global
-formatter prompt.
+Local profile table for Dictation AI Formatter prompt routing. Profiles match either an exact macOS bundle identifier or a coarse app category, then provide a prompt template that follows the same `{{TRANSCRIPT}}` contract as the global formatter prompt.
 
 ```sql
 CREATE TABLE ai_formatter_profiles (
@@ -1400,11 +1132,7 @@ struct AskEvidenceReference: Codable {
 }
 ```
 
-`AskConversation` is stored as the payload of `ask_conversations`, not as a
-GRDB row type. An assistant placeholder is saved as `incomplete` before model
-work begins. Terminal outcomes distinguish `complete`, `failed`, and
-`cancelled`; an interrupted process may leave the durable placeholder
-`incomplete`.
+`AskConversation` is stored as the payload of `ask_conversations`, not as a GRDB row type. An assistant placeholder is saved as `incomplete` before model work begins. Terminal outcomes distinguish `complete`, `failed`, and `cancelled`; an interrupted process may leave the durable placeholder `incomplete`.
 
 ### Prompt
 

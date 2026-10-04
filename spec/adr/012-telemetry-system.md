@@ -53,29 +53,9 @@ This is not "anonymous" in the strict GDPR sense (session + chip + locale + coun
 
 ### What We Collect
 
-The live source of truth for event types is the `TelemetryEventName`
-enum (`Sources/SottoCore/Services/Telemetry/TelemetryEvent.swift`) and the
-catalog in `docs/telemetry.md`. They span app lifecycle, dictation,
-transcription, speaker diarization, meeting recording + crash recovery, calendar
-auto-start, feature adoption, settings, licensing (retained but mostly unfired in
-free builds), performance/model lifecycle, permissions, errors/crashes, and CLI
-usage. The catalog pairs lightweight breadcrumb events with wide per-operation
-outcome events (`*_operation`) for product-health analysis.
+The live source of truth for event types is the `TelemetryEventName` enum (`Sources/SottoCore/Services/Telemetry/TelemetryEvent.swift`) and the catalog in `docs/telemetry.md`. They span app lifecycle, dictation, transcription, speaker diarization, meeting recording + crash recovery, calendar auto-start, feature adoption, settings, licensing (retained but mostly unfired in free builds), performance/model lifecycle, permissions, errors/crashes, and CLI usage. The catalog pairs lightweight breadcrumb events with wide per-operation outcome events (`*_operation`) for product-health analysis.
 
-The development source also emits `audio_engine_lifecycle` as bounded
-shared microphone diagnostics: at most one five-second slow checkpoint and one terminal
-snapshot, with fast prepare/stop snapshots suppressed. Its random `attempt_id`
-belongs to that lifecycle call. When a meeting or dictation owns capture, the
-same snapshot also carries that workflow's `workflow_id` and `consumer` so it
-can be joined to the parent `*_operation` without treating the engine attempt
-as a product failure. It adds no product-health denominator and does not turn
-delay into a failure verdict or audio timeout. Both local and consent-gated
-network sinks run asynchronously and remain best effort. Safe phase/route
-categories and classified errors follow
-the [telemetry contract](../contracts/telemetry-v1.md#microphone-engine-lifecycle-observation).
-Queued events also carry `git_commit` and `build_number` in props so agents can
-group by exact binary. Stable-channel availability requires the paired server
-deployment before the app release.
+The development source also emits `audio_engine_lifecycle` as bounded shared microphone diagnostics: at most one five-second slow checkpoint and one terminal snapshot, with fast prepare/stop snapshots suppressed. Its random `attempt_id` belongs to that lifecycle call. When a meeting or dictation owns capture, the same snapshot also carries that workflow's `workflow_id` and `consumer` so it can be joined to the parent `*_operation` without treating the engine attempt as a product failure. It adds no product-health denominator and does not turn delay into a failure verdict or audio timeout. Both local and consent-gated network sinks run asynchronously and remain best effort. Safe phase/route categories and classified errors follow the [telemetry contract](../contracts/telemetry-v1.md#microphone-engine-lifecycle-observation). Queued events also carry `git_commit` and `build_number` in props so agents can group by exact binary. Stable-channel availability requires the paired server deployment before the app release.
 
 ### What We Don't Collect
 

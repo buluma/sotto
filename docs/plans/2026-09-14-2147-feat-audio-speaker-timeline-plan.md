@@ -9,8 +9,7 @@ execution: code
 
 # Audio Speaker Timeline - Plan
 
-This is an implementation plan for [issue #836](https://github.com/moona3k/macparakeet/issues/836).
-The accompanying documentation establishes the direction; it does not implement the feature or close the issue.
+This is an implementation plan for [issue #836](https://github.com/moona3k/macparakeet/issues/836). The accompanying documentation establishes the direction; it does not implement the feature or close the issue.
 
 ## Goal Capsule
 
@@ -27,14 +26,11 @@ The accompanying documentation establishes the direction; it does not implement 
 
 ### Summary
 
-Add a read-only audio speaker timeline for file/URL transcription and finalized meetings.
-Users can inspect detected turns and seek compatible retained audio without assigning untimed text to those turns.
+Add a read-only audio speaker timeline for file/URL transcription and finalized meetings. Users can inspect detected turns and seek compatible retained audio without assigning untimed text to those turns.
 
 ### Problem Frame
 
-Cohere returns text without word timestamps.
-The file pipeline consequently skips speaker analysis, while archived-source meetings can analyze speakers but lose audio-only turns when the finalizer reconstructs speaker metadata from words.
-Users lose useful audio navigation even though the diarizer does not require ASR timestamps.
+Cohere returns text without word timestamps. The file pipeline consequently skips speaker analysis, while archived-source meetings can analyze speakers but lose audio-only turns when the finalizer reconstructs speaker metadata from words. Users lose useful audio navigation even though the diarizer does not require ASR timestamps.
 
 ### Key Decisions
 
@@ -56,13 +52,11 @@ Users lose useful audio navigation even though the diarizer does not require ASR
 
 ### Scope Boundaries
 
-The milestone covers existing file/URL, archived-source meeting, and canonical-only meeting processing paths.
-It adds no dictation diarization, live timeline, automatic library backfill, audio retention extension, or timeline-specific export format.
+The milestone covers existing file/URL, archived-source meeting, and canonical-only meeting processing paths. It adds no dictation diarization, live timeline, automatic library backfill, audio retention extension, or timeline-specific export format.
 
 #### Deferred to Follow-Up Work
 
-Text alignment, timeline corrections/renaming, microphone speech activity, speaker-duration analytics, and new identity matching remain separate work.
-Issue #836's broader speaker-labeled-text request remains open after this milestone unless explicitly narrowed by its owner.
+Text alignment, timeline corrections/renaming, microphone speech activity, speaker-duration analytics, and new identity matching remain separate work. Issue #836's broader speaker-labeled-text request remains open after this milestone unless explicitly narrowed by its owner.
 
 ### Acceptance Examples
 
@@ -78,8 +72,7 @@ Issue #836's broader speaker-labeled-text request remains open after this milest
 
 ### Investigation evidence
 
-Inspected development baseline: `bb72542c7359c2061d1309457847ee864378e2d3` on 2026-09-14.
-These are source observations, not runtime measurements.
+Inspected development baseline: `bb72542c7359c2061d1309457847ee864378e2d3` on 2026-09-14. These are source observations, not runtime measurements.
 
 | Finding | Source and consequence |
 |---|---|
@@ -92,10 +85,7 @@ These are source observations, not runtime measurements.
 | JSON coverage is uneven | `Sources/CLI/Commands/MeetingsCommand.swift` has explicit DTOs; `MeetingTranscriptRecord` omits even legacy diarization segments. Adding a model property alone is insufficient. |
 | Split children already reprocess their own media | `Sources/SottoCore/Services/MeetingSplit/MeetingSplitService.swift`; use that path to produce new child analyses. |
 
-The issue's “after each pause” dictation premise differs from the current Cohere stop-time behavior in `spec/06-stt-engine.md`.
-Its referenced Obsidian plugin emits one utterance-wide Cohere segment, then chooses a speaker by overlap; it does not split an untimed paragraph into reliable dialogue.
-Primary-source references: [Cohere adapter](https://github.com/brittain9/speech-kit-obsidian-plugin/blob/6b27587816094e4f4d51a434a0beeb2b313dab18/native/src/adapters/cohere_transcribe.rs#L161) and [worker](https://github.com/brittain9/speech-kit-obsidian-plugin/blob/6b27587816094e4f4d51a434a0beeb2b313dab18/native/src/worker.rs#L932).
-These observations support R2 and the decision to defer text alignment.
+The issue's “after each pause” dictation premise differs from the current Cohere stop-time behavior in `spec/06-stt-engine.md`. Its referenced Obsidian plugin emits one utterance-wide Cohere segment, then chooses a speaker by overlap; it does not split an untimed paragraph into reliable dialogue. Primary-source references: [Cohere adapter](https://github.com/brittain9/speech-kit-obsidian-plugin/blob/6b27587816094e4f4d51a434a0beeb2b313dab18/native/src/adapters/cohere_transcribe.rs#L161) and [worker](https://github.com/brittain9/speech-kit-obsidian-plugin/blob/6b27587816094e4f4d51a434a0beeb2b313dab18/native/src/worker.rs#L932). These observations support R2 and the decision to defer text alignment.
 
 ### Key Technical Decisions
 
@@ -136,15 +126,11 @@ stateDiagram-v2
     Saved --> StaticTimeline: audio later unavailable
 ```
 
-An initial cancelled job follows the existing cancelled/error status path; `PreviousSnapshot` applies to retranscription.
-Persistence failures also retain the prior snapshot and must not publish the candidate timeline.
+An initial cancelled job follows the existing cancelled/error status path; `PreviousSnapshot` applies to retranscription. Persistence failures also retain the prior snapshot and must not publish the candidate timeline.
 
 ### Assumptions and implementation-time checks
 
-Read-only rows, collapsed initial presentation, and no duration statistics are bounded defaults chosen for this plan.
-The feature does not require a new model or signal-processing algorithm.
-Inspection of actual media duration and selected-track playback compatibility must be verified during implementation; the current code's word-derived duration is insufficient evidence.
-Measure long-list responsiveness and resource cost on real audio before release; no timing or diarization-error-rate target is claimed by this document.
+Read-only rows, collapsed initial presentation, and no duration statistics are bounded defaults chosen for this plan. The feature does not require a new model or signal-processing algorithm. Inspection of actual media duration and selected-track playback compatibility must be verified during implementation; the current code's word-derived duration is insufficient evidence. Measure long-list responsiveness and resource cost on real audio before release; no timing or diarization-error-rate target is claimed by this document.
 
 ---
 
@@ -247,15 +233,8 @@ Measure long-list responsiveness and resource cost on real audio before release;
 
 ## Verification Contract
 
-During implementation, iterate with `swift test --filter <AreaTests>` for the suites named above, from the owning worktree.
-Run the full `swift test` suite at most once as the final code gate, with a single owner, under `AGENTS.md` and `docs/pr-review-workflow.md`.
-Model/download and native playback checks are separate from fixture tests and hosted CI.
-This documentation-only PR checks source accuracy, local links, frontmatter, and diff integrity; it does not run the app suite or qualify speaker accuracy.
+During implementation, iterate with `swift test --filter <AreaTests>` for the suites named above, from the owning worktree. Run the full `swift test` suite at most once as the final code gate, with a single owner, under `AGENTS.md` and `docs/pr-review-workflow.md`. Model/download and native playback checks are separate from fixture tests and hosted CI. This documentation-only PR checks source accuracy, local links, frontmatter, and diff integrity; it does not run the app suite or qualify speaker accuracy.
 
 ## Definition of Done
 
-The implementation satisfies R1–R6 and AE1–AE5, with current-candidate evidence for U1–U5.
-All named app/CLI/artifact surfaces agree on saved audio evidence while text consumers retain their prior semantics.
-Legacy data and correction histories are preserved, and no abandoned experiments or model/runtime replacements remain in the change.
-Docs distinguish implementation on development `main`, real-audio qualification, and stable release availability.
-Merging this plan alone meets none of the feature's runtime acceptance criteria.
+The implementation satisfies R1–R6 and AE1–AE5, with current-candidate evidence for U1–U5. All named app/CLI/artifact surfaces agree on saved audio evidence while text consumers retain their prior semantics. Legacy data and correction histories are preserved, and no abandoned experiments or model/runtime replacements remain in the change. Docs distinguish implementation on development `main`, real-audio qualification, and stable release availability. Merging this plan alone meets none of the feature's runtime acceptance criteria.

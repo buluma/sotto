@@ -182,10 +182,7 @@ Users who want local-only LLM can install Ollama (`brew install ollama && ollama
 
 ### Key Types
 
-The excerpts below illustrate the service boundary, not the complete current
-API. Source protocols also carry detailed/streaming completion receipts,
-operation/session context, user notes, and typed inference settings. See
-[spec/11](../11-llm-integration.md) and [spec/14](../14-per-prompt-inference-settings.md).
+The excerpts below illustrate the service boundary, not the complete current API. Source protocols also carry detailed/streaming completion receipts, operation/session context, user notes, and typed inference settings. See [spec/11](../11-llm-integration.md) and [spec/14](../14-per-prompt-inference-settings.md).
 
 ```swift
 /// Provider configuration — provider ID + model in UserDefaults, API key in Keychain

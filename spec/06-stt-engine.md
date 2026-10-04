@@ -25,9 +25,7 @@ Sotto's default speech engine family is Parakeet TDT 0.6B via FluidAudio CoreML 
 
 #### Parakeet model variant (v2 / v3 / unified / orukeet)
 
-FluidAudio ships two peer Parakeet TDT 0.6B builds plus the newer Parakeet
-Unified build. Orukeet is an optional third-party preview on the same TDT
-path. All four are selectable Parakeet models:
+FluidAudio ships two peer Parakeet TDT 0.6B builds plus the newer Parakeet Unified build. Orukeet is an optional third-party preview on the same TDT path. All four are selectable Parakeet models:
 
 | Variant | `ParakeetModelVariant` | Languages | Notes |
 |---------|------------------------|-----------|-------|
@@ -74,10 +72,7 @@ Parakeet remains the default because it is faster, lower-latency, and lower-memo
 
 ### Cohere Transcribe Optional Engine
 
-**Planned audio navigation (#836):** The [independent speaker timeline](contracts/audio-speaker-timeline-v1.md)
-will preserve audio-derived speaker turns without requiring Cohere word timestamps.
-This is planned work, not a new Cohere decoder capability or current speaker-labeled-text support.
-The current output and capture behavior below remain accurate.
+**Planned audio navigation (#836):** The [independent speaker timeline](contracts/audio-speaker-timeline-v1.md) will preserve audio-derived speaker turns without requiring Cohere word timestamps. This is planned work, not a new Cohere decoder capability or current speaker-labeled-text support. The current output and capture behavior below remain accurate.
 
 Cohere Transcribe (`cohere-transcribe-03-2026`, 2B, Apache-2.0) was evaluated by the gold-standard benchmark (`benchmarks/asr/`, PR #568) and is shipped as an opt-in local engine for accuracy-critical record-then-transcribe work. It runs on-device through the same FluidAudio CoreML SDK as Parakeet/Nemotron — FluidAudio >= 0.15.4 exposes a public `CoherePipeline`; q8 model repo `FluidInference/cohere-transcribe-03-2026-coreml` — so no MLX or new runtime is required, unlike the deferred MLX-only candidates (Qwen3-ASR, Moonshine).
 
@@ -152,25 +147,13 @@ For meeting recording specifically, this has an important consequence: the saved
 
 ### Custom Vocabulary Boosting (FluidAudio 0.11.0+)
 
-Sotto Phase 1 uses FluidAudio's 110M CTC encoder as a post-TDT
-recognition sidecar, not as a replacement ASR runtime. The normal Parakeet TDT
-decode runs first and returns transcript text plus token timings. Recognition
-boosting is opt-in: `customVocabularyRecognitionBoostingEnabled` defaults to
-`false`. When that preference is enabled, the engine supports boosting, and
-enabled vocabulary anchors exist, Sotto runs the CTC sidecar over the
-same audio samples and uses `VocabularyRescorer` to produce the final
-transcript text. Adding an anchor alone does not enable this sidecar.
+Sotto Phase 1 uses FluidAudio's 110M CTC encoder as a post-TDT recognition sidecar, not as a replacement ASR runtime. The normal Parakeet TDT decode runs first and returns transcript text plus token timings. Recognition boosting is opt-in: `customVocabularyRecognitionBoostingEnabled` defaults to `false`. When that preference is enabled, the engine supports boosting, and enabled vocabulary anchors exist, Sotto runs the CTC sidecar over the same audio samples and uses `VocabularyRescorer` to produce the final transcript text. Adding an anchor alone does not enable this sidecar.
 
 Source of truth:
 
-- Enabled `CustomWord` rows with `replacement == nil` or blank replacement
-  become recognition-time vocabulary anchors. Independently of boosting,
-  deterministic custom-word processing uses these entries to restore stored
-  casing when a whole-word match exists.
-- Enabled rows with nonblank `replacement` remain deterministic
-  post-transcription corrections/backstops.
-- Disabled rows and terms shorter than `minTermLength` (`3`) are ignored by
-  recognition boosting.
+- Enabled `CustomWord` rows with `replacement == nil` or blank replacement become recognition-time vocabulary anchors. Independently of boosting, deterministic custom-word processing uses these entries to restore stored casing when a whole-word match exists.
+- Enabled rows with nonblank `replacement` remain deterministic post-transcription corrections/backstops.
+- Disabled rows and terms shorter than `minTermLength` (`3`) are ignored by recognition boosting.
 
 Support matrix:
 
@@ -185,29 +168,14 @@ Support matrix:
 
 Runtime behavior:
 
-- Empty vocabulary or unsupported engine variants take the byte-for-byte
-  previous path: no CTC model download/load and no added latency.
-- The CTC model is lazy-loaded from FluidAudio's Application Support model
-  cache only when boosting is needed; download/load/rescoring failures degrade
-  to the unboosted transcript and log only content-free diagnostics.
-- Vocabulary tokenization is cached by stable content hash and refreshed when
-  the effective anchor set changes.
-- Product constants live in `CustomVocabularyBoostingConfiguration`:
-  `minSimilarity = 0.65`, `minTermLength = 3`, and FluidAudio's size-aware
-  rescoring defaults otherwise.
-- Dictation sidecar audio uses the same 16 kHz samples sent to TDT, including
-  the 0.5 second trailing-silence pad from issue #562. File and meeting
-  finalization keep the URL/disk-backed TDT path; Phase 1 only sidecars short
-  audio that can be loaded under the configured sidecar sample bound, and skips
-  boosting for longer jobs until chunked sidecar rescoring lands.
-- Vocabulary contents are user data. Sotto does not log or emit telemetry
-  with the term strings.
+- Empty vocabulary or unsupported engine variants take the byte-for-byte previous path: no CTC model download/load and no added latency.
+- The CTC model is lazy-loaded from FluidAudio's Application Support model cache only when boosting is needed; download/load/rescoring failures degrade to the unboosted transcript and log only content-free diagnostics.
+- Vocabulary tokenization is cached by stable content hash and refreshed when the effective anchor set changes.
+- Product constants live in `CustomVocabularyBoostingConfiguration`: `minSimilarity = 0.65`, `minTermLength = 3`, and FluidAudio's size-aware rescoring defaults otherwise.
+- Dictation sidecar audio uses the same 16 kHz samples sent to TDT, including the 0.5 second trailing-silence pad from issue #562. File and meeting finalization keep the URL/disk-backed TDT path; Phase 1 only sidecars short audio that can be loaded under the configured sidecar sample bound, and skips boosting for longer jobs until chunked sidecar rescoring lands.
+- Vocabulary contents are user data. Sotto does not log or emit telemetry with the term strings.
 
-When active, peak working RAM is the Parakeet TDT slot plus the CTC sidecar. The
-published speed/memory benchmark currently measures the non-boosted Parakeet
-paths at 115-131 MB peak RSS on an M4 Pro; rerun a representative boosted-vocab
-case before publishing a boosted-memory number. The intended term count remains
-small user vocabularies rather than full dictionaries.
+When active, peak working RAM is the Parakeet TDT slot plus the CTC sidecar. The published speed/memory benchmark currently measures the non-boosted Parakeet paths at 115-131 MB peak RSS on an M4 Pro; rerun a representative boosted-vocab case before publishing a boosted-memory number. The intended term count remains small user vocabularies rather than full dictionaries.
 
 ### Additional Capabilities (via FluidAudio)
 
@@ -335,22 +303,9 @@ ADR-016 defines Sotto's STT architecture as:
 - **Many producers** (`DictationService`, `MeetingRecordingService`, `TranscriptionService`) submitting jobs into the scheduler
 - **Explicit speech-engine routing** through `SpeechEngineSelection` when a caller needs a pinned engine/language
 
-The app does not treat "one service = one STT runtime" as a valid long-term architecture.
-`STTClient` remains only as a standalone compatibility facade for the CLI and tests; app code uses the shared `STTRuntime` + `STTScheduler` from `AppEnvironment`.
-The GUI uses `speechRecognitionEngine` as **Live Speech** for dictation and
-eligible meeting preview. `transcriptionSpeechRecognitionEngine` is the
-optional **Final Transcription** override for authoritative post-meeting STT and
-file, media, URL, podcast, and retranscription jobs. When the latter key is
-absent, final work inherits Live Speech; Settings must preserve absence rather
-than materializing a duplicate value. This is a routing-policy layer on top of
-the shared control plane, not a separate runtime per feature. The CLI can still
-override per invocation.
+The app does not treat "one service = one STT runtime" as a valid long-term architecture. `STTClient` remains only as a standalone compatibility facade for the CLI and tests; app code uses the shared `STTRuntime` + `STTScheduler` from `AppEnvironment`. The GUI uses `speechRecognitionEngine` as **Live Speech** for dictation and eligible meeting preview. `transcriptionSpeechRecognitionEngine` is the optional **Final Transcription** override for authoritative post-meeting STT and file, media, URL, podcast, and retranscription jobs. When the latter key is absent, final work inherits Live Speech; Settings must preserve absence rather than materializing a duplicate value. This is a routing-policy layer on top of the shared control plane, not a separate runtime per feature. The CLI can still override per invocation.
 
-The first live/final build runs a one-shot preference repair for development
-profiles that opened Settings during the brief feature-grouped split: an
-equal-valued transcription key is removed because that build materialized it
-without user intent. A different value is preserved. After the repair flag is
-set, an explicitly enabled equal-valued override remains durable as intended.
+The first live/final build runs a one-shot preference repair for development profiles that opened Settings during the brief feature-grouped split: an equal-valued transcription key is removed because that build materialized it without user intent. A different value is preserved. After the repair flag is set, an explicitly enabled equal-valued override remains durable as intended.
 
 ### Lifecycle
 
@@ -385,11 +340,7 @@ Backpressure and queueing rules:
 - Meeting rows without archived source metadata fall back to `fileTranscription` on the stored `transcriptions.filePath` audio
 - Dictation must not be queued behind meeting or batch work
 - File transcription is intentionally queued and single-job in v1; a running long batch job may delay meeting STT on the background slot
-- Back-to-back meeting recording does not add a second ASR lane. The meeting
-  stop path returns the recorder to idle after durable audio, lock, and
-  Library-row materialization; the queued final STT still waits for any
-  currently running `fileTranscription` job, then `meetingFinalize` priority
-  puts it ahead of later queued file work
+- Back-to-back meeting recording does not add a second ASR lane. The meeting stop path returns the recorder to idle after durable audio, lock, and Library-row materialization; the queued final STT still waits for any currently running `fileTranscription` job, then `meetingFinalize` priority puts it ahead of later queued file work
 - Long-running batch work should be segmented into bounded work units in a future iteration if we want it to yield more gracefully
 - Progress reporting must be fanned out per job, not broadcast globally from the raw runtime stream
 - Cancellation is checked before scheduler admission so fast user cancels do not race into successful transcriptions
@@ -443,11 +394,7 @@ Saved meeting retranscription from the library:
     transcriptions.filePath audio only → .wav → STTScheduler.transcribe(audioPath:, job: .fileTranscription, onProgress:) → queued background-slot STT → updated meeting transcript
 ```
 
-The captured route remains authoritative for immediate post-stop finalization
-and schema-v2 recovery. Library retranscription is user-initiated: attributed
-meetings offer the captured engine as the primary explicit rerun choice plus
-the other available engines. Legacy or unattributed rows that do not supply an
-explicit choice use the current Final Transcription route when the job starts.
+The captured route remains authoritative for immediate post-stop finalization and schema-v2 recovery. Library retranscription is user-initiated: attributed meetings offer the captured engine as the primary explicit rerun choice plus the other available engines. Legacy or unattributed rows that do not supply an explicit choice use the current Final Transcription route when the job starts.
 
 ---
 
@@ -503,8 +450,7 @@ During onboarding:
 4. If speaker detection is enabled, prepare diarization assets (~130 MB) on the separate diarization service path.
 5. Warm the selected runtime path enough to verify the chosen engine works.
 
-Onboarding should not report the speech stack as ready until the runtime owner is ready **and** any required default-on speaker-detection assets are available.
-Whisper readiness is separate on the default Parakeet path, but it is first-run readiness on the locale-aware CJK path.
+Onboarding should not report the speech stack as ready until the runtime owner is ready **and** any required default-on speaker-detection assets are available. Whisper readiness is separate on the default Parakeet path, but it is first-run readiness on the locale-aware CJK path.
 
 This replaces the previous Python venv bootstrap (~500 MB deps + ~2.5 GB model).
 
@@ -672,15 +618,9 @@ for segment in result.segments {
 
 The automatic path uses the `fast128` preset, a 0.5 activity threshold and no minimum segment duration. The matched 0.15.7-versus-0.17.4 evaluation in `benchmarks/diarization/2026-09-25-nemotron-evaluation.md` records where it improves and where it regresses. It is a qualified adoption, not a universal accuracy guarantee.
 
-For the explicit-count path, `DiarizationService.highAccuracyConfig` starts from the library default and
-sets segmentation `stepRatio = 0.1`, embedding
-`minSegmentDurationSeconds = 0`, and zero-vote re-embedding enabled.
-Speaker-count constraints are applied to this preset per request.
+For the explicit-count path, `DiarizationService.highAccuracyConfig` starts from the library default and sets segmentation `stepRatio = 0.1`, embedding `minSegmentDurationSeconds = 0`, and zero-vote re-embedding enabled. Speaker-count constraints are applied to this preset per request.
 
-For both paths, isolated one-word speaker flips and unlabeled gaps are
-smoothed at word assignment (`SpeakerMerger`) only when both neighboring runs
-agree ([issue #1046](https://github.com/moona3k/macparakeet/issues/1046)). This
-does not change diarizer output, and it can erase a brief reply.
+For both paths, isolated one-word speaker flips and unlabeled gaps are smoothed at word assignment (`SpeakerMerger`) only when both neighboring runs agree ([issue #1046](https://github.com/moona3k/macparakeet/issues/1046)). This does not change diarizer output, and it can erase a brief reply.
 
 The app pins FluidAudio 0.17.4. Older Community-1 measurements under 0.15.x are not current app accuracy or throughput guarantees. Asset sizes above also do not measure peak process memory. See ADR-010's 2026-09-25 Nemotron amendment and its earlier amendments for provenance and the remaining DER gap.
 

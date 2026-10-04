@@ -5,92 +5,39 @@
 > people running them) that want to *call* `sotto-cli` to add local STT
 > to their stack.
 
-Examples describe the current development contract (see
-[`Sources/CLI/CHANGELOG.md`](../Sources/CLI/CHANGELOG.md)), not a promise
-about an older stable or Homebrew binary. Check `--version` and `spec --json`
-first; [release channels](../spec/README.md#release-channels-and-feature-flags)
-distinguish published binaries from the development source.
+Examples describe the current development contract (see [`Sources/CLI/CHANGELOG.md`](../Sources/CLI/CHANGELOG.md)), not a promise about an older stable or Homebrew binary. Check `--version` and `spec --json` first; [release channels](../spec/README.md#release-channels-and-feature-flags) distinguish published binaries from the development source.
 
 ## Scope of the CLI
 
-The CLI is a first-class automation surface, **not a GUI mirror.** It intentionally
-does not replicate every affordance the .app provides -- it exposes the parts
-that map cleanly to headless automation, agent invocation, and scriptable
-testing.
+The CLI is a first-class automation surface, **not a GUI mirror.** It intentionally does not replicate every affordance the .app provides -- it exposes the parts that map cleanly to headless automation, agent invocation, and scriptable testing.
 
 ### In scope
 
-- **Local transcription** -- audio/video files, folders, public media URLs,
-  Apple Podcasts links/searches, and YouTube to text, with engine selection
-  (Parakeet / Nemotron / Cohere / Whisper) and per-invocation language hints.
-- **Scriptable shared defaults** -- `config get|set|list` over the same
-  preference suite the GUI reads (`com.sotto.Sotto`). CLI-only
-  installs work; a later GUI install picks up the same values.
-- **Stable JSON / read surfaces** -- every read-only command emits JSON with
-  schemas pinned to the major CLI version. Failure envelopes carry a stable
-  `errorType` so agents can branch deterministically.
-- **Model and binary health** -- `health --json` reports model readiness,
-  database accessibility, FFmpeg, and yt-dlp without mutating state. Repair
-  flags explicitly warm/download local caches; missing application directories
-  are reported rather than created by the probe.
-- **Persisted history and knowledge retrieval** -- list/search prior
-  dictations and transcriptions, retrieve cited transcript segments, and
-  inspect current knowledge cards from the shared SQLite database. Card
-  generation is a separate, provider-backed write.
-- **Prompt management and meeting inspection** -- manage versioned transcript
-  prompts, their model/inference settings and label availability; manage Live
-  Ask quick prompts and selected-text Transforms; run prompts against saved
-  transcriptions and inspect, annotate, and export meeting recordings.
-- **Headless verification hooks** -- agents can drive deterministic runs (pin
-  all flags) or smoke-test GUI-default behavior with the explicit
-  `app-default` flag group.
+- **Local transcription** -- audio/video files, folders, public media URLs, Apple Podcasts links/searches, and YouTube to text, with engine selection (Parakeet / Nemotron / Cohere / Whisper) and per-invocation language hints.
+- **Scriptable shared defaults** -- `config get|set|list` over the same preference suite the GUI reads (`com.sotto.Sotto`). CLI-only installs work; a later GUI install picks up the same values.
+- **Stable JSON / read surfaces** -- every read-only command emits JSON with schemas pinned to the major CLI version. Failure envelopes carry a stable `errorType` so agents can branch deterministically.
+- **Model and binary health** -- `health --json` reports model readiness, database accessibility, FFmpeg, and yt-dlp without mutating state. Repair flags explicitly warm/download local caches; missing application directories are reported rather than created by the probe.
+- **Persisted history and knowledge retrieval** -- list/search prior dictations and transcriptions, retrieve cited transcript segments, and inspect current knowledge cards from the shared SQLite database. Card generation is a separate, provider-backed write.
+- **Prompt management and meeting inspection** -- manage versioned transcript prompts, their model/inference settings and label availability; manage Live Ask quick prompts and selected-text Transforms; run prompts against saved transcriptions and inspect, annotate, and export meeting recordings.
+- **Headless verification hooks** -- agents can drive deterministic runs (pin all flags) or smoke-test GUI-default behavior with the explicit `app-default` flag group.
 
 ### Out of scope (by design)
 
-- **Interactive dictation** -- live mic capture, push-to-talk, the global
-  hotkey, and the dictation overlay are GUI surfaces. The CLI does not record
-  from the microphone.
-- **Live meeting UI** -- the Notes / Transcript / Ask three-tab live panel,
-  the floating meeting pill, live recording controls, and in-flight
-  post-stop transcription abort/delete confirmation are GUI-only. The CLI
-  inspects meeting artifacts after the fact.
-- **Onboarding, settings UI, library grids, sounds, overlays** -- none of these
-  have automation analogues; they remain in the .app.
+- **Interactive dictation** -- live mic capture, push-to-talk, the global hotkey, and the dictation overlay are GUI surfaces. The CLI does not record from the microphone.
+- **Live meeting UI** -- the Notes / Transcript / Ask three-tab live panel, the floating meeting pill, live recording controls, and in-flight post-stop transcription abort/delete confirmation are GUI-only. The CLI inspects meeting artifacts after the fact.
+- **Onboarding, settings UI, library grids, sounds, overlays** -- none of these have automation analogues; they remain in the .app.
 
-The principle: if a use case can be automated, scripted, or driven by an agent,
-the CLI should support it through a stable contract. If it requires a user
-sitting at a keyboard, it lives in the .app.
+The principle: if a use case can be automated, scripted, or driven by an agent, the CLI should support it through a stable contract. If it requires a user sitting at a keyboard, it lives in the .app.
 
 ## What `sotto-cli` gives your agent
 
-- **Local Parakeet speech-to-text** on Apple Silicon, with v3 for English plus
-  supported European languages, v2 for English timestamped transcripts, and
-  Unified for readable English timestamped transcripts. Runs on the Neural Engine.
-  No cloud, no API keys, no per-minute charges.
-- **Audio + video file transcription** -- accepts MP3 / WAV / MP4 / MOV /
-  WebM / etc. via the bundled FFmpeg, with sequential folder/multi-file batch
-  output.
-- **Media URL transcription** via yt-dlp for public media URLs, plus native
-  Apple Podcasts link resolution and freetext Apple Podcasts search through
-  `transcribe --podcast`. The standalone Homebrew install uses Homebrew's
-  `yt-dlp`; the app bundle can seed a signed helper into Sotto's
-  Application Support folder before first media URL use.
-- **Persistent SQLite memory layer** -- saved transcriptions, dictations, and
-  prompt outputs remain queryable; private/no-history operations deliberately
-  do not retain transcript content.
-- **Shared app/CLI preferences** -- agents can set speech engine, processing
-  mode, speaker detection, audio retention, YouTube audio quality, and
-  telemetry without driving the GUI.
-- **Prompt library + LLM-backed summarization** -- bring your own provider
-  (OpenAI, Anthropic, Gemini, OpenRouter, Moonshot/Kimi, DeepSeek, Qwen, Z.AI,
-  MiniMax, Ollama, LM Studio, Apple Intelligence on macOS 26+,
-  OpenAI-compatible, or a configured CLI subprocess), or skip the LLM entirely
-  and consume raw transcripts.
-- **Machine-readable output** -- read-only query commands use `--json`,
-  format-selecting commands use `--format json`, and LLM/prompt commands use
-  `--json` for structured envelopes (see
-  [`../Sources/CLI/CHANGELOG.md`](../Sources/CLI/CHANGELOG.md) for the
-  contract).
+- **Local Parakeet speech-to-text** on Apple Silicon, with v3 for English plus supported European languages, v2 for English timestamped transcripts, and Unified for readable English timestamped transcripts. Runs on the Neural Engine. No cloud, no API keys, no per-minute charges.
+- **Audio + video file transcription** -- accepts MP3 / WAV / MP4 / MOV / WebM / etc. via the bundled FFmpeg, with sequential folder/multi-file batch output.
+- **Media URL transcription** via yt-dlp for public media URLs, plus native Apple Podcasts link resolution and freetext Apple Podcasts search through `transcribe --podcast`. The standalone Homebrew install uses Homebrew's `yt-dlp`; the app bundle can seed a signed helper into Sotto's Application Support folder before first media URL use.
+- **Persistent SQLite memory layer** -- saved transcriptions, dictations, and prompt outputs remain queryable; private/no-history operations deliberately do not retain transcript content.
+- **Shared app/CLI preferences** -- agents can set speech engine, processing mode, speaker detection, audio retention, YouTube audio quality, and telemetry without driving the GUI.
+- **Prompt library + LLM-backed summarization** -- bring your own provider (OpenAI, Anthropic, Gemini, OpenRouter, Moonshot/Kimi, DeepSeek, Qwen, Z.AI, MiniMax, Ollama, LM Studio, Apple Intelligence on macOS 26+, OpenAI-compatible, or a configured CLI subprocess), or skip the LLM entirely and consume raw transcripts.
+- **Machine-readable output** -- read-only query commands use `--json`, format-selecting commands use `--format json`, and LLM/prompt commands use `--json` for structured envelopes (see [`../Sources/CLI/CHANGELOG.md`](../Sources/CLI/CHANGELOG.md) for the contract).
 
 ## Install
 
@@ -102,55 +49,31 @@ sotto-cli --version
 sotto-cli health --json
 ```
 
-This installs the standalone CLI plus its Homebrew-managed `ffmpeg` and
-`yt-dlp` runtime dependencies. It does not require `Sotto.app`.
-Parakeet, Nemotron, and Cohere CoreML caches are managed by FluidAudio.
-WhisperKit model downloads live under
-`~/Library/Application Support/Sotto/models/stt/whisper/`.
+This installs the standalone CLI plus its Homebrew-managed `ffmpeg` and `yt-dlp` runtime dependencies. It does not require `Sotto.app`. Parakeet, Nemotron, and Cohere CoreML caches are managed by FluidAudio. WhisperKit model downloads live under `~/Library/Application Support/Sotto/models/stt/whisper/`.
 
-**Bundled app alternative:** after installing
-[Sotto](https://macparakeet.com), the same CLI surface is available at:
+**Bundled app alternative:** after installing [Sotto](https://macparakeet.com), the same CLI surface is available at:
 
 ```bash
 /Applications/Sotto.app/Contents/MacOS/sotto-cli --help
 ```
 
-Sotto deliberately does not modify your shell configuration or install
-files into package-manager directories. If you want the bundled executable
-under the shorter `sotto-cli` command, use the Homebrew installation
-above or configure your own shell alias, PATH entry, or symlink. First check
-whether another copy is already available:
+Sotto deliberately does not modify your shell configuration or install files into package-manager directories. If you want the bundled executable under the shorter `sotto-cli` command, use the Homebrew installation above or configure your own shell alias, PATH entry, or symlink. First check whether another copy is already available:
 
 ```bash
 command -v sotto-cli
 ```
 
-The Homebrew CLI and the app-bundled CLI are released independently, so their
-versions can differ. Use `command -v sotto-cli` and
-`sotto-cli --version` to confirm which executable Terminal will run. Do
-not replace a Homebrew-managed link with an app-managed link.
+The Homebrew CLI and the app-bundled CLI are released independently, so their versions can differ. Use `command -v sotto-cli` and `sotto-cli --version` to confirm which executable Terminal will run. Do not replace a Homebrew-managed link with an app-managed link.
 
 ## Why Apple Silicon specifically
 
-The supported runtime is macOS 14.2+ on Apple Silicon (M1 or newer), where
-Parakeet uses CoreML/Apple Neural Engine. The CLI does not support Linux/x86
-VPS deployment or offer a CPU fallback there. A headless Apple Silicon Mac is
-the deployment target; it still needs local model setup and any selected
-external provider/helper configuration.
+The supported runtime is macOS 14.2+ on Apple Silicon (M1 or newer), where Parakeet uses CoreML/Apple Neural Engine. The CLI does not support Linux/x86 VPS deployment or offer a CPU fallback there. A headless Apple Silicon Mac is the deployment target; it still needs local model setup and any selected external provider/helper configuration.
 
 ## Common commands (the agent vocabulary)
 
-The commands below show the machine-readable flag each command expects:
-`--json` for fixed-shape query/envelope commands, `--format json` for
-format-selecting commands. Schemas are stable per
-[`../Sources/CLI/CHANGELOG.md`](../Sources/CLI/CHANGELOG.md).
+The commands below show the machine-readable flag each command expects: `--json` for fixed-shape query/envelope commands, `--format json` for format-selecting commands. Schemas are stable per [`../Sources/CLI/CHANGELOG.md`](../Sources/CLI/CHANGELOG.md).
 
-Discover the installed command catalog before constructing an invocation.
-Each entry describes its path, arguments/options, `jsonMode`, `readOnly`
-classification, and output summary. It is not a JSON Schema for every payload
-or a sandbox: a command family may be marked mutating because some options
-write, and query startup can still create directories or migrate supported
-database schemas. Use `--help` for additional setup/helper details:
+Discover the installed command catalog before constructing an invocation. Each entry describes its path, arguments/options, `jsonMode`, `readOnly` classification, and output summary. It is not a JSON Schema for every payload or a sandbox: a command family may be marked mutating because some options write, and query startup can still create directories or migrate supported database schemas. Use `--help` for additional setup/helper details:
 
 ```bash
 sotto-cli spec --json
@@ -162,52 +85,19 @@ sotto-cli spec --json
 sotto-cli health --json
 ```
 
-Reports model readiness, database accessibility, and binary dependencies
-(FFmpeg, yt-dlp). Without repair flags it does not install/update helpers,
-download models, migrate/create the database, or create application
-directories. Inspect the report's component statuses and `paths`,
-not only its exit code: an uninstalled optional model does not block a local
-database search. Repair only a prerequisite for the requested operation, with
-user authorization; `health --repair-binaries` can fetch a managed helper.
+Reports model readiness, database accessibility, and binary dependencies (FFmpeg, yt-dlp). Without repair flags it does not install/update helpers, download models, migrate/create the database, or create application directories. Inspect the report's component statuses and `paths`, not only its exit code: an uninstalled optional model does not block a local database search. Repair only a prerequisite for the requested operation, with user authorization; `health --repair-binaries` can fetch a managed helper.
 
-`database.status` is one of `ok`, `missing`, `schema_skew`, or `error`.
-`schema_skew` means the shared database was migrated by a newer Sotto
-app than this CLI build understands; upgrade `sotto-cli` and retry
-rather than treating it as a database fault.
+`database.status` is one of `ok`, `missing`, `schema_skew`, or `error`. `schema_skew` means the shared database was migrated by a newer Sotto app than this CLI build understands; upgrade `sotto-cli` and retry rather than treating it as a database fault.
 
 ### Safe automation and isolation
 
-- Start with `--version`, `spec --json`, then the health report and the
-  narrowest relevant read. Never repair, regenerate, clear, or delete merely
-  because a component is missing.
-- Normal CLI calls share the user's database, preferences, model caches, and
-  artifact paths with the app. `config set` and `models select` change shared
-  defaults; prefer per-invocation flags for reproducible work.
-- `--database PATH` selects a database only where advertised. It does not
-  isolate preferences, Keychain, models, downloads, or the audio/artifact paths
-  stored in copied rows. Never run destructive commands against a copied
-  production database that still points to original user files.
-- For source-build smoke work, set `SOTTO_DEBUG_APP_STATE_DIR` to an
-  absolute test-owned directory to redirect app-support/artifact paths and
-  speech/speaker model caches. `AppPaths` accepts this override in both Debug
-  and Release binaries. It does **not** redirect the shared UserDefaults suite
-  or Keychain, and paths already embedded in copied rows stay untouched; avoid
-  configuration writes, or use a disposable macOS account when full
-  user-state isolation is required.
-- `--no-history` avoids completed transcript retention, not all I/O. Transcribe
-  can still initialize a database, use models/helpers, and emit telemetry.
-  `SOTTO_TELEMETRY=0` disables telemetry for one invocation without
-  changing shared preferences; it is not a network sandbox.
-- `search-reindex` writes derived indexes; `cards generate` additionally calls
-  the configured LLM. `meetings artifact` refreshes files from SQLite, while
-  notes/results commands modify user-visible records. Treat these as writes,
-  not read-only inspection. Do not manually edit generated sidecars as though
-  they were canonical database records.
-- Query classification does not guarantee zero writes: database startup can
-  initialize/migrate supported storage, and `cards list` can refresh outdated
-  derived transcript segments before checking card freshness. It does not
-  generate cards or call an LLM. Use the non-mutating default health probe
-  when deciding whether it is safe to open a database.
+- Start with `--version`, `spec --json`, then the health report and the narrowest relevant read. Never repair, regenerate, clear, or delete merely because a component is missing.
+- Normal CLI calls share the user's database, preferences, model caches, and artifact paths with the app. `config set` and `models select` change shared defaults; prefer per-invocation flags for reproducible work.
+- `--database PATH` selects a database only where advertised. It does not isolate preferences, Keychain, models, downloads, or the audio/artifact paths stored in copied rows. Never run destructive commands against a copied production database that still points to original user files.
+- For source-build smoke work, set `SOTTO_DEBUG_APP_STATE_DIR` to an absolute test-owned directory to redirect app-support/artifact paths and speech/speaker model caches. `AppPaths` accepts this override in both Debug and Release binaries. It does **not** redirect the shared UserDefaults suite or Keychain, and paths already embedded in copied rows stay untouched; avoid configuration writes, or use a disposable macOS account when full user-state isolation is required.
+- `--no-history` avoids completed transcript retention, not all I/O. Transcribe can still initialize a database, use models/helpers, and emit telemetry. `SOTTO_TELEMETRY=0` disables telemetry for one invocation without changing shared preferences; it is not a network sandbox.
+- `search-reindex` writes derived indexes; `cards generate` additionally calls the configured LLM. `meetings artifact` refreshes files from SQLite, while notes/results commands modify user-visible records. Treat these as writes, not read-only inspection. Do not manually edit generated sidecars as though they were canonical database records.
+- Query classification does not guarantee zero writes: database startup can initialize/migrate supported storage, and `cards list` can refresh outdated derived transcript segments before checking card freshness. It does not generate cards or call an LLM. Use the non-mutating default health probe when deciding whether it is safe to open a database.
 
 ### Transcribe a file
 
@@ -222,20 +112,15 @@ sotto-cli transcribe /path/to/audio.mp3 --format transcript
 sotto-cli transcribe /path/to/audio.mp3 --format transcript --no-history | pbcopy
 ```
 
-For a local container with multiple embedded audio streams, select one with a
-one-based track number. The choice is persisted with saved history and reused
-by retranscription:
+For a local container with multiple embedded audio streams, select one with a one-based track number. The choice is persisted with saved history and reused by retranscription:
 
 ```bash
 sotto-cli transcribe /path/to/episode.mkv --audio-track 2 --format json
 ```
 
-`--audio-track` works for local files and folders only; media URLs and podcast
-inputs reject it rather than pretending to control a remote/download stream.
+`--audio-track` works for local files and folders only; media URLs and podcast inputs reject it rather than pretending to control a remote/download stream.
 
-To write a subtitle or structured DAPT transcript directly, use
-`--format srt|vtt|dapt` with an `--output-dir` (one command, no separate
-`export` step):
+To write a subtitle or structured DAPT transcript directly, use `--format srt|vtt|dapt` with an `--output-dir` (one command, no separate `export` step):
 
 ```bash
 sotto-cli transcribe /path/to/audio.mp3 --format vtt --output-dir .
@@ -244,17 +129,7 @@ sotto-cli transcribe /path/to/interview.mp3 --format dapt --output-dir .
 # -> ./interview.dapt.xml
 ```
 
-A single input without `--output-dir` prints the selected document to stdout,
-so you can also redirect it:
-`sotto-cli transcribe interview.mp3 --format dapt > interview.dapt.xml`.
-DAPT preserves automatic word timing and speaker attribution when they are
-aligned with the transcript. A corrected or merged timed line is emitted once
-for its preserved segment envelope; its rewritten words are not assigned the
-automatic per-word timestamps. Current display labels become character aliases.
-If the optional label roster is incomplete, stored anonymous IDs such as `S2` remain
-anonymous aliases. If diarization is off or unavailable, DAPT omits character
-agents; if word timing is unavailable, it emits a valid untimed original
-transcript rather than inventing timing or attribution.
+A single input without `--output-dir` prints the selected document to stdout, so you can also redirect it: `sotto-cli transcribe interview.mp3 --format dapt > interview.dapt.xml`. DAPT preserves automatic word timing and speaker attribution when they are aligned with the transcript. A corrected or merged timed line is emitted once for its preserved segment envelope; its rewritten words are not assigned the automatic per-word timestamps. Current display labels become character aliases. If the optional label roster is incomplete, stored anonymous IDs such as `S2` remain anonymous aliases. If diarization is off or unavailable, DAPT omits character agents; if word timing is unavailable, it emits a valid untimed original transcript rather than inventing timing or attribution.
 
 To re-export something already in your library, list it and export by id:
 
@@ -263,40 +138,18 @@ sotto-cli history transcriptions          # note the subcommand; lists ids
 sotto-cli export <id> --format dapt
 ```
 
-To rerun STT for an existing saved item without creating a new library row,
-use `retranscribe`. It requires retained source audio and an explicit
-`--update` confirmation because it replaces transcript-derived fields on the
-existing record:
+To rerun STT for an existing saved item without creating a new library row, use `retranscribe`. It requires retained source audio and an explicit `--update` confirmation because it replaces transcript-derived fields on the existing record:
 
 ```bash
 sotto-cli retranscribe <id-or-prefix-or-title> --update --json
 sotto-cli retranscribe <id> --kind meeting --update --engine cohere --language ja --envelope
 ```
 
-`retranscribe` resolves dictations by UUID/prefix, transcriptions by
-UUID/prefix or exact name, and meetings by UUID/prefix or exact title. Auto
-resolution fails if the identifier matches more than one saved record; retry
-with a full UUID, or a longer UUID prefix for prefix matches. Use
-`--kind dictation|transcription|meeting` only to disambiguate cross-kind matches. It
-supports the same speech-engine, model, language, and processing-mode flags as
-`transcribe`; speaker-detection flags apply only to saved transcriptions and
-meetings.
+`retranscribe` resolves dictations by UUID/prefix, transcriptions by UUID/prefix or exact name, and meetings by UUID/prefix or exact title. Auto resolution fails if the identifier matches more than one saved record; retry with a full UUID, or a longer UUID prefix for prefix matches. Use `--kind dictation|transcription|meeting` only to disambiguate cross-kind matches. It supports the same speech-engine, model, language, and processing-mode flags as `transcribe`; speaker-detection flags apply only to saved transcriptions and meetings.
 
-`--no-history` avoids retaining the completed transcription in the shared
-Sotto history. For media URL and podcast inputs, downloaded audio is
-temporary when `--no-history` is set.
+`--no-history` avoids retaining the completed transcription in the shared Sotto history. For media URL and podcast inputs, downloaded audio is temporary when `--no-history` is set.
 
-Parakeet is the default local engine for compatibility with existing scripts:
-use v3 for English plus supported European languages, v2 for English timestamped
-transcripts, or Unified for readable English with word timestamps. Orukeet is
-an optional Parakeet preview, not a separate engine. Download it with
-`models download parakeet-orukeet`, then use `models select parakeet-orukeet`
-or `transcribe --parakeet-model orukeet`. The default stays v3, and results
-from that build report `engineVariant` `orukeet`. It has no native streaming,
-tail-window preview, or recognition-time vocabulary boosting. Use Nemotron
-Beta when streaming preview matters, Whisper for broad-language
-files/media/retranscription, and Cohere only for local batch plain text with an
-explicit language.
+Parakeet is the default local engine for compatibility with existing scripts: use v3 for English plus supported European languages, v2 for English timestamped transcripts, or Unified for readable English with word timestamps. Orukeet is an optional Parakeet preview, not a separate engine. Download it with `models download parakeet-orukeet`, then use `models select parakeet-orukeet` or `transcribe --parakeet-model orukeet`. The default stays v3, and results from that build report `engineVariant` `orukeet`. It has no native streaming, tail-window preview, or recognition-time vocabulary boosting. Use Nemotron Beta when streaming preview matters, Whisper for broad-language files/media/retranscription, and Cohere only for local batch plain text with an explicit language.
 
 Nemotron, Cohere, and Whisper require local model downloads before first use:
 
@@ -323,13 +176,7 @@ sotto-cli transcribe /path/to/japanese.m4a --engine cohere --language ja --forma
 sotto-cli transcribe /path/to/korean.mp3 --engine whisper --language ko --format json
 ```
 
-To test the same defaults a user selected in the GUI, make every app-default
-read explicit. Bare `transcribe` already follows the saved file/URL
-speaker-detection preference, while `retranscribe --kind meeting` follows the
-saved meeting speaker-detection preference when left at app-default. The full
-flag group below also opts into saved speech-engine, processing,
-audio-retention, and YouTube-quality defaults. This does not exercise GUI-only
-UI, playback, hotkey, export, or optional AI formatter output.
+To test the same defaults a user selected in the GUI, make every app-default read explicit. Bare `transcribe` already follows the saved file/URL speaker-detection preference, while `retranscribe --kind meeting` follows the saved meeting speaker-detection preference when left at app-default. The full flag group below also opts into saved speech-engine, processing, audio-retention, and YouTube-quality defaults. This does not exercise GUI-only UI, playback, hotkey, export, or optional AI formatter output.
 
 ```bash
 sotto-cli transcribe /path/to/audio.mp3 \
@@ -342,22 +189,16 @@ sotto-cli transcribe /path/to/audio.mp3 \
   --format json
 ```
 
-For a specific file or recording where the speaker count is known, constrain
-speaker detection per run instead of changing the saved default:
+For a specific file or recording where the speaker count is known, constrain speaker detection per run instead of changing the saved default:
 
 ```bash
 sotto-cli transcribe /path/to/interview.mp3 --speaker-count 2 --format json
 sotto-cli transcribe /path/to/panel.mp3 --speaker-min 2 --speaker-max 4 --format json
 ```
 
-Those constraint flags imply speaker detection when `--speaker-detection` is
-left at `app-default`; they are rejected with `--speaker-detection off` or
-`--no-diarize`. Use `--speaker-count` for an exact count, or `--speaker-min`
-and/or `--speaker-max` for bounds.
+Those constraint flags imply speaker detection when `--speaker-detection` is left at `app-default`; they are rejected with `--speaker-detection off` or `--no-diarize`. Use `--speaker-count` for an exact count, or `--speaker-min` and/or `--speaker-max` for bounds.
 
-Agents can also set those shared defaults without opening the GUI. Treat this
-as pre-run setup: a running GUI may cache some settings until relaunch or an
-in-app change.
+Agents can also set those shared defaults without opening the GUI. Treat this as pre-run setup: a running GUI may cache some settings until relaunch or an in-app change.
 
 ```bash
 sotto-cli config set speech-engine whisper
@@ -375,10 +216,7 @@ sotto-cli config set save-transcription-audio off
 sotto-cli config set youtube-audio-quality m4a
 ```
 
-`--engine whisper` uses Whisper with auto-detected language unless `--language`
-is passed. `--engine cohere` uses the saved Cohere language unless `--language`
-is passed, because Cohere has no auto-detect. Saved engine-specific languages
-are used when `--engine app-default` resolves to that engine.
+`--engine whisper` uses Whisper with auto-detected language unless `--language` is passed. `--engine cohere` uses the saved Cohere language unless `--language` is passed, because Cohere has no auto-detect. Saved engine-specific languages are used when `--engine app-default` resolves to that engine.
 
 ### Transcribe a media URL
 
@@ -402,9 +240,7 @@ sotto-cli history rename <id> --title "Q3 vendor notes" --json
 sotto-cli history favorite <id> --json
 ```
 
-`history rename` matches the GUI: meeting rows change the meeting title;
-local file rows set a display `titleOverride` without renaming the source
-file. URL/podcast rows are rejected.
+`history rename` matches the GUI: meeting rows change the meeting title; local file rows set a display `titleOverride` without renaming the source file. URL/podcast rows are rejected.
 
 ### Search the transcript knowledge layer
 
@@ -414,37 +250,26 @@ sotto-cli search 'decision AND parser' --source meeting --speaker Dana --limit 2
 sotto-cli search '重要な会議' --since 2026-01-01 --json
 ```
 
-`search` returns citation-ready segment hits with recording metadata, `seq`,
-optional `startMs`/speaker, a character-safe snippet, and FTS rank. FTS5 phrase,
-prefix, and `AND`/`OR` syntax passes through unchanged. Han/Kana/Thai queries
-automatically use an exact substring fallback and return `rank: null`.
-Bare `yyyy-MM-dd` values use the user's local day (`--since` at its start,
-`--until` through its end); timestamps with `Z` or an explicit offset retain
-that zone.
+`search` returns citation-ready segment hits with recording metadata, `seq`, optional `startMs`/speaker, a character-safe snippet, and FTS rank. FTS5 phrase, prefix, and `AND`/`OR` syntax passes through unchanged. Han/Kana/Thai queries automatically use an exact substring fallback and return `rank: null`. Bare `yyyy-MM-dd` values use the user's local day (`--since` at its start, `--until` through its end); timestamps with `Z` or an explicit offset retain that zone.
 
-If an upgraded library lacks the segment index, explicitly authorize one
-deterministic local rebuild (a database write, not a provider call):
+If an upgraded library lacks the segment index, explicitly authorize one deterministic local rebuild (a database write, not a provider call):
 
 ```bash
 sotto-cli search-reindex --json
 ```
 
-Drill into either a meeting or file/URL transcription without loading the
-whole transcript:
+Drill into either a meeting or file/URL transcription without loading the whole transcript:
 
 ```bash
 sotto-cli transcript <id> --around 00:12:30 --window 30s --json
 sotto-cli transcript <id> --around-seq 18 --context 2 --json
 ```
 
-Legacy/no-timing rows remain searchable. Their segments have `startMs: null`,
-so sequence-based context is the precise citation path; timestamp reads degrade
-to the first sequence context instead of failing.
+Legacy/no-timing rows remain searchable. Their segments have `startMs: null`, so sequence-based context is the precise citation path; timestamp reads degrade to the first sequence context instead of failing.
 
 ### Scan and backfill knowledge cards
 
-Cards are compact, regenerable index entries for deciding which transcript to
-open and where to verify candidate decisions/actions:
+Cards are compact, regenerable index entries for deciding which transcript to open and where to verify candidate decisions/actions:
 
 ```bash
 sotto-cli cards list --since 2026-01-01 --source meeting --json
@@ -453,40 +278,15 @@ sotto-cli cards generate --stale --json
 sotto-cli cards generate <id-or-prefix> --json
 ```
 
-`cards list` joins title, recording date, nullable duration, source, and
-nullable calendar attendees from the canonical transcription row; those fields
-are not duplicated in card storage. Meeting cards can include cited candidate
-decisions/actions. File and URL cards always return empty decision/action
-arrays. Stale cards are suppressed rather than returned with obsolete citation
-ranges. Treat extracted decisions/actions as routing hints and verify them with
-`transcript --around-seq` before asserting them as facts.
+`cards list` joins title, recording date, nullable duration, source, and nullable calendar attendees from the canonical transcription row; those fields are not duplicated in card storage. Meeting cards can include cited candidate decisions/actions. File and URL cards always return empty decision/action arrays. Stale cards are suppressed rather than returned with obsolete citation ranges. Treat extracted decisions/actions as routing hints and verify them with `transcript --around-seq` before asserting them as facts.
 
-Use `cards list` to route across recordings, `search` for concrete phrases, and
-`transcript` for evidence. Include the recording ID/title and segment sequence
-(plus timestamp when available) in citations. Dictations use the separate
-`history search` path; segment/card retrieval is not a cross-mode Ask endpoint.
+Use `cards list` to route across recordings, `search` for concrete phrases, and `transcript` for evidence. Include the recording ID/title and segment sequence (plus timestamp when available) in citations. Dictations use the separate `history search` path; segment/card retrieval is not a cross-mode Ask endpoint.
 
-Card generation uses the provider already opted into in Sotto Settings.
-Progress and per-recording token counts go to stderr. JSON stdout reports
-aggregate prompt/completion/total tokens; `estimatedCostUSD` is explicitly
-`null` because model pricing is not available as a reliable local contract.
-`--stale` is idempotent across the transcript hash, prompt version, card schema
-version, and segmenter version. A failed regeneration keeps the prior card,
-appears in the aggregate report, and makes the command exit `1`.
-The `selected` count for `--stale` is the SQL-prefiltered stale/missing subset;
-the backfill also rebuilds the card FTS index for integrity recovery.
+Card generation uses the provider already opted into in Sotto Settings. Progress and per-recording token counts go to stderr. JSON stdout reports aggregate prompt/completion/total tokens; `estimatedCostUSD` is explicitly `null` because model pricing is not available as a reliable local contract. `--stale` is idempotent across the transcript hash, prompt version, card schema version, and segmenter version. A failed regeneration keeps the prior card, appears in the aggregate report, and makes the command exit `1`. The `selected` count for `--stale` is the SQL-prefiltered stale/missing subset; the backfill also rebuilds the card FTS index for integrity recovery.
 
 ### Investigate selected recordings in Ask
 
-The additive `ask` command family manages saved, source-scoped conversations.
-It is default-off. The examples below require a Debug CLI and
-`--enable-ask-workspace` on each command; Release builds reject this flag and
-perform no Ask database/model work. Existing single-transcript chat is separate.
-Use `ask sources` to find completed recordings by picker metadata, then pass
-their full UUIDs to `ask new`. A run reads only that selected set. Conversation
-and source revisions are returned in JSON; carry the latest conversation
-revision into each mutation or send so stale writes fail instead of overwriting
-another app or CLI change.
+The additive `ask` command family manages saved, source-scoped conversations. It is default-off. The examples below require a Debug CLI and `--enable-ask-workspace` on each command; Release builds reject this flag and perform no Ask database/model work. Existing single-transcript chat is separate. Use `ask sources` to find completed recordings by picker metadata, then pass their full UUIDs to `ask new`. A run reads only that selected set. Conversation and source revisions are returned in JSON; carry the latest conversation revision into each mutation or send so stale writes fail instead of overwriting another app or CLI change.
 
 ```bash
 sotto-cli ask sources --enable-ask-workspace --search pricing --type meeting --limit 20
@@ -502,19 +302,7 @@ sotto-cli ask evidence --enable-ask-workspace <recording-uuid> \
   --source-revision <revision-from-citation> --segment 4
 ```
 
-`ask list`, `new`, `show`, `rename`, `delete`, `sources`, `select`, `draft`,
-`send`, and `evidence` emit JSON by default. Use `send --stream` for NDJSON
-activity, phase, step, and text records followed by a final conversation
-record; ignore unknown event types. Provider configuration is inline for each
-send; Ask accepts direct model providers and rejects Local CLI. `--allow-remote`
-is required for providers that may receive selected transcript content,
-including generic OpenAI-compatible endpoints even when their URL is loopback.
-In-process/Apple Intelligence and Ollama or LM Studio loopback routes are the
-consent-free local paths. Ask never silently switches providers. See the
-[Ask contract](../spec/contracts/ask-workspace.md) for source revisions,
-citations, consent, streaming event fields, and lifecycle behavior. CLI 4.8.0
-adds this surface in development source; it does not announce a stable app or
-standalone CLI release.
+`ask list`, `new`, `show`, `rename`, `delete`, `sources`, `select`, `draft`, `send`, and `evidence` emit JSON by default. Use `send --stream` for NDJSON activity, phase, step, and text records followed by a final conversation record; ignore unknown event types. Provider configuration is inline for each send; Ask accepts direct model providers and rejects Local CLI. `--allow-remote` is required for providers that may receive selected transcript content, including generic OpenAI-compatible endpoints even when their URL is loopback. In-process/Apple Intelligence and Ollama or LM Studio loopback routes are the consent-free local paths. Ask never silently switches providers. See the [Ask contract](../spec/contracts/ask-workspace.md) for source revisions, citations, consent, streaming event fields, and lifecycle behavior. CLI 4.8.0 adds this surface in development source; it does not announce a stable app or standalone CLI release.
 
 ### Search past dictations
 
@@ -539,34 +327,11 @@ sotto-cli prompts run "Action items" \
   --json
 ```
 
-Prompt objects returned by `prompts list/show --json` include additive optional
-`inferenceSettings` (`temperature`, `topP`, `topK`, `maxTokens`, and
-`thinkingMode`, plus optional `reasoningEffort`: `low`, `medium`, `high`, or
-`xhigh`). Reasoning effort applies only when thinking is enabled. A blank value
-means the prompt inherits Sotto's current
-prompt-result defaults. `prompts run --json` includes additive optional
-`effectiveSettings` in its LLM result envelope. When present, it is the
-provider/model-filtered receipt of settings actually sent, not a copy of the
-unfiltered prompt request. Automations should treat either field as optional
-and must not infer provider support from `inferenceSettings` alone.
+Prompt objects returned by `prompts list/show --json` include additive optional `inferenceSettings` (`temperature`, `topP`, `topK`, `maxTokens`, and `thinkingMode`, plus optional `reasoningEffort`: `low`, `medium`, `high`, or `xhigh`). Reasoning effort applies only when thinking is enabled. A blank value means the prompt inherits Sotto's current prompt-result defaults. `prompts run --json` includes additive optional `effectiveSettings` in its LLM result envelope. When present, it is the provider/model-filtered receipt of settings actually sent, not a copy of the unfiltered prompt request. Automations should treat either field as optional and must not infer provider support from `inferenceSettings` alone.
 
-The prompt editor derives available controls from the effective provider/model,
-including a prompt's model override. Inherited values stay unset until explicitly
-customized; custom endpoint capabilities are not assumed to match native vendor
-APIs. For Gemini 3, inherited prompt sampling omits temperature instead of sending
-the app's legacy default. Explicit overrides and historical execution receipts
-retain their values. The same resolver serves `prompts run` and `llm summarize`;
-this changes no command flags or JSON field names.
+The prompt editor derives available controls from the effective provider/model, including a prompt's model override. Inherited values stay unset until explicitly customized; custom endpoint capabilities are not assumed to match native vendor APIs. For Gemini 3, inherited prompt sampling omits temperature instead of sending the app's legacy default. Explicit overrides and historical execution receipts retain their values. The same resolver serves `prompts run` and `llm summarize`; this changes no command flags or JSON field names.
 
-`prompts set` configures these settings through `--temperature`, `--top-p`,
-`--top-k`, `--max-tokens`, `--thinking-mode`, and `--reasoning-effort`. Use
-`--model` for a model override, `--active-model` to clear that override, or
-`--provider-default-settings` to clear all inference overrides. Changed
-content, model, or inference settings create an immutable version; omitted
-settings are preserved. `prompts add` creates the prompt, then `prompts set`
-can configure its generation settings. Transforms use their active version
-settings as well. The CLI does not emit per-result requested-settings or
-unsupported-field metadata.
+`prompts set` configures these settings through `--temperature`, `--top-p`, `--top-k`, `--max-tokens`, `--thinking-mode`, and `--reasoning-effort`. Use `--model` for a model override, `--active-model` to clear that override, or `--provider-default-settings` to clear all inference overrides. Changed content, model, or inference settings create an immutable version; omitted settings are preserved. `prompts add` creates the prompt, then `prompts set` can configure its generation settings. Transforms use their active version settings as well. The CLI does not emit per-result requested-settings or unsupported-field metadata.
 
 ```bash
 sotto-cli prompts set "Summary" --temperature 0.3 --max-tokens 2048 --json
@@ -574,32 +339,17 @@ sotto-cli prompts set "Summary" --thinking-mode enabled --reasoning-effort high 
 sotto-cli prompts set "Summary" --active-model --provider-default-settings --json
 ```
 
-Prompt history is immutable. Restoring an old version creates and activates a
-new version; it never rewrites history. `prompts delete` is recoverable with
-`prompts restore-deleted`, including for built-ins. Built-in status is
-provenance rather than a mutation restriction. A restored version's `createdAt`
-and the prompt's `updatedAt` record the restoration time.
+Prompt history is immutable. Restoring an old version creates and activates a new version; it never rewrites history. `prompts delete` is recoverable with `prompts restore-deleted`, including for built-ins. Built-in status is provenance rather than a mutation restriction. A restored version's `createdAt` and the prompt's `updatedAt` record the restoration time.
 
-`prompts run` uses the app's label availability rules for every transcription
-source. With no policies a prompt is available everywhere. Matching explicit
-label rules take precedence (any available match wins); otherwise the all-label
-fallback applies, or availability is denied. Legacy meeting-type policies do
-not override these rules. Manual runs do not require auto-run to be enabled.
+`prompts run` uses the app's label availability rules for every transcription source. With no policies a prompt is available everywhere. Matching explicit label rules take precedence (any available match wins); otherwise the all-label fallback applies, or availability is denied. Legacy meeting-type policies do not override these rules. Manual runs do not require auto-run to be enabled.
 
-Model discovery is advisory: providers validate requested model names and
-aliases when generation runs. Local CLI cannot apply a different prompt model
-override to its configured command and rejects it before executing the command.
+Model discovery is advisory: providers validate requested model names and aliases when generation runs. Local CLI cannot apply a different prompt model override to its configured command and rejects it before executing the command.
 
-`<id-or-prefix>` accepts a full UUID, a UUID prefix (>= 4 chars), or the
-case-insensitive name. Ambiguous prefixes return a `.ambiguous` error so the
-agent can re-prompt the user.
+`<id-or-prefix>` accepts a full UUID, a UUID prefix (>= 4 chars), or the case-insensitive name. Ambiguous prefixes return a `.ambiguous` error so the agent can re-prompt the user.
 
 ### Organize prompts with collections
 
-Collections group saved transcript prompts and Transforms. Each prompt can
-belong to one collection. They do not change prompt execution, availability,
-or version history. Recording labels are separate: they classify recordings
-and can control which transcript prompts are available.
+Collections group saved transcript prompts and Transforms. Each prompt can belong to one collection. They do not change prompt execution, availability, or version history. Recording labels are separate: they classify recordings and can control which transcript prompts are available.
 
 ```bash
 sotto-cli prompts collections list --json
@@ -611,27 +361,13 @@ sotto-cli prompts set "Summary" --no-collection --json
 sotto-cli prompts collections delete <collection-uuid> --json
 ```
 
-Use the full collection UUID returned by `list` or `add`. Reordering requires
-every existing collection exactly once, in the desired order. Deleting a
-collection removes its assignments while retaining all prompts and versions.
-`prompts add --collection <collection-uuid>` assigns a new prompt immediately;
-omitting collection flags when editing preserves its current assignment.
-These commands accept `--database <path>` for an isolated automation database.
-Set source-specific auto-run (`--source`) in a separate command from collection
-assignment; the CLI rejects combining those mutations.
+Use the full collection UUID returned by `list` or `add`. Reordering requires every existing collection exactly once, in the desired order. Deleting a collection removes its assignments while retaining all prompts and versions. `prompts add --collection <collection-uuid>` assigns a new prompt immediately; omitting collection flags when editing preserves its current assignment. These commands accept `--database <path>` for an isolated automation database. Set source-specific auto-run (`--source`) in a separate command from collection assignment; the CLI rejects combining those mutations.
 
-In the GUI, transcript prompts are managed from the Library header **Prompts**
-button and from completed transcripts; Live Ask is managed from Meetings.
-Transforms remains its own selected-text rewrite destination. This navigation does not change
-CLI categories or storage: Live Ask uses the separate quick-prompt commands
-below, and existing prompt/version commands continue to support Transforms.
+In the GUI, transcript prompts are managed from the Library header **Prompts** button and from completed transcripts; Live Ask is managed from Meetings. Transforms remains its own selected-text rewrite destination. This navigation does not change CLI categories or storage: Live Ask uses the separate quick-prompt commands below, and existing prompt/version commands continue to support Transforms.
 
 ### Manage live Ask quick prompts
 
-Ask quick prompts are the lightweight chat shortcuts shown in the live meeting
-Ask tab. Pinned prompts surface as compact after-response pills; every visible
-prompt appears in the empty Ask state and sparkle menu. They are not persistent
-transcript result templates.
+Ask quick prompts are the lightweight chat shortcuts shown in the live meeting Ask tab. Pinned prompts surface as compact after-response pills; every visible prompt appears in the empty Ask state and sparkle menu. They are not persistent transcript result templates.
 
 ```bash
 sotto-cli quick-prompts list --json
@@ -643,26 +379,20 @@ sotto-cli quick-prompts export --out ask-prompts.json --include-builtins --json
 sotto-cli quick-prompts import ask-prompts.json --mode merge --dry-run --json
 ```
 
-The bundle envelope is stable within the CLI major version:
-`schema: "sotto.quick_prompts"`, `version: 1`. Each prompt carries
-`isPinned: Bool` for after-response strip placement.
+The bundle envelope is stable within the CLI major version: `schema: "sotto.quick_prompts"`, `version: 1`. Each prompt carries `isPinned: Bool` for after-response strip placement.
 
 ### Inspect meeting recordings
 
-Meeting commands are deterministic local database operations. They do not
-require an LLM provider.
+Meeting commands are deterministic local database operations. They do not require an LLM provider.
 
-Saved results can be edited in place without replacing their IDs or generation
-receipts. Read the existing content first, then supply it as a write
-precondition. A stale precondition fails with `conflict`; reload before retrying.
+Saved results can be edited in place without replacing their IDs or generation receipts. Read the existing content first, then supply it as a write precondition. A stale precondition fails with `conflict`; reload before retrying.
 
 ```bash
 sotto-cli meetings results edit <meeting-id> <result-uuid> \
   --expected-content-file original.md --file edited.md --json
 ```
 
-For the equivalent of the reading editor's batch edit, write a JSON array using
-segment IDs from the latest `meetings transcript --format json` response:
+For the equivalent of the reading editor's batch edit, write a JSON array using segment IDs from the latest `meetings transcript --format json` response:
 
 ```json
 [
@@ -676,9 +406,7 @@ sotto-cli meetings corrections revise-text <meeting-id> \
   --expected-revision 0 --file changes.json --json
 ```
 
-The whole batch is one Undo step. Omissions affect the effective transcript,
-exports and AI context while preserving the original recognition and audio.
-Use `--database <path>` for an owned database; see the isolation rules below.
+The whole batch is one Undo step. Omissions affect the effective transcript, exports and AI context while preserving the original recognition and audio. Use `--database <path>` for an owned database; see the isolation rules below.
 
 ### Inspect and configure AI task routes
 
@@ -690,32 +418,7 @@ sotto-cli llm routes set analysis --provider anthropic \
 sotto-cli llm routes reset analysis --json
 ```
 
-List reports default, cleanup, analysis and transform routes with effective
-provider/model and inheritance. It omits credentials and exposes only endpoint
-origins without reading Keychain. Mutation descriptions also avoid credential
-reads. Set changes one cleanup/analysis override; reset restores inheritance
-without deleting keys. Configure Default AI in GUI Settings first; a saved
-task override alone does not enable AI in the app. `configured` describes the
-stored route, not app or provider readiness. Default configuration remains
-managed in GUI Settings.
-When `--model` is omitted, a saved route uses the provider's current GUI default.
-Explicit model names and custom-provider requirements still apply. One-off inline
-LLM commands retain their historical model defaults for script compatibility.
-No LLM request is made by these commands. Explicit key flags take precedence
-over saved provider keys, then provider environment variables; keys are shared
-per provider, so explicitly replacing a key also affects other routes using it.
-Local CLI routes reuse the existing shared command template and reject a
-different `--command`. Preferences and Keychain are shared with the GUI and are
-not isolated by `--database` or a state-directory override. Relaunch or refresh
-a running GUI if it still displays cached settings. Close AI Settings before
-changing routes from the CLI, then reopen it: saving an already-open Settings
-draft writes its cached configuration, including routes and provider keys.
-The GUI model picker rejects a stale selection if a concurrent CLI change has
-replaced or reset the displayed route. Route metadata updates are coordinated
-across processes; credentials remain separate, shared per-provider Keychain values.
-Competing changes fail busy before mutation, including while another operation
-awaits Keychain authorization. An unconfirmed-save error means publication could
-not be confirmed after mutation; inspect the current routes before retrying.
+List reports default, cleanup, analysis and transform routes with effective provider/model and inheritance. It omits credentials and exposes only endpoint origins without reading Keychain. Mutation descriptions also avoid credential reads. Set changes one cleanup/analysis override; reset restores inheritance without deleting keys. Configure Default AI in GUI Settings first; a saved task override alone does not enable AI in the app. `configured` describes the stored route, not app or provider readiness. Default configuration remains managed in GUI Settings. When `--model` is omitted, a saved route uses the provider's current GUI default. Explicit model names and custom-provider requirements still apply. One-off inline LLM commands retain their historical model defaults for script compatibility. No LLM request is made by these commands. Explicit key flags take precedence over saved provider keys, then provider environment variables; keys are shared per provider, so explicitly replacing a key also affects other routes using it. Local CLI routes reuse the existing shared command template and reject a different `--command`. Preferences and Keychain are shared with the GUI and are not isolated by `--database` or a state-directory override. Relaunch or refresh a running GUI if it still displays cached settings. Close AI Settings before changing routes from the CLI, then reopen it: saving an already-open Settings draft writes its cached configuration, including routes and provider keys. The GUI model picker rejects a stale selection if a concurrent CLI change has replaced or reset the displayed route. Route metadata updates are coordinated across processes; credentials remain separate, shared per-provider Keychain values. Competing changes fail busy before mutation, including while another operation awaits Keychain authorization. An unconfirmed-save error means publication could not be confirmed after mutation; inspect the current routes before retrying.
 
 ### Other meeting commands
 
@@ -751,24 +454,9 @@ sotto-cli meetings corrections merge-speakers <id> \
 sotto-cli meetings corrections undo <id> --expected-revision 5 --json
 ```
 
-The two meeting transcript JSON views expose the effective corrected text and
-segments. `transcriptTextAlignment` is `automatic`, `segment`, or `untimed`;
-rows without automatic word timestamps are `untimed`. `textCorrectionsApplied`
-tells an agent whether timed text/boundary corrections
-are active. A segment may include `isTextEdited: true`. Keep treating the
-separate `wordTimestamps` array as automatic recognition evidence: under
-`segment` alignment it is not a word-by-word timing map for corrected text.
-One-to-one text edits retain the durable segment UUID. Structural edits include
-`anchorTranscriptSegmentIDs` so an agent can trace the effective line to its
-automatic sources. Correction writes require the latest
-`speakerCorrectionRevision`; stale writes fail instead of overwriting another
-app or agent's work.
+The two meeting transcript JSON views expose the effective corrected text and segments. `transcriptTextAlignment` is `automatic`, `segment`, or `untimed`; rows without automatic word timestamps are `untimed`. `textCorrectionsApplied` tells an agent whether timed text/boundary corrections are active. A segment may include `isTextEdited: true`. Keep treating the separate `wordTimestamps` array as automatic recognition evidence: under `segment` alignment it is not a word-by-word timing map for corrected text. One-to-one text edits retain the durable segment UUID. Structural edits include `anchorTranscriptSegmentIDs` so an agent can trace the effective line to its automatic sources. Correction writes require the latest `speakerCorrectionRevision`; stale writes fail instead of overwriting another app or agent's work.
 
-Import one historical audio or video file as a normal managed meeting. The
-source remains unchanged; progress goes to stderr and the final record goes to
-stdout. A `partial` result is usable and exits zero. A `needsRetry` result has
-already saved its meeting and audio, so open that meeting and retry
-transcription rather than importing again:
+Import one historical audio or video file as a normal managed meeting. The source remains unchanged; progress goes to stderr and the final record goes to stdout. A `partial` result is usable and exits zero. A `needsRetry` result has already saved its meeting and audio, so open that meeting and retry transcription rather than importing again:
 
 ```bash
 sotto-cli meetings import ~/Downloads/partnership.m4a \
@@ -777,11 +465,7 @@ sotto-cli meetings import ~/Downloads/partnership.m4a \
   --json
 ```
 
-Split a saved recording that spans multiple meetings. Every resulting part,
-including the first, is a brand-new saved meeting that receives its own first
-transcription and normal enabled completion automation, including summaries
-and best-effort knowledge-card generation; the
-original recording is never modified, retranscribed, or deleted:
+Split a saved recording that spans multiple meetings. Every resulting part, including the first, is a brand-new saved meeting that receives its own first transcription and normal enabled completion automation, including summaries and best-effort knowledge-card generation; the original recording is never modified, retranscribed, or deleted:
 
 ```bash
 sotto-cli meetings split preview <meeting> --cut 1800000 --json
@@ -796,30 +480,7 @@ sotto-cli meetings split resume <operation-id> --json
 sotto-cli meetings split discard <operation-id> --json
 ```
 
-`preview` performs no writes. `create` publishes the audio parts and
-processes them sequentially in one call; it is safe to repeat with identical
-arguments after an interruption at any point — the same parts and progress
-are reused, never duplicated — and accepts `--dry-run` to print the preview
-instead. Every `--title` must contain non-whitespace text. Both `create` and
-`status --source` accept an exact source UUID even
-after that recording has been deleted, for retrying/discovering a committed
-split. `status --source` finds every split operation recorded for a meeting,
-which matters if a process died before returning an operation id. `resume`
-retries only unfinished/failed parts without recreating audio and only
-accepts a committed operation; if it never finished creating, rerun `create`
-with the original arguments instead. `discard` abandons a not-yet-published
-operation and is refused once audio has committed; a discarded operation's
-`--key` is a permanent tombstone, so retrying needs a fresh `--key`. A
-completed operation with any failed part still prints its full result, then
-exits non-zero. Ctrl-C during `create`/`resume` finishes settling in-flight
-work (completed stages are kept) before exiting `130`. Preview's
-`hasRawMicrophone`/`hasRawSystem`/`hasCleanedMicrophone` describe whether
-that track will actually be exported — both the file and usable alignment
-metadata are required — not merely whether the file exists; missing or
-corrupt metadata never blocks splitting, every part still gets full
-canonical playback audio. This CLI slice follows the shared saved
-speech-engine and meeting speaker-detection preferences rather than exposing
-per-invocation engine/model override flags.
+`preview` performs no writes. `create` publishes the audio parts and processes them sequentially in one call; it is safe to repeat with identical arguments after an interruption at any point — the same parts and progress are reused, never duplicated — and accepts `--dry-run` to print the preview instead. Every `--title` must contain non-whitespace text. Both `create` and `status --source` accept an exact source UUID even after that recording has been deleted, for retrying/discovering a committed split. `status --source` finds every split operation recorded for a meeting, which matters if a process died before returning an operation id. `resume` retries only unfinished/failed parts without recreating audio and only accepts a committed operation; if it never finished creating, rerun `create` with the original arguments instead. `discard` abandons a not-yet-published operation and is refused once audio has committed; a discarded operation's `--key` is a permanent tombstone, so retrying needs a fresh `--key`. A completed operation with any failed part still prints its full result, then exits non-zero. Ctrl-C during `create`/`resume` finishes settling in-flight work (completed stages are kept) before exiting `130`. Preview's `hasRawMicrophone`/`hasRawSystem`/`hasCleanedMicrophone` describe whether that track will actually be exported — both the file and usable alignment metadata are required — not merely whether the file exists; missing or corrupt metadata never blocks splitting, every part still gets full canonical playback audio. This CLI slice follows the shared saved speech-engine and meeting speaker-detection preferences rather than exposing per-invocation engine/model override flags.
 
 Manage local meeting classification and assign it atomically:
 
@@ -833,52 +494,21 @@ sotto-cli meetings classify <meeting> --type "Customer" --add-label "QBR" --json
 sotto-cli meetings classify <meeting> --type none --remove-label "QBR" --json
 ```
 
-The compatibility surface retains zero or one primary type and any number of
-labels per meeting. Labels drive prompt availability and support search;
-legacy types no longer control prompt selection. Names remain local user data.
-Changing a completed meeting's classification does not rerun prompts retroactively.
-Use `meetings labels set` to rename a label or choose one of the explicit
-`coral`, `green`, `amber`, `red`, `purple`, or `blue` colors. Pass
-`--automatic-color` to clear an explicit color and return to the stable
-identity-based color.
+The compatibility surface retains zero or one primary type and any number of labels per meeting. Labels drive prompt availability and support search; legacy types no longer control prompt selection. Names remain local user data. Changing a completed meeting's classification does not rerun prompts retroactively. Use `meetings labels set` to rename a label or choose one of the explicit `coral`, `green`, `amber`, `red`, `purple`, or `blue` colors. Pass `--automatic-color` to clear an explicit color and return to the stable identity-based color.
 
-Use `meetings notes` for user-authored notes. Use `meetings results add` for
-externally generated summaries, decisions, action items, or other agent output;
-those rows are stored as `PromptResult` records rather than overwriting
-`userNotes`. Meeting result JSON and `prompt-results.json` include additive
-optional `inferenceSettingsSnapshot` when Sotto recorded an effective
-provider/model-filtered inference receipt for that result.
-Library-generated results also carry optional `promptId`, `promptVersionId`,
-`providerSnapshot`, and `modelSnapshot` receipts. Older or externally added
-results can omit them; never substitute current configuration for a missing
-historical receipt.
+Use `meetings notes` for user-authored notes. Use `meetings results add` for externally generated summaries, decisions, action items, or other agent output; those rows are stored as `PromptResult` records rather than overwriting `userNotes`. Meeting result JSON and `prompt-results.json` include additive optional `inferenceSettingsSnapshot` when Sotto recorded an effective provider/model-filtered inference receipt for that result. Library-generated results also carry optional `promptId`, `promptVersionId`, `providerSnapshot`, and `modelSnapshot` receipts. Older or externally added results can omit them; never substitute current configuration for a missing historical receipt.
 
-`meetings artifact` is the stable folder contract for local meeting sessions.
-It refreshes the session folder from SQLite and returns paths to:
+`meetings artifact` is the stable folder contract for local meeting sessions. It refreshes the session folder from SQLite and returns paths to:
 
 - `manifest.json` — schema, meeting metadata, and file index
-- `meeting.md` — deterministic Markdown view with local frontmatter, notes,
-  transcript, prompt-result index, and artifact paths
+- `meeting.md` — deterministic Markdown view with local frontmatter, notes, transcript, prompt-result index, and artifact paths
 - `transcript.json` — transcript text, timestamps, speakers, diarization
 - `notes.md` — user-authored notes when present
 - `prompt-results.json` and `prompt-results/*.md` — saved generated outputs
 
-The snapshot, `manifest.meeting`, and `transcript.json` can carry
-`meetingCaptureReport`. `quality: "partial"` describes retained audio, not a
-failed transcription: partial audio can have `status: "completed"`. An absent
-legacy report means unknown, not healthy. The candidate's `silent` system
-status survives recovery when coverage stays sufficient and means exact-zero
-written system signal under the qualified conditions in the
-[artifact contract](../spec/contracts/meeting-artifacts-v1.md); it is not a
-quiet-audio threshold or evidence that no remote speaker spoke. A `silent`
-status alone does not make `quality` partial — a fully captured self-note or
-other one-sided recording reports `quality: "healthy"`; coverage shortfall,
-interruption, capture failure, or unavailable media still do.
+The snapshot, `manifest.meeting`, and `transcript.json` can carry `meetingCaptureReport`. `quality: "partial"` describes retained audio, not a failed transcription: partial audio can have `status: "completed"`. An absent legacy report means unknown, not healthy. The candidate's `silent` system status survives recovery when coverage stays sufficient and means exact-zero written system signal under the qualified conditions in the [artifact contract](../spec/contracts/meeting-artifacts-v1.md); it is not a quiet-audio threshold or evidence that no remote speaker spoke. A `silent` status alone does not make `quality` partial — a fully captured self-note or other one-sided recording reports `quality: "healthy"`; coverage shortfall, interruption, capture failure, or unavailable media still do.
 
-`meetings export <id> --format md --stdout` uses the same Markdown shape as
-`meeting.md` without refreshing unrelated files. For machine-readable paths,
-use `meetings artifact <id> --json` (`markdownPath`) or
-`meetings export <id> --stdout --format json` (`artifactMarkdownPath`).
+`meetings export <id> --format md --stdout` uses the same Markdown shape as `meeting.md` without refreshing unrelated files. For machine-readable paths, use `meetings artifact <id> --json` (`markdownPath`) or `meetings export <id> --stdout --format json` (`artifactMarkdownPath`).
 
 Future meeting sessions are stored under the configured artifact root:
 
@@ -888,10 +518,7 @@ sotto-cli config set meeting-artifacts-folder ~/Documents/Sotto/Meetings
 sotto-cli config set meeting-artifacts-folder default
 ```
 
-For post-meeting local automation, configure a disabled-by-default hook. The
-hook path must be an absolute executable path; Sotto runs it without a
-shell, sends a `meeting.completed` JSON event on stdin, times out, and writes
-`automation-hook-result.json` back into the meeting folder.
+For post-meeting local automation, configure a disabled-by-default hook. The hook path must be an absolute executable path; Sotto runs it without a shell, sends a `meeting.completed` JSON event on stdin, times out, and writes `automation-hook-result.json` back into the meeting folder.
 
 ```bash
 sotto-cli config set meeting-hook-path /absolute/path/to/hook
@@ -914,12 +541,9 @@ Meeting commands that support `--envelope` return an opt-in success envelope:
 }
 ```
 
-Prompt and direct LLM JSON responses use an envelope with `output`, `provider`,
-`model`, optional `usage`, optional `stopReason`, and `latencyMs`.
+Prompt and direct LLM JSON responses use an envelope with `output`, `provider`, `model`, optional `usage`, optional `stopReason`, and `latencyMs`.
 
-When a `--json` command fails *after argument parsing succeeds* (provider
-error, missing input, lookup miss, runtime exception, etc.), stdout is a
-structured failure envelope instead of the success shape:
+When a `--json` command fails *after argument parsing succeeds* (provider error, missing input, lookup miss, runtime exception, etc.), stdout is a structured failure envelope instead of the success shape:
 
 ```json
 {
@@ -935,134 +559,51 @@ structured failure envelope instead of the success shape:
 }
 ```
 
-`errorType` is a stable low-cardinality string; `fix` and `meta` are optional.
-Branch on the exit code, then classify the error with
-`Sources/CLI/CHANGELOG.md`. A potentially transient provider error
-(`rate_limit`, `connection`, `streaming`) does not by itself authorize replaying
-a mutating command. Check whether partial output or saved results already
-exist before retrying; fix `auth`, `model`, input, lookup, and validation
-problems rather than retrying them unchanged.
+`errorType` is a stable low-cardinality string; `fix` and `meta` are optional. Branch on the exit code, then classify the error with `Sources/CLI/CHANGELOG.md`. A potentially transient provider error (`rate_limit`, `connection`, `streaming`) does not by itself authorize replaying a mutating command. Check whether partial output or saved results already exist before retrying; fix `auth`, `model`, input, lookup, and validation problems rather than retrying them unchanged.
 
-Parse-time failures (unknown flags, missing required flags,
-mutually-exclusive combos like `--json` with `--stream`) surface through
-ArgumentParser's plain-text stderr path with exit code `2`. Always branch
-on the exit code first.
+Parse-time failures (unknown flags, missing required flags, mutually-exclusive combos like `--json` with `--stream`) surface through ArgumentParser's plain-text stderr path with exit code `2`. Always branch on the exit code first.
 
 ## Use it as an agent skill
 
-The clean integration shape is a thin skill wrapper around
-`sotto-cli`, not a second transcription implementation. The skill's job
-is to teach an agent when to call the CLI, how to parse the JSON envelopes, and
-which operations are deterministic local database reads/writes.
+The clean integration shape is a thin skill wrapper around `sotto-cli`, not a second transcription implementation. The skill's job is to teach an agent when to call the CLI, how to parse the JSON envelopes, and which operations are deterministic local database reads/writes.
 
-Claude Code-style skills are a good template because they are just a directory
-with a `SKILL.md` file: the frontmatter names when the skill should load, and
-the body gives concise operating instructions. The same pattern ports to Codex,
-OpenClaw, Hermes, or any agent framework that can shell out to local tools.
+Claude Code-style skills are a good template because they are just a directory with a `SKILL.md` file: the frontmatter names when the skill should load, and the body gives concise operating instructions. The same pattern ports to Codex, OpenClaw, Hermes, or any agent framework that can shell out to local tools.
 
 ```text
 sotto-stt/
   SKILL.md
 ```
 
-The reusable skill lives at
-[`integrations/skill/sotto-stt/SKILL.md`](skill/sotto-stt/SKILL.md).
-Use that file directly when packaging Sotto for Codex, Claude Code,
-OpenClaw, Hermes, or another local agent framework.
+The reusable skill lives at [`integrations/skill/sotto-stt/SKILL.md`](skill/sotto-stt/SKILL.md). Use that file directly when packaging Sotto for Codex, Claude Code, OpenClaw, Hermes, or another local agent framework.
 
 ## Conventions
 
-- **Exit codes:** `0` success, `1` runtime failure (work attempted and failed
-  -- LLM error, DB error, transcription failure), `2` validation/misuse
-  (malformed invocation -- unknown flag, missing required arg, unsupported
-  `--format`), `130` SIGINT. After argument parsing succeeds, JSON output
-  never goes to stderr regardless of code; parse-time failures still use
-  ArgumentParser's plain-text stderr path. Full table in
-  `Sources/CLI/CHANGELOG.md` "Exit codes" section.
-- **API keys:** prefer provider env vars or `--api-key-env NAME`. Hosted
-  providers read `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, and
-  `OPENROUTER_API_KEY` directly. Avoid `--api-key sk-...`; command-line
-  arguments can appear in shell history and process listings.
-- **Base URLs:** hosted/non-local providers require `https://` unless the
-  endpoint is loopback. For intentional non-loopback `http://` testing, pass
-  `--allow-insecure-http`; the CLI writes a stderr warning and keeps stdout
-  machine-readable.
-- **JSON flag shape:** read-only query commands take `--json` (a binary flag);
-  format-selecting commands take `--format json` because they emit one of
-  several formats (txt / markdown / srt / vtt / dapt / json). Commands that
-  normally write files, such as `meetings export`, also require `--stdout` when
-  you want JSON on stdout. The split is deliberate -- see
-  `Sources/CLI/CHANGELOG.md` for the compatibility note.
-- **Lookups:** records that take an `<id-or-name>` argument accept full UUID,
-  UUID prefix (>= 4 chars), or case-insensitive name. Ambiguous prefixes
-  produce a `.ambiguous` error; missing records produce `.notFound`.
-- **Privacy:** speech inference and database queries run locally, but an entire
-  CLI invocation is not necessarily network-free. Network paths include model
-  downloads/warm-up/repair, helper repair, media URL and podcast directory/RSS/
-  enclosure downloads, explicitly configured LLM calls (including
-  `cards generate`, prompt/Transform execution, and cloud-backed Local CLI
-  commands). Feedback submission, remote telemetry, hosted sharing, automatic app
-  updates, and Discover feed requests are removed in this personal fork. Discover
-  uses bundled offline cards. No captured audio is sent to an LLM by Sotto.
-  Legacy activation validation can also contact LemonSqueezy during app setup
-  or CLI `transcribe --enforce-entitlements` when stored activation state needs
-  refresh; current free builds remain unlocked regardless of that result.
-  CLI telemetry emits a single privacy-safe
-  `cli_operation` event per successfully parsed CLI invocation, posted to the
-  self-hosted endpoint at `https://macparakeet.com/api/telemetry`. The telemetry event
-  ships only allowlisted invocation metadata (`operation_id`, `workflow_id`,
-  `parent_operation_id`, `command`, `subcommand`, `outcome`,
-  `duration_seconds`, `input_kind`, `output_format`, `json`, `exit_code`,
-  `error_type`) — never the file path, URL, transcript, language value, or any
-  user content (random per-process session UUID, no persistent identifier).
-  Disable it any of four ways:
+- **Exit codes:** `0` success, `1` runtime failure (work attempted and failed -- LLM error, DB error, transcription failure), `2` validation/misuse (malformed invocation -- unknown flag, missing required arg, unsupported `--format`), `130` SIGINT. After argument parsing succeeds, JSON output never goes to stderr regardless of code; parse-time failures still use ArgumentParser's plain-text stderr path. Full table in `Sources/CLI/CHANGELOG.md` "Exit codes" section.
+- **API keys:** prefer provider env vars or `--api-key-env NAME`. Hosted providers read `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, and `OPENROUTER_API_KEY` directly. Avoid `--api-key sk-...`; command-line arguments can appear in shell history and process listings.
+- **Base URLs:** hosted/non-local providers require `https://` unless the endpoint is loopback. For intentional non-loopback `http://` testing, pass `--allow-insecure-http`; the CLI writes a stderr warning and keeps stdout machine-readable.
+- **JSON flag shape:** read-only query commands take `--json` (a binary flag); format-selecting commands take `--format json` because they emit one of several formats (txt / markdown / srt / vtt / dapt / json). Commands that normally write files, such as `meetings export`, also require `--stdout` when you want JSON on stdout. The split is deliberate -- see `Sources/CLI/CHANGELOG.md` for the compatibility note.
+- **Lookups:** records that take an `<id-or-name>` argument accept full UUID, UUID prefix (>= 4 chars), or case-insensitive name. Ambiguous prefixes produce a `.ambiguous` error; missing records produce `.notFound`.
+- **Privacy:** speech inference and database queries run locally, but an entire CLI invocation is not necessarily network-free. Network paths include model downloads/warm-up/repair, helper repair, media URL and podcast directory/RSS/ enclosure downloads, explicitly configured LLM calls (including `cards generate`, prompt/Transform execution, and cloud-backed Local CLI commands). Feedback submission, remote telemetry, hosted sharing, automatic app updates, and Discover feed requests are removed in this personal fork. Discover uses bundled offline cards. No captured audio is sent to an LLM by Sotto. Legacy activation validation can also contact LemonSqueezy during app setup or CLI `transcribe --enforce-entitlements` when stored activation state needs refresh; current free builds remain unlocked regardless of that result. CLI telemetry emits a single privacy-safe `cli_operation` event per successfully parsed CLI invocation, posted to the self-hosted endpoint at `https://macparakeet.com/api/telemetry`. The telemetry event ships only allowlisted invocation metadata (`operation_id`, `workflow_id`, `parent_operation_id`, `command`, `subcommand`, `outcome`, `duration_seconds`, `input_kind`, `output_format`, `json`, `exit_code`, `error_type`) — never the file path, URL, transcript, language value, or any user content (random per-process session UUID, no persistent identifier). Disable it any of four ways:
     - `SOTTO_TELEMETRY=0` (per process)
     - `DO_NOT_TRACK=1` (industry-standard signal, also honored)
-    - `sotto-cli config set telemetry off` (persists in the shared
-      UserDefaults suite the GUI reads)
+    - `sotto-cli config set telemetry off` (persists in the shared UserDefaults suite the GUI reads)
     - "Help improve Sotto" toggle in the GUI Settings → Privacy card
 
-  Auto-disabled in CI environments (`CI`, `GITHUB_ACTIONS`, `GITLAB_CI`,
-  `BUILDKITE`, `CIRCLECI`, `TRAVIS`, `JENKINS_URL`, `TF_BUILD`,
-  `TEAMCITY_VERSION` — any one set to a truthy value). Override CI auto-
-  disable with `SOTTO_TELEMETRY=1`. This explicit force-on also overrides
-  `DO_NOT_TRACK=1` and the saved off preference. See `docs/telemetry.md` for the
-  full event catalog and the structured-error privacy contract. For read-only
-  local audio-log JSON queries from a source checkout, see
-  [the diagnostic query guide](../docs/local-audio-diagnostics-query.md).
-- **Concurrency:** the STT scheduler reserves one slot for dictation and shares
-  a second slot for meeting/batch work **within a process** (ADR-016).
-  Multi-file batches are sequential. Separate CLI processes do not share that
-  in-memory scheduler or a cross-process model lock; callers must bound their
-  own concurrency rather than assuming the app serializes separate binaries.
+  Auto-disabled in CI environments (`CI`, `GITHUB_ACTIONS`, `GITLAB_CI`, `BUILDKITE`, `CIRCLECI`, `TRAVIS`, `JENKINS_URL`, `TF_BUILD`, `TEAMCITY_VERSION` — any one set to a truthy value). Override CI auto- disable with `SOTTO_TELEMETRY=1`. This explicit force-on also overrides `DO_NOT_TRACK=1` and the saved off preference. See `docs/telemetry.md` for the full event catalog and the structured-error privacy contract. For read-only local audio-log JSON queries from a source checkout, see [the diagnostic query guide](../docs/local-audio-diagnostics-query.md).
+- **Concurrency:** the STT scheduler reserves one slot for dictation and shares a second slot for meeting/batch work **within a process** (ADR-016). Multi-file batches are sequential. Separate CLI processes do not share that in-memory scheduler or a cross-process model lock; callers must bound their own concurrency rather than assuming the app serializes separate binaries.
 
 ## Per-ecosystem entry points
 
 - **OpenClaw:** [`openclaw/README.md`](./openclaw/README.md)
 - **Hermes Agent:** [`hermes/README.md`](./hermes/README.md)
-- **Claude Code / Codex CLI / generic skill consumers:** use the
-  Claude Code-style `SKILL.md` sketch above for external agents that call
-  `sotto-cli`. Coding agents working inside this repository should read
-  [`/AGENTS.md`](../AGENTS.md) instead.
+- **Claude Code / Codex CLI / generic skill consumers:** use the Claude Code-style `SKILL.md` sketch above for external agents that call `sotto-cli`. Coding agents working inside this repository should read [`/AGENTS.md`](../AGENTS.md) instead.
 
 ## Reporting issues
 
-Open an issue at <https://github.com/moona3k/macparakeet/issues> with the
-`integration` label. Include the agent platform, the CLI version
-(`sotto-cli --version`), and a minimal repro.
+Open an issue at <https://github.com/moona3k/macparakeet/issues> with the `integration` label. Include the agent platform, the CLI version (`sotto-cli --version`), and a minimal repro.
 
 ### Updating prompt label availability
 
-Use `prompts set PROMPT --label LABEL --available` (or `--unavailable`) to
-change one label rule. Use `--all-labels --available|--unavailable` to change
-only the fallback when no explicit label rule matches, for every source.
-Existing label exceptions are preserved. A first label rule preserves the
-previous available fallback; set `--all-labels --unavailable` to restrict
-unmatched transcriptions. `--json` returns the saved policy.
+Use `prompts set PROMPT --label LABEL --available` (or `--unavailable`) to change one label rule. Use `--all-labels --available|--unavailable` to change only the fallback when no explicit label rule matches, for every source. Existing label exceptions are preserved. A first label rule preserves the previous available fallback; set `--all-labels --unavailable` to restrict unmatched transcriptions. `--json` returns the saved policy.
 
-The former fork flags `--meeting-type` and `--all-meeting-types` now fail with
-migration guidance: meeting types no longer determine prompt execution.
-Configure source auto-run separately, for example
-`prompts set PROMPT --source meeting --auto-run`. Label availability still
-limits which transcriptions qualify. Editing prompt text or inference settings
-in the app preserves existing policies unless the label selection is changed.
+The former fork flags `--meeting-type` and `--all-meeting-types` now fail with migration guidance: meeting types no longer determine prompt execution. Configure source auto-run separately, for example `prompts set PROMPT --source meeting --auto-run`. Label availability still limits which transcriptions qualify. Editing prompt text or inference settings in the app preserves existing policies unless the label selection is changed.

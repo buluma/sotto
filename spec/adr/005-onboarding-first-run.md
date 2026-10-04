@@ -34,9 +34,7 @@ The current onboarding flow is linear and step-based (2026-09-23 amendment):
 
 The onboarding can also be launched manually from Settings.
 
-If onboarding is closed before completion, the app shows an explicit confirmation dialog. If the user exits setup anyway, onboarding is shown again on the next app activation until completion.
-Before the speech-stack download starts, onboarding runs lightweight preflight checks (disk space + network readiness).
-While onboarding is visible, permission state is polled so changes made in System Settings are reflected automatically.
+If onboarding is closed before completion, the app shows an explicit confirmation dialog. If the user exits setup anyway, onboarding is shown again on the next app activation until completion. Before the speech-stack download starts, onboarding runs lightweight preflight checks (disk space + network readiness). While onboarding is visible, permission state is polled so changes made in System Settings are reflected automatically.
 
 ## Consequences
 
@@ -109,19 +107,6 @@ The Microphone step stays in onboarding, but Continue is no longer gated on gran
 
 ## Implementation qualification — 2026-10-02 audit
 
-The September 23 decision remains the intended behavior. The independent audit
-identified an implementation gap in its background-download guarantee:
-Parakeet preparation runs in the shared speech runtime, while the locale-selected
-Whisper download currently runs inside the onboarding view model's task. Closing
-the window cancels that task. A cancellation-aware Whisper downloader can
-therefore stop after Skip / Finish instead of completing in the background.
-Whisper setup also does not currently use the progress-stall watchdog installed
-for Parakeet. These are open conformance gaps, not accepted engine-specific UX
-differences; see GUI-03 and GUI-04 in the
-[audit report](../../docs/audits/2026-10-02-app-audit/gui-onboarding.md).
+The September 23 decision remains the intended behavior. The independent audit identified an implementation gap in its background-download guarantee: Parakeet preparation runs in the shared speech runtime, while the locale-selected Whisper download currently runs inside the onboarding view model's task. Closing the window cancels that task. A cancellation-aware Whisper downloader can therefore stop after Skip / Finish instead of completing in the background. Whisper setup also does not currently use the progress-stall watchdog installed for Parakeet. These are open conformance gaps, not accepted engine-specific UX differences; see GUI-03 and GUI-04 in the [audit report](../../docs/audits/2026-10-02-app-audit/gui-onboarding.md).
 
-The same audit corrected failed-setup layout before key confirmation: error
-content now uses intrinsic height in both Try It phases. Native hosting renders
-with synthetic dependencies establish layout evidence only. Clean-install TCC,
-physical Fn gestures, real model download/cancellation, first audio capture,
-and cross-app paste still require native end-to-end qualification.
+The same audit corrected failed-setup layout before key confirmation: error content now uses intrinsic height in both Try It phases. Native hosting renders with synthetic dependencies establish layout evidence only. Clean-install TCC, physical Fn gestures, real model download/cancellation, first audio capture, and cross-app paste still require native end-to-end qualification.

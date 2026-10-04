@@ -5,11 +5,9 @@
 
 ## Context
 
-Sotto can copy and export transcript text, but recipients must assemble their own presentation and the publisher cannot later stop access.
-A hosted link would be useful for meetings, imported media, and other Library items, but it must not turn the local corpus into a cloud account or weaken the promise that audio stays on the Mac.
+Sotto can copy and export transcript text, but recipients must assemble their own presentation and the publisher cannot later stop access. A hosted link would be useful for meetings, imported media, and other Library items, but it must not turn the local corpus into a cloud account or weaken the promise that audio stays on the Mac.
 
-The feature needs three independent capabilities: recipient access to one share, anonymous owner authority to manage shares, and content encryption that keeps routine hosting infrastructure from reading the text.
-A machine fingerprint or IP address is not a safe substitute for any of them because it is not a secret, is unreliable, and is difficult to rotate or recover.
+The feature needs three independent capabilities: recipient access to one share, anonymous owner authority to manage shares, and content encryption that keeps routine hosting infrastructure from reading the text. A machine fingerprint or IP address is not a safe substitute for any of them because it is not a secret, is unreliable, and is difficult to rotate or recover.
 
 ## Decision
 
@@ -33,25 +31,17 @@ Sotto will treat sharing as an explicit encrypted export with its own lifecycle.
 - Recipient access is accountless and read-only, with no password, analytics, comments, collaboration, or content-bearing previews in v1; content-free abuse reports never trigger automatic blocking.
 - Sharing uses a separate release flag, storage, credentials, logging policy, and deployment surface from telemetry.
 
-The stable link, bundle, authentication, API, lifecycle, and deletion semantics are defined in [Share Link and Bundle v1](../contracts/share-link-bundle-v1.md) and [Share Service v1](../contracts/share-service-v1.md).
-The UI behavior is summarized in [Shareable Transcript Snapshots](../15-shareable-transcripts.md).
+The stable link, bundle, authentication, API, lifecycle, and deletion semantics are defined in [Share Link and Bundle v1](../contracts/share-link-bundle-v1.md) and [Share Service v1](../contracts/share-service-v1.md). The UI behavior is summarized in [Shareable Transcript Snapshots](../15-shareable-transcripts.md).
 
 ## Consequences
 
-The Library and audio remain local while a publisher can disclose a deliberately smaller artifact and later stop future access.
-An object-store or database disclosure yields ciphertext rather than the selected text, assuming sound cryptography and an uncompromised viewer.
-The service contract stays independent of UI concepts such as Share-sheet toggles.
+The Library and audio remain local while a publisher can disclose a deliberately smaller artifact and later stop future access. An object-store or database disclosure yields ciphertext rather than the selected text, assuming sound cryptography and an uncompromised viewer. The service contract stays independent of UI concepts such as Share-sheet toggles.
 
-Anyone with the complete URL can read, copy, and forward the content.
-Stopping cannot erase recipient copies or plaintext already loaded into a browser.
-Keeping one URL through updates means a compromised URL cannot be repaired in place; the owner must create a new share and permanently stop the old one.
+Anyone with the complete URL can read, copy, and forward the content. Stopping cannot erase recipient copies or plaintext already loaded into a browser. Keeping one URL through updates means a compromised URL cannot be repaired in place; the owner must create a new share and permanently stop the old one.
 
-The viewer origin is part of the trust boundary.
-First-party JavaScript receives the fragment key and plaintext, so Sotto must not claim protection against a malicious viewer deployment or absolute zero knowledge.
-Encrypted content also prevents server-side search, meaningful content previews, and ordinary content moderation.
+The viewer origin is part of the trust boundary. First-party JavaScript receives the fragment key and plaintext, so Sotto must not claim protection against a malicious viewer deployment or absolute zero knowledge. Encrypted content also prevents server-side search, meaningful content previews, and ordinary content moderation.
 
-The feature adds hosted operations, local publication and outbox records, Keychain state, deletion coordination, abuse controls, and current privacy disclosures to an otherwise local corpus.
-Losing the originating Keychain state without a saved recovery code leaves remote management unavailable until mandatory expiry.
+The feature adds hosted operations, local publication and outbox records, Keychain state, deletion coordination, abuse controls, and current privacy disclosures to an otherwise local corpus. Losing the originating Keychain state without a saved recovery code leaves remote management unavailable until mandatory expiry.
 
 ## Alternatives considered
 

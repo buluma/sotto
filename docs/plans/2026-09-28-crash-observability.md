@@ -50,9 +50,4 @@ The ring is persisted as part of fatal reporting, not periodically to disk. SIGK
 
 ## Verification record
 
-See [crash-context-verification.md](../crash-context-verification.md) for measured
-costs and release proof boundaries. Local Greptile is unavailable because the
-installed CLI is signed out; independent code reviews cover the native buffer,
-filesystem ownership, archive, receiver, and privacy contract. The final gate
-and PR retain automated validation evidence. No Jev steps were needed: this
-change uses fixed schemas and mechanical validation, not semantic judgments.
+See [crash-context-verification.md](../crash-context-verification.md) for measured costs and release proof boundaries. Local Greptile is unavailable because the installed CLI is signed out; independent code reviews cover the native buffer, filesystem ownership, archive, receiver, and privacy contract. The final gate and PR retain automated validation evidence. No Jev steps were needed: this change uses fixed schemas and mechanical validation, not semantic judgments.

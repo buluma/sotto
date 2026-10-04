@@ -136,11 +136,7 @@ Logger(subsystem: "com.sotto.viewmodels", category: "SettingsViewModel")
 Logger(subsystem: "com.sotto", category: "CalendarService") // legacy/simple cases
 ```
 
-New log lines should use stable event-style messages with `key=value`
-dimensions, for example `meeting_recording_started session=<uuid>`, rather than
-free-form prose. Local logs are for developer triage and explicit diagnostic
-bundles; product-health analytics come from typed telemetry operation events in
-`docs/telemetry.md`.
+New log lines should use stable event-style messages with `key=value` dimensions, for example `meeting_recording_started session=<uuid>`, rather than free-form prose. Local logs are for developer triage and explicit diagnostic bundles; product-health analytics come from typed telemetry operation events in `docs/telemetry.md`.
 
 **Log levels:**
 - `.debug` -- Verbose diagnostic info, high-volume details, and gated traces
@@ -149,19 +145,9 @@ bundles; product-health analytics come from typed telemetry operation events in
 - `.error` -- Failed operations or recoverable errors that require attention
 - `.fault` -- Unrecoverable corruption or crash-adjacent failures
 
-**Privacy:** Transcript text, prompts, notes, file names, file paths, URLs,
-provider error bodies, microphone names, CoreAudio device IDs, and device UIDs
-must be logged as `.private` or omitted. Prefer structured safe dimensions such
-as extension, file-size bucket, source, stage, outcome, device presence,
-coarse device transport, and classified `error_type`.
+**Privacy:** Transcript text, prompts, notes, file names, file paths, URLs, provider error bodies, microphone names, CoreAudio device IDs, and device UIDs must be logged as `.private` or omitted. Prefer structured safe dimensions such as extension, file-size bucket, source, stage, outcome, device presence, coarse device transport, and classified `error_type`.
 
-Shareable audio diagnostics are stricter than local `os.Logger` entries. Raw
-`localizedDescription` values may be kept in private OSLog fields for local
-debugging, but `~/Library/Logs/Sotto/dictation-audio.log` and any future
-diagnostic bundle must use classified `error_type` plus sanitized, single-line
-`error_detail` values. Device identity in these shareable logs is limited to
-`present`/`none` and coarse transport labels such as `built-in`, `usb`,
-`bluetooth`, `aggregate-*`, `virtual`, or `unknown`.
+Shareable audio diagnostics are stricter than local `os.Logger` entries. Raw `localizedDescription` values may be kept in private OSLog fields for local debugging, but `~/Library/Logs/Sotto/dictation-audio.log` and any future diagnostic bundle must use classified `error_type` plus sanitized, single-line `error_detail` values. Device identity in these shareable logs is limited to `present`/`none` and coarse transport labels such as `built-in`, `usb`, `bluetooth`, `aggregate-*`, `virtual`, or `unknown`.
 
 ## Retry Strategy
 
@@ -175,23 +161,6 @@ diagnostic bundle must use classified `error_type` plus sanitized, single-line
 
 ## Error Reporting
 
-Errors are always logged locally. If telemetry is enabled, non-identifying
-operation failures and crash reports may also be sent to Sotto's
-self-hosted telemetry pipeline.
+Errors are always logged locally. If telemetry is enabled, non-identifying operation failures and crash reports may also be sent to Sotto's self-hosted telemetry pipeline.
 
-The in-app feedback flow has an explicit opt-in control for attaching
-`~/Library/Logs/Sotto/dictation-audio.log` when users report dictation or
-meeting recording problems. The attachment is scoped to a recent window by
-default (`DiagnosticLogScope.recent`: the last 7 days, with 2 MB / 20k-line
-safety ceilings, falling back to the last few hundred lines when nothing is
-that recent) so a public issue carries the window around the bug rather than the
-full multi-week on-disk history. An advanced "Include full history" toggle lifts
-the time window to the entire on-disk log for intermittent issues. Scoping
-selects *whole lines by recency*; it never edits line contents, which are
-already privacy-scrubbed at write time.
-A broader diagnostic bundle is still a follow-up:
-it should contain recent Sotto `os.Logger` entries, the audio diagnostics
-log, app version/build info, and redacted runtime metadata. It must not include
-audio, transcripts, notes, prompts, file names, file paths, URLs, API keys, or
-microphone identity (names, CoreAudio device IDs, device UIDs), and it must not
-upload automatically.
+The in-app feedback flow has an explicit opt-in control for attaching `~/Library/Logs/Sotto/dictation-audio.log` when users report dictation or meeting recording problems. The attachment is scoped to a recent window by default (`DiagnosticLogScope.recent`: the last 7 days, with 2 MB / 20k-line safety ceilings, falling back to the last few hundred lines when nothing is that recent) so a public issue carries the window around the bug rather than the full multi-week on-disk history. An advanced "Include full history" toggle lifts the time window to the entire on-disk log for intermittent issues. Scoping selects *whole lines by recency*; it never edits line contents, which are already privacy-scrubbed at write time. A broader diagnostic bundle is still a follow-up: it should contain recent Sotto `os.Logger` entries, the audio diagnostics log, app version/build info, and redacted runtime metadata. It must not include audio, transcripts, notes, prompts, file names, file paths, URLs, API keys, or microphone identity (names, CoreAudio device IDs, device UIDs), and it must not upload automatically.

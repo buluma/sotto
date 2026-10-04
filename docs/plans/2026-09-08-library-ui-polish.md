@@ -1,7 +1,6 @@
 # Library UI polish — implementation plan
 
-Status: approved for implementation and PR/merge on September 8, 2026.
-Base: origin/main edfaa4889b8beac34b28712829d3850f88bd8fd3.
+Status: approved for implementation and PR/merge on September 8, 2026. Base: origin/main edfaa4889b8beac34b28712829d3850f88bd8fd3.
 
 ## Goal
 Make Library classification and status legible, compact, and consistent while preserving current card structure, persistence, filtering semantics, and actions.

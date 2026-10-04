@@ -41,14 +41,7 @@ Two nullable columns are added to `prompts` via a forward-only migration:
 
 Migration is additive. `.result` prompts ignore both columns (they will always read NULL, and they have no UI to set them). No data migration needed for existing rows.
 
-The 2026-09-05 prompt-versioning amendment moves Transform prompt content and
-generation settings into the same immutable `prompt_versions` records as result
-prompts. `keyboardShortcut` and `runningLabel` remain on `prompts` and changing
-only either field creates no version. Built-in Transforms have the same edit,
-delete, soft-restore, history, diff, and restore-as-new-version semantics as
-every other prompt. Transform execution resolves and snapshots the active
-version, including typed settings and optional model override, before the LLM
-request starts.
+The 2026-09-05 prompt-versioning amendment moves Transform prompt content and generation settings into the same immutable `prompt_versions` records as result prompts. `keyboardShortcut` and `runningLabel` remain on `prompts` and changing only either field creates no version. Built-in Transforms have the same edit, delete, soft-restore, history, diff, and restore-as-new-version semantics as every other prompt. Transform execution resolves and snapshots the active version, including typed settings and optional model override, before the LLM request starts.
 
 ### 3. AX-first capture with clipboard-hijack fallback (locked by spike)
 

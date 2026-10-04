@@ -5,15 +5,7 @@
 
 This document captures the future design space that was split out of `spec/12`: typed actions, workflows, agent profiles, and Apple Shortcuts / App Intents integration. Its earlier Voice Control exploration has been superseded by [ADR-033](adr/033-explicit-voice-control.md) and the [Voice Control contract](contracts/voice-control.md). It is a roadmap and architecture exploration, not a locked implementation contract.
 
-This proposal is not the agent operator guide. Existing automation already
-includes CLI discovery, local history/segment search, cited transcript slices,
-knowledge-card reads/generation, saved meeting notes/results/artifacts/exports,
-and the disabled-by-default post-meeting executable hook. Use
-[`integrations/README.md`](../integrations/README.md) and the installed
-`sotto-cli spec --json` for those contracts and their I/O boundaries.
-Generalized workflows, agent profiles, autonomous desktop actions, and App
-Intents below remain proposals; no MCP service or GUI-mirroring requirement is
-introduced by this document.
+This proposal is not the agent operator guide. Existing automation already includes CLI discovery, local history/segment search, cited transcript slices, knowledge-card reads/generation, saved meeting notes/results/artifacts/exports, and the disabled-by-default post-meeting executable hook. Use [`integrations/README.md`](../integrations/README.md) and the installed `sotto-cli spec --json` for those contracts and their I/O boundaries. Generalized workflows, agent profiles, autonomous desktop actions, and App Intents below remain proposals; no MCP service or GUI-mirroring requirement is introduced by this document.
 
 ---
 
@@ -31,11 +23,7 @@ This doc exists to:
 
 1. Defining an implementation-ready schema for actions, workflows, or agent profiles.
 2. Committing to a shipping order beyond rough sequencing.
-3. Claiming that generalized workflows or autonomous agent handoff are
-   available today. Explicit spoken Voice Control has a separate implementation
-   behind a default-off release flag; see ADR-033. Existing selected-text
-   Transforms and the one-shot meeting start-context snapshot are narrower
-   implemented uses of desktop context than the proposed workflows.
+3. Claiming that generalized workflows or autonomous agent handoff are available today. Explicit spoken Voice Control has a separate implementation behind a default-off release flag; see ADR-033. Existing selected-text Transforms and the one-shot meeting start-context snapshot are narrower implemented uses of desktop context than the proposed workflows.
 
 ---
 
@@ -103,9 +91,7 @@ If Sotto introduces action execution, each action likely needs a standard input 
 
 ### Transcript Context
 
-Illustrative context assembled from current models (not an existing shared
-`ProcessingContext` type). Transcription source types include file, YouTube,
-podcast, and meeting; dictation is a separate model:
+Illustrative context assembled from current models (not an existing shared `ProcessingContext` type). Transcription source types include file, YouTube, podcast, and meeting; dictation is a separate model:
 
 ```
 transcript: String

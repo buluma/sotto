@@ -12,8 +12,7 @@
 
 ## Purpose
 
-This contract defines the complete recipient link, encrypted envelope, and decrypted text bundle exchanged by the Mac app and the browser viewer.
-It keeps cryptographic interoperability and content exclusions stable while allowing the app UI and service implementation to evolve independently.
+This contract defines the complete recipient link, encrypted envelope, and decrypted text bundle exchanged by the Mac app and the browser viewer. It keeps cryptographic interoperability and content exclusions stable while allowing the app UI and service implementation to evolve independently.
 
 ## Producers and consumers
 
@@ -69,8 +68,7 @@ The exact additional authenticated data is the UTF-8 encoding of this sequence, 
 com.sotto.share-envelope\0v1\0<locator>\0<content-revision>
 ```
 
-`content-revision` is an unpadded base-10 integer beginning at `1` and increasing by exactly one for each explicit snapshot update.
-Expiry is not authenticated in this envelope because it is independently mutable server state.
+`content-revision` is an unpadded base-10 integer beginning at `1` and increasing by exactly one for each explicit snapshot update. Expiry is not authenticated in this envelope because it is independently mutable server state.
 
 ## Decrypted bundle
 
@@ -125,26 +123,18 @@ Stable bundle semantics:
 - Summary and notes Markdown is treated as untrusted input. Raw HTML and automatic remote assets are not rendered. A restricted renderer may construct safe DOM nodes directly; any renderer producing HTML must use a reviewed sanitizer before insertion.
 - Transcript segments contain non-empty `text` and may include the current display speaker label.
 - `startMs` and `endMs` are either both present or both absent, with `0 <= startMs <= endMs`.
-- A segment-timed correction is shared as the effective corrected line with its
-  preserved segment start/end pair. The bundle never represents the automatic
-  word timestamps as alignment for rewritten words. Legacy whole-transcript
-  replacements remain untimed.
+- A segment-timed correction is shared as the effective corrected line with its preserved segment start/end pair. The bundle never represents the automatic word timestamps as alignment for rewritten words. Legacy whole-transcript replacements remain untimed.
 - Unknown section kinds invalidate the bundle.
 
-The share projection may include only the selected display title, source kind, display date, duration, summary text and display titles, notes, transcript text, timestamps, and current speaker labels.
-The Core projection's `ShareSelection.includeMetadata` defaults to false and independently controls the bundle title and source metadata. Transcript export formatting options do not opt those fields in; the app passes the owner's explicit preview selection.
-It must exclude audio, local record or segment IDs, paths, artifact locations, source URLs, thumbnails, confidence values, model or provider details, prompt instructions, generation receipts, chat, calendar and attendee data, meeting URLs, capture diagnostics, and every unselected field.
+The share projection may include only the selected display title, source kind, display date, duration, summary text and display titles, notes, transcript text, timestamps, and current speaker labels. The Core projection's `ShareSelection.includeMetadata` defaults to false and independently controls the bundle title and source metadata. Transcript export formatting options do not opt those fields in; the app passes the owner's explicit preview selection. It must exclude audio, local record or segment IDs, paths, artifact locations, source URLs, thumbnails, confidence values, model or provider details, prompt instructions, generation receipts, chat, calendar and attendee data, meeting URLs, capture diagnostics, and every unselected field.
 
 ## Non-stable presentation
 
-Viewer typography, colors, layout, button placement, human-readable errors, and the Mac app's Share-sheet composition may change without a bundle version bump.
-Contextual selection defaults are governed by [Shareable Transcript Snapshots](../15-shareable-transcripts.md), not the wire bundle.
+Viewer typography, colors, layout, button placement, human-readable errors, and the Mac app's Share-sheet composition may change without a bundle version bump. Contextual selection defaults are governed by [Shareable Transcript Snapshots](../15-shareable-transcripts.md), not the wire bundle.
 
 ## Versioning and compatibility
 
-V1 readers must ignore unknown additive object fields but reject unknown `schema`, `schemaVersion`, section kinds, and cryptographic algorithms.
-Removing or changing a stable field, encryption rule, AAD byte, size boundary, or section semantic requires a new version and a compatibility plan for active links.
-The service must retain the viewer support needed to open every unexpired version it accepted.
+V1 readers must ignore unknown additive object fields but reject unknown `schema`, `schemaVersion`, section kinds, and cryptographic algorithms. Removing or changing a stable field, encryption rule, AAD byte, size boundary, or section semantic requires a new version and a compatibility plan for active links. The service must retain the viewer support needed to open every unexpired version it accepted.
 
 ## Tests that enforce this
 

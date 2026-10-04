@@ -25,16 +25,9 @@ Design philosophy: **Simple, native, stays out of the way.** No chrome, no clutt
 
 ## Brand And Asset Sources
 
-- In-app brand surfaces use the canonical parakeet PNG through
-  `BreathWaveIcon.brandMark` and `BreathWaveLogo`; see
-  `docs/brand-identity.md` for sizing, tinting, and usage rules.
-- App chrome uses `DesignSystem.Colors.accent`, the warm coral-orange brand
-  accent (`#E86B3B` in the light palette). System colors carry the rest of the
-  UI.
-- Promotional and editorial design uses `brand-assets/`: the recolorable
-  `parakeet-line.svg`, Pop palette, composition templates, and generated PNG
-  exports. The Pop palette is for campaigns, posters, social assets, and launch
-  moments; it must not leak into app chrome.
+- In-app brand surfaces use the canonical parakeet PNG through `BreathWaveIcon.brandMark` and `BreathWaveLogo`; see `docs/brand-identity.md` for sizing, tinting, and usage rules.
+- App chrome uses `DesignSystem.Colors.accent`, the warm coral-orange brand accent (`#E86B3B` in the light palette). System colors carry the rest of the UI.
+- Promotional and editorial design uses `brand-assets/`: the recolorable `parakeet-line.svg`, Pop palette, composition templates, and generated PNG exports. The Pop palette is for campaigns, posters, social assets, and launch moments; it must not leak into app chrome.
 
 ---
 
@@ -78,74 +71,23 @@ The sidebar uses NavigationSplitView with flat items (icon + label):
 - **Feedback** (`bubble.left.and.text.bubble.right`) -- Bug reports, feature requests, community link
 - **Settings** (`gearshape`) -- Dictation prefs, meeting recording prefs, storage, permissions
 
-Meetings now has a dedicated workspace while remaining visible in Library.
-Meeting **capture** still lives on the Transcribe tile, hotkey, menu bar, and
-Meetings workspace; meeting **browse** lives both in the Meetings workspace and
-under Library's Meetings filter. Reason: Library remains the universal archive,
-while Meetings is the workflow surface for upcoming calendar context, the active
-recording state, recent meetings, recovery states, and intelligence readiness.
+Meetings now has a dedicated workspace while remaining visible in Library. Meeting **capture** still lives on the Transcribe tile, hotkey, menu bar, and Meetings workspace; meeting **browse** lives both in the Meetings workspace and under Library's Meetings filter. Reason: Library remains the universal archive, while Meetings is the workflow surface for upcoming calendar context, the active recording state, recent meetings, recovery states, and intelligence readiness.
 
-The Meetings overview uses the available content width with 20pt side insets
-and 16pt section spacing. At 960pt content width it places a flexible meeting
-list beside a 300pt utility rail; narrower windows stack the sections. The
-recording tile uses compact insets and a content-driven minimum height so status
-messages can grow. Search, label filters, and Select Many share one toolbar. The
-search field absorbs leftover width when that row fits; when it does not, the
-search field moves above the filters and those controls stay in place. Bulk
-actions retain their own contextual bar. Calendar Off is explained once in the
-inline controls, including what connecting Calendar enables before access is
-granted. Loading, permission, error, and upcoming-event states remain visible
-when applicable.
+The Meetings overview uses the available content width with 20pt side insets and 16pt section spacing. At 960pt content width it places a flexible meeting list beside a 300pt utility rail; narrower windows stack the sections. The recording tile uses compact insets and a content-driven minimum height so status messages can grow. Search, label filters, and Select Many share one toolbar. The search field absorbs leftover width when that row fits; when it does not, the search field moves above the filters and those controls stay in place. Bulk actions retain their own contextual bar. Calendar Off is explained once in the inline controls, including what connecting Calendar enables before access is granted. Loading, permission, error, and upcoming-event states remain visible when applicable.
 
-Upcoming calendar rows stay list-like: no persistent Skip button. A context
-menu offers **Don't auto-record this meeting**, and **Don't auto-record this
-repeating meeting** only when `event.isRecurring` is true (`externalId` alone
-is not enough). Skipped rows remain visible at reduced opacity: **Won't
-auto-record this time** for an occurrence skip on a collapsed series row,
-**Won't auto-record this series** for a recurring event-level skip, **Won't
-auto-record** for a one-off (occurrence or event-level). Undo is
-**Auto-record again**, or **Auto-record this repeating meeting again** for
-series. In notify-only mode the row caption states that Sotto won't
-remind you or start recording. The auto-start toast ✕ is always this
-occurrence, not a session-only dismiss. Skip never lives as a Settings list
-of events; per-calendar include stays the coarse filter. Collapse plus the
-Upcoming cap means not every fetched occurrence is reachable from this list.
+Upcoming calendar rows stay list-like: no persistent Skip button. A context menu offers **Don't auto-record this meeting**, and **Don't auto-record this repeating meeting** only when `event.isRecurring` is true (`externalId` alone is not enough). Skipped rows remain visible at reduced opacity: **Won't auto-record this time** for an occurrence skip on a collapsed series row, **Won't auto-record this series** for a recurring event-level skip, **Won't auto-record** for a one-off (occurrence or event-level). Undo is **Auto-record again**, or **Auto-record this repeating meeting again** for series. In notify-only mode the row caption states that Sotto won't remind you or start recording. The auto-start toast ✕ is always this occurrence, not a session-only dismiss. Skip never lives as a Settings list of events; per-calendar include stays the coarse filter. Collapse plus the Upcoming cap means not every fetched occurrence is reachable from this list.
 
 Column width: `min: 160, ideal: 180, max: 220`. Window minimum width: 800pt.
 
 ### Ask Workspace (development)
 
-Ask is a top-level destination adjacent to Library. A new conversation starts
-with an empty source set; **Ask selected** in Library creates a conversation
-with the chosen records. The conversation menu provides New, recent
-conversations, Rename, and Delete. Deleting a conversation removes its own
-questions, answers, and draft; Library sources remain intact.
+Ask is a top-level destination adjacent to Library. A new conversation starts with an empty source set; **Ask selected** in Library creates a conversation with the chosen records. The conversation menu provides New, recent conversations, Rename, and Delete. Deleting a conversation removes its own questions, answers, and draft; Library sources remain intact.
 
-The header shows the conversation title and selected-source count. A compact
-source strip names up to two sources and summarizes the remainder. The thread
-and composer stay at readable width; the footer shows the configured provider
-and model. Remote consent identifies the provider and explains that the
-question, relevant conversation context, and selected excerpts may be sent.
-Stopping a run preserves its question and records an explicit cancelled state.
-If the process exits before a terminal write, the durable assistant placeholder
-remains marked incomplete.
+The header shows the conversation title and selected-source count. A compact source strip names up to two sources and summarizes the remainder. The thread and composer stay at readable width; the footer shows the configured provider and model. Remote consent identifies the provider and explains that the question, relevant conversation context, and selected excerpts may be sent. Stopping a run preserves its question and records an explicit cancelled state. If the process exits before a terminal write, the durable assistant placeholder remains marked incomplete.
 
-**Choose sources** opens a searchable sheet, initially filtered to meetings.
-Users can switch to all source types and filter by title, date, type, or
-existing labels. Selection remains intact while filters change; up to 32
-completed Library transcripts can be selected. Apply replaces the active
-membership and starts a new context section; Cancel leaves the prior section
-unchanged. A changed context keeps earlier messages visible without reusing
-them in future model input.
+**Choose sources** opens a searchable sheet, initially filtered to meetings. Users can switch to all source types and filter by title, date, type, or existing labels. Selection remains intact while filters change; up to 32 completed Library transcripts can be selected. Apply replaces the active membership and starts a new context section; Cancel leaves the prior section unchanged. A changed context keeps earlier messages visible without reusing them in future model input.
 
-Selecting a citation opens the evidence inspector on the right in a wide window
-or as a sheet at narrower widths. It shows the current source title/date and
-revision-checked passage, including a timecode when one is available; the
-**Open in Library** action returns to that recording. Untimed legacy edits and
-text-only sources use a text passage label. Changed, missing, or invalid evidence
-shows an unavailable-state explanation instead of substituting new transcript
-text for old evidence. Inspection is independent of the current source set:
-removing a source from a conversation does not hide its valid historical citations.
+Selecting a citation opens the evidence inspector on the right in a wide window or as a sheet at narrower widths. It shows the current source title/date and revision-checked passage, including a timecode when one is available; the **Open in Library** action returns to that recording. Untimed legacy edits and text-only sources use a text passage label. Changed, missing, or invalid evidence shows an unavailable-state explanation instead of substituting new transcript text for old evidence. Inspection is independent of the current source set: removing a source from a conversation does not hide its valid historical citations.
 
 Content transitions between tabs use `DesignSystem.Animation.contentSwap` (0.2s easeInOut).
 
@@ -186,221 +128,56 @@ The tile body is informational. Only the visible Start and Stop capsules are rea
 
 When list mode is selected, the view renders a date-grouped list (`Today` / `Yesterday` / `Previous 7 Days` / `Previous 30 Days` / `{Month Year}`) using `MeetingDateGroupHeader` + `MeetingRowCard`. Routine retained-audio state does not add repeated text pills: retained audio has no marker, while no retained path uses a quiet crossed-waveform icon with a tooltip and keyboard-accessible explanation that the transcript remains available. A no-retained-path state is not proof that a user deleted the audio. Unexpected missing audio remains an explicit amber warning so recovery expectations stay visible before the user opens a menu.
 
-A finalized meeting whose `meetingCaptureReport.quality` is `partial` shows the
-existing **Partial audio** badge in both its Library row and thumbnail card, and
-the existing **Partial meeting audio** banner in transcript detail. The shared
-presentation explains elapsed versus captured duration and each degraded source.
-Healthy silent system audio adds no warning; silence also adds no extra message
-when another source has a genuine capture failure. Missing, interrupted, failed,
-or short capture and playback fallback remain visible. This state is durable and
-appears after finalization; it does not add a live alert or automatically restart
-ScreenCaptureKit during a meeting.
+A finalized meeting whose `meetingCaptureReport.quality` is `partial` shows the existing **Partial audio** badge in both its Library row and thumbnail card, and the existing **Partial meeting audio** banner in transcript detail. The shared presentation explains elapsed versus captured duration and each degraded source. Healthy silent system audio adds no warning; silence also adds no extra message when another source has a genuine capture failure. Missing, interrupted, failed, or short capture and playback fallback remain visible. This state is durable and appears after finalization; it does not add a live alert or automatically restart ScreenCaptureKit during a meeting.
 
-Every Library filter, including Meetings, exposes a compact Grid/List segmented
-control in the header. With no stored choice, Meetings uses the date-grouped list
-and other Library contexts use the grid. Browsing and switching filters do not
-save a preference. An explicit Grid or List choice is global across Library
-contexts and persists across launches; the separate Meetings workspace is unchanged.
-List mode reuses the date-grouped row presentation and adds the transcription
-source beside the title; thumbnail cards also show the source. Source
-attribution is drawn only where the active context leaves the source open,
-resolved from the same `(scope, filter)` pair as the library query. `All` and
-`Favorites` admit any source and show the icon with its text. `Podcasts`,
-`Local`, `Meetings`, and every filter inside the Meetings workspace admit
-exactly one source, so the label is omitted rather than repeating the filter.
-While a source-filter query reloads, existing cards retain the attribution
-resolved for their displayed result set; the destination context applies only
-when its rows publish.
+Every Library filter, including Meetings, exposes a compact Grid/List segmented control in the header. With no stored choice, Meetings uses the date-grouped list and other Library contexts use the grid. Browsing and switching filters do not save a preference. An explicit Grid or List choice is global across Library contexts and persists across launches; the separate Meetings workspace is unchanged. List mode reuses the date-grouped row presentation and adds the transcription source beside the title; thumbnail cards also show the source. Source attribution is drawn only where the active context leaves the source open, resolved from the same `(scope, filter)` pair as the library query. `All` and `Favorites` admit any source and show the icon with its text. `Podcasts`, `Local`, `Meetings`, and every filter inside the Meetings workspace admit exactly one source, so the label is omitted rather than repeating the filter. While a source-filter query reloads, existing cards retain the attribution resolved for their displayed result set; the destination context applies only when its rows publish.
 
-While a Library refresh or Load More query is pending, a successful single-item
-favorite change, recording deletion, or meeting-audio deletion invalidates that
-query's older snapshot. After any successful bulk recording/audio deletion,
-refresh the current requested window even if a query finished while the bulk
-operation was suspended. A page can read after an early target is deleted but
-publish before later targets finish, so its completed loading state does not
-prove that its offsets remain valid. Preserve failed-item selection and the
-bulk failure summary if the replacement read also fails. Publish the successful
-mutation immediately and run
-the replacement database read off the main actor through the normal cancellable
-page loader. The refreshed result keeps the requested page window and current
-filters, so deleted rows/audio affordances cannot reappear and a deletion cannot
-shift pagination past an unseen recording. A subsequent filter or query change
-supersedes this replacement. If the mutation succeeds but the refresh fails,
-retain the updated rows, selection, pagination and displayed source attribution;
-report the refresh failure separately, without claiming the saved mutation failed.
+While a Library refresh or Load More query is pending, a successful single-item favorite change, recording deletion, or meeting-audio deletion invalidates that query's older snapshot. After any successful bulk recording/audio deletion, refresh the current requested window even if a query finished while the bulk operation was suspended. A page can read after an early target is deleted but publish before later targets finish, so its completed loading state does not prove that its offsets remain valid. Preserve failed-item selection and the bulk failure summary if the replacement read also fails. Publish the successful mutation immediately and run the replacement database read off the main actor through the normal cancellable page loader. The refreshed result keeps the requested page window and current filters, so deleted rows/audio affordances cannot reappear and a deletion cannot shift pagination past an unseen recording. A subsequent filter or query change supersedes this replacement. If the mutation succeeds but the refresh fails, retain the updated rows, selection, pagination and displayed source attribution; report the refresh failure separately, without claiming the saved mutation failed.
 
-`Video` has narrowed the source to one family but not to one platform, so it
-shows the platform's own brand mark from `Resources/BrandGlyphs` without the
-word. The word is dropped only where such a mark replaces it: a source that
-maps to more than one platform (`Podcast` covers any feed, `Video` covers
-Twitch and unrecognized hosts) or whose asset fails to load keeps its text,
-because the SF Symbol fallback is shared by seven sources and separated only
-by tint, which names nothing to a reader who cannot distinguish those colors.
-The brand mark is hidden from accessibility, so the label supplies the source
-name that the logo carries visually. Search, filters,
-contextual actions, pagination, export, and bulk selection behave identically in
-either layout.
+`Video` has narrowed the source to one family but not to one platform, so it shows the platform's own brand mark from `Resources/BrandGlyphs` without the word. The word is dropped only where such a mark replaces it: a source that maps to more than one platform (`Podcast` covers any feed, `Video` covers Twitch and unrecognized hosts) or whose asset fails to load keeps its text, because the SF Symbol fallback is shared by seven sources and separated only by tint, which names nothing to a reader who cannot distinguish those colors. The brand mark is hidden from accessibility, so the label supplies the source name that the logo carries visually. Search, filters, contextual actions, pagination, export, and bulk selection behave identically in either layout.
 
-Thumbnail cards show transcription failure, stopped transcription, and pending
-background transcription independently of routine retained-audio state. Queued and running
-finalization both use the persisted `processing` status and the existing
-**Transcribing** presentation, never a completed claim. A stale or partial snippet
-must not hide a card's non-completed status. Missing audio, recovery, and
-partial-capture warnings remain explicit rather than being compressed into a
-routine state icon.
+Thumbnail cards show transcription failure, stopped transcription, and pending background transcription independently of routine retained-audio state. Queued and running finalization both use the persisted `processing` status and the existing **Transcribing** presentation, never a completed claim. A stale or partial snippet must not hide a card's non-completed status. Missing audio, recovery, and partial-capture warnings remain explicit rather than being compressed into a routine state icon.
 
-When a grid card has locally cached or successfully loaded remote artwork, that
-real artwork remains first. A remote image that is still loading keeps its loading
-surface. When no artwork exists or remote loading fails, the 16:9 area shows a
-static Seed of Life cover derived only from the transcription UUID and fixed
-v2 recipe. Seven equal circles share one night field; the UUID rotates the
-figure, lights one or two rings, and shifts sage ink by at most 12°. The cover
-does not encode source, status, audio, transcript, confidence, title, duration,
-or time, and it does not use brand coral or a gold nucleus. The cover has no
-text or animation, so existing title, duration, source, and lifecycle chrome stay
-legible and authoritative outside the artwork. The construction and input rules
-are recorded in
-[`docs/design/2026-09-15-cover-geometry/philosophy.md`](../docs/design/2026-09-15-cover-geometry/philosophy.md).
-List rows retain their existing snippet-first preview behavior, including while
-a meeting with saved transcript text is being retranscribed.
+When a grid card has locally cached or successfully loaded remote artwork, that real artwork remains first. A remote image that is still loading keeps its loading surface. When no artwork exists or remote loading fails, the 16:9 area shows a static Seed of Life cover derived only from the transcription UUID and fixed v2 recipe. Seven equal circles share one night field; the UUID rotates the figure, lights one or two rings, and shifts sage ink by at most 12°. The cover does not encode source, status, audio, transcript, confidence, title, duration, or time, and it does not use brand coral or a gold nucleus. The cover has no text or animation, so existing title, duration, source, and lifecycle chrome stay legible and authoritative outside the artwork. The construction and input rules are recorded in [`docs/design/2026-09-15-cover-geometry/philosophy.md`](../docs/design/2026-09-15-cover-geometry/philosophy.md). List rows retain their existing snippet-first preview behavior, including while a meeting with saved transcript text is being retranscribed.
 
-Favorited Library items show a small filled amber star beside their title in
-grid, list, and transcript detail. It is a passive status marker with a
-**Favorite** tooltip and accessibility label; the existing item menu keeps the
-Add/Remove Favorite action. Unfavorited items show no empty star. The marker
-applies consistently to meetings, imports, and URLs without changing favorite
-persistence or filtering.
+Favorited Library items show a small filled amber star beside their title in grid, list, and transcript detail. It is a passive status marker with a **Favorite** tooltip and accessibility label; the existing item menu keeps the Add/Remove Favorite action. Unfavorited items show no empty star. The marker applies consistently to meetings, imports, and URLs without changing favorite persistence or filtering.
 
-Opening an empty processing meeting row must preserve that same lifecycle
-truth. The transcript pane shows an indeterminate "Transcribing meeting"
-surface, states that the audio is saved and final transcription continues in
-the background, and tells the user they may leave and return later. It must not
-use the terminal "No transcript available" empty state. Edit and Retranscribe
-are unavailable while the row is processing. After the row reaches a terminal
-state, Text mode permits Edit even when transcription produced no text so the
-user can enter it manually; Retranscribe still requires retained audio. If the
-matching detail page is already open when background finalization finishes, it
-refreshes in place on either success or terminal failure, even while another
-meeting is recording. That in-place refresh must not navigate, activate a
-window, or replace an unrelated open detail page. Recorder-idle queued
-completion may still present the finished meeting, matching the existing
-queued-completion behavior.
+Opening an empty processing meeting row must preserve that same lifecycle truth. The transcript pane shows an indeterminate "Transcribing meeting" surface, states that the audio is saved and final transcription continues in the background, and tells the user they may leave and return later. It must not use the terminal "No transcript available" empty state. Edit and Retranscribe are unavailable while the row is processing. After the row reaches a terminal state, Text mode permits Edit even when transcription produced no text so the user can enter it manually; Retranscribe still requires retained audio. If the matching detail page is already open when background finalization finishes, it refreshes in place on either success or terminal failure, even while another meeting is recording. That in-place refresh must not navigate, activate a window, or replace an unrelated open detail page. Recorder-idle queued completion may still present the finished meeting, matching the existing queued-completion behavior.
 
 ### Transcription Labels Popover
 
-Label editing uses a compact popover anchored to the action that opened it from
-Library, the Meetings workspace, or any saved-transcription detail. Labels are
-shared by meetings, podcasts, videos, and local files. The popover floats above
-the current context without masking or resizing it. It has a **Labels** heading,
-a focused full-width **Search or create a label** field, and a content-sized
-results region capped to the space available for the popover. **Manage labels…**
-opens a separate sheet for shared-label maintenance. Clicking outside or pressing
-Escape dismisses the assignment popover.
+Label editing uses a compact popover anchored to the action that opened it from Library, the Meetings workspace, or any saved-transcription detail. Labels are shared by meetings, podcasts, videos, and local files. The popover floats above the current context without masking or resizing it. It has a **Labels** heading, a focused full-width **Search or create a label** field, and a content-sized results region capped to the space available for the popover. **Manage labels…** opens a separate sheet for shared-label maintenance. Clicking outside or pressing Escape dismisses the assignment popover.
 
-The source tabs — Meetings, Podcasts, Video, and Local — are the transcription
-types. The product does not add a second, user-defined "meeting type" taxonomy.
-Legacy custom meeting types are migrated to labels without removing the legacy
-database value, preserving downgrade compatibility.
+The source tabs — Meetings, Podcasts, Video, and Local — are the transcription types. The product does not add a second, user-defined "meeting type" taxonomy. Legacy custom meeting types are migrated to labels without removing the legacy database value, preserving downgrade compatibility.
 
-Result prompts expose an **Available for** label cloud in the Prompt Manager.
-**All transcriptions** is the default. Selecting one or more colored labels
-makes the prompt available when any selected label is present, across meetings,
-podcasts, videos, and local files. The same availability gate applies before
-automatic generation; the prompt's existing per-source Auto-Run setting remains
-the source of truth for whether matching content runs automatically.
+Result prompts expose an **Available for** label cloud in the Prompt Manager. **All transcriptions** is the default. Selecting one or more colored labels makes the prompt available when any selected label is present, across meetings, podcasts, videos, and local files. The same availability gate applies before automatic generation; the prompt's existing per-source Auto-Run setting remains the source of truth for whether matching content runs automatically.
 
-The label editor keeps every assigned label in a separate wrapping token area
-below search, even when the query matches none of them. The region grows for
-small content and scrolls only after its height cap, so each assigned token and
-its remove action remains reachable. Available labels appear even with an empty
-query; every match is reachable by scrolling, and a valid unmatched query puts
-**Create “name”** next to the available-label results. Selected and available
-rows use a color dot, name, and state icon; tokens retain a reachable remove
-action. Pressing Return reuses an exact match or creates and immediately assigns a new value. Long
-labels truncate visually only after preserving their full tooltip and
-accessibility name.
+The label editor keeps every assigned label in a separate wrapping token area below search, even when the query matches none of them. The region grows for small content and scrolls only after its height cap, so each assigned token and its remove action remains reachable. Available labels appear even with an empty query; every match is reachable by scrolling, and a valid unmatched query puts **Create “name”** next to the available-label results. Selected and available rows use a color dot, name, and state icon; tokens retain a reachable remove action. Pressing Return reuses an exact match or creates and immediately assigns a new value. Long labels truncate visually only after preserving their full tooltip and accessibility name.
 
-The management sheet searches active and archived labels and creates new ones.
-Each row can rename a label, choose **Automatic** or a compact stored palette (`coral`, `green`,
-`amber`, `red`, `purple`, `blue`), and archive or restore it. Automatic clears
-the stored token; missing or unsupported tokens map deterministically from UUID
-bytes. Archive hides a label from new choices while retaining existing
-assignments and label-targeted prompt rules. There is no hard-delete control.
-Every label surface resolves the same stored ID and palette token, so reordering,
-renaming, filtering, and restart do not change its color.
+The management sheet searches active and archived labels and creates new ones. Each row can rename a label, choose **Automatic** or a compact stored palette (`coral`, `green`, `amber`, `red`, `purple`, `blue`), and archive or restore it. Automatic clears the stored token; missing or unsupported tokens map deterministically from UUID bytes. Archive hides a label from new choices while retaining existing assignments and label-targeted prompt rules. There is no hard-delete control. Every label surface resolves the same stored ID and palette token, so reordering, renaming, filtering, and restart do not change its color.
 
-Library's compact **Labels** / **Labels · N** filter trigger opens a searchable
-vertical option list with color dots, names, and selected checks. It states
-**Match any selected label**, retains the existing OR query semantics, offers
-**Show selected**, and provides a scoped Clear action. Search or Show selected
-only changes visible options; neither removes a label assignment. No Any/All
-mode or persistent toolbar row of filter pills is added.
+Library's compact **Labels** / **Labels · N** filter trigger opens a searchable vertical option list with color dots, names, and selected checks. It states **Match any selected label**, retains the existing OR query semantics, offers **Show selected**, and provides a scoped Clear action. Search or Show selected only changes visible options; neither removes a label assignment. No Any/All mode or persistent toolbar row of filter pills is added.
 
 ### Saved Meeting Notes
 
-Every saved meeting detail exposes a dedicated `Notes` tab immediately after
-`Transcript`, including meetings with no notes and meetings whose transcription
-is still processing. Notes are an editorial layer and never appear inside the
-factual transcript pane. The tab always shows an editable plaintext
-`TextEditor`, including when notes are empty, with Copy, word count, and the
-existing 7,500-word soft-cap warning. The separate 8,000-word cap bounds notes
-sent to prompt assembly; it does not truncate stored notes.
+Every saved meeting detail exposes a dedicated `Notes` tab immediately after `Transcript`, including meetings with no notes and meetings whose transcription is still processing. Notes are an editorial layer and never appear inside the factual transcript pane. The tab always shows an editable plaintext `TextEditor`, including when notes are empty, with Copy, word count, and the existing 7,500-word soft-cap warning. The separate 8,000-word cap bounds notes sent to prompt assembly; it does not truncate stored notes.
 
-The Notes pane is an open writing surface, without nested cards or an editor
-border. A compact “Your notes” heading and Copy action sit above a flexible,
-full-height editor using the 15 pt reading-body size and 5 pt line spacing.
-The pane reuses the detail view’s outer inset with an additional 8 pt horizontal
-writing margin. It has no fixed minimum editor height, so shorter windows can
-keep the word count and save/retry controls visible. Copy remains in place but
-is disabled when the draft is blank or belongs to another meeting. An enabled,
-empty editor shows a non-interactive writing prompt. VoiceOver describes
-automatic saving only while the editor is enabled. A deleted meeting hears that
-its notes were not saved, and a mismatched meeting hears that notes cannot be
-edited right now. The Copied confirmation clears when the draft changes, the
-displayed meeting changes, or the pane disappears. Save status, word count, and
-warnings stay below the editor.
+The Notes pane is an open writing surface, without nested cards or an editor border. A compact “Your notes” heading and Copy action sit above a flexible, full-height editor using the 15 pt reading-body size and 5 pt line spacing. The pane reuses the detail view’s outer inset with an additional 8 pt horizontal writing margin. It has no fixed minimum editor height, so shorter windows can keep the word count and save/retry controls visible. Copy remains in place but is disabled when the draft is blank or belongs to another meeting. An enabled, empty editor shows a non-interactive writing prompt. VoiceOver describes automatic saving only while the editor is enabled. A deleted meeting hears that its notes were not saved, and a mismatched meeting hears that notes cannot be edited right now. The Copied confirmation clears when the draft changes, the displayed meeting changes, or the pane disappears. Save status, word count, and warnings stay below the editor.
 
-Changes auto-save to SQLite after a 500 ms idle debounce. The status is hidden
-on entry, including for empty notes. Editing shows a small spinner; a successful
-save briefly shows a muted green check before the status disappears. These
-routine states use icons with tooltips and accessibility labels, in a fixed-size
-slot. Save failures retain visible text and Retry. The word count remains
-separate and uses singular wording for one word. The editor stays writable
-during persistence.
-Leaving the tab, leaving the detail page, or starting an LLM action flushes the
-latest draft and refreshes the derived meeting files once. Ordinary quit also
-flushes pending file refreshes, including drafts already saved to SQLite.
-The debounce does not rebuild transcript or prompt-result files. Chat and result
-prompts never start after a failed database flush, so they
-cannot receive stale notes. Saving blank or whitespace-only text clears the
-canonical value. Database success remains authoritative even if the
-derived-artifact refresh reports a separate retryable warning. Successive
-saves use database last-writer-wins semantics. Notes, title and speaker rename
-refreshes are ordered per meeting and reread the committed row before writing.
-Other producers, including the CLI, retain their existing refresh behavior.
+Changes auto-save to SQLite after a 500 ms idle debounce. The status is hidden on entry, including for empty notes. Editing shows a small spinner; a successful save briefly shows a muted green check before the status disappears. These routine states use icons with tooltips and accessibility labels, in a fixed-size slot. Save failures retain visible text and Retry. The word count remains separate and uses singular wording for one word. The editor stays writable during persistence. Leaving the tab, leaving the detail page, or starting an LLM action flushes the latest draft and refreshes the derived meeting files once. Ordinary quit also flushes pending file refreshes, including drafts already saved to SQLite. The debounce does not rebuild transcript or prompt-result files. Chat and result prompts never start after a failed database flush, so they cannot receive stale notes. Saving blank or whitespace-only text clears the canonical value. Database success remains authoritative even if the derived-artifact refresh reports a separate retryable warning. Successive saves use database last-writer-wins semantics. Notes, title and speaker rename refreshes are ordered per meeting and reread the committed row before writing. Other producers, including the CLI, retain their existing refresh behavior.
 
-A notes-save error banner belongs to the selected meeting. Selecting another
-recording dismisses that banner while retaining the failed draft and its retry
-state in the notes coordinator. Same-meeting metadata refreshes and background
-saves for other meetings preserve the banner; unrelated diagnostics remain intact.
+A notes-save error banner belongs to the selected meeting. Selecting another recording dismisses that banner while retaining the failed draft and its retry state in the notes coordinator. Same-meeting metadata refreshes and background saves for other meetings preserve the banner; unrelated diagnostics remain intact.
 
 ### Result Prompt Meeting-Notes Context
 
-The expanded configuration area of every result-prompt card includes an
-**Include meeting notes as context** checkbox and this help text:
+The expanded configuration area of every result-prompt card includes an **Include meeting notes as context** checkbox and this help text:
 
 > When this prompt runs on a meeting with notes, use those notes as additional
 > context. The transcript remains the source of truth.
 
-The checkbox is present for built-in and custom result prompts, absent for
-Transforms, and off by default. Custom-prompt Create/Edit sheets expose the
-same choice; an enabled card may show a quiet `Meeting notes` context badge.
-The primary UI does not mention `{{userNotes}}`: that variable remains an
-advanced custom-template compatibility mechanism. Chat/Ask does not gain this
-checkbox and retains its existing automatic use of committed meeting notes.
+The checkbox is present for built-in and custom result prompts, absent for Transforms, and off by default. Custom-prompt Create/Edit sheets expose the same choice; an enabled card may show a quiet `Meeting notes` context badge. The primary UI does not mention `{{userNotes}}`: that variable remains an advanced custom-template compatibility mechanism. Chat/Ask does not gain this checkbox and retains its existing automatic use of committed meeting notes.
 
-This UI was implemented and locally verified on 2026-09-05. Release
-availability follows the normal channel process.
+This UI was implemented and locally verified on 2026-09-05. Release availability follows the normal channel process.
 
 ### Local Transcription Rename
 
@@ -408,11 +185,7 @@ Local transcription rows expose `Rename...` with a `pencil` symbol in the same L
 
 The transcript detail header uses the same effective title as the Library. The pencil affordance is available for supported title-editing sources: meetings through the existing meeting title path, and local file transcriptions through the persisted title override path.
 
-Meeting rename publishes the row returned by its database write; a missing
-record is an error, not a successful local rename. Library and Recent Meetings
-replace any in-flight meeting-capable query snapshot while preserving its
-requested page window. Idle date-sorted windows update in place; title sorting
-and search membership are re-evaluated. Non-meeting-only queries are unaffected.
+Meeting rename publishes the row returned by its database write; a missing record is an error, not a successful local rename. Library and Recent Meetings replace any in-flight meeting-capable query snapshot while preserving its requested page window. Idle date-sorted windows update in place; title sorting and search membership are re-evaluated. Non-meeting-only queries are unaffected.
 
 ### Library Multi-Select Cleanup
 
@@ -659,32 +432,15 @@ coexist.
 └──────────────────────────────────────────┘
 ```
 
-- Only entered when the AI Formatter is enabled and about to run on the
-  transcript. Sits between Processing and Success; skipped entirely
-  when the formatter is disabled.
-- [seed of life]: Sacred geometry bloom — six coral petal circles
-  growing in place from tiny vertex dots into a full Seed of Life,
-  rotating continuously at ~10s/rev. Rendered by `FormatterVisualView`.
-  - 6-fold symmetry matches the `.processing` Merkaba's six vertex
-    lights so the cross-fade reads as "six things re-composing."
-  - Petal outer edges reach `size * 0.44`, visually close to the
-    Merkaba's outer-vertex radius of `size * 0.423` — same bounding
-    ring on both states.
-  - Color: `DesignSystem.Colors.accent` (warm coral), signaling a
-    different kind of work than the white `.processing` spinner.
-  - Phases: Bud (0 → 0.15s, dots ignite) → Bloom (0.15 → 1.00s,
-    petals grow in place) → Hold (1.00s → ∞, flower rotates and
-    breathes until the formatter returns).
-- Pill size: same 46×46 as Processing — the state change is a
-  hue/geometry evolution, not a resize.
-- Triggered by the `.sottoAIFormatterDidStart` notification
-  (posted from `DictationService.formatTranscriptIfNeeded`) which the
-  `DictationFlowCoordinator` observes to promote the overlay state
-  from `.processing` → `.formatting`. Terminal transitions
-  (cancellation, success, error) take precedence — the coordinator
-  only promotes when currently in `.processing`.
-- For command sessions, falls back to a spinner + "Refining..." label
-  so the visible command context continues to read during refinement.
+- Only entered when the AI Formatter is enabled and about to run on the transcript. Sits between Processing and Success; skipped entirely when the formatter is disabled.
+- [seed of life]: Sacred geometry bloom — six coral petal circles growing in place from tiny vertex dots into a full Seed of Life, rotating continuously at ~10s/rev. Rendered by `FormatterVisualView`.
+  - 6-fold symmetry matches the `.processing` Merkaba's six vertex lights so the cross-fade reads as "six things re-composing."
+  - Petal outer edges reach `size * 0.44`, visually close to the Merkaba's outer-vertex radius of `size * 0.423` — same bounding ring on both states.
+  - Color: `DesignSystem.Colors.accent` (warm coral), signaling a different kind of work than the white `.processing` spinner.
+  - Phases: Bud (0 → 0.15s, dots ignite) → Bloom (0.15 → 1.00s, petals grow in place) → Hold (1.00s → ∞, flower rotates and breathes until the formatter returns).
+- Pill size: same 46×46 as Processing — the state change is a hue/geometry evolution, not a resize.
+- Triggered by the `.sottoAIFormatterDidStart` notification (posted from `DictationService.formatTranscriptIfNeeded`) which the `DictationFlowCoordinator` observes to promote the overlay state from `.processing` → `.formatting`. Terminal transitions (cancellation, success, error) take precedence — the coordinator only promotes when currently in `.processing`.
+- For command sessions, falls back to a spinner + "Refining..." label so the visible command context continues to read during refinement.
 - Reduce Motion: presents the fully-bloomed peak state statically.
 - VoiceOver: "Refining transcript".
 
@@ -930,16 +686,7 @@ Drop zone components:
 
 ### Embedded Audio Track Picker
 
-After a local file/folder selection, FFmpeg reads container headers without
-adding a new control or preference. This preflight does not create a Library
-row or start STT. Exactly one audio track continues immediately with no new UI.
-Two or more tracks present a compact sheet whose rows are named `Track N`,
-enriched with language and default-state metadata when available.
-Choosing a row starts transcription immediately; Cancel leaves no partial
-transcription. For a batch, the sheet says that one choice applies to its
-multi-track files; single-track files continue automatically. The picker never
-appears for single-track files, URLs, podcasts,
-dictation, or meeting capture, and it is not duplicated in Settings.
+After a local file/folder selection, FFmpeg reads container headers without adding a new control or preference. This preflight does not create a Library row or start STT. Exactly one audio track continues immediately with no new UI. Two or more tracks present a compact sheet whose rows are named `Track N`, enriched with language and default-state metadata when available. Choosing a row starts transcription immediately; Cancel leaves no partial transcription. For a batch, the sheet says that one choice applies to its multi-track files; single-track files continue automatically. The picker never appears for single-track files, URLs, podcasts, dictation, or meeting capture, and it is not duplicated in Settings.
 
 ### Processing State
 
@@ -1007,97 +754,34 @@ Export bar:
 
 ### Transcript Body Layout Rules
 
-The Library "freeze at 100% CPU" bug (macOS 26) was a self-feeding SwiftUI
-update loop in the timed transcript: a `LazyVStack` view cache re-measuring
-and re-instantiating rows after a scroll, each row's `.textSelection(.enabled)`
-platform overlay requesting another update, and hover re-dispatch after every
-update keeping it alive. Rules that follow from it:
+The Library "freeze at 100% CPU" bug (macOS 26) was a self-feeding SwiftUI update loop in the timed transcript: a `LazyVStack` view cache re-measuring and re-instantiating rows after a scroll, each row's `.textSelection(.enabled)` platform overlay requesting another update, and hover re-dispatch after every update keeping it alive. Rules that follow from it:
 
-- Small transcripts render in a plain `VStack`; transcripts above the 400-row
-  `TranscriptBodyLayout.nonLazyRowLimit` use `LazyVStack`. An unknown count
-  stays lazy while the detached cache builds, avoiding an eager long-transcript
-  first-open. Speaker turns are split into cards of at most 24 segments so a
-  long single-speaker turn cannot defeat laziness. DEBUG launches can flip
-  layout and row selection with `SOTTO_DEBUG_TRANSCRIPT_LAZY` and
-  `SOTTO_DEBUG_TRANSCRIPT_SELECTION` to bisect a recurrence.
-- Find navigation uses Return / Shift-Return, the chevrons, or Command-G /
-  Shift-Command-G. It jumps to the matched line without animation. In lazy
-  speaker-card layouts it first realizes the owning card, then reveals a
-  separate line anchor, including for the card's first segment. New navigation,
-  query/content changes, manual scrolling, closing Find, and leaving the pane
-  cancel a pending jump.
-- Do not put more AppKit platform views (representables, selectable text
-  overlays) inside lazily measured rows than the row already has.
-- `Tests/SottoTests/Views/TranscriptTimestampedLayoutSmokeTests.swift`
-  hosts the real view offscreen, scrolls it down and back, and fails if layout
-  keeps re-running; hover itself cannot be simulated offscreen and stays a
-  manual check.
+- Small transcripts render in a plain `VStack`; transcripts above the 400-row `TranscriptBodyLayout.nonLazyRowLimit` use `LazyVStack`. An unknown count stays lazy while the detached cache builds, avoiding an eager long-transcript first-open. Speaker turns are split into cards of at most 24 segments so a long single-speaker turn cannot defeat laziness. DEBUG launches can flip layout and row selection with `SOTTO_DEBUG_TRANSCRIPT_LAZY` and `SOTTO_DEBUG_TRANSCRIPT_SELECTION` to bisect a recurrence.
+- Find navigation uses Return / Shift-Return, the chevrons, or Command-G / Shift-Command-G. It jumps to the matched line without animation. In lazy speaker-card layouts it first realizes the owning card, then reveals a separate line anchor, including for the card's first segment. New navigation, query/content changes, manual scrolling, closing Find, and leaving the pane cancel a pending jump.
+- Do not put more AppKit platform views (representables, selectable text overlays) inside lazily measured rows than the row already has.
+- `Tests/SottoTests/Views/TranscriptTimestampedLayoutSmokeTests.swift` hosts the real view offscreen, scrolls it down and back, and fails if layout keeps re-running; hover itself cannot be simulated offscreen and stays a manual check.
 
 ### Timed Transcript Editing
 
-A completed transcript with word timing exposes `Edit transcript` in the Timed
-view. Editing mode keeps the existing speaker tools and adds line-owned text
-and boundary actions:
+A completed transcript with word timing exposes `Edit transcript` in the Timed view. Editing mode keeps the existing speaker tools and adds line-owned text and boundary actions:
 
-- Each line's action menu offers `Edit text…`. The sheet shows the preserved
-  start/end range, accepts a non-empty replacement, and keeps the draft open
-  with an inline error when persistence fails.
-- `Merge with previous` and `Merge with next` appear only for adjacent current
-  lines with the same effective speaker assignment. A merge spans the first
-  line's start through the last line's end.
-- `Split segment` is unavailable for a text-edited line. The user can undo the
-  text edit, split at an automatic word boundary, and edit the new lines.
-- A persistent editing bar above the transcript scroll area groups the shared
-  `Undo edit`, `Redo edit`, and `Reset edits` history with a prominent checkmark
-  `Done` button. Done exits editing and clears selection; corrections are
-  already saved by their existing actions. The scrolling header only offers
-  `Edit transcript` / `Edit speakers` when editing is inactive.
-- `Reset edits…` opens a confirmation alert before restoring the automatic
-  transcript's text, speaker names/assignments, and segment boundaries. Cancel
-  leaves edits intact; `Reset edits` confirms. Reset remains in correction
-  history and can itself be reversed with `Undo edit`. A confirmation belongs
-  to the transcript that opened it and is dismissed when switching transcripts.
-- At narrow pane widths, selection and speaker-assignment tools move to a
-  second row so history and Done remain visible without horizontal scrolling.
-  In still narrower video split panes, selection and history use an `Edit
-  actions` overflow menu below Done. This final layout stacks the controls so
-  the menu never competes with Done for horizontal space.
-- During playback, untouched text follows automatic word cues. A corrected or
-  merged line highlights as one unit only while playback is inside its preserved
-  time envelope; no word-level highlight is implied.
-- The Text view and Timed view render the same effective corrected words. The
-  legacy whole-transcript editor remains available only from Text view for
-  content without safe timing and explains that its replacement is untimed.
-- A completed timed transcript's Text view also has its own `Edit`, separate
-  from Timed view's per-line menu. It turns each editable passage into a
-  field: rewrite it or use its remove control to omit it. `Done` saves the
-  session as one `reviseText` correction (empty result is a no-op); `Cancel`
-  discards it. Outside that mode, Text view stays plain reading with normal
-  selection and copy.
+- Each line's action menu offers `Edit text…`. The sheet shows the preserved start/end range, accepts a non-empty replacement, and keeps the draft open with an inline error when persistence fails.
+- `Merge with previous` and `Merge with next` appear only for adjacent current lines with the same effective speaker assignment. A merge spans the first line's start through the last line's end.
+- `Split segment` is unavailable for a text-edited line. The user can undo the text edit, split at an automatic word boundary, and edit the new lines.
+- A persistent editing bar above the transcript scroll area groups the shared `Undo edit`, `Redo edit`, and `Reset edits` history with a prominent checkmark `Done` button. Done exits editing and clears selection; corrections are already saved by their existing actions. The scrolling header only offers `Edit transcript` / `Edit speakers` when editing is inactive.
+- `Reset edits…` opens a confirmation alert before restoring the automatic transcript's text, speaker names/assignments, and segment boundaries. Cancel leaves edits intact; `Reset edits` confirms. Reset remains in correction history and can itself be reversed with `Undo edit`. A confirmation belongs to the transcript that opened it and is dismissed when switching transcripts.
+- At narrow pane widths, selection and speaker-assignment tools move to a second row so history and Done remain visible without horizontal scrolling. In still narrower video split panes, selection and history use an `Edit actions` overflow menu below Done. This final layout stacks the controls so the menu never competes with Done for horizontal space.
+- During playback, untouched text follows automatic word cues. A corrected or merged line highlights as one unit only while playback is inside its preserved time envelope; no word-level highlight is implied.
+- The Text view and Timed view render the same effective corrected words. The legacy whole-transcript editor remains available only from Text view for content without safe timing and explains that its replacement is untimed.
+- A completed timed transcript's Text view also has its own `Edit`, separate from Timed view's per-line menu. It turns each editable passage into a field: rewrite it or use its remove control to omit it. `Done` saves the session as one `reviseText` correction (empty result is a no-op); `Cancel` discards it. Outside that mode, Text view stays plain reading with normal selection and copy.
 
-Retranscribing changes the automatic transcript fingerprint and resets manual
-transcript edits rather than replaying stale ranges. The complete storage and
-alignment decision is [ADR-031](adr/031-timed-transcript-corrections.md).
+Retranscribing changes the automatic transcript fingerprint and resets manual transcript edits rather than replaying stale ranges. The complete storage and alignment decision is [ADR-031](adr/031-timed-transcript-corrections.md).
 
 ### Transcript AI Context Lifecycle
 
-The release-readiness candidate prepares rich AI context off the main actor
-from one immutable transcript revision and context mode. The view shares
-in-flight preparation and cached results for that revision; send, quick prompt,
-summary generation, and regeneration await valid context rather than sending
-an empty/loading placeholder. Before provider submission, the request must
-still match the active transcription ID, content revision, and mode.
+The release-readiness candidate prepares rich AI context off the main actor from one immutable transcript revision and context mode. The view shares in-flight preparation and cached results for that revision; send, quick prompt, summary generation, and regeneration await valid context rather than sending an empty/loading placeholder. Before provider submission, the request must still match the active transcription ID, content revision, and mode.
 
-Edits, reverts, metadata/content refreshes, transcription switches, and mode
-changes invalidate stale prepared context; disappearing invalidates owned
-context work. Late completion cannot replace current chat context or submit
-the previous transcript. This is the context-loader contract, not a claim that
-every media task is cancelled or that long-transcript hardware/UI QA has passed.
-If the same transcript's revision or context mode changes while a prompt is
-being prepared, the still-current action shows a retry notice without submitting
-stale context. Navigation, disappearance, explicit cancellation, and replacement
-actions remain silent. The notice uses the existing result-header error surface;
-there is no automatic resubmission.
+Edits, reverts, metadata/content refreshes, transcription switches, and mode changes invalidate stale prepared context; disappearing invalidates owned context work. Late completion cannot replace current chat context or submit the previous transcript. This is the context-loader contract, not a claim that every media task is cancelled or that long-transcript hardware/UI QA has passed. If the same transcript's revision or context mode changes while a prompt is being prepared, the still-current action shows a retry notice without submitting stale context. Navigation, disappearance, explicit cancellation, and replacement actions remain silent. The notice uses the existing result-header error surface; there is no automatic resubmission.
 
 ### Recent Transcriptions List
 
@@ -1255,36 +939,17 @@ The Transforms sidebar item is visible when `AppFeatures.transformsEnabled` is t
 
 ### Custom Words Management
 
-Vocabulary > Fix words > Manage words opens a 640 × 560 sheet with a title,
-recognition-support detail, and Done button. Search matches both words and
-replacements. The grouped list shows the word, replacement or exact-spelling
-hint, an enable switch, and an individual delete action. The Add Rule form
-follows the list.
+Vocabulary > Fix words > Manage words opens a 640 × 560 sheet with a title, recognition-support detail, and Done button. Search matches both words and replacements. The grouped list shows the word, replacement or exact-spelling hint, an enable switch, and an individual delete action. The Add Rule form follows the list.
 
-**Bulk deletion:** one quiet Select… action appears beside the rule count.
-It enters selection mode without adding persistent checkboxes to the normal
-view. Selection mode replaces enable switches with checkboxes, hides individual
-trash actions and the Add Rule form, and reuses the list header for Select all,
-the selection count, Delete…, and Cancel. Keep that header reachable while
-scrolling large lists. Select all indicates none, some, or all selected.
+**Bulk deletion:** one quiet Select… action appears beside the rule count. It enters selection mode without adding persistent checkboxes to the normal view. Selection mode replaces enable switches with checkboxes, hides individual trash actions and the Add Rule form, and reuses the list header for Select all, the selection count, Delete…, and Cancel. Keep that header reachable while scrolling large lists. Select all indicates none, some, or all selected.
 
-- A row's checkbox and label form one selection target. Selecting a rule never
-  toggles its enabled state.
-- Select all operates on matching rules, including disabled entries. An empty
-  match set cannot initiate deletion. Changing search clears selection and any
-  unconfirmed request, preventing deletion of hidden rows.
-- Delete… opens a confirmation with the exact count. Cancelling the confirmation
-  preserves selection. Cancel leaves selection mode without deleting anything.
-- During deletion, prevent repeated actions, word mutations, and sheet dismissal.
-  Success returns to the normal list. Failure preserves the list and selection
-  and shows an error beside the list, where it remains visible in selection mode.
+- A row's checkbox and label form one selection target. Selecting a rule never toggles its enabled state.
+- Select all operates on matching rules, including disabled entries. An empty match set cannot initiate deletion. Changing search clears selection and any unconfirmed request, preventing deletion of hidden rows.
+- Delete… opens a confirmation with the exact count. Cancelling the confirmation preserves selection. Cancel leaves selection mode without deleting anything.
+- During deletion, prevent repeated actions, word mutations, and sheet dismissal. Success returns to the normal list. Failure preserves the list and selection and shows an error beside the list, where it remains visible in selection mode.
 - Exiting the sheet clears transient selection and unconfirmed requests.
 
-See the [selected-word deletion contract](contracts/custom-word-deletion.md)
-for transaction and confirmation-snapshot guarantees, and the
-[approved interaction study](../docs/plans/2026-09-07-issue-882-bulk-delete.md)
-for the current/proposed HTML comparison. This is development behavior until
-included in an app release.
+See the [selected-word deletion contract](contracts/custom-word-deletion.md) for transaction and confirmation-snapshot guarantees, and the [approved interaction study](../docs/plans/2026-09-07-issue-882-bulk-delete.md) for the current/proposed HTML comparison. This is development behavior until included in an app release.
 
 ### Text Snippets Management (v0.2)
 
@@ -1405,118 +1070,42 @@ Centered at the bottom of the settings form:
 
 Button to re-run onboarding flow: "Run Onboarding Again..."
 
-The first-run window follows [ADR-005](adr/005-onboarding-first-run.md): Welcome,
-Permissions, Try It, and Ready. Try It has a hotkey rehearsal phase and a real
-dictation phase. Loading and inactive practice boxes may use compact fixed
-heights; model-setup failures use their content's intrinsic height in either
-phase so the heading, explanation, recovery tips, and Retry / Open Settings
-buttons do not overlap adjacent content. The step body scrolls while navigation
-and Skip remain in the footer.
+The first-run window follows [ADR-005](adr/005-onboarding-first-run.md): Welcome, Permissions, Try It, and Ready. Try It has a hotkey rehearsal phase and a real dictation phase. Loading and inactive practice boxes may use compact fixed heights; model-setup failures use their content's intrinsic height in either phase so the heading, explanation, recovery tips, and Retry / Open Settings buttons do not overlap adjacent content. The step body scrolls while navigation and Skip remain in the footer.
 
-Synthetic native hosting tests can validate these view states and geometry.
-They do not establish physical hotkey behavior, microphone or Accessibility
-permission prompts, real-model readiness, cross-app paste, or VoiceOver support.
-The [October audit](../docs/audits/2026-10-02-app-audit/gui-onboarding.md) records
-the verified states and outstanding end-to-end qualification.
+Synthetic native hosting tests can validate these view states and geometry. They do not establish physical hotkey behavior, microphone or Accessibility permission prompts, real-model readiness, cross-app paste, or VoiceOver support. The [October audit](../docs/audits/2026-10-02-app-audit/gui-onboarding.md) records the verified states and outstanding end-to-end qualification.
 
 ---
 
 ## Prompts
 
-Prompts are set-up-once configuration, so they are managed where they run
-rather than from a sidebar destination of their own:
+Prompts are set-up-once configuration, so they are managed where they run rather than from a sidebar destination of their own:
 
-- **Transcript prompts** generate outputs from completed meeting, file, podcast
-  and video transcripts. Their manager opens as a sheet from the **Library**
-  header **Prompts** button (the primary home, since Library lists every
-  transcript they run on), from **Manage Prompts** in a transcript's generation
-  popover, and from **After each meeting → Prompts** in Meetings.
-- **Live Ask** questions are reusable questions for ongoing meetings, using the
-  existing QuickPrompt model and manager. They are managed from the Meetings
-  **Meeting Prompts** section and from the live Ask pane.
+- **Transcript prompts** generate outputs from completed meeting, file, podcast and video transcripts. Their manager opens as a sheet from the **Library** header **Prompts** button (the primary home, since Library lists every transcript they run on), from **Manage Prompts** in a transcript's generation popover, and from **After each meeting → Prompts** in Meetings.
+- **Live Ask** questions are reusable questions for ongoing meetings, using the existing QuickPrompt model and manager. They are managed from the Meetings **Meeting Prompts** section and from the live Ask pane.
 
-v0.8.0 through v0.8.7 exposed both managers from a sidebar **Prompts**
-destination; that destination was removed because neither kind of prompt
-applies to dictation and neither is a daily destination.
+v0.8.0 through v0.8.7 exposed both managers from a sidebar **Prompts** destination; that destination was removed because neither kind of prompt applies to dictation and neither is a daily destination.
 
-**Transforms** remains its existing self-contained selected-text rewrite
-surface. Transcript management does not expose Transform rows, including
-creation and Trash. Stored categories, versions, metadata and CLI commands remain
-compatible. The AI Formatter's transcript and dictation prompts stay in
-Settings → AI beside the switches they configure.
+**Transforms** remains its existing self-contained selected-text rewrite surface. Transcript management does not expose Transform rows, including creation and Trash. Stored categories, versions, metadata and CLI commands remain compatible. The AI Formatter's transcript and dictation prompts stay in Settings → AI beside the switches they configure.
 
-Transcript prompt lists retain search and optional collection filtering. **New
-prompt** creates a transcript prompt; **Manage collections** opens collection
-creation, renaming, reordering and deletion. Built-in provenance is shown on rows,
-without redundant Result/Transform category badges. No search matches is a filter
-empty state, not a claim that the user has no custom prompts.
+Transcript prompt lists retain search and optional collection filtering. **New prompt** creates a transcript prompt; **Manage collections** opens collection creation, renaming, reordering and deletion. Built-in provenance is shown on rows, without redundant Result/Transform category badges. No search matches is a filter empty state, not a claim that the user has no custom prompts.
 
-The Meetings **After each meeting → Prompts** entry reuses transcript management;
-Live Ask management reuses the same question manager from the Meeting Prompts
-section and the live Ask pane. Meetings remains the place to use live questions and choose automatic
-post-meeting outputs. The **After each meeting** chips read and write
-`Prompt.autoRuns(for: .meeting)` via `PromptRepository.setAutoRun(id:source:.meeting)`,
-gated by current `prompt_label_policies` availability for an unlabeled recording.
-They do not persist auto-run in legacy `prompt_meeting_policies`. Hidden prompts
-stay off the card; other transcription sources keep their own auto-run bits.
-All entries receive their configured repositories and
-editing services. Collections organize transcript/Transform instruction records;
-recording labels classify recordings and gate availability. Live Ask retains its
-existing question groups and pinning, without a collection migration. Auto-Run
-help uses native help so it is not clipped and does not intercept clicks.
+The Meetings **After each meeting → Prompts** entry reuses transcript management; Live Ask management reuses the same question manager from the Meeting Prompts section and the live Ask pane. Meetings remains the place to use live questions and choose automatic post-meeting outputs. The **After each meeting** chips read and write `Prompt.autoRuns(for: .meeting)` via `PromptRepository.setAutoRun(id:source:.meeting)`, gated by current `prompt_label_policies` availability for an unlabeled recording. They do not persist auto-run in legacy `prompt_meeting_policies`. Hidden prompts stay off the card; other transcription sources keep their own auto-run bits. All entries receive their configured repositories and editing services. Collections organize transcript/Transform instruction records; recording labels classify recordings and gate availability. Live Ask retains its existing question groups and pinning, without a collection migration. Auto-Run help uses native help so it is not clipped and does not intercept clicks.
 
-The editor retains Markdown source/preview, notes-context opt-in, collection
-assignment, model override, and collapsed generation settings. **Version history**
-retains version metadata, text/settings comparisons, and restore-as-new-version.
-Restoring requires explicit confirmation; cancelling ordinary edits does not
-silently discard or restore a version. Deleted prompts remain recoverable.
+The editor retains Markdown source/preview, notes-context opt-in, collection assignment, model override, and collapsed generation settings. **Version history** retains version metadata, text/settings comparisons, and restore-as-new-version. Restoring requires explicit confirmation; cancelling ordinary edits does not silently discard or restore a version. Deleted prompts remain recoverable.
 
-Generation settings use the effective provider and model, including any prompt
-model override. The collapsed summary distinguishes inherited AI settings from
-explicit overrides. **Use AI settings** shows the current provider/model; the
-model chooser retains custom-ID entry when model discovery is unavailable.
-Opening and saving an untouched editor preserves inheritance rather than saving
-displayed defaults as explicit values.
+Generation settings use the effective provider and model, including any prompt model override. The collapsed summary distinguishes inherited AI settings from explicit overrides. **Use AI settings** shows the current provider/model; the model chooser retains custom-ID entry when model discovery is unavailable. Opening and saving an untouched editor preserves inheritance rather than saving displayed defaults as explicit values.
 
-Controls reflect what the integration sends and identify unverified custom
-endpoint support. Known model/provider restrictions and setting combinations apply before save; inherited values are
-identified as app or provider defaults. Unknown defaults and model limits are
-not presented as exact numbers. Existing unsupported overrides remain visible
-with an explanation and an explicit removal action. Custom compatible endpoints
-retain manual configuration with an unverified-support explanation. Reasoning
-controls are unavailable when the adapter cannot send them. The same effective
-model drives run-screen compatibility feedback and request resolution.
+Controls reflect what the integration sends and identify unverified custom endpoint support. Known model/provider restrictions and setting combinations apply before save; inherited values are identified as app or provider defaults. Unknown defaults and model limits are not presented as exact numbers. Existing unsupported overrides remain visible with an explanation and an explicit removal action. Custom compatible endpoints retain manual configuration with an unverified-support explanation. Reasoning controls are unavailable when the adapter cannot send them. The same effective model drives run-screen compatibility feedback and request resolution.
 
-Gemini 3 inherited prompt sampling uses the provider default instead of injecting
-the app's legacy temperature. Explicit settings and historical execution receipts
-remain intact. This does not introduce a separate global numeric settings layer
-or change the Transforms editor.
+Gemini 3 inherited prompt sampling uses the provider default instead of injecting the app's legacy temperature. Explicit settings and historical execution receipts remain intact. This does not introduce a separate global numeric settings layer or change the Transforms editor.
 
-Availability and automatic generation are separate controls. **All transcriptions**
-is the common default; selected labels permit any matching transcription,
-independent of its source. Source-aware auto-run only runs an available prompt.
-Explain both settings together in ordinary language so the user can understand
-why a prompt is offered and when it runs. Existing detailed CLI policy exceptions
-must survive edits that do not change availability. Rules that the simple picker
-cannot represent are shown as **Custom availability rules**; choosing All
-transcriptions or a label explicitly replaces those rules on Save. The prompt,
-its version and edited availability commit atomically. Visibility and source auto-run
-remain in the manager; Transform shortcuts remain in the Transforms editor.
-Collection ordering remains in Manage collections. Prompt ordering and running-label
-metadata are preserved by edits; this layout does not add prompt duplication,
-prompt-reordering controls, or a running-label editor.
+Availability and automatic generation are separate controls. **All transcriptions** is the common default; selected labels permit any matching transcription, independent of its source. Source-aware auto-run only runs an available prompt. Explain both settings together in ordinary language so the user can understand why a prompt is offered and when it runs. Existing detailed CLI policy exceptions must survive edits that do not change availability. Rules that the simple picker cannot represent are shown as **Custom availability rules**; choosing All transcriptions or a label explicitly replaces those rules on Save. The prompt, its version and edited availability commit atomically. Visibility and source auto-run remain in the manager; Transform shortcuts remain in the Transforms editor. Collection ordering remains in Manage collections. Prompt ordering and running-label metadata are preserved by edits; this layout does not add prompt duplication, prompt-reordering controls, or a running-label editor.
 
 ## Discover (v0.4)
 
 A curated content feed displayed as a sidebar item with a full-page content view. Discover surfaces tips, quotes, affirmations, and sponsored items fetched from a remote JSON feed (`macparakeet.com/api/discover.json`) with local cache fallback and a bundled default. Visibility and the launch fetch are gated by Settings → System → Appearance → **Show Discover in the sidebar** (`showDiscover`, default on). When launched with the preference off, the card is omitted and `DiscoverService` is not configured, so launch makes no request to the feed endpoint.
 
-While enabled, the feed refresh starts at app launch or on re-enable, not by
-selecting this page, and remains independent of the telemetry setting. Turning
-Discover off cancels cache-load, refresh, and rotation tasks and clears the
-displayed feed. Late completions cannot publish content or revive cancelled
-work, including across rapid disable/re-enable transitions. Bounded local cache
-I/O already queued may finish; disabling does not erase the on-disk cache.
-Neither this setting nor telemetry opt-out is a global network switch.
+While enabled, the feed refresh starts at app launch or on re-enable, not by selecting this page, and remains independent of the telemetry setting. Turning Discover off cancels cache-load, refresh, and rotation tasks and clears the displayed feed. Late completions cannot publish content or revive cancelled work, including across rapid disable/re-enable transitions. Bounded local cache I/O already queued may finish; disabling does not erase the on-disk cache. Neither this setting nor telemetry opt-out is a global network switch.
 
 ### Sidebar Card
 
@@ -1616,45 +1205,23 @@ Toggle on   → setupDiscoverContent() again (no relaunch)
 
 ## LLM Markdown Content
 
-`MarkdownContentView` is the single presentation boundary for generated
-assistant content in Prompt Results, saved Chat, and live Ask. It renders the
-same CommonMark/GFM subset on every surface, including nested lists, static
-checked/unchecked task items, fenced code, and horizontally scrollable tables.
-The surrounding pane owns vertical scrolling; wide Markdown blocks must not
-expand the transcript detail or live-meeting panel.
+`MarkdownContentView` is the single presentation boundary for generated assistant content in Prompt Results, saved Chat, and live Ask. It renders the same CommonMark/GFM subset on every surface, including nested lists, static checked/unchecked task items, fenced code, and horizontally scrollable tables. The surrounding pane owns vertical scrolling; wide Markdown blocks must not expand the transcript detail or live-meeting panel.
 
-Static and streaming content share a serial snapshot renderer. Each appearance
-subscribes afresh and receives the latest content; only the newest pending
-snapshot is retained while parsing. Closing or hiding a pane cancels its
-consumer, and a cancelled parse cannot publish over a replacement renderer.
-Returning to the pane must continue rendering new snapshots.
+Static and streaming content share a serial snapshot renderer. Each appearance subscribes afresh and receives the latest content; only the newest pending snapshot is retained while parsing. Closing or hiding a pane cancels its consumer, and a cancelled parse cannot publish over a replacement renderer. Returning to the pane must continue rendering new snapshots.
 
-Saved-result panes keep their actions above the scrolling content; actions wrap
-when the detail pane is narrow. In edit mode, the native text editor owns
-scrolling and expands with the available pane height. Do not place that editor
-inside another vertical scroll view.
+Saved-result panes keep their actions above the scrolling content; actions wrap when the detail pane is narrow. In edit mode, the native text editor owns scrolling and expands with the available pane height. Do not place that editor inside another vertical scroll view.
 
-Saved Chat retains every streamed token but coalesces message-list publication
-at a 33 ms cadence. Successful completion publishes the entire response before
-clearing streaming state. Stop and failure discard partial responses; navigation
-keeps the existing detached-conversation persistence rules.
+Saved Chat retains every streamed token but coalesces message-list publication at a 33 ms cadence. Successful completion publishes the entire response before clearing streaming state. Stop and failure discard partial responses; navigation keeps the existing detached-conversation persistence rules.
 
-Generated Markdown remains read-only and selectable. Task boxes communicate
-their checked state but are not controls. Headings and table cells preserve the
-renderer accessibility structure. Fonts and colors map to `DesignSystem` and
-must remain appearance-aware.
+Generated Markdown remains read-only and selectable. Task boxes communicate their checked state but are not controls. Headings and table cells preserve the renderer accessibility structure. Fonts and colors map to `DesignSystem` and must remain appearance-aware.
 
 Treat rendered model output as untrusted presentation data:
 
-- image loading is disabled, including remote, local-file, bundled, and data URL
-  sources;
+- image loading is disabled, including remote, local-file, bundled, and data URL sources;
 - only `http` and `https` links may be handed to the system browser;
-- activation of `file:`, `javascript:`, custom schemes, and relative
-  destinations is discarded;
+- activation of `file:`, `javascript:`, custom schemes, and relative destinations is discarded;
 - raw HTML does not create a web view or executable embedded content;
-- Copy Result and full-result exports continue using the original Markdown
-  source. Table-only Copy and Download use the renderer's normalized Markdown
-  for that table.
+- Copy Result and full-result exports continue using the original Markdown source. Table-only Copy and Download use the renderer's normalized Markdown for that table.
 
 ---
 
@@ -1905,26 +1472,10 @@ Sotto follows standard macOS patterns:
 
 ## Ask investigation activity
 
-Ask uses one quiet activity disclosure above each assistant answer. During a run,
-its label follows host-owned source operations and planning, writing, and reference
-validation phases. The existing Markdown renderer displays the streamed answer;
-there is no artificial typing delay or percentage estimate. Text publication is
-coalesced to 33 ms with a trailing flush during provider pauses; terminal content
-comes from the saved service result.
+Ask uses one quiet activity disclosure above each assistant answer. During a run, its label follows host-owned source operations and planning, writing, and reference validation phases. The existing Markdown renderer displays the streamed answer; there is no artificial typing delay or percentage estimate. Text publication is coalesced to 33 ms with a trailing flush during provider pauses; terminal content comes from the saved service result.
 
-Expanding activity shows bounded search queries, selected-source titles, returned
-counts, continuation availability, and failed/cancelled steps. Empty searches are
-completed operations, not failures. Counts describe returned results, never full
-corpus coverage. The user's expanded state survives the transition to the saved
-answer within the current view. Saved activity is collapsed by default on reopen.
-Source citations remain the separate path to inspect supporting passages.
+Expanding activity shows bounded search queries, selected-source titles, returned counts, continuation availability, and failed/cancelled steps. Empty searches are completed operations, not failures. Counts describe returned results, never full corpus coverage. The user's expanded state survives the transition to the saved answer within the current view. Saved activity is collapsed by default on reopen. Source citations remain the separate path to inspect supporting passages.
 
-Scrolling follows content growth while the reader stays at the bottom. Moving up
-suspends following; Jump to latest resumes it. Submitting a new question returns
-to the latest turn. Disclosure motion and explicit jumps respect Reduce Motion;
-streaming growth does not queue scrolling animations. Activity text and controls
-use native type, dynamic system colors, and the shared button styles.
+Scrolling follows content growth while the reader stays at the bottom. Moving up suspends following; Jump to latest resumes it. Submitting a new question returns to the latest turn. Disclosure motion and explicit jumps respect Reduce Motion; streaming growth does not queue scrolling animations. Activity text and controls use native type, dynamic system colors, and the shared button styles.
 
-Activity is stored locally with the answer and exposed through the CLI contract.
-It contains no copied transcript passages, raw provider errors, or model reasoning.
-See [Ask contract](contracts/ask-workspace.md) for bounds and interruption semantics.
+Activity is stored locally with the answer and exposed through the CLI contract. It contains no copied transcript passages, raw provider errors, or model reasoning. See [Ask contract](contracts/ask-workspace.md) for bounds and interruption semantics.

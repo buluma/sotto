@@ -20,52 +20,21 @@
 
 **10 of the last 14 production crashes (71%) are a single, deterministic bug in our code:**
 
-`AudioRecorder.configureAndStart(...)` at `AudioRecorder.swift:227` calls
-`AVAudioInputNode.installTap(onBus:bufferSize:format:block:)`. The call raises
-an **uncatchable Objective-C `NSException`** from the macOS audio framework
-stack (AVFAudio / AudioToolbox / CoreAudio HAL) on certain user audio device
-configurations. Swift cannot catch `NSException` with `try/catch`, and Cocoa's
-`NSApplication.run()` event loop catches unhandled `NSException`s internally
-and calls `abort()` directly — bypassing our `NSSetUncaughtExceptionHandler`,
-which is why every crash record shows `crash_type: signal` rather than
-`crash_type: exception` (see §3.6 for the full handler-chain analysis).
-`SIGABRT` (signal 6) arrives, our signal handler captures the backtrace, and
-the report is uploaded on next launch.
+`AudioRecorder.configureAndStart(...)` at `AudioRecorder.swift:227` calls `AVAudioInputNode.installTap(onBus:bufferSize:format:block:)`. The call raises an **uncatchable Objective-C `NSException`** from the macOS audio framework stack (AVFAudio / AudioToolbox / CoreAudio HAL) on certain user audio device configurations. Swift cannot catch `NSException` with `try/catch`, and Cocoa's `NSApplication.run()` event loop catches unhandled `NSException`s internally and calls `abort()` directly — bypassing our `NSSetUncaughtExceptionHandler`, which is why every crash record shows `crash_type: signal` rather than `crash_type: exception` (see §3.6 for the full handler-chain analysis). `SIGABRT` (signal 6) arrives, our signal handler captures the backtrace, and the report is uploaded on next launch.
 
-**Both affected users are on a USB aggregate audio input device**
-(`CADefaultDeviceAggregate-*`, `device_sub_transport: usb`, 2 channels,
-48 kHz) — confirmed from their `dictation_completed` telemetry rows, not
-extrapolated. The trigger is transient state in the aggregate (Bluetooth
-handshake, USB hot-plug, virtual audio driver restart, wake-from-sleep)
-causing the format captured at line 164 to no longer match the bus's current
-format at line 227.
+**Both affected users are on a USB aggregate audio input device** (`CADefaultDeviceAggregate-*`, `device_sub_transport: usb`, 2 channels, 48 kHz) — confirmed from their `dictation_completed` telemetry rows, not extrapolated. The trigger is transient state in the aggregate (Bluetooth handshake, USB hot-plug, virtual audio driver restart, wake-from-sleep) causing the format captured at line 164 to no longer match the bus's current format at line 227.
 
-One of the two affected users (cluster C, CA / M4 / macOS 26.2) is a
-**brand-new user still in the onboarding flow** — the sessions after the
-crashes show `onboarding_step`, `model_download_started`, and
-`model_download_completed`. That is the most expensive crash to take
-because it destroys first-impression trust; see the "Onboarding stuck
-incident" entry in `MEMORY.md` for the prior precedent.
+One of the two affected users (cluster C, CA / M4 / macOS 26.2) is a **brand-new user still in the onboarding flow** — the sessions after the crashes show `onboarding_step`, `model_download_started`, and `model_download_completed`. That is the most expensive crash to take because it destroys first-impression trust; see the "Onboarding stuck incident" entry in `MEMORY.md` for the prior precedent.
 
-The remaining 4 crashes are unrelated system-level faults (see "Other clusters"
-at the bottom of this doc).
+The remaining 4 crashes are unrelated system-level faults (see "Other clusters" at the bottom of this doc).
 
-**Fix shape:** wrap the AVFAudio calls in `AudioRecorder.configureAndStart`
-(specifically `inputNode.outputFormat(forBus: 0)` and `inputNode.installTap(...)`,
-and defensively `engine.start()`) in a thin Objective-C `@try/@catch` trampoline
-that converts `NSException` to a Swift `Error`. This is the standard technique
-for every Swift project that talks to AVFAudio. We currently have zero ObjC
-exception trampolines in the codebase (`grep @try Sources/` returns only
-`CrashReporter.swift`, which registers an uncaught-exception *handler*, not a
-catcher — and that handler never fires for this crash because Cocoa's event
-loop short-circuits it, see §3.6).
+**Fix shape:** wrap the AVFAudio calls in `AudioRecorder.configureAndStart` (specifically `inputNode.outputFormat(forBus: 0)` and `inputNode.installTap(...)`, and defensively `engine.start()`) in a thin Objective-C `@try/@catch` trampoline that converts `NSException` to a Swift `Error`. This is the standard technique for every Swift project that talks to AVFAudio. We currently have zero ObjC exception trampolines in the codebase (`grep @try Sources/` returns only `CrashReporter.swift`, which registers an uncaught-exception *handler*, not a catcher — and that handler never fires for this crash because Cocoa's event loop short-circuits it, see §3.6).
 
 ---
 
 ## 1. Data pulled from telemetry
 
-Source: D1 database `sotto-telemetry` on the live Cloudflare Worker.
-Queries run at ~2026-04-08T23:45Z. Window: 72 hours.
+Source: D1 database `sotto-telemetry` on the live Cloudflare Worker. Queries run at ~2026-04-08T23:45Z. Window: 72 hours.
 
 ```sql
 SELECT event_id, session, app_ver, os_ver, chip, country, ts, props
@@ -87,9 +56,7 @@ ORDER BY ts DESC
 | `llm_formatter_failed` | 2 | 1 |
 | `transcription_failed` | 2 | 2 |
 
-All 14 `crash_occurred` records are on `app_ver = 0.5.5` except one stale record
-from `app_ver = 0.5.1` whose `crash_app_ver` is `0.4.27` (a pre-0.5 crash
-persisted on disk and uploaded post-upgrade — ignore).
+All 14 `crash_occurred` records are on `app_ver = 0.5.5` except one stale record from `app_ver = 0.5.1` whose `crash_app_ver` is `0.4.27` (a pre-0.5 crash persisted on disk and uploaded post-upgrade — ignore).
 
 ### 1.2 The 14 crashes
 
@@ -110,46 +77,35 @@ persisted on disk and uploaded post-upgrade — ignore).
 | 13 | 2026-04-06T18:00:53Z | CA / Apple M4 / 26.2 | 0.5.5 | 0.5.5 | 6 / SIGABRT | DDD7A497-… |
 | 14 | 2026-04-06T17:56:20Z | CA / Apple M4 / 26.2 | 0.5.5 | 0.5.5 | 6 / SIGABRT | DDD7A497-… |
 
-The single `uuid = DDD7A497-EFB2-3CC2-A024-B4C83E9F0F65` on every current crash
-is the `LC_UUID` of the 0.5.5 `Sotto` Mach-O. I verified this by mounting
-the live DMG (`downloads.macparakeet.com/Sotto.dmg`, 0.5.5 build
-`20260406005332`) and running `dwarfdump --uuid`:
+The single `uuid = DDD7A497-EFB2-3CC2-A024-B4C83E9F0F65` on every current crash is the `LC_UUID` of the 0.5.5 `Sotto` Mach-O. I verified this by mounting the live DMG (`downloads.macparakeet.com/Sotto.dmg`, 0.5.5 build `20260406005332`) and running `dwarfdump --uuid`:
 
 ```
 UUID: DDD7A497-EFB2-3CC2-A024-B4C83E9F0F65 (arm64)
   /Volumes/Sotto/Sotto.app/Contents/MacOS/Sotto
 ```
 
-The stale row #9 has a different UUID `3BB999A2-9CE1-39E5-AB18-1A87F785E3CF`,
-which is not 0.5.5 — that's a 0.4.27 binary whose crash file sat on disk and
-was uploaded after the user upgraded.
+The stale row #9 has a different UUID `3BB999A2-9CE1-39E5-AB18-1A87F785E3CF`, which is not 0.5.5 — that's a 0.4.27 binary whose crash file sat on disk and was uploaded after the user upgraded.
 
 ### 1.3 Clustering by stack-trace signature
 
-Raw frame addresses vary between crashes because of ASLR. To compare stacks
-across processes, subtract `slide` from each address to get a **fixed binary
-offset**. The main executable loads at `0x100000000 + slide`, so:
+Raw frame addresses vary between crashes because of ASLR. To compare stacks across processes, subtract `slide` from each address to get a **fixed binary offset**. The main executable loads at `0x100000000 + slide`, so:
 
 ```
 offset = address − slide − 0x100000000
 ```
 
-Frame 0 of every crash resolves to the same offset `0x865c70`, which atos
-against the 0.5.5 binary reports as:
+Frame 0 of every crash resolves to the same offset `0x865c70`, which atos against the 0.5.5 binary reports as:
 
 ```
 closure #1 in variable initialization expression of
 static CrashReporter.signalHandler (CrashReporter.swift:202)
 ```
 
-That's our crash reporter's `backtrace()` call — so frame 0 is always the
-reporter itself, not the real crash site. Looking at the frames above and
-below frame 0:
+That's our crash reporter's `backtrace()` call — so frame 0 is always the reporter itself, not the real crash site. Looking at the frames above and below frame 0:
 
 **Cluster A — 7 crashes, DE / M4 Max / macOS 15.6**
 
-Stack (using `slide = 0x42e8000` from row 6 as the canonical sample, offsets
-identical for all 7):
+Stack (using `slide = 0x42e8000` from row 6 as the canonical sample, offsets identical for all 7):
 
 ```
 frame  address        offset (−slide−0x100000000)   symbol
@@ -173,43 +129,21 @@ frame  address        offset (−slide−0x100000000)   symbol
  20-23 0x192f…0x193…  Foundation main run loop / NSApplication.run
 ```
 
-All 7 crashes share the exact same frame offsets
-`{0x865c70, 0x80638c, 0x804d70, 0x8044c8}`. The slide values I verified are
-`0x42e8000`, `0x2a94000`, `0x2288000`, `0x24e4000`, `0xf14000`, `0x2214000`,
-`0x4d44000`. Seven distinct ASLR slides, identical binary offsets → identical
-code path.
+All 7 crashes share the exact same frame offsets `{0x865c70, 0x80638c, 0x804d70, 0x8044c8}`. The slide values I verified are `0x42e8000`, `0x2a94000`, `0x2288000`, `0x24e4000`, `0xf14000`, `0x2214000`, `0x4d44000`. Seven distinct ASLR slides, identical binary offsets → identical code path.
 
 **Cluster C — 3 crashes, CA / M4 / macOS 26.2**
 
-Same app-code offsets `{0x865c70, 0x80638c, 0x804d70, 0x8044c8}`. Slides are
-`0x380000`, `0x2a20000`, `0x4fdc000`. The system-library region frames have
-**completely different addresses** from cluster A (macOS 15.6) because
-macOS 26.2 has a different dyld shared cache layout — cluster C's frames 1–12
-are in the `0x181…` and `0x225b…` ranges. The app-code offsets are bit-identical
-to cluster A, which is the only thing that matters for clustering: the same
-code path in the same binary is being reached from different OS versions via
-different framework-side addresses.
+Same app-code offsets `{0x865c70, 0x80638c, 0x804d70, 0x8044c8}`. Slides are `0x380000`, `0x2a20000`, `0x4fdc000`. The system-library region frames have **completely different addresses** from cluster A (macOS 15.6) because macOS 26.2 has a different dyld shared cache layout — cluster C's frames 1–12 are in the `0x181…` and `0x225b…` ranges. The app-code offsets are bit-identical to cluster A, which is the only thing that matters for clustering: the same code path in the same binary is being reached from different OS versions via different framework-side addresses.
 
-**Conclusion from clustering:** clusters A and C are the same bug in our code,
-reached by two distinct users on different macOS versions and different
-hardware. **10 of 14 = 71% of crash volume in the window.**
+**Conclusion from clustering:** clusters A and C are the same bug in our code, reached by two distinct users on different macOS versions and different hardware. **10 of 14 = 71% of crash volume in the window.**
 
 **Cluster B — 2 crashes, BY / M2 Max / macOS 14.8.5, SIGBUS**
 
-After removing frame 0 (our signal handler), *no remaining frames are in the
-app binary*. Every frame is in the shared cache (0x183…, 0x18e…, 0x19b…). This
-is a crash on a worker thread running entirely in Apple frameworks. SIGBUS on
-an audio-stack address range likely points at CoreAudio HAL / AVFAudio / CoreML
-mmap fault on the older OS. We have no direct app stack frame to point at. Not
-the same bug as A/C.
+After removing frame 0 (our signal handler), *no remaining frames are in the app binary*. Every frame is in the shared cache (0x183…, 0x18e…, 0x19b…). This is a crash on a worker thread running entirely in Apple frameworks. SIGBUS on an audio-stack address range likely points at CoreAudio HAL / AVFAudio / CoreML mmap fault on the older OS. We have no direct app stack frame to point at. Not the same bug as A/C.
 
 **Cluster D — 1 crash, US / M1 Max / macOS 26.3, SIGSEGV**
 
-8-frame stack, very short. Frame 2 is at offset ~0x9336000 above the slide,
-which does NOT fit our main binary's address range — it is in a dynamically
-loaded framework (FluidAudio, a generated `.mlmodelc` code blob, or similar).
-Surrounding frames are in the 0x198…/0x19b… range (audio / CoreML territory).
-Different stack shape from A/C, different signal. Not the same bug.
+8-frame stack, very short. Frame 2 is at offset ~0x9336000 above the slide, which does NOT fit our main binary's address range — it is in a dynamically loaded framework (FluidAudio, a generated `.mlmodelc` code blob, or similar). Surrounding frames are in the 0x198…/0x19b… range (audio / CoreML territory). Different stack shape from A/C, different signal. Not the same bug.
 
 **Cluster E — 1 stale crash (row 9)**
 
@@ -227,20 +161,13 @@ Different binary UUID, `crash_app_ver = 0.4.27`. Ignore.
 | `STTError.transcriptionFailed` (CoreML program) | 1 | 0.4.21 legacy |
 | `AudioProcessorError.insufficientSamples` | 1 | 0.4.14 legacy |
 
-Nothing on 0.5.5 here other than Escape-cancels and the CN network errors.
-The installTap bug is notable precisely because it does *not* show up as
-`dictation_failed` — the error path in `DictationService.startRecording`
-(line 148-175) can't catch `NSException`, so the failure surfaces as a crash,
-not a `dictation_failed` event.
+Nothing on 0.5.5 here other than Escape-cancels and the CN network errors. The installTap bug is notable precisely because it does *not* show up as `dictation_failed` — the error path in `DictationService.startRecording` (line 148-175) can't catch `NSException`, so the failure surfaces as a crash, not a `dictation_failed` event.
 
 ---
 
 ## 2. Symbolication process (reproducible)
 
-Because the dSYM for 0.5.5 was lost before commit `704dfde` ("Archive dSYM
-during release builds for crash symbolication") landed on 2026-04-06, I
-recovered function names by running `atos` directly against the stripped
-release binary inside the shipped DMG.
+Because the dSYM for 0.5.5 was lost before commit `704dfde` ("Archive dSYM during release builds for crash symbolication") landed on 2026-04-06, I recovered function names by running `atos` directly against the stripped release binary inside the shipped DMG.
 
 ```sh
 # 1. Download the live 0.5.5 DMG (cache-bust the CDN)
@@ -268,19 +195,9 @@ AudioRecorder.start()                               (AudioRecorder.swift:80)
 AudioProcessor.startCapture()                       (AudioProcessor.swift:29)
 ```
 
-(When I first queried with a slightly different offset atos reported
-`<compiler-generated>:0` for `configureAndStart`; probing offsets in
-10-byte increments eventually landed the PC squarely on the `installTap`
-call site at line 227. I also confirmed
-`0x1008063a0 → AudioRecorder.configureAndStart (AudioRecorder.swift:320)`,
-which is the `sampleCounter.withLock { $0 = 0 }` call right after
-`installTap` — a sanity check that atos's line mapping is accurate for this
-function.)
+(When I first queried with a slightly different offset atos reported `<compiler-generated>:0` for `configureAndStart`; probing offsets in 10-byte increments eventually landed the PC squarely on the `installTap` call site at line 227. I also confirmed `0x1008063a0 → AudioRecorder.configureAndStart (AudioRecorder.swift:320)`, which is the `sampleCounter.withLock { $0 = 0 }` call right after `installTap` — a sanity check that atos's line mapping is accurate for this function.)
 
-`atos` works fine on a stripped release binary for *function-name* resolution
-because the Mach-O still contains the symbol table (`LC_SYMTAB`); only the
-DWARF debug info (line numbers, inlining, argument types) is in the dSYM. For
-this investigation, function names + an actual read of the source are enough.
+`atos` works fine on a stripped release binary for *function-name* resolution because the Mach-O still contains the symbol table (`LC_SYMTAB`); only the DWARF debug info (line numbers, inlining, argument types) is in the dSYM. For this investigation, function names + an actual read of the source are enough.
 
 ---
 
@@ -291,44 +208,21 @@ this investigation, function names + an actual read of the source are enough.
 Reading the stack bottom-up (entry → crash):
 
 1. `NSApplication.run` → main run loop (Foundation, frames 20–23)
-2. Swift concurrency executor resumes the actor (`libswift_Concurrency`,
-   frames 16–19) — this is the await-point inside
-   `DictationService.startRecording`
-3. `AudioProcessor.startCapture()` (`AudioProcessor.swift:29`)
-   — frame 15, offset `0x8044c8`
-4. `AudioRecorder.start()` (`AudioRecorder.swift:80`)
-   — frame 14, offset `0x804d70`
-5. `AudioRecorder.configureAndStart(overrideDeviceID: nil)` with in-flight
-   return address at `AudioRecorder.swift:227` — frame 13, offset `0x80638c`
-   (see §3.3 for the off-by-4 return address explanation)
+2. Swift concurrency executor resumes the actor (`libswift_Concurrency`, frames 16–19) — this is the await-point inside `DictationService.startRecording`
+3. `AudioProcessor.startCapture()` (`AudioProcessor.swift:29`) — frame 15, offset `0x8044c8`
+4. `AudioRecorder.start()` (`AudioRecorder.swift:80`) — frame 14, offset `0x804d70`
+5. `AudioRecorder.configureAndStart(overrideDeviceID: nil)` with in-flight return address at `AudioRecorder.swift:227` — frame 13, offset `0x80638c` (see §3.3 for the off-by-4 return address explanation)
 6. Into the audio framework stack (frames 10–12)
 7. Up into libswiftCore / libobjc / libsystem abort/unwind path (frames 1–9)
 8. `SIGABRT` raised → our signal handler captures backtrace (frame 0)
 
-Frames 10–12 are in the macOS audio framework neighborhood — I cannot pin
-them to an exact dylib (AVFAudio vs AudioToolbox vs CoreAudio HAL) without
-the macOS 15.6 and 26.2 dyld shared caches, which I do not have. What I can
-verify: they are three consecutive system-library frames called from our
-`configureAndStart`, they are BELOW the libswiftCore/abort path, and
-`installTap` is the only operation in our `configureAndStart` that crosses
-into the audio framework stack at this call site. That's sufficient for the
-diagnosis; pinning the exact dylib is not necessary because the fix (ObjC
-trampoline inside our Swift code) catches the exception regardless of which
-framework raised it.
+Frames 10–12 are in the macOS audio framework neighborhood — I cannot pin them to an exact dylib (AVFAudio vs AudioToolbox vs CoreAudio HAL) without the macOS 15.6 and 26.2 dyld shared caches, which I do not have. What I can verify: they are three consecutive system-library frames called from our `configureAndStart`, they are BELOW the libswiftCore/abort path, and `installTap` is the only operation in our `configureAndStart` that crosses into the audio framework stack at this call site. That's sufficient for the diagnosis; pinning the exact dylib is not necessary because the fix (ObjC trampoline inside our Swift code) catches the exception regardless of which framework raised it.
 
-The exception is raised inside the audio framework stack and unwinds back
-through our frames on the way out. Because `installTap` is an `@objc`
-Objective-C method and we call it from Swift with no `@try/@catch` trampoline
-in between, the `NSException` propagates freely through Swift frames (Swift
-knows nothing about it) until it either hits the top-level
-`NSApplication.run()` event-loop try/catch or the Swift runtime's uncaught
-handler, either of which calls `abort()` → `SIGABRT`. See §3.6 for why our
-own `NSSetUncaughtExceptionHandler` is not firing.
+The exception is raised inside the audio framework stack and unwinds back through our frames on the way out. Because `installTap` is an `@objc` Objective-C method and we call it from Swift with no `@try/@catch` trampoline in between, the `NSException` propagates freely through Swift frames (Swift knows nothing about it) until it either hits the top-level `NSApplication.run()` event-loop try/catch or the Swift runtime's uncaught handler, either of which calls `abort()` → `SIGABRT`. See §3.6 for why our own `NSSetUncaughtExceptionHandler` is not firing.
 
 ### 3.2 The actual code path
 
-`Sources/SottoCore/Audio/AudioRecorder.swift` around the crash site
-(full context, line numbers verified against HEAD):
+`Sources/SottoCore/Audio/AudioRecorder.swift` around the crash site (full context, line numbers verified against HEAD):
 
 ```swift
  70  public func start() throws {
@@ -382,17 +276,11 @@ own `NSSetUncaughtExceptionHandler` is not firing.
 337  }
 ```
 
-Frame 13's offset (`0x80638c`) symbolicates to `AudioRecorder.swift:227` —
-that is the `installTap(onBus:bufferSize:format:block:)` call site. The
-`installTap` API is a bridged Objective-C method on `AVAudioIONode`; when its
-internal validation fails it raises `NSInternalInconsistencyException` or
-`com.apple.coreaudio.avfaudio`, both of which are unrecoverable in Swift.
+Frame 13's offset (`0x80638c`) symbolicates to `AudioRecorder.swift:227` — that is the `installTap(onBus:bufferSize:format:block:)` call site. The `installTap` API is a bridged Objective-C method on `AVAudioIONode`; when its internal validation fails it raises `NSInternalInconsistencyException` or `com.apple.coreaudio.avfaudio`, both of which are unrecoverable in Swift.
 
 ### 3.3 Frame 13's PC is 4 bytes past the installTap BL — why that's stronger evidence
 
-Frame 13 on every cluster A/C crash is at binary offset **`0x80638c`**. When I
-walked the binary 4 bytes at a time with `atos` against the shipped 0.5.5
-stripped binary, the line mapping looks like this:
+Frame 13 on every cluster A/C crash is at binary offset **`0x80638c`**. When I walked the binary 4 bytes at a time with `atos` against the shipped 0.5.5 stripped binary, the line mapping looks like this:
 
 ```
 0x100806380 → AudioRecorder.swift:227   ← BL instruction for installTap
@@ -406,80 +294,29 @@ stripped binary, the line mapping looks like this:
 0x1008063c0 → AudioRecorder.swift:323   ← try engine.start()
 ```
 
-On ARM64, `BL` (branch-and-link) stores `PC + 4` in the LR register as the
-return address. When a function makes a call, the caller pushes LR to the
-stack frame and that's what the stack walker reads. **A frame-pointer
-backtrace captures the instruction *after* the in-flight call, not the call
-itself.** So a frame 13 PC of `0x80638c` — exactly 4 bytes past the last byte
-of the line-227 mapping — is the return address of the `BL` that called
-`installTap`. The thread is still "inside" `installTap` (or deeper, in the
-frames above it), and would have returned to `0x80638c` if `installTap` had
-returned normally. It didn't. An exception unwound through it, the exception
-propagated all the way up to `abort()`, `SIGABRT` arrived, and the signal
-handler walked a stack that still had the original call's return address
-sitting there.
+On ARM64, `BL` (branch-and-link) stores `PC + 4` in the LR register as the return address. When a function makes a call, the caller pushes LR to the stack frame and that's what the stack walker reads. **A frame-pointer backtrace captures the instruction *after* the in-flight call, not the call itself.** So a frame 13 PC of `0x80638c` — exactly 4 bytes past the last byte of the line-227 mapping — is the return address of the `BL` that called `installTap`. The thread is still "inside" `installTap` (or deeper, in the frames above it), and would have returned to `0x80638c` if `installTap` had returned normally. It didn't. An exception unwound through it, the exception propagated all the way up to `abort()`, `SIGABRT` arrived, and the signal handler walked a stack that still had the original call's return address sitting there.
 
-This is the textbook signature of "uncaught exception propagating through an
-unreturned call". The `<compiler-generated>` label is because atos only has
-sparse line info (Swift embedded metadata, not DWARF — see §2) and the bytes
-immediately after a `BL` instruction are not tagged with a source line.
+This is the textbook signature of "uncaught exception propagating through an unreturned call". The `<compiler-generated>` label is because atos only has sparse line info (Swift embedded metadata, not DWARF — see §2) and the bytes immediately after a `BL` instruction are not tagged with a source line.
 
-**Bottom line:** the crashing call is unambiguously the `installTap` call at
-line 227. Not line 164 (`outputFormat`), not line 209 (`AVAudioFile`), not
-line 323 (`engine.start`). The offset arithmetic leaves no room.
+**Bottom line:** the crashing call is unambiguously the `installTap` call at line 227. Not line 164 (`outputFormat`), not line 209 (`AVAudioFile`), not line 323 (`engine.start`). The offset arithmetic leaves no room.
 
 ### 3.4 Why the Swift `do/try/catch` at line 79-96 does not help
 
-Swift's `throws/catch` only handles values conforming to `Error`. It does
-**not** catch Objective-C `NSException`. When Apple's own docs say a method
-"may throw an exception," they mean an ObjC `NSException`, which is a
-separate unwinding mechanism from Swift error propagation. The only way to
-catch these in Swift is via an Objective-C (or Objective-C++) file with a
-`@try { ... } @catch (NSException *) { ... }` bridge.
+Swift's `throws/catch` only handles values conforming to `Error`. It does **not** catch Objective-C `NSException`. When Apple's own docs say a method "may throw an exception," they mean an ObjC `NSException`, which is a separate unwinding mechanism from Swift error propagation. The only way to catch these in Swift is via an Objective-C (or Objective-C++) file with a `@try { ... } @catch (NSException *) { ... }` bridge.
 
-We have zero such bridges. Every AVFAudio call on lines 142–337 can in
-principle raise, and Swift `try` does nothing to protect us.
+We have zero such bridges. Every AVFAudio call on lines 142–337 can in principle raise, and Swift `try` does nothing to protect us.
 
 ### 3.5 Why `installTap` raises under normal-looking conditions
 
-The most common triggers for `installTap` raising `NSException` in production
-(collected from Apple engineering replies on the developer forums and from
-observed radars over the last several macOS releases):
+The most common triggers for `installTap` raising `NSException` in production (collected from Apple engineering replies on the developer forums and from observed radars over the last several macOS releases):
 
-1. **Format mismatch after device change.** The `format:` parameter must match
-   `inputNode.inputFormat(forBus: 0)` at the time of the call, or be `nil`.
-   On line 164 we capture `inputFormat = inputNode.outputFormat(forBus: 0)`;
-   63 lines later on line 227 we pass that same value to `installTap`. If the
-   hardware format changes between those two calls (Bluetooth HFP ↔ A2DP,
-   aggregate sub-device change, sample-rate renegotiation), the captured
-   format no longer matches the bus's current format and `installTap` raises.
-2. **Aggregate device in an inconsistent state.** Both affected users show
-   `device_name = CADefaultDeviceAggregate-*` in their successful dictations
-   (rows from sessions 77F616B2 and 8141EB13). macOS auto-creates these
-   aggregate wrappers and they are a known source of AVFAudio exceptions when
-   their sub-devices disappear or their clock source is invalid.
-3. **Mic permission state race.** On recent macOS, calling `inputNode` APIs
-   before the permission prompt has been resolved can raise. We check
-   `authorizationStatus` on line 73 but *only log it* — we do not gate the
-   call. If `status == .notDetermined` at launch we will plough straight into
-   the AVFAudio call and roll the dice.
-4. **Tap already installed.** If a prior session failed to clean up
-   (e.g., another `configureAndStart` started a tap and then an early return
-   skipped `removeTap`), a subsequent `installTap` on the same bus raises
-   "attempting to install a tap on a bus that already has one". Looking at
-   the code, every tap install is followed by `engine.start()` in its own
-   `do { ... } catch { inputNode.removeTap(onBus: 0) ... }`, so this case is
-   handled — but only for the `engine.start()` failure path. If anything
-   between `installTap` and `engine.start()` throws (it can't today, but a
-   future edit could introduce one), we would orphan a tap.
-5. **Buffer size 4096 incompatible with the hardware preferred size.** On
-   some USB interfaces, `installTap` rejects a `bufferSize` that is not a
-   valid multiple of the hardware buffer. 4096 is almost always safe but
-   not guaranteed.
+1. **Format mismatch after device change.** The `format:` parameter must match `inputNode.inputFormat(forBus: 0)` at the time of the call, or be `nil`. On line 164 we capture `inputFormat = inputNode.outputFormat(forBus: 0)`; 63 lines later on line 227 we pass that same value to `installTap`. If the hardware format changes between those two calls (Bluetooth HFP ↔ A2DP, aggregate sub-device change, sample-rate renegotiation), the captured format no longer matches the bus's current format and `installTap` raises.
+2. **Aggregate device in an inconsistent state.** Both affected users show `device_name = CADefaultDeviceAggregate-*` in their successful dictations (rows from sessions 77F616B2 and 8141EB13). macOS auto-creates these aggregate wrappers and they are a known source of AVFAudio exceptions when their sub-devices disappear or their clock source is invalid.
+3. **Mic permission state race.** On recent macOS, calling `inputNode` APIs before the permission prompt has been resolved can raise. We check `authorizationStatus` on line 73 but *only log it* — we do not gate the call. If `status == .notDetermined` at launch we will plough straight into the AVFAudio call and roll the dice.
+4. **Tap already installed.** If a prior session failed to clean up (e.g., another `configureAndStart` started a tap and then an early return skipped `removeTap`), a subsequent `installTap` on the same bus raises "attempting to install a tap on a bus that already has one". Looking at the code, every tap install is followed by `engine.start()` in its own `do { ... } catch { inputNode.removeTap(onBus: 0) ... }`, so this case is handled — but only for the `engine.start()` failure path. If anything between `installTap` and `engine.start()` throws (it can't today, but a future edit could introduce one), we would orphan a tap.
+5. **Buffer size 4096 incompatible with the hardware preferred size.** On some USB interfaces, `installTap` rejects a `bufferSize` that is not a valid multiple of the hardware buffer. 4096 is almost always safe but not guaranteed.
 
-I can't tell which of these fired without the exception's `reason` string,
-which the current crash reporter does not capture (it only captures signal
-number + address backtrace, not the `NSException.reason`). See §5 for the fix.
+I can't tell which of these fired without the exception's `reason` string, which the current crash reporter does not capture (it only captures signal number + address backtrace, not the `NSException.reason`). See §5 for the fix.
 
 ### 3.6 Why the pattern looks "intermittent"
 
@@ -491,48 +328,22 @@ For cluster A (DE user), the seven crash timestamps (from `crash_ts`) are:
 15:25:35, 15:28:11            → two more, roughly three minutes apart
 ```
 
-Between the 14:00 pair and the 15:25 pair, the **same user** (same binary,
-same chip, same OS) ran session `8141EB13` — uploaded the 14:00:21 crash,
-then successfully dictated for **82 minutes** (14:03 → 15:22, many
-`dictation_started`/`dictation_completed` pairs), quit, relaunched, and
-crashed again at 15:25:35.
+Between the 14:00 pair and the 15:25 pair, the **same user** (same binary, same chip, same OS) ran session `8141EB13` — uploaded the 14:00:21 crash, then successfully dictated for **82 minutes** (14:03 → 15:22, many `dictation_started`/`dictation_completed` pairs), quit, relaunched, and crashed again at 15:25:35.
 
 This is the signature of an audio-device-state-dependent bug:
 
-- The user has a USB aggregate audio device selected
-  (`device_name = CADefaultDeviceAggregate-60938-10`,
-  `device_transport = aggregate`, `device_sub_transport = usb`,
-  `device_channels = 2`, `device_sample_rate = 48000` —
-  confirmed from `dictation_completed` rows in sessions `8141EB13` and
-  `77F616B2`).
-- Sometimes, when they press the hotkey, the aggregate device's internal
-  format is in an inconsistent state (right after wake-from-sleep, right
-  after a Bluetooth headset toggled power, USB hot-plug, virtual audio
-  driver restart, etc.) and `installTap` raises.
+- The user has a USB aggregate audio device selected (`device_name = CADefaultDeviceAggregate-60938-10`, `device_transport = aggregate`, `device_sub_transport = usb`, `device_channels = 2`, `device_sample_rate = 48000` — confirmed from `dictation_completed` rows in sessions `8141EB13` and `77F616B2`).
+- Sometimes, when they press the hotkey, the aggregate device's internal format is in an inconsistent state (right after wake-from-sleep, right after a Bluetooth headset toggled power, USB hot-plug, virtual audio driver restart, etc.) and `installTap` raises.
 - Sometimes the state is fine and everything works.
 - Once in a working state, it stays working for the rest of the session.
 
-**Cluster C shows the same pattern on macOS 26.2 — but critically, the
-affected user is going through onboarding for the first time.** Pulling
-sessions `30CF5A2F`, `6A865200`, `EEAD4122` from telemetry shows:
+**Cluster C shows the same pattern on macOS 26.2 — but critically, the affected user is going through onboarding for the first time.** Pulling sessions `30CF5A2F`, `6A865200`, `EEAD4122` from telemetry shows:
 
-- Three consecutive process launches, each immediately uploading a crash
-  report from the previous launch.
-- The third session (`EEAD4122`) after reporting its crash then runs
-  `onboarding_step` events, `model_download_started`,
-  `model_loaded`, `model_download_completed`, and finally
-  `onboarding_completed` — this is a brand-new user's first-ever session
-  with the app.
-- Their device is also a USB aggregate:
-  `device_name = CADefaultDeviceAggregate-35104-0`,
-  `device_transport = aggregate`, `device_sub_transport = usb`,
-  `device_channels = 2`, `device_sample_rate = 48000`. Same profile as
-  cluster A.
+- Three consecutive process launches, each immediately uploading a crash report from the previous launch.
+- The third session (`EEAD4122`) after reporting its crash then runs `onboarding_step` events, `model_download_started`, `model_loaded`, `model_download_completed`, and finally `onboarding_completed` — this is a brand-new user's first-ever session with the app.
+- Their device is also a USB aggregate: `device_name = CADefaultDeviceAggregate-35104-0`, `device_transport = aggregate`, `device_sub_transport = usb`, `device_channels = 2`, `device_sample_rate = 48000`. Same profile as cluster A.
 
-This matters a lot for severity. The **prior precedent** in `MEMORY.md` is
-the "Onboarding stuck incident (v0.4.22)" — a previous regression that
-blocked ~23 users during onboarding cost disproportionate trust. First-run
-crashes are the highest-leverage crashes to kill.
+This matters a lot for severity. The **prior precedent** in `MEMORY.md` is the "Onboarding stuck incident (v0.4.22)" — a previous regression that blocked ~23 users during onboarding cost disproportionate trust. First-run crashes are the highest-leverage crashes to kill.
 
 ### 3.7 Ruling out alternative hypotheses
 
@@ -548,59 +359,29 @@ crashes are the highest-leverage crashes to kill.
 
 ### 3.8 Why every crash record is `crash_type: signal` and never `crash_type: exception`
 
-`CrashReporter.swift` installs **both** a POSIX signal handler (via
-`sigaction` for SIGSEGV, SIGABRT, SIGBUS, SIGILL, SIGTRAP, SIGFPE, line 116)
-and an ObjC uncaught exception handler (via `NSSetUncaughtExceptionHandler`,
-line 128). The exception handler is the richer path — it captures
-`exception.reason`, `exception.name`, and
-`exception.callStackReturnAddresses`, and writes `crash_type: exception`.
-If it fired we would already know exactly which AVFAudio invariant was
-violated.
+`CrashReporter.swift` installs **both** a POSIX signal handler (via `sigaction` for SIGSEGV, SIGABRT, SIGBUS, SIGILL, SIGTRAP, SIGFPE, line 116) and an ObjC uncaught exception handler (via `NSSetUncaughtExceptionHandler`, line 128). The exception handler is the richer path — it captures `exception.reason`, `exception.name`, and `exception.callStackReturnAddresses`, and writes `crash_type: exception`. If it fired we would already know exactly which AVFAudio invariant was violated.
 
-Every single crash in telemetry shows `crash_type: signal`. The ObjC
-exception handler has never fired for any production crash. Why?
+Every single crash in telemetry shows `crash_type: signal`. The ObjC exception handler has never fired for any production crash. Why?
 
-Because **Cocoa's `NSApplication.run()` event loop catches unhandled
-`NSException`s internally and calls `abort()` directly, bypassing
-`NSSetUncaughtExceptionHandler`.** This is a well-known Cocoa gotcha and has
-been since the 10.5 era: `-[NSApplication run]` wraps each event-dispatch
-cycle in an internal try/catch, and on an uncaught exception it logs
-`*** Terminating app due to uncaught exception '<name>', reason: '<reason>'`
-to stderr and then calls `abort()` — *without* invoking the user-installed
-uncaught exception handler. Apple documents this as an "implementation
-detail" and has not fixed it.
+Because **Cocoa's `NSApplication.run()` event loop catches unhandled `NSException`s internally and calls `abort()` directly, bypassing `NSSetUncaughtExceptionHandler`.** This is a well-known Cocoa gotcha and has been since the 10.5 era: `-[NSApplication run]` wraps each event-dispatch cycle in an internal try/catch, and on an uncaught exception it logs `*** Terminating app due to uncaught exception '<name>', reason: '<reason>'` to stderr and then calls `abort()` — *without* invoking the user-installed uncaught exception handler. Apple documents this as an "implementation detail" and has not fixed it.
 
 The consequence for us:
 
-1. `installTap` raises `NSException` on the main thread inside a hotkey
-   event handler dispatched by the Cocoa run loop.
-2. The `NSException` unwinds Swift frames (which know nothing about it) and
-   reaches the Cocoa event loop's implicit try/catch.
+1. `installTap` raises `NSException` on the main thread inside a hotkey event handler dispatched by the Cocoa run loop.
+2. The `NSException` unwinds Swift frames (which know nothing about it) and reaches the Cocoa event loop's implicit try/catch.
 3. Cocoa logs and calls `abort()`. **Our exception handler is skipped.**
 4. `abort()` raises `SIGABRT`.
-5. Our signal handler catches the signal, writes `crash_type: signal` with
-   the backtrace, and re-raises for default termination.
+5. Our signal handler catches the signal, writes `crash_type: signal` with the backtrace, and re-raises for default termination.
 
-The signal handler is doing its job. The exception handler is not broken —
-it's just never reached. This is not a bug in `CrashReporter`, it's a
-structural property of Cocoa apps.
+The signal handler is doing its job. The exception handler is not broken — it's just never reached. This is not a bug in `CrashReporter`, it's a structural property of Cocoa apps.
 
-**Why this matters for the fix:** catching the exception at the call site
-in Swift (via our ObjC trampoline, §5.1) bypasses Cocoa entirely. The fix
-does not depend on `NSSetUncaughtExceptionHandler` working. If we had used
-the trampoline from day one we would never have taken any of these 10
-crashes. Conversely, there is no way to "fix" the uncaught exception handler
-path for this case — we can't make Cocoa call it.
+**Why this matters for the fix:** catching the exception at the call site in Swift (via our ObjC trampoline, §5.1) bypasses Cocoa entirely. The fix does not depend on `NSSetUncaughtExceptionHandler` working. If we had used the trampoline from day one we would never have taken any of these 10 crashes. Conversely, there is no way to "fix" the uncaught exception handler path for this case — we can't make Cocoa call it.
 
 As a secondary note, we could also:
 
-1. Override `-[NSApplication reportException:]` (a subclassing hook) to
-   route to our handler before Cocoa's `abort()`. Possible but fragile and
-   Cocoa-version-dependent.
-2. Use `NSExceptionHandler` (the old Foundation class) instead of
-   `NSSetUncaughtExceptionHandler`. Deprecated and brittle.
-3. Monkey-patch `objc_setUncaughtExceptionHandler` at the ObjC runtime
-   level. Works but is fighting the system.
+1. Override `-[NSApplication reportException:]` (a subclassing hook) to route to our handler before Cocoa's `abort()`. Possible but fragile and Cocoa-version-dependent.
+2. Use `NSExceptionHandler` (the old Foundation class) instead of `NSSetUncaughtExceptionHandler`. Deprecated and brittle.
+3. Monkey-patch `objc_setUncaughtExceptionHandler` at the ObjC runtime level. Works but is fighting the system.
 
 None of these are worth doing. The call-site trampoline is the right fix.
 
@@ -608,35 +389,17 @@ None of these are worth doing. The call-site trampoline is the right fix.
 
 ## 4. Blast radius
 
-- **Cluster A (7 crashes):** 1 user in Germany, Apple M4 Max, macOS 15.6,
-  0.5.5. Binary UUID matches shipped release. User successfully ran the
-  app between crash bursts, so not permanently locked out.
-- **Cluster C (3 crashes):** 1 user in Canada, Apple M4, macOS 26.2 (Tahoe
-  beta), 0.5.5. Same bug. User probably recovered too — we don't have the
-  cross-session activity for this one.
-- **All 10 "our bug" crashes are on 0.5.5**, which is the current shipped
-  release per `https://macparakeet.com/appcast.xml`
-  (`sparkle:shortVersionString = 0.5.5`, `sparkle:version = 20260406005332`).
-- **Users not locked out, but dictation is unusable for bursts** of minutes
-  at a time when the trigger state is present. Relaunches are painful.
-- **Attack surface is every dictation start**, not just edge cases — the
-  trigger is an AVFAudio call path we run every single time a user presses
-  the hotkey. The fact that only two users reported it in 72h reflects how
-  often the audio subsystem is in the triggering state, not how many users
-  are running through the vulnerable code path (**every single dictation is
-  vulnerable**).
+- **Cluster A (7 crashes):** 1 user in Germany, Apple M4 Max, macOS 15.6, 0.5.5. Binary UUID matches shipped release. User successfully ran the app between crash bursts, so not permanently locked out.
+- **Cluster C (3 crashes):** 1 user in Canada, Apple M4, macOS 26.2 (Tahoe beta), 0.5.5. Same bug. User probably recovered too — we don't have the cross-session activity for this one.
+- **All 10 "our bug" crashes are on 0.5.5**, which is the current shipped release per `https://macparakeet.com/appcast.xml` (`sparkle:shortVersionString = 0.5.5`, `sparkle:version = 20260406005332`).
+- **Users not locked out, but dictation is unusable for bursts** of minutes at a time when the trigger state is present. Relaunches are painful.
+- **Attack surface is every dictation start**, not just edge cases — the trigger is an AVFAudio call path we run every single time a user presses the hotkey. The fact that only two users reported it in 72h reflects how often the audio subsystem is in the triggering state, not how many users are running through the vulnerable code path (**every single dictation is vulnerable**).
 
-Expected population impact: **anyone with an aggregate input device, any
-Bluetooth mic users during HFP/A2DP transitions, anyone on Tahoe beta, and
-possibly anyone during mic permission race states.** We should assume silent
-impact is larger than telemetry shows, because an unknown number of crashes
-happen before `CrashReporter` is ready or the user opts out of telemetry.
+Expected population impact: **anyone with an aggregate input device, any Bluetooth mic users during HFP/A2DP transitions, anyone on Tahoe beta, and possibly anyone during mic permission race states.** We should assume silent impact is larger than telemetry shows, because an unknown number of crashes happen before `CrashReporter` is ready or the user opts out of telemetry.
 
 ### 4.1 Is this a regression?
 
-Short answer: **no in the code, yes in the observability.** This is a
-long-latent bug we've finally gained visibility into, not something we
-broke recently.
+Short answer: **no in the code, yes in the observability.** This is a long-latent bug we've finally gained visibility into, not something we broke recently.
 
 **Code history — the vulnerable line has been there since v0.1:**
 
@@ -652,57 +415,25 @@ $ git blame -L 225,230 Sources/SottoCore/Audio/AudioRecorder.swift
 
 Following the file via `git log --follow`:
 
-- `92460f8` — *Track v0.1 app implementation and align docs* — initial
-  commit of `Sources/SottoCore/Audio/AudioRecorder.swift`. The
-  `installTap(onBus: 0, bufferSize: 4096, format: inputFormat)` pattern
-  was present from day one.
-- `6070755` (2026-03-20) — *Fix dictation broken when Bluetooth headphones
-  connected.* Moved the `installTap` call around and added format
-  validation (`sampleRate > 0, channelCount > 0` guard on line 185) plus
-  a built-in-mic fallback. The `format: inputFormat` argument was
-  unchanged — the fix made the surrounding code more defensive but did
-  not address the NSException case.
-- `a85da69`, `3336e55`, `cb940e7`, later commits — added session
-  generation tracking, `guard let self else` checks, concurrency
-  hardening. None touched the `format:` parameter or added an ObjC
-  trampoline.
+- `92460f8` — *Track v0.1 app implementation and align docs* — initial commit of `Sources/SottoCore/Audio/AudioRecorder.swift`. The `installTap(onBus: 0, bufferSize: 4096, format: inputFormat)` pattern was present from day one.
+- `6070755` (2026-03-20) — *Fix dictation broken when Bluetooth headphones connected.* Moved the `installTap` call around and added format validation (`sampleRate > 0, channelCount > 0` guard on line 185) plus a built-in-mic fallback. The `format: inputFormat` argument was unchanged — the fix made the surrounding code more defensive but did not address the NSException case.
+- `a85da69`, `3336e55`, `cb940e7`, later commits — added session generation tracking, `guard let self else` checks, concurrency hardening. None touched the `format:` parameter or added an ObjC trampoline.
 
 So the bug shipped with v0.1 and every release since.
 
 **Observability history — we just got the ability to see these crashes:**
 
-- `2fd4d74` (2026-03-31) — *Add crash reporting via signal handlers +
-  disk persistence.* This is when `CrashReporter.swift` was introduced.
-  **Before Mar 31, these crashes happened silently.** Users on aggregate
-  audio devices who hit the trigger would have seen their app vanish,
-  relaunched, and we would never have known.
-- `704dfde` (2026-04-06) — *Archive dSYM during release builds for crash
-  symbolication.* Added *after* 0.5.5 shipped, which is why we had to
-  symbolicate against the stripped binary via `atos` + `LC_SYMTAB`.
+- `2fd4d74` (2026-03-31) — *Add crash reporting via signal handlers + disk persistence.* This is when `CrashReporter.swift` was introduced. **Before Mar 31, these crashes happened silently.** Users on aggregate audio devices who hit the trigger would have seen their app vanish, relaunched, and we would never have known.
+- `704dfde` (2026-04-06) — *Archive dSYM during release builds for crash symbolication.* Added *after* 0.5.5 shipped, which is why we had to symbolicate against the stripped binary via `atos` + `LC_SYMTAB`.
 
-So the crash reporter is 8 days old as of this investigation, and the
-first "investigation window" we've ever had started on Mar 31. The 10
-crashes we're looking at are the **first** observations of a bug that has
-probably been intermittently crashing users on aggregate audio devices
-for every release going back to v0.1.
+So the crash reporter is 8 days old as of this investigation, and the first "investigation window" we've ever had started on Mar 31. The 10 crashes we're looking at are the **first** observations of a bug that has probably been intermittently crashing users on aggregate audio devices for every release going back to v0.1.
 
 **What this implies for severity and messaging:**
 
-1. This is not "we broke something yesterday and users are suddenly
-   crashing." It's "we've always had this class of failure, we just
-   couldn't see it, and now we can." The fix is not a revert — it's
-   closing a long-standing gap in our audio error handling.
-2. The 72-hour telemetry count (10 crashes, 2 users) is a **floor**,
-   not an average. We have no "before" to compare it to. The real
-   long-term cost of this bug is unknown.
-3. The crash reporter did exactly what it was designed to do: surface
-   a latent issue that was invisible before. This is a vindication of
-   shipping `2fd4d74` three weeks ago, not an indictment of the audio
-   code.
-4. For the fix PR, don't frame this as urgent/emergency. Frame it as
-   "the first real bug our crash reporter caught, and it's a
-   long-standing one that benefits every user going back to v0.1."
-   Ship it calmly as 0.5.6; it's not a panic revert.
+1. This is not "we broke something yesterday and users are suddenly crashing." It's "we've always had this class of failure, we just couldn't see it, and now we can." The fix is not a revert — it's closing a long-standing gap in our audio error handling.
+2. The 72-hour telemetry count (10 crashes, 2 users) is a **floor**, not an average. We have no "before" to compare it to. The real long-term cost of this bug is unknown.
+3. The crash reporter did exactly what it was designed to do: surface a latent issue that was invisible before. This is a vindication of shipping `2fd4d74` three weeks ago, not an indictment of the audio code.
+4. For the fix PR, don't frame this as urgent/emergency. Frame it as "the first real bug our crash reporter caught, and it's a long-standing one that benefits every user going back to v0.1." Ship it calmly as 0.5.6; it's not a panic revert.
 
 ---
 
@@ -710,8 +441,7 @@ for every release going back to v0.1.
 
 ### 5.1 Immediate: Objective-C exception trampoline
 
-Add a tiny Objective-C helper that converts `NSException` into an
-`NSError` so Swift can catch it:
+Add a tiny Objective-C helper that converts `NSException` into an `NSError` so Swift can catch it:
 
 ```objc
 // Sources/SottoObjCShims/include/MPKObjCExceptionCatcher.h
@@ -745,8 +475,7 @@ BOOL MPKTryBlock(void (^block)(void), NSError **error) {
 }
 ```
 
-Add a new SwiftPM target `SottoObjCShims` (C target, no deps) and link
-it into `SottoCore`. This keeps all other targets Swift-only.
+Add a new SwiftPM target `SottoObjCShims` (C target, no deps) and link it into `SottoCore`. This keeps all other targets Swift-only.
 
 ### 5.2 Use it in AudioRecorder.configureAndStart
 
@@ -792,11 +521,7 @@ if !startOK || startError != nil {
 }
 ```
 
-This converts every observed and plausible crash into a clean Swift throw,
-which the existing catch in `AudioRecorder.start()` (line 81-96) will route
-through the "retry on built-in mic" fallback. The existing
-`DictationService.startRecording` catch (line 166-174) will then log a
-`dictation_failed` telemetry event carrying the real AVFAudio reason string.
+This converts every observed and plausible crash into a clean Swift throw, which the existing catch in `AudioRecorder.start()` (line 81-96) will route through the "retry on built-in mic" fallback. The existing `DictationService.startRecording` catch (line 166-174) will then log a `dictation_failed` telemetry event carrying the real AVFAudio reason string.
 
 ### 5.3 Gate on mic permission status before calling inputNode
 
@@ -816,31 +541,15 @@ public func start() throws {
 }
 ```
 
-The UI layer should already be calling `PermissionService.requestAccess`
-before the first dictation, but this guard makes the invariant explicit and
-prevents the AVFAudio call from ever being reached in a permission-race
-state. Today line 73 only logs the status and then proceeds — that is a
-separate minor bug worth fixing alongside the main one.
+The UI layer should already be calling `PermissionService.requestAccess` before the first dictation, but this guard makes the invariant explicit and prevents the AVFAudio call from ever being reached in a permission-race state. Today line 73 only logs the status and then proceeds — that is a separate minor bug worth fixing alongside the main one.
 
 ### 5.4 Crash reporter `NSException.reason` — status: not fixable for this class
 
-We never see `NSException.reason` in telemetry because Cocoa's
-`NSApplication.run()` event loop short-circuits
-`NSSetUncaughtExceptionHandler` (see §3.8 for the full explanation).
-**This is not a bug in `CrashReporter.swift`** — it's a Cocoa platform
-property. The reporter is correctly wired up; the handler just never fires
-for main-thread exceptions raised inside event dispatch.
+We never see `NSException.reason` in telemetry because Cocoa's `NSApplication.run()` event loop short-circuits `NSSetUncaughtExceptionHandler` (see §3.8 for the full explanation). **This is not a bug in `CrashReporter.swift`** — it's a Cocoa platform property. The reporter is correctly wired up; the handler just never fires for main-thread exceptions raised inside event dispatch.
 
-The call-site trampoline in §5.1–5.2 makes this moot: once we catch the
-exception ourselves before it escapes Swift, we get the full `reason`
-string in our own `dictation_failed` telemetry event, via the existing
-`AudioProcessorError.recordingFailed(reason)` path and
-`TelemetryErrorClassifier.errorDetail` in
-`DictationService.startRecording`'s catch block (line 170).
+The call-site trampoline in §5.1–5.2 makes this moot: once we catch the exception ourselves before it escapes Swift, we get the full `reason` string in our own `dictation_failed` telemetry event, via the existing `AudioProcessorError.recordingFailed(reason)` path and `TelemetryErrorClassifier.errorDetail` in `DictationService.startRecording`'s catch block (line 170).
 
-No action needed on `CrashReporter.swift` for this bug. Future
-non-main-thread exceptions (e.g., from a Core Audio IO thread) might still
-reach the uncaught handler, so leave it installed.
+No action needed on `CrashReporter.swift` for this bug. Future non-main-thread exceptions (e.g., from a Core Audio IO thread) might still reach the uncaught handler, so leave it installed.
 
 ### 5.5 Defense in depth: prefer `format: nil` for installTap
 
@@ -856,34 +565,20 @@ inputNode.installTap(onBus: 0, bufferSize: 4096, format: nil) { buffer, _ in
 }
 ```
 
-This sidesteps the "format captured earlier no longer matches" class of
-failure (§3.4 case 1), which is the most common trigger per AVAudioEngine
-forum reports. Our tap block already creates an `AVAudioConverter` per tap
-based on `inputFormat` captured on line 164; we'd need to derive the
-converter from `buffer.format` per callback, or rebuild it on format change.
-Slightly more work but also slightly safer. The ObjC trampoline (§5.1-5.2)
-is still required as a safety net because `format: nil` does not protect
-against the other four triggers.
+This sidesteps the "format captured earlier no longer matches" class of failure (§3.4 case 1), which is the most common trigger per AVAudioEngine forum reports. Our tap block already creates an `AVAudioConverter` per tap based on `inputFormat` captured on line 164; we'd need to derive the converter from `buffer.format` per callback, or rebuild it on format change. Slightly more work but also slightly safer. The ObjC trampoline (§5.1-5.2) is still required as a safety net because `format: nil` does not protect against the other four triggers.
 
 Recommended: do **both** §5.1-5.2 and §5.5.
 
 ### 5.6 Restore and preserve the dSYM
 
-Commit `704dfde` (2026-04-06) already made the build script archive the
-dSYM into `dist/`. Verify that 0.5.6 and later ship with the dSYM archived
-and retained (e.g., commit the dSYM to a private bucket, or snapshot
-`dist/Sotto.dSYM` to sotto-downloads R2 alongside the DMG)
-so that any future crash at a different offset can be symbolicated
-immediately.
+Commit `704dfde` (2026-04-06) already made the build script archive the dSYM into `dist/`. Verify that 0.5.6 and later ship with the dSYM archived and retained (e.g., commit the dSYM to a private bucket, or snapshot `dist/Sotto.dSYM` to sotto-downloads R2 alongside the DMG) so that any future crash at a different offset can be symbolicated immediately.
 
 ### 5.7 Ship as 0.5.6 patch
 
 - Branch: `fix/audiorecorder-installtap-exception`
 - Target: 0.5.6 (patch), same day
 - Pre-flight: `swift test`, the whole suite
-- Post-ship: watch the `crash_occurred` stream for 72h; we expect the 10
-  cluster-A/C crashes to be replaced by `dictation_failed` events carrying
-  the real exception reason.
+- Post-ship: watch the `crash_occurred` stream for 72h; we expect the 10 cluster-A/C crashes to be replaced by `dictation_failed` events carrying the real exception reason.
 
 ---
 
@@ -891,28 +586,19 @@ immediately.
 
 ### 6.1 Cluster B — BY / M2 Max / macOS 14.8.5 / SIGBUS
 
-No app frames after frame 0. Pure system stack in audio-framework address
-ranges. SIGBUS = misaligned access or mmap fault, commonly seen on:
+No app frames after frame 0. Pure system stack in audio-framework address ranges. SIGBUS = misaligned access or mmap fault, commonly seen on:
 
-- CoreML `.mlmodelc` mmap when the file was modified/corrupted under the
-  mapping (e.g., interrupted download, disk pressure eviction).
+- CoreML `.mlmodelc` mmap when the file was modified/corrupted under the mapping (e.g., interrupted download, disk pressure eviction).
 - AudioToolbox callbacks reading beyond a shared buffer.
 
-No proof this is our fault. **Action:** once §5.1-5.2 lands and AVFAudio
-exceptions are no longer conflated with "crashes we can't explain", we
-should flag this as its own investigation. Possible mitigations:
+No proof this is our fault. **Action:** once §5.1-5.2 lands and AVFAudio exceptions are no longer conflated with "crashes we can't explain", we should flag this as its own investigation. Possible mitigations:
 - Validate model file checksum on load.
 - Use `AudioProcessor` retry on model load failure.
-- Update FluidAudio to latest (review memory reference
-  `reference_fluidaudio_api.md`).
+- Update FluidAudio to latest (review memory reference `reference_fluidaudio_api.md`).
 
 ### 6.2 Cluster D — US / M1 Max / macOS 26.3 / SIGSEGV
 
-Single crash, 8-frame stack. One frame in a dynamically loaded framework
-(offset far outside main binary). Surrounding frames in CoreAudio / CoreML
-range. Likely Tahoe + FluidAudio corner case. User recovered — kept using
-app, sent a feature request. **Action:** monitor; not actionable from one
-sample. Revisit if it recurs.
+Single crash, 8-frame stack. One frame in a dynamically loaded framework (offset far outside main binary). Surrounding frames in CoreAudio / CoreML range. Likely Tahoe + FluidAudio corner case. User recovered — kept using app, sent a feature request. **Action:** monitor; not actionable from one sample. Revisit if it recurs.
 
 ### 6.3 Cluster E — stale 0.4.27 crash
 
@@ -934,17 +620,10 @@ Ignore.
 - Source files (verified against HEAD `fc85bc5`):
   - `Sources/SottoCore/Audio/AudioRecorder.swift` — crash site at line 227
   - `Sources/SottoCore/Audio/AudioProcessor.swift` — line 29 (frame 15)
-  - `Sources/SottoCore/Services/DictationService.swift` — line 149
-    (caller of `startCapture`)
-  - `Sources/SottoCore/Services/CrashReporter.swift` — line 202
-    (signal handler backtrace call)
-- Telemetry queries were run via
-  `npx wrangler d1 execute sotto-telemetry --remote --command ...`
-  against D1 database id `7372263e-6a0b-4c70-8188-8f1d6d16bf31`.
-- Relevant commit: `704dfde Archive dSYM during release builds for crash
-  symbolication` — added on 2026-04-06 after this bug had already shipped in
-  0.5.5. The 0.5.5 dSYM was already lost when this ran; I recovered function
-  names from the stripped binary's symbol table via `atos`, not from a dSYM.
+  - `Sources/SottoCore/Services/DictationService.swift` — line 149 (caller of `startCapture`)
+  - `Sources/SottoCore/Services/CrashReporter.swift` — line 202 (signal handler backtrace call)
+- Telemetry queries were run via `npx wrangler d1 execute sotto-telemetry --remote --command ...` against D1 database id `7372263e-6a0b-4c70-8188-8f1d6d16bf31`.
+- Relevant commit: `704dfde Archive dSYM during release builds for crash symbolication` — added on 2026-04-06 after this bug had already shipped in 0.5.5. The 0.5.5 dSYM was already lost when this ran; I recovered function names from the stripped binary's symbol table via `atos`, not from a dSYM.
 
 ---
 
@@ -966,36 +645,20 @@ Ignore.
 ## 9. Action checklist
 
 - [ ] Implement `SottoObjCShims` SPM target with `MPKTryBlock`.
-- [ ] Wrap `outputFormat(forBus:)`, `installTap(...)`, and `engine.start()` in
-      `AudioRecorder.configureAndStart` with `MPKTryBlock`.
-- [ ] Switch the tap to `format: nil` and derive the converter from
-      `buffer.format` inside the tap block.
-- [ ] Add hard gate at `AudioRecorder.start()` on
-      `AVCaptureDevice.authorizationStatus(for: .audio) == .authorized`.
-- [ ] Verify `NSSetUncaughtExceptionHandler(objcExceptionHandler)` is
-      actually installed at launch and that its crash file is uploaded.
-- [ ] Add a unit test that feeds a deliberately-invalid format to
-      `installTap` via a stub and asserts we throw a Swift error instead of
-      aborting. (If we cannot simulate the NSException from a unit test, at
-      least cover `MPKTryBlock` with a trivial "block raises NSException →
-      returns NO with populated error" test.)
-- [ ] Ship 0.5.6 with this fix. Run the release checklist in
-      `docs/distribution.md`.
-- [ ] Confirm `dist/Sotto.dSYM` is preserved to sotto-downloads R2
-      as part of the release process so future crashes are symbolicable
-      from day one.
-- [ ] Re-query `crash_occurred` 72h after 0.5.6 ships and confirm clusters A
-      and C are gone.
+- [ ] Wrap `outputFormat(forBus:)`, `installTap(...)`, and `engine.start()` in `AudioRecorder.configureAndStart` with `MPKTryBlock`.
+- [ ] Switch the tap to `format: nil` and derive the converter from `buffer.format` inside the tap block.
+- [ ] Add hard gate at `AudioRecorder.start()` on `AVCaptureDevice.authorizationStatus(for: .audio) == .authorized`.
+- [ ] Verify `NSSetUncaughtExceptionHandler(objcExceptionHandler)` is actually installed at launch and that its crash file is uploaded.
+- [ ] Add a unit test that feeds a deliberately-invalid format to `installTap` via a stub and asserts we throw a Swift error instead of aborting. (If we cannot simulate the NSException from a unit test, at least cover `MPKTryBlock` with a trivial "block raises NSException → returns NO with populated error" test.)
+- [ ] Ship 0.5.6 with this fix. Run the release checklist in `docs/distribution.md`.
+- [ ] Confirm `dist/Sotto.dSYM` is preserved to sotto-downloads R2 as part of the release process so future crashes are symbolicable from day one.
+- [ ] Re-query `crash_occurred` 72h after 0.5.6 ships and confirm clusters A and C are gone.
 
 ---
 
 ## 10. Fresh-eye review (2026-04-08, second pass)
 
-After the first pass of this report was written, I was asked to re-verify
-every assumption from scratch. The second pass caught several imprecisions
-that were folded back into the body above. This section is the audit trail
-— what I checked, what I found wrong, and what I changed. If you ever need
-to retrace my reasoning, start here.
+After the first pass of this report was written, I was asked to re-verify every assumption from scratch. The second pass caught several imprecisions that were folded back into the body above. This section is the audit trail — what I checked, what I found wrong, and what I changed. If you ever need to retrace my reasoning, start here.
 
 ### 10.1 Holes I probed
 
@@ -1012,89 +675,34 @@ to retrace my reasoning, start here.
 
 ### 10.2 What was wrong in the first pass
 
-1. **Off-by-4 on the crashing PC line number.** First pass said "frame 13
-   is at line 227". More precisely, frame 13's PC is at offset `0x80638c`,
-   which is the first byte after the BL instruction for the line-227
-   `installTap` call. `atos` correctly reports `<compiler-generated>:0`
-   for that exact offset, and the line-227 mapping ends at `0x806388`.
-   The conclusion is the same (installTap is the crashing call), but the
-   off-by-4 is actually stronger evidence than a direct PC match because
-   it is precisely the shape of an unreturned-call return address. Fixed
-   in §3.3 (new subsection).
+1. **Off-by-4 on the crashing PC line number.** First pass said "frame 13 is at line 227". More precisely, frame 13's PC is at offset `0x80638c`, which is the first byte after the BL instruction for the line-227 `installTap` call. `atos` correctly reports `<compiler-generated>:0` for that exact offset, and the line-227 mapping ends at `0x806388`. The conclusion is the same (installTap is the crashing call), but the off-by-4 is actually stronger evidence than a direct PC match because it is precisely the shape of an unreturned-call return address. Fixed in §3.3 (new subsection).
 
-2. **Overclaimed "AVFAudio" as the specific framework.** First pass said
-   the 0x1f3 range "is AVFAudio". Without the macOS 15.6 dyld shared
-   cache I can't distinguish AVFAudio vs AudioToolbox vs CoreAudio HAL.
-   All three are in the audio framework neighborhood and `installTap`
-   routes through all of them. I softened the claim in the TL;DR, §3.1,
-   §3.7, and the §8 confidence table. Does not affect the fix.
+2. **Overclaimed "AVFAudio" as the specific framework.** First pass said the 0x1f3 range "is AVFAudio". Without the macOS 15.6 dyld shared cache I can't distinguish AVFAudio vs AudioToolbox vs CoreAudio HAL. All three are in the audio framework neighborhood and `installTap` routes through all of them. I softened the claim in the TL;DR, §3.1, §3.7, and the §8 confidence table. Does not affect the fix.
 
-3. **Cluster C device info was extrapolated, not verified.** First pass
-   said cluster C was "on `CADefaultDeviceAggregate-*`" but did not cite
-   a telemetry row. Second pass pulled all events from cluster C's three
-   sessions and found `device_name: CADefaultDeviceAggregate-35104-0`,
-   `device_sub_transport: usb`, 2ch / 48 kHz in the recovered session.
-   Same profile as cluster A. Fixed in TL;DR and §3.6.
+3. **Cluster C device info was extrapolated, not verified.** First pass said cluster C was "on `CADefaultDeviceAggregate-*`" but did not cite a telemetry row. Second pass pulled all events from cluster C's three sessions and found `device_name: CADefaultDeviceAggregate-35104-0`, `device_sub_transport: usb`, 2ch / 48 kHz in the recovered session. Same profile as cluster A. Fixed in TL;DR and §3.6.
 
-4. **Missed that cluster C's user is in onboarding.** The telemetry for
-   session `EEAD4122` (the third launch after the three crashes) shows
-   `onboarding_step`, `model_download_started`, `model_loaded`,
-   `model_download_completed`, `onboarding_completed`. **This user is
-   crashing during their first-ever use of the app.** This is high-stakes
-   because onboarding crashes cost disproportionate first-impression
-   trust — see the "Onboarding stuck incident (v0.4.22)" entry in
-   `MEMORY.md` for prior precedent. Added to TL;DR and §3.6.
+4. **Missed that cluster C's user is in onboarding.** The telemetry for session `EEAD4122` (the third launch after the three crashes) shows `onboarding_step`, `model_download_started`, `model_loaded`, `model_download_completed`, `onboarding_completed`. **This user is crashing during their first-ever use of the app.** This is high-stakes because onboarding crashes cost disproportionate first-impression trust — see the "Onboarding stuck incident (v0.4.22)" entry in `MEMORY.md` for prior precedent. Added to TL;DR and §3.6.
 
-5. **Didn't explain why `crash_type: exception` never appears.** First
-   pass left this as "worth a quick verification" in §5.4. Second pass
-   read `CrashReporter.swift` in full, confirmed the handler is installed
-   correctly, and diagnosed the Cocoa `NSApplication.run()` event-loop
-   bypass that short-circuits `NSSetUncaughtExceptionHandler` for
-   main-thread exceptions. This is a well-known Cocoa gotcha, not a bug
-   in our reporter. Rewrote §5.4 and added §3.8.
+5. **Didn't explain why `crash_type: exception` never appears.** First pass left this as "worth a quick verification" in §5.4. Second pass read `CrashReporter.swift` in full, confirmed the handler is installed correctly, and diagnosed the Cocoa `NSApplication.run()` event-loop bypass that short-circuits `NSSetUncaughtExceptionHandler` for main-thread exceptions. This is a well-known Cocoa gotcha, not a bug in our reporter. Rewrote §5.4 and added §3.8.
 
-6. **Confidence on "line 227 is the crash site" was ~95%.** With the
-   off-by-4 arithmetic, it's now ~99%. Ruled out line 164 (different
-   offset range, `0x8058…`) and line 323 (`0x8063c0`, after the crashing
-   PC). Updated §8.
+6. **Confidence on "line 227 is the crash site" was ~95%.** With the off-by-4 arithmetic, it's now ~99%. Ruled out line 164 (different offset range, `0x8058…`) and line 323 (`0x8063c0`, after the crashing PC). Updated §8.
 
-7. **Line numbers in a stripped binary — how is atos getting them?**
-   First pass assumed DWARF was present; `otool -l` shows only
-   `__swift5_*` sections (Swift runtime reflection metadata), no
-   `__debug_info`. Swift's embedded metadata sparse-maps some source
-   lines to addresses; `atos` uses this for function + partial line
-   info, which is why most offsets map to a real line number while some
-   map to `<compiler-generated>:0`. Good to know for future crash
-   investigations against stripped binaries.
+7. **Line numbers in a stripped binary — how is atos getting them?** First pass assumed DWARF was present; `otool -l` shows only `__swift5_*` sections (Swift runtime reflection metadata), no `__debug_info`. Swift's embedded metadata sparse-maps some source lines to addresses; `atos` uses this for function + partial line info, which is why most offsets map to a real line number while some map to `<compiler-generated>:0`. Good to know for future crash investigations against stripped binaries.
 
 ### 10.3 What was right in the first pass
 
 All of these survived re-verification unchanged:
 
-- Clusters A and C have byte-identical app-code offsets
-  `{0x865c70, 0x80638c, 0x804d70, 0x8044c8}` across all 10 crashes.
-- The 0.5.5 binary UUID `DDD7A497-EFB2-3CC2-A024-B4C83E9F0F65` matches
-  every crash row and the live DMG on R2.
-- The crashing function is `AudioRecorder.configureAndStart(...)`, called
-  from `AudioRecorder.start()` at line 80, called from
-  `AudioProcessor.startCapture()` at line 29.
-- `AudioProcessor.startCapture()` has exactly one caller:
-  `DictationService.startRecording` at line 149. Confirmed via grep.
-- `AudioRecorder()` / `AudioProcessor()` are constructed at app-launch
-  time (in `AppEnvironment.swift:51` and `TranscribeCommand.swift:65`)
-  but the constructors do nothing dangerous. Only `start()` / `startCapture()`
-  touch AVAudioEngine.
-- The crash happens at the first dictation hotkey press, not at app
-  launch. The telemetry correlation of `crash_occurred` with `app_launched`
-  is an artifact of the crash reporter's next-launch upload mechanism.
-- Both affected users recovered after retries — neither is permanently
-  locked out. The trigger is transient audio device state.
-- Clusters B (2 × SIGBUS on macOS 14.8.5) and D (1 × SIGSEGV on macOS
-  26.3) are unrelated to this bug; their stacks have no app frames after
-  frame 0.
+- Clusters A and C have byte-identical app-code offsets `{0x865c70, 0x80638c, 0x804d70, 0x8044c8}` across all 10 crashes.
+- The 0.5.5 binary UUID `DDD7A497-EFB2-3CC2-A024-B4C83E9F0F65` matches every crash row and the live DMG on R2.
+- The crashing function is `AudioRecorder.configureAndStart(...)`, called from `AudioRecorder.start()` at line 80, called from `AudioProcessor.startCapture()` at line 29.
+- `AudioProcessor.startCapture()` has exactly one caller: `DictationService.startRecording` at line 149. Confirmed via grep.
+- `AudioRecorder()` / `AudioProcessor()` are constructed at app-launch time (in `AppEnvironment.swift:51` and `TranscribeCommand.swift:65`) but the constructors do nothing dangerous. Only `start()` / `startCapture()` touch AVAudioEngine.
+- The crash happens at the first dictation hotkey press, not at app launch. The telemetry correlation of `crash_occurred` with `app_launched` is an artifact of the crash reporter's next-launch upload mechanism.
+- Both affected users recovered after retries — neither is permanently locked out. The trigger is transient audio device state.
+- Clusters B (2 × SIGBUS on macOS 14.8.5) and D (1 × SIGSEGV on macOS 26.3) are unrelated to this bug; their stacks have no app frames after frame 0.
 - Cluster E (1 × stale 0.4.27 crash reported post-upgrade) is noise.
-- The fix is an ObjC exception trampoline at the call site +
-  `format: nil` on `installTap` + a permission gate.
+- The fix is an ObjC exception trampoline at the call site + `format: nil` on `installTap` + a permission gate.
 
 ### 10.4 Verification commands (reproducible)
 

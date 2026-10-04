@@ -1,16 +1,8 @@
 # Release Demo Smoke
 
-This smoke path proves a released Sotto CLI can run a local demo without
-writing demo transcription history to the user's app database. It checks CLI
-availability, records health readiness, synthesizes a tiny local audio fixture,
-transcribes it into an isolated SQLite database with Parakeet v3 and raw
-processing pinned explicitly, reads the saved row back in a fresh CLI process,
-exports it to Markdown, and verifies engine attribution, persisted content, and
-export content across those artifacts.
+This smoke path proves a released Sotto CLI can run a local demo without writing demo transcription history to the user's app database. It checks CLI availability, records health readiness, synthesizes a tiny local audio fixture, transcribes it into an isolated SQLite database with Parakeet v3 and raw processing pinned explicitly, reads the saved row back in a fresh CLI process, exports it to Markdown, and verifies engine attribution, persisted content, and export content across those artifacts.
 
-For the bounded, offline, disposable-account wrapper that pins a qualified
-model before running this smoke, see
-[`docs/testing/model-qualification.md`](testing/model-qualification.md).
+For the bounded, offline, disposable-account wrapper that pins a qualified model before running this smoke, see [`docs/testing/model-qualification.md`](testing/model-qualification.md).
 
 Run it against the installed app-bundled CLI:
 
@@ -30,12 +22,9 @@ For development verification only, allow a SwiftPM fallback:
 scripts/dev/release_demo_smoke.sh --allow-swift-run
 ```
 
-Evidence is written under `.codex/release-demo-smoke/<UTC timestamp>/` unless
-`--output-dir` is provided. Every started run writes:
+Evidence is written under `.codex/release-demo-smoke/<UTC timestamp>/` unless `--output-dir` is provided. Every started run writes:
 
-- `summary.md` with the pass/fail result, CLI path, isolated database, failure
-  detail when applicable, transcription ID, transcript preview, and evidence
-  file list
+- `summary.md` with the pass/fail result, CLI path, isolated database, failure detail when applicable, transcription ID, transcript preview, and evidence file list
 - `commands.log` with every command and exit status
 
 A passing run also produces:
@@ -45,43 +34,20 @@ A passing run also produces:
 - `transcribe.json` plus `transcribe.stderr`
 - `history.json` plus `history.stderr`, a fresh-process persistence proof
 - `export.md` plus `export.stdout`/`export.stderr`
-- `validation.json`, the content and persistence assertions from
-  `scripts/dev/verify_release_demo.py`
+- `validation.json`, the content and persistence assertions from `scripts/dev/verify_release_demo.py`
 
 Pass/fail criteria:
 
 - `health --json` exits successfully and emits valid JSON
 - the fixture WAV is non-empty
-- `transcribe --format json --database <isolated-db> --engine parakeet
-  --parakeet-model v3 --mode raw` exits successfully, emits valid JSON, returns
-  `status = completed`, and contains transcript text
-- a separate `history transcriptions --json --database <isolated-db>` process
-  reads back the same ID, `completed` status, and transcript text
-- `export <transcription-id> --format markdown --database <isolated-db>` exits
-  successfully and writes a non-empty Markdown file
-- `verify_release_demo.py` confirms both the transcribe and history rows
-  report the Parakeet v3 engine, agree on ID/status/transcript text, contain at
-  least four of five distinctive fixture words, and that the exported Markdown
-  contains the persisted transcript
+- `transcribe --format json --database <isolated-db> --engine parakeet --parakeet-model v3 --mode raw` exits successfully, emits valid JSON, returns `status = completed`, and contains transcript text
+- a separate `history transcriptions --json --database <isolated-db>` process reads back the same ID, `completed` status, and transcript text
+- `export <transcription-id> --format markdown --database <isolated-db>` exits successfully and writes a non-empty Markdown file
+- `verify_release_demo.py` confirms both the transcribe and history rows report the Parakeet v3 engine, agree on ID/status/transcript text, contain at least four of five distinctive fixture words, and that the exported Markdown contains the persisted transcript
 
 Notes:
 
-- The script intentionally does not use `--no-history`; export needs a persisted
-  transcription ID. The `--database` option keeps transcription/export
-  persistence inside the evidence directory instead of the user's Sotto
-  database.
-- `health --json` reports the installed app's normal health surface, including
-  the app database path and counts when that database already exists. It is not
-  a database-isolated command.
-- The script does not request explicit model/helper repair, change signing,
-  or alter distribution credentials. `health --json` is a non-mutating readiness
-  probe, but the script proceeds to transcription after recording its report;
-  success from the health command alone is not model-readiness proof. Normal
-  transcription may prepare models and use shared caches. This smoke isolates
-  transcript rows, not all app state or network activity. See the
-  [integration isolation rules](../integrations/README.md#safe-automation-and-isolation).
-- Health, transcription, history, and export invocations set
-  `SOTTO_TELEMETRY=0`. Passing this smoke does not verify GUI capture,
-  hardware routes, permissions, signing, notarization, or the Sparkle update
-  path, and it does not by itself prove offline/no-download or dedicated-account
-  isolation -- see the qualification wrapper above for those boundaries.
+- The script intentionally does not use `--no-history`; export needs a persisted transcription ID. The `--database` option keeps transcription/export persistence inside the evidence directory instead of the user's Sotto database.
+- `health --json` reports the installed app's normal health surface, including the app database path and counts when that database already exists. It is not a database-isolated command.
+- The script does not request explicit model/helper repair, change signing, or alter distribution credentials. `health --json` is a non-mutating readiness probe, but the script proceeds to transcription after recording its report; success from the health command alone is not model-readiness proof. Normal transcription may prepare models and use shared caches. This smoke isolates transcript rows, not all app state or network activity. See the [integration isolation rules](../integrations/README.md#safe-automation-and-isolation).
+- Health, transcription, history, and export invocations set `SOTTO_TELEMETRY=0`. Passing this smoke does not verify GUI capture, hardware routes, permissions, signing, notarization, or the Sparkle update path, and it does not by itself prove offline/no-download or dedicated-account isolation -- see the qualification wrapper above for those boundaries.

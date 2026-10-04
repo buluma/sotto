@@ -46,11 +46,6 @@ Branch from origin/main, commit plan/spec/implementation together, open a real P
 
 ## Implementation verification
 
-- Normal-dependency focused `swift test` run: 469 XCTest cases passed, zero
-  failures. Coverage includes resolver and HTTP payloads, prompt and result
-  view models, model-selection intent, and public CLI prompt commands.
-- Independent Grok/Cursor Core and UI reviews reached LGTM after fixing custom
-  model selection from an empty override, override-only warning visibility,
-  action styling, and repeated unverified-endpoint help.
-- No storage/CLI schema changes, paid provider probes or user-data mutations.
-  Full-suite CI and the release app build remain the final shipping gates.
+- Normal-dependency focused `swift test` run: 469 XCTest cases passed, zero failures. Coverage includes resolver and HTTP payloads, prompt and result view models, model-selection intent, and public CLI prompt commands.
+- Independent Grok/Cursor Core and UI reviews reached LGTM after fixing custom model selection from an empty override, override-only warning visibility, action styling, and repeated unverified-endpoint help.
+- No storage/CLI schema changes, paid provider probes or user-data mutations. Full-suite CI and the release app build remain the final shipping gates.

@@ -1,10 +1,6 @@
 # Documentation map
 
-Start with the [spec index](../spec/README.md) for product behavior, release
-channels, feature gates and accepted decisions. The
-[architecture map](../spec/03-architecture.md) explains ownership and data flow;
-[subsystem guides](../Sources/SottoCore/) explain local implementation
-constraints.
+Start with the [spec index](../spec/README.md) for product behavior, release channels, feature gates and accepted decisions. The [architecture map](../spec/03-architecture.md) explains ownership and data flow; [subsystem guides](../Sources/SottoCore/) explain local implementation constraints.
 
 | Need | Read |
 |---|---|
@@ -19,13 +15,6 @@ constraints.
 | Dated verification | [QA packages](qa/), [audits](audits/) |
 | Proposals and historical context | [Research](research/), [historical archive](historical/README.md) |
 
-ADRs preserve the reason for a decision; explicit amendments override older
-implementation descriptions. Active specs and contracts describe intended
-current behavior, with code/tests checked when they disagree. A proposal, old
-plan checkbox or accepted strategy does not establish shipped capability.
-Dated QA evidence applies only to its recorded candidate and environment.
+ADRs preserve the reason for a decision; explicit amendments override older implementation descriptions. Active specs and contracts describe intended current behavior, with code/tests checked when they disagree. A proposal, old plan checkbox or accepted strategy does not establish shipped capability. Dated QA evidence applies only to its recorded candidate and environment.
 
-The [2026-09-07 documentation audit](audits/2026-09-07-documentation-alignment.md)
-records the current alignment pass. Its
-[follow-up ideas](research/2026-09-07-documentation-audit-followups.md) are separate
-from accepted decisions and release requirements.
+The [2026-09-07 documentation audit](audits/2026-09-07-documentation-alignment.md) records the current alignment pass. Its [follow-up ideas](research/2026-09-07-documentation-audit-followups.md) are separate from accepted decisions and release requirements.

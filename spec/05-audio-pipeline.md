@@ -56,31 +56,11 @@ User triggers dictation
 
 ### Shared microphone lifecycle diagnostics
 
-`AudioEngineLifecycleDiagnostics` observes engine start, idle preparation,
-recovery attempts, and stop for both dictation and meeting consumers. An
-independent utility timer can snapshot the last entered boundary while the
-platform queue or a native audio call remains blocked. Start/prepare/stop
-observers begin before queue admission; recovery timing starts with the current
-restart attempt and excludes its previously scheduled backoff.
+`AudioEngineLifecycleDiagnostics` observes engine start, idle preparation, recovery attempts, and stop for both dictation and meeting consumers. An independent utility timer can snapshot the last entered boundary while the platform queue or a native audio call remains blocked. Start/prepare/stop observers begin before queue admission; recovery timing starts with the current restart attempt and excludes its previously scheduled backoff.
 
-Each lifecycle can publish one `audio_engine_lifecycle` slow checkpoint after
-five seconds, then one terminal snapshot if the call returns. Start/recovery
-always publish terminal outcomes; prepare/stop publish only when slow,
-including failures. If a slow call returns before its timer runs, it publishes
-only a terminal with `was_slow=true`. This observes lifecycle progress without
-changing routing, capture, cancellation, or the existing readiness/recovery
-controls. Five seconds is an observation threshold, not a hard native timeout.
-The existing first-buffer deadline begins after native start returns; it cannot
-interrupt a native call that remains blocked during setup or start.
+Each lifecycle can publish one `audio_engine_lifecycle` slow checkpoint after five seconds, then one terminal snapshot if the call returns. Start/recovery always publish terminal outcomes; prepare/stop publish only when slow, including failures. If a slow call returns before its timer runs, it publishes only a terminal with `was_slow=true`. This observes lifecycle progress without changing routing, capture, cancellation, or the existing readiness/recovery controls. Five seconds is an observation threshold, not a hard native timeout. The existing first-buffer deadline begins after native start returns; it cannot interrupt a native call that remains blocked during setup or start.
 
-The local record and optional telemetry event share a fresh lifecycle
-`attempt_id`, monotonic phase timings, finite route categories, and classified
-errors. That ID covers engine fallback attempts and does not identify a meeting
-or product operation. Both sinks are asynchronous and best effort; a missing
-terminal remains unknown, and an entered phase does not establish a native root
-cause. No audio render callback performs this diagnostic work. Exact fields,
-suppression, and the required server-first rollout are defined in the
-[telemetry contract](contracts/telemetry-v1.md#microphone-engine-lifecycle-observation).
+The local record and optional telemetry event share a fresh lifecycle `attempt_id`, monotonic phase timings, finite route categories, and classified errors. That ID covers engine fallback attempts and does not identify a meeting or product operation. Both sinks are asynchronous and best effort; a missing terminal remains unknown, and an entered phase does not establish a native root cause. No audio render callback performs this diagnostic work. Exact fields, suppression, and the required server-first rollout are defined in the [telemetry contract](contracts/telemetry-v1.md#microphone-engine-lifecycle-observation).
 
 ---
 
@@ -94,11 +74,7 @@ Input File → FFmpeg → 16kHz mono WAV → selected local STT engine → Trans
 
 - **FFmpeg** (bundled with the app) handles format conversion to 16kHz mono WAV
 - The STT engine requires 16kHz mono Float32 input; FFmpeg normalizes all formats to this
-- FFmpeg input-summary probing enumerates local-file audio streams before STT.
-  One stream preserves automatic selection; two or more require an explicit
-  zero-based audio-stream ordinal and conversion adds `-map 0:a:N`. Stream
-  indices shown by the container are informational and are not substituted for
-  the audio-only ordinal.
+- FFmpeg input-summary probing enumerates local-file audio streams before STT. One stream preserves automatic selection; two or more require an explicit zero-based audio-stream ordinal and conversion adds `-map 0:a:N`. Stream indices shown by the container are informational and are not substituted for the audio-only ordinal.
 
 ### Supported Formats
 
@@ -177,26 +153,9 @@ User pastes YouTube URL
 
 ### Dual-Stream Capture
 
-Selected sources start independently. The recording service installs its
-session-scoped event consumer after creating the protective lock and writer,
-before awaiting capture startup, so a pending microphone cannot delay system
-audio storage. The first usable buffer establishes capture; valid silence is
-accepted. A 12-second initial readiness window marks sources with no buffers
-unavailable (they may join later); with no source delivering, startup fails.
-This bounds the meeting's readiness decision, not native microphone execution.
+Selected sources start independently. The recording service installs its session-scoped event consumer after creating the protective lock and writer, before awaiting capture startup, so a pending microphone cannot delay system audio storage. The first usable buffer establishes capture; valid silence is accepted. A 12-second initial readiness window marks sources with no buffers unavailable (they may join later); with no source delivering, startup fails. This bounds the meeting's readiness decision, not native microphone execution.
 
-Stop retires session callbacks and settles available source files without
-waiting for native microphone startup/unsubscription. The microphone remains
-leased until both calls settle; another system-only meeting can proceed, but
-another mic start cannot bypass that lease. Pill/hotkey Stop during Starting
-saves surviving audio through the normal finalize path. App quit during that
-Starting capture window offers End & Transcribe or Discard; permission-check
-abort remains discard-only. Explicit user discard still deletes. The existing
-partial capture report and source offsets describe missing or late channels. If
-the only healthy source is then lost, capture failure routes the saved audio
-through normal Stop. Failed startup never deletes already-written audio, and
-competing Stop/discard/startup cleanup paths share one settlement owner. See the
-[artifact contract](contracts/meeting-artifacts-v1.md#stable-folder-entries).
+Stop retires session callbacks and settles available source files without waiting for native microphone startup/unsubscription. The microphone remains leased until both calls settle; another system-only meeting can proceed, but another mic start cannot bypass that lease. Pill/hotkey Stop during Starting saves surviving audio through the normal finalize path. App quit during that Starting capture window offers End & Transcribe or Discard; permission-check abort remains discard-only. Explicit user discard still deletes. The existing partial capture report and source offsets describe missing or late channels. If the only healthy source is then lost, capture failure routes the saved audio through normal Stop. Failed startup never deletes already-written audio, and competing Stop/discard/startup cleanup paths share one settlement owner. See the [artifact contract](contracts/meeting-artifacts-v1.md#stable-folder-entries).
 
 ```
 System Audio → ScreenCaptureKit SCStream audio → PCM adapter ─────────────┐
@@ -229,112 +188,37 @@ Mic Input    → SharedMicrophoneStream (+ Voice Processing I/O when active)┘ 
                                               → background source-file STT + aligned merge
 ```
 
-- **Source mode** is user-configurable per recording start: microphone +
-  system audio (default), microphone only, or system audio only. The selected
-  mode controls both permission prompts and which capture streams are started.
-- **System audio** is captured via ScreenCaptureKit `SCStream` audio
-  (`SCStreamConfiguration.capturesAudio = true`) only when the source mode
-  includes system audio, which avoids owning or clocking a HAL aggregate output
-  device.
-- **Mic audio** is captured by subscribing to `SharedMicrophoneStream` only
-  when the source mode includes microphone audio, with a typed policy
-  (`MeetingMicProcessingMode`): `raw` (default), `vpioPreferred`, or
-  `vpioRequired`.
-- Sotto ships meeting capture with raw mic capture and ScreenCaptureKit
-  for system audio when both sources are selected. VPIO remains available for
-  explicit experiments, but it is not the shipped default because live-call
-  testing showed that engaging it can muffle the user's outgoing mic in
-  Zoom/Meet. The older Core Audio process-tap path also remains out of
-  production because it does not reliably coexist with VPIO in-process. See
-  `docs/research/vpio-process-tap-conflict.md`.
-- When both streams are selected, they are captured within the same meeting
-  session and aligned by host time. `CaptureOrchestrator` owns join + offset +
-  live-preview chunk boundaries via `MeetingAudioPairJoiner` plus per-source
-  `MeetingLiveAudioChunking` strategies. Single-source sessions skip the
-  unselected stream and produce a mono `meeting-playback.m4a`.
-- Raw capture applies no platform AEC/noise suppression/AGC. Meeting mic
-  conditioning is preview-only: release bundles with LocalVQE assets may run
-  `StreamingMeetingEchoSuppressor` over paired mic/system samples, while
-  local/dev bundles without those assets fall back to raw preview samples with
-  diagnostics. Transcript-layer system-dominance suppression and
-  `MeetingTranscriptSourceReconciler` remain safety nets against obvious
-  speaker bleed, not a complete AEC substitute. When VPIO is explicitly
-  requested and engages, macOS applies AEC/noise suppression/AGC before buffers
-  reach `MeetingRecordingService`.
+- **Source mode** is user-configurable per recording start: microphone + system audio (default), microphone only, or system audio only. The selected mode controls both permission prompts and which capture streams are started.
+- **System audio** is captured via ScreenCaptureKit `SCStream` audio (`SCStreamConfiguration.capturesAudio = true`) only when the source mode includes system audio, which avoids owning or clocking a HAL aggregate output device.
+- **Mic audio** is captured by subscribing to `SharedMicrophoneStream` only when the source mode includes microphone audio, with a typed policy (`MeetingMicProcessingMode`): `raw` (default), `vpioPreferred`, or `vpioRequired`.
+- Sotto ships meeting capture with raw mic capture and ScreenCaptureKit for system audio when both sources are selected. VPIO remains available for explicit experiments, but it is not the shipped default because live-call testing showed that engaging it can muffle the user's outgoing mic in Zoom/Meet. The older Core Audio process-tap path also remains out of production because it does not reliably coexist with VPIO in-process. See `docs/research/vpio-process-tap-conflict.md`.
+- When both streams are selected, they are captured within the same meeting session and aligned by host time. `CaptureOrchestrator` owns join + offset + live-preview chunk boundaries via `MeetingAudioPairJoiner` plus per-source `MeetingLiveAudioChunking` strategies. Single-source sessions skip the unselected stream and produce a mono `meeting-playback.m4a`.
+- Raw capture applies no platform AEC/noise suppression/AGC. Meeting mic conditioning is preview-only: release bundles with LocalVQE assets may run `StreamingMeetingEchoSuppressor` over paired mic/system samples, while local/dev bundles without those assets fall back to raw preview samples with diagnostics. Transcript-layer system-dominance suppression and `MeetingTranscriptSourceReconciler` remain safety nets against obvious speaker bleed, not a complete AEC substitute. When VPIO is explicitly requested and engages, macOS applies AEC/noise suppression/AGC before buffers reach `MeetingRecordingService`.
 - Audio is stored as separate M4A files (AAC 64kbps, 48kHz mono) per source
 - Source audio is written as fragmented M4A with 1-second movie fragments so kill-9 recovery can keep playable audio through the last committed fragment.
-- After recording stops, the captured source M4As are finalized and merged into
-  `meeting-playback.m4a`. Dual-input sessions preserve source separation as stereo
-  (`L=mic`, `R=system`), while single-input sessions remain mono. The recovery
-  lock is then rewritten to `awaitingTranscription`, and a processing Library
-  row is saved before the recorder returns to idle.
-- Final meeting STT does **not** transcribe `meeting-playback.m4a`. A background queue
-  transcribes the captured source files separately with the engine captured at
-  recording start, then merges those fresh results by persisted
-  `MeetingSourceAlignment`. For the local (`Me`) microphone track, source
-  selection follows the echo-cancellation readiness gate below. The system track
-  is unchanged. `MeetingRecordingOutput.microphoneTranscriptionURL` remains a
-  cheap UI/list helper, not the final-STT gate. `meeting-playback.m4a` is kept as the
-  playback/export artifact. See
-  `docs/research/meeting-dual-stream-transcription-pipeline.md` for the full
-  pipeline and tradeoffs.
+- After recording stops, the captured source M4As are finalized and merged into `meeting-playback.m4a`. Dual-input sessions preserve source separation as stereo (`L=mic`, `R=system`), while single-input sessions remain mono. The recovery lock is then rewritten to `awaitingTranscription`, and a processing Library row is saved before the recorder returns to idle.
+- Final meeting STT does **not** transcribe `meeting-playback.m4a`. A background queue transcribes the captured source files separately with the engine captured at recording start, then merges those fresh results by persisted `MeetingSourceAlignment`. For the local (`Me`) microphone track, source selection follows the echo-cancellation readiness gate below. The system track is unchanged. `MeetingRecordingOutput.microphoneTranscriptionURL` remains a cheap UI/list helper, not the final-STT gate. `meeting-playback.m4a` is kept as the playback/export artifact. See `docs/research/meeting-dual-stream-transcription-pipeline.md` for the full pipeline and tradeoffs.
 - Recovery locks and retention safety are a tested boundary contract. See [`spec/contracts/meeting-recovery-retention.md`](contracts/meeting-recovery-retention.md) before changing lock-file predicates or automatic meeting-audio deletion.
 - Live chunk enqueue keeps a conservative guard: when recent system energy strongly dominates processed mic energy for a short freshness window, mic chunks are skipped for live transcription only. Mic audio is still written to disk and included in final mix/output.
 - Joiner queue overflow, long-session sync lag, and runtime capture failures are emitted as diagnostics for observability (`MeetingAudioCaptureEvent.error` where available).
 
 ### Final Capture Truth
 
-Frame coverage and signal presence are distinct from transcript completeness.
-The finalized `MeetingCaptureReport` compares written/timeline durations with
-pause-adjusted elapsed time and can mark successfully transcribed audio
-`partial`. Missing legacy reports mean unknown, not healthy.
+Frame coverage and signal presence are distinct from transcript completeness. The finalized `MeetingCaptureReport` compares written/timeline durations with pause-adjusted elapsed time and can mark successfully transcribed audio `partial`. Missing legacy reports mean unknown, not healthy.
 
-The release-readiness candidate adds qualified `silent` system-source reporting:
-at least 30 seconds, system buffers delivered, nonzero microphone signal, and
-exact-zero peak absolute sample in successfully written converted/downmixed
-system PCM. This includes retained pre-pause buffers and excludes dropped
-paused buffers. Right-channel-only input is not silence if it survives the
-downmix; phase-cancelling input is evaluated as written. There is no quiet-audio
-threshold or new live restart. `system_peak_level` diagnostics now describe
-written PCM peak magnitude, not the UI's input-channel RMS meter.
+The release-readiness candidate adds qualified `silent` system-source reporting: at least 30 seconds, system buffers delivered, nonzero microphone signal, and exact-zero peak absolute sample in successfully written converted/downmixed system PCM. This includes retained pre-pause buffers and excludes dropped paused buffers. Right-channel-only input is not silence if it survives the downmix; phase-cancelling input is evaluated as written. There is no quiet-audio threshold or new live restart. `system_peak_level` diagnostics now describe written PCM peak magnitude, not the UI's input-channel RMS meter.
 
-Recovery refreshes surviving media duration/alignment while retaining prior
-silence and interruption history; unavailable/interrupted media still takes
-precedence. Full field/precedence details live in the
-[artifact contract](contracts/meeting-artifacts-v1.md).
+Recovery refreshes surviving media duration/alignment while retaining prior silence and interruption history; unavailable/interrupted media still takes precedence. Full field/precedence details live in the [artifact contract](contracts/meeting-artifacts-v1.md).
 
-Source-writer finalization has one aggregate five-second deadline. A timed-out
-written source fails settlement without cancelling AVAssetWriter or deleting
-audio. A process-local folder guard remains until all callbacks return;
-recovery/discard cannot touch still-owned files. See the
-[recovery ownership contract](contracts/meeting-recovery-retention.md#source-writer-finalization-ownership).
+Source-writer finalization has one aggregate five-second deadline. A timed-out written source fails settlement without cancelling AVAssetWriter or deleting audio. A process-local folder guard remains until all callbacks return; recovery/discard cannot touch still-owned files. See the [recovery ownership contract](contracts/meeting-recovery-retention.md#source-writer-finalization-ownership).
 
 ### Meeting Echo Cancellation (AEC)
 
-Dual-source meeting capture preserves raw source artifacts:
-`microphone-raw.m4a` and `system-raw.m4a`, plus mixed `meeting-playback.m4a` for playback and
-export. After stop, `MeetingCleanedMicRenderer` can derive
-`microphone-cleaned.m4a` offline from the raw mic and system reference using
-the LocalVQE echo-only v1.4 path with `MeetingEchoDelayEstimator` delay
-estimation. Before running the model, the echo probe can skip no-echo meetings
-(headphones or inaudible remote audio) and choose raw without manufacturing a
-cleaned file. For very long meetings, the duration guard skips upfront when the
-render is predicted to exceed the bounded final-STT deadline.
+Dual-source meeting capture preserves raw source artifacts: `microphone-raw.m4a` and `system-raw.m4a`, plus mixed `meeting-playback.m4a` for playback and export. After stop, `MeetingCleanedMicRenderer` can derive `microphone-cleaned.m4a` offline from the raw mic and system reference using the LocalVQE echo-only v1.4 path with `MeetingEchoDelayEstimator` delay estimation. Before running the model, the echo probe can skip no-echo meetings (headphones or inaudible remote audio) and choose raw without manufacturing a cleaned file. For very long meetings, the duration guard skips upfront when the render is predicted to exceed the bounded final-STT deadline.
 
-Final STT waits on `MeetingCleanedMicrophoneReadiness` with a bounded,
-duration-scaled deadline before choosing the microphone source. It uses cleaned
-audio only when the render finishes and the artifact is non-empty and decodable;
-otherwise it falls back to raw mic. The source decision records a structured
-routing reason (`cleanedUsed`, `rawTimeout`, `rawInvalidArtifact`,
-`rawRenderFailed`, `rawMissingSystemReference`, `rawNoAECAssets`,
-`skippedNoEchoPath`, or `predictedRenderTimeout`). The render/skip summary is
-persisted to
-`meeting-recording-metadata.json` as optional `echoSuppression` provenance so
-shared artifact folders explain cleaned-vs-raw routing without app logs.
+Final STT waits on `MeetingCleanedMicrophoneReadiness` with a bounded, duration-scaled deadline before choosing the microphone source. It uses cleaned audio only when the render finishes and the artifact is non-empty and decodable; otherwise it falls back to raw mic. The source decision records a structured routing reason (`cleanedUsed`, `rawTimeout`, `rawInvalidArtifact`, `rawRenderFailed`, `rawMissingSystemReference`, `rawNoAECAssets`, `skippedNoEchoPath`, or `predictedRenderTimeout`). The render/skip summary is persisted to `meeting-recording-metadata.json` as optional `echoSuppression` provenance so shared artifact folders explain cleaned-vs-raw routing without app logs.
 
-[ADR-028](adr/028-meeting-echo-cancellation.md) is the architectural record.
-[`spec/contracts/meeting-artifacts-v1.md`](contracts/meeting-artifacts-v1.md)
-is the artifact and sidecar contract.
+[ADR-028](adr/028-meeting-echo-cancellation.md) is the architectural record. [`spec/contracts/meeting-artifacts-v1.md`](contracts/meeting-artifacts-v1.md) is the artifact and sidecar contract.
 
 ### Key Components
 
@@ -395,27 +279,11 @@ User clicks "Start Meeting Recording"
     → Navigate to transcription detail view only if no newer meeting recording is active
 ```
 
-The foreground stop path is intentionally sequential, not concurrent: Meeting
-B can start only after Meeting A's source audio, mixed playback artifact,
-`awaitingTranscription` lock, and processing Library row are durable. Meeting
-A's final STT then continues in the queue-owned background path.
+The foreground stop path is intentionally sequential, not concurrent: Meeting B can start only after Meeting A's source audio, mixed playback artifact, `awaitingTranscription` lock, and processing Library row are durable. Meeting A's final STT then continues in the queue-owned background path.
 
-On app startup, processing-row reconciliation excludes both finalizations in
-the current process's queue and rows whose exact artifact folder has a readable
-lock owned by another live process. An unowned row becomes retryable error only
-if its persisted status is still `processing` at the atomic update boundary;
-this prevents startup cleanup from regressing a concurrently completed row.
-Retry and crash recovery first claim that folder by rewriting the lock with
-their PID and a unique lease token. The claim and startup reconciliation share
-a per-folder advisory mutex, so the ownership check and compare-and-set cannot
-race a newly admitted finalization. Failed admission restores the prior lock;
-successful settlement deletes it.
+On app startup, processing-row reconciliation excludes both finalizations in the current process's queue and rows whose exact artifact folder has a readable lock owned by another live process. An unowned row becomes retryable error only if its persisted status is still `processing` at the atomic update boundary; this prevents startup cleanup from regressing a concurrently completed row. Retry and crash recovery first claim that folder by rewriting the lock with their PID and a unique lease token. The claim and startup reconciliation share a per-folder advisory mutex, so the ownership check and compare-and-set cannot race a newly admitted finalization. Failed admission restores the prior lock; successful settlement deletes it.
 
-This is a recorder-availability guarantee, not an instant-transcript guarantee.
-Queued meeting finalization still uses the shared `STTScheduler` background
-slot. If file, folder, YouTube, podcast, or media URL STT is already running,
-the stopped meeting waits for that job to finish; once the slot is free,
-`meetingFinalize` outranks later queued `fileTranscription` work.
+This is a recorder-availability guarantee, not an instant-transcript guarantee. Queued meeting finalization still uses the shared `STTScheduler` background slot. If file, folder, YouTube, podcast, or media URL STT is already running, the stopped meeting waits for that job to finish; once the slot is free, `meetingFinalize` outranks later queued `fileTranscription` work.
 
 ### Storage
 
@@ -430,59 +298,17 @@ the stopped meeting waits for that job to finish; once the slot is free,
     └── chunks/            # Live-preview scratch chunks
 ```
 
-Audio files are kept forever by default. Settings > Storage exposes a meeting
-audio retention policy: keep forever, auto-delete after a configurable number of
-days (1–365, default 30), or delete immediately after transcription. Switching
-to an auto-deleting mode is gated behind a one-time confirmation; the legacy
-`saveMeetingAudio` preference migrates to keep-forever (on) or delete-immediately
-(off). Users can also reveal, save a copy, or delete
-managed meeting audio from the meeting detail view, Library/Meetings row menus,
-Settings > Storage, and CLI support commands. Audio deletion clears the
-transcript's stored `filePath` and removes top-level app-managed audio files
-from the session folder, including `meeting-playback.m4a`, selected-source
-`microphone-raw.m4a` / `system-raw.m4a`, and other managed audio extensions. It keeps
-the transcript row, `meetingArtifactFolderPath`, and non-audio artifacts such
-as `manifest.json`, `transcript.json`, `notes.md`, and prompt-result files.
-Full meeting deletion is the path that removes the session folder.
+Audio files are kept forever by default. Settings > Storage exposes a meeting audio retention policy: keep forever, auto-delete after a configurable number of days (1–365, default 30), or delete immediately after transcription. Switching to an auto-deleting mode is gated behind a one-time confirmation; the legacy `saveMeetingAudio` preference migrates to keep-forever (on) or delete-immediately (off). Users can also reveal, save a copy, or delete managed meeting audio from the meeting detail view, Library/Meetings row menus, Settings > Storage, and CLI support commands. Audio deletion clears the transcript's stored `filePath` and removes top-level app-managed audio files from the session folder, including `meeting-playback.m4a`, selected-source `microphone-raw.m4a` / `system-raw.m4a`, and other managed audio extensions. It keeps the transcript row, `meetingArtifactFolderPath`, and non-audio artifacts such as `manifest.json`, `transcript.json`, `notes.md`, and prompt-result files. Full meeting deletion is the path that removes the session folder.
 
-Scheduled retention only detaches audio for completed meeting rows with stored
-audio paths. Retention age uses `audioRetentionStartedAt ?? createdAt` for both
-database selection and policy evaluation. Imported historical meetings therefore
-receive a fresh managed-audio window without changing their library chronology.
-Split eligibility uses the same clock. Retention skips any session folder that
-still has `recording.lock`, live or dead PID, because those files are active or recoverable recording input.
-Crash-recovered meetings are protected while recovery runs by the claiming
-process PID and finalization lease; once the lock is removed and the recovered
-row is completed, normal retention applies. The same lock guard protects
-manual cleanup: both `TranscriptionAssetCleanup` and the
-`clear-meeting-audio` CLI refuse to remove a session folder while a
-`recording.lock` is present, including dead-owner `awaitingTranscription` locks
-whose audio is still queued for background transcription (back-to-back meeting
-recording).
+Scheduled retention only detaches audio for completed meeting rows with stored audio paths. Retention age uses `audioRetentionStartedAt ?? createdAt` for both database selection and policy evaluation. Imported historical meetings therefore receive a fresh managed-audio window without changing their library chronology. Split eligibility uses the same clock. Retention skips any session folder that still has `recording.lock`, live or dead PID, because those files are active or recoverable recording input. Crash-recovered meetings are protected while recovery runs by the claiming process PID and finalization lease; once the lock is removed and the recovered row is completed, normal retention applies. The same lock guard protects manual cleanup: both `TranscriptionAssetCleanup` and the `clear-meeting-audio` CLI refuse to remove a session folder while a `recording.lock` is present, including dead-owner `awaitingTranscription` locks whose audio is still queued for background transcription (back-to-back meeting recording).
 
 ### External recording import
 
-[ADR-030](adr/030-external-meeting-import.md) and the
-[meeting import contract](contracts/meeting-import-v1.md) govern one-file imports.
-The app and CLI normalize a supported local audio/video file into an owned,
-system-only meeting archive: `system-raw.m4a`, zero-offset alignment metadata,
-and canonical `meeting-playback.m4a` bytes through a hard link or copy fallback.
-The external source is never moved, modified, renamed, or deleted.
+[ADR-030](adr/030-external-meeting-import.md) and the [meeting import contract](contracts/meeting-import-v1.md) govern one-file imports. The app and CLI normalize a supported local audio/video file into an owned, system-only meeting archive: `system-raw.m4a`, zero-offset alignment metadata, and canonical `meeting-playback.m4a` bytes through a hard link or copy fallback. The external source is never moved, modified, renamed, or deleted.
 
-The verified archive and ordinary recovery lock are published before the meeting
-stub. The stub keeps the chosen historical `createdAt`, fresh
-`audioRetentionStartedAt`, and any explicit title intent. Existing meeting
-finalization supplies STT, configured diarization, text processing, indexing,
-and artifacts; ordinary settlement removes the lock after completed-row
-verification. Cards and enabled after-meeting prompts follow as best-effort
-saved-audio automation. A failure before transcript completion leaves the
-published meeting retryable; a later failure reports a warning and preserves
-the completed transcript. No new capture session or microphone permission is
-required for the import itself.
+The verified archive and ordinary recovery lock are published before the meeting stub. The stub keeps the chosen historical `createdAt`, fresh `audioRetentionStartedAt`, and any explicit title intent. Existing meeting finalization supplies STT, configured diarization, text processing, indexing, and artifacts; ordinary settlement removes the lock after completed-row verification. Cards and enabled after-meeting prompts follow as best-effort saved-audio automation. A failure before transcript completion leaves the published meeting retryable; a later failure reports a warning and preserves the completed transcript. No new capture session or microphone permission is required for the import itself.
 
-The active meeting-audio retention preference applies to the managed copy.
-Delete-immediately detaches audio after successful transcription and automation;
-an unfinished retryable import keeps audio so Retry can complete the same row.
+The active meeting-audio retention preference applies to the managed copy. Delete-immediately detaches audio after successful transcription and automation; an unfinished retryable import keeps audio so Retry can complete the same row.
 
 ### Concurrent Operation with Dictation (ADR-015)
 
@@ -508,28 +334,9 @@ The primary concurrency use case remains meeting recording + dictation. File tra
 
 ### Dictation Live Preview
 
-Dictation can show a display-only live transcript preview above the dictation
-pill while you speak (`AppFeatures.liveDictationStreamingEnabled`, #517). It is
-decoupled from the paste: the final inserted text always comes from the
-stop-time transcription path, so a jumpy or approximate preview can never
-corrupt the result. Per engine: Parakeet TDT runs a single-flight tail-window
-batch preview (~1s cadence over the last ~15s of mic samples through its
-existing `[Float]` batch path); Parakeet Unified and both Nemotron builds use
-native streaming partials. Whisper stays default-off pending a per-pass latency
-probe, and Cohere stays off because it is record-then-transcribe only. Users toggle
-it — and pick a preview text size — in Settings → Capture → Dictation
-(`showLiveDictationPreview`, default on); the toggle gates only the preview
-sink.
+Dictation can show a display-only live transcript preview above the dictation pill while you speak (`AppFeatures.liveDictationStreamingEnabled`, #517). It is decoupled from the paste: the final inserted text always comes from the stop-time transcription path, so a jumpy or approximate preview can never corrupt the result. Per engine: Parakeet TDT runs a single-flight tail-window batch preview (~1s cadence over the last ~15s of mic samples through its existing `[Float]` batch path); Parakeet Unified and both Nemotron builds use native streaming partials. Whisper stays default-off pending a per-pass latency probe, and Cohere stays off because it is record-then-transcribe only. Users toggle it — and pick a preview text size — in Settings → Capture → Dictation (`showLiveDictationPreview`, default on); the toggle gates only the preview sink.
 
-Before display the raw preview stream passes through a `LiveTranscriptStabilizer`
-(owned by `DictationService`, reset per session): it aligns each update against
-the committed tail and only ever appends — committing the stable body and holding
-the last few words as a volatile hypothesis — so already-shown words don't jump,
-re-spell, or disappear as the window slides or partials are revised. The overlay
-renders this as a bottom-anchored rolling readout: the newest line is pinned to
-the bottom and older lines rise and fade out at the top edge via a gradient mask,
-with no mid-word head truncation. Stabilization is display-only and can never
-alter the pasted text. See `docs/research/live-dictation-streaming.md`.
+Before display the raw preview stream passes through a `LiveTranscriptStabilizer` (owned by `DictationService`, reset per session): it aligns each update against the committed tail and only ever appends — committing the stable body and holding the last few words as a volatile hypothesis — so already-shown words don't jump, re-spell, or disappear as the window slides or partials are revised. The overlay renders this as a bottom-anchored rolling readout: the newest line is pinned to the bottom and older lines rise and fade out at the top edge via a gradient mask, with no mid-word head truncation. Stabilization is display-only and can never alter the pasted text. See `docs/research/live-dictation-streaming.md`.
 
 ### Meeting Live Preview
 

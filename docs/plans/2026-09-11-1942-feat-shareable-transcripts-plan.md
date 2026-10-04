@@ -33,13 +33,11 @@ execution: code
 
 ### Summary
 
-Sotto will publish an explicitly reviewed, text-only snapshot as an encrypted, expiring page at `share.macparakeet.com`.
-Anyone with the complete link can read the snapshot, while its anonymous owner can update it deliberately or stop sharing permanently.
+Sotto will publish an explicitly reviewed, text-only snapshot as an encrypted, expiring page at `share.macparakeet.com`. Anyone with the complete link can read the snapshot, while its anonymous owner can update it deliberately or stop sharing permanently.
 
 ### Problem Frame
 
-Sotto can already copy and export transcripts, notes, and summaries, but those actions make the recipient responsible for presentation and make later revocation impossible.
-Users need a low-friction way to share only the useful text while preserving Sotto's local-first privacy position and avoiding a mandatory account system.
+Sotto can already copy and export transcripts, notes, and summaries, but those actions make the recipient responsible for presentation and make later revocation impossible. Users need a low-friction way to share only the useful text while preserving Sotto's local-first privacy position and avoiding a mandatory account system.
 
 ### Key Decisions
 
@@ -290,12 +288,9 @@ stateDiagram-v2
 
 ### Cross-Repository Sequencing
 
-The app work belongs in this repository.
-The hosted Worker, viewer, database migration, DNS binding, public privacy copy, and deployment configuration belong in the companion `sotto-website` repository.
+The app work belongs in this repository. The hosted Worker, viewer, database migration, DNS binding, public privacy copy, and deployment configuration belong in the companion `sotto-website` repository.
 
-Build the shared fixture and service contract first, then land the service and viewer while the app flag remains off.
-Before durable credential, deletion, and app-integration work depends on the hosted surface, use a disposable synthetic share to verify that representative browsers and sharing channels preserve the fragment and that the planned privacy explanation is understood.
-The app may merge after it passes against a disposable or staging service, but public enablement waits for a deployed compatible service and every release gate in `docs/share-service-privacy-and-operations.md`.
+Build the shared fixture and service contract first, then land the service and viewer while the app flag remains off. Before durable credential, deletion, and app-integration work depends on the hosted surface, use a disposable synthetic share to verify that representative browsers and sharing channels preserve the fragment and that the planned privacy explanation is understood. The app may merge after it passes against a disposable or staging service, but public enablement waits for a deployed compatible service and every release gate in `docs/share-service-privacy-and-operations.md`.
 
 ### Risks and Mitigations
 
@@ -477,8 +472,7 @@ The app may merge after it passes against a disposable or staging service, but p
 | Privacy capture | Inspect app, browser, Worker, edge, D1, R2, APM, crash, and support evidence for all flows. | No plaintext, fragment, complete URL, content-derived metadata, or owner/recovery secret appears outside its allowed boundary. |
 | Independent review | Review the exact app and website diffs with correctness, API-contract, privacy/security, data-integrity, reliability, and maintainability lenses. | Findings converge to trivial or explicitly resolved outcomes before merge. |
 
-Real user transcript content is not required for implementation verification.
-Use synthetic fixtures until the privacy, deletion, legal, and staging gates permit a feature-flagged beta.
+Real user transcript content is not required for implementation verification. Use synthetic fixtures until the privacy, deletion, legal, and staging gates permit a feature-flagged beta.
 
 ---
 

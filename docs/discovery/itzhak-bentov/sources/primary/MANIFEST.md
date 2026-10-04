@@ -1,8 +1,6 @@
 # Primary source documents — provenance
 
-Hard, source-of-truth documents downloaded locally so the archive survives link
-rot. Each entry: what it is, where it came from, and what it substantiates in
-[`../../report.md`](../../report.md).
+Hard, source-of-truth documents downloaded locally so the archive survives link rot. Each entry: what it is, where it came from, and what it substantiates in [`../../report.md`](../../report.md).
 
 > **The PDFs are not committed to git** (they are ~33 MB of binaries, and every
 > one is a freely re-downloadable public-domain government document or published
@@ -42,11 +40,7 @@ Source: `https://patentimages.storage.googleapis.com/...` (Google Patents offici
 | `gateway-process-recovered-page25.pdf` | The long-missing **page 25**, recovered (1 p) — the page absent from the CIA copy |
 | `gateway-process-report-fulltext.txt` | OCR full text — grep here for the Bentov / 7 Hz / standing-wave passages |
 
-Document number **CIA-RDP96-00788R001700210016-5**. Source: Internet Archive item
-`1983-analysis-and-assessment-of-gateway-process` (the CIA reading-room direct-docs
-path now 302-redirects and blocks direct fetch; this IA item mirrors the same
-declassified document + the recovered page 25). Public domain (US Government work).
-Substantiates §4 and the Bentov→McDonnell link.
+Document number **CIA-RDP96-00788R001700210016-5**. Source: Internet Archive item `1983-analysis-and-assessment-of-gateway-process` (the CIA reading-room direct-docs path now 302-redirects and blocks direct fetch; this IA item mirrors the same declassified document + the recovered page 25). Public domain (US Government work). Substantiates §4 and the Bentov→McDonnell link.
 
 ## Flight 191 (NTSB, primary)
 
@@ -54,15 +48,8 @@ Substantiates §4 and the Bentov→McDonnell link.
 |---|---|
 | `NTSB-AAR7917-flight191.pdf` | NTSB Aircraft Accident Report AAR-79-17, American Airlines Flight 191, 25 May 1979 |
 
-Source: `ntsb.gov/investigations/AccidentReports/Reports/AAR7917.pdf`. Public domain.
-Substantiates §5 — the full accident cause chain (engine/pylon separation →
-slat retraction → asymmetric stall). This is what makes the "assassination" reading
-unsupported: a documented, non-selective maintenance/design failure.
+Source: `ntsb.gov/investigations/AccidentReports/Reports/AAR7917.pdf`. Public domain. Substantiates §5 — the full accident cause chain (engine/pylon separation → slat retraction → asymmetric stall). This is what makes the "assassination" reading unsupported: a documented, non-selective maintenance/design failure.
 
 ## Deliberately NOT archived (copyright)
 
-- ***Stalking the Wild Pendulum*** and Bentov's other books are **still in print**
-  (Inner Traditions / Destiny Books). Redistributing a full scan would be a
-  copyright violation. The report links the publisher pages and the Internet
-  Archive borrow copy instead. If you want the text locally, borrow it through
-  archive.org rather than mirroring it here.
+- ***Stalking the Wild Pendulum*** and Bentov's other books are **still in print** (Inner Traditions / Destiny Books). Redistributing a full scan would be a copyright violation. The report links the publisher pages and the Internet Archive borrow copy instead. If you want the text locally, borrow it through archive.org rather than mirroring it here.

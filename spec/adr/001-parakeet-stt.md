@@ -142,29 +142,12 @@ Nemotron is labeled Beta because the first Sotto smoke benchmark showed strong w
 
 > Date: 2026-06-11
 
-The Nemotron engine now exposes two builds, selected through a persisted
-Nemotron model preference (Settings build picker, `config set nemotron-model`,
-`models select nemotron-english-1120ms`, or `transcribe --nemotron-model`):
+The Nemotron engine now exposes two builds, selected through a persisted Nemotron model preference (Settings build picker, `config set nemotron-model`, `models select nemotron-english-1120ms`, or `transcribe --nemotron-model`):
 
-- `multilingual-1120ms` (default) — the Nemotron 3.5 multilingual build from
-  the 2026-06-08 amendment, with the existing `nemotron-language` hint.
-- `english-1120ms` — **Nemotron Speech Streaming EN 0.6B** (FastConformer-RNNT,
-  ~600 MB CoreML download via `FluidInference/nemotron-speech-streaming-en-0.6b-coreml`,
-  1120 ms chunk tier). English-only; it has no language-hint surface, so the
-  stored `nemotron-language` is ignored while it is selected. Vendor-published
-  benchmarks (M5 Pro: 2.28% WER / 65x RTFx at the 1120 ms tier, 100-file
-  LibriSpeech subset) motivated surfacing it — see
-  `docs/research/stt-models-and-voice-personalization-2026-06.md` §2.1 and
-  roadmap item 2 (§9) (June 2026 STT research, currently on the
-  `research/stt-models-voice-personalization` branch pending merge).
+- `multilingual-1120ms` (default) — the Nemotron 3.5 multilingual build from the 2026-06-08 amendment, with the existing `nemotron-language` hint.
+- `english-1120ms` — **Nemotron Speech Streaming EN 0.6B** (FastConformer-RNNT, ~600 MB CoreML download via `FluidInference/nemotron-speech-streaming-en-0.6b-coreml`, 1120 ms chunk tier). English-only; it has no language-hint surface, so the stored `nemotron-language` is ignored while it is selected. Vendor-published benchmarks (M5 Pro: 2.28% WER / 65x RTFx at the 1120 ms tier, 100-file LibriSpeech subset) motivated surfacing it — see `docs/research/stt-models-and-voice-personalization-2026-06.md` §2.1 and roadmap item 2 (§9) (June 2026 STT research, currently on the `research/stt-models-voice-personalization` branch pending merge).
 
-Scope notes: file and meeting jobs run batch-at-stop through the streaming
-manager; Sotto maps FluidAudio token timings into word-level timestamps
-when the EN build reports them, and only the 1120 ms tier is surfaced. Build
-swaps follow the same scheduler guards as
-Parakeet v2/v3 swaps (ADR-016). License posture: FluidAudio and its CoreML
-conversion are Apache-2.0, but upstream NVIDIA model terms are not publicly
-verifiable, so the model stays a user-triggered download — never bundled.
+Scope notes: file and meeting jobs run batch-at-stop through the streaming manager; Sotto maps FluidAudio token timings into word-level timestamps when the EN build reports them, and only the 1120 ms tier is surfaced. Build swaps follow the same scheduler guards as Parakeet v2/v3 swaps (ADR-016). License posture: FluidAudio and its CoreML conversion are Apache-2.0, but upstream NVIDIA model terms are not publicly verifiable, so the model stays a user-triggered download — never bundled.
 
 > Amendment (2026-06-14): the EN build now also streams **live dictation
 > partials** (the display-only live transcript preview) through its native
@@ -173,96 +156,39 @@ verifiable, so the model stays a user-triggered download — never bundled.
 > `plans/active/2026-06-13-live-dictation-streaming-parakeet-and-preview-ui.md`
 > and `docs/research/live-dictation-streaming.md`.
 
-Both Nemotron builds remain Beta; standard-path fresh installs default to
-Parakeet v3, with the locale-aware WhisperKit onboarding exception above.
-Promotion criteria are unchanged: real Sotto corpus benchmarks
-(dictation + meeting audio with corrected transcripts), not vendor numbers.
+Both Nemotron builds remain Beta; standard-path fresh installs default to Parakeet v3, with the locale-aware WhisperKit onboarding exception above. Promotion criteria are unchanged: real Sotto corpus benchmarks (dictation + meeting audio with corrected transcripts), not vendor numbers.
 
 ## Addendum: Parakeet Unified English Build (June 2026)
 
 > Date: 2026-06-17
 
-The Parakeet model picker now exposes a third build alongside v3/v2, selected
-through the persisted Parakeet model preference (Settings build picker,
-`config set parakeet-model unified`, `models select parakeet-unified`, or
-`transcribe --parakeet-model unified`):
+The Parakeet model picker now exposes a third build alongside v3/v2, selected through the persisted Parakeet model preference (Settings build picker, `config set parakeet-model unified`, `models select parakeet-unified`, or `transcribe --parakeet-model unified`):
 
-- `unified` — **NVIDIA Parakeet Unified EN 0.6B** (Unified-FastConformer-RNNT,
-  ~565 MB int8 CoreML download via
-  `FluidInference/parakeet-unified-en-0.6b-coreml`, requires FluidAudio ≥
-  0.15.3). English-only; no language-hint surface.
+- `unified` — **NVIDIA Parakeet Unified EN 0.6B** (Unified-FastConformer-RNNT, ~565 MB int8 CoreML download via `FluidInference/parakeet-unified-en-0.6b-coreml`, requires FluidAudio ≥ 0.15.3). English-only; no language-hint surface.
 
-Architecturally Unified is **not** a TDT build: it has its own
-preprocessor/encoder/decoder CoreML chain and no `AsrModelVersion`, so it is
-served by a dedicated `ParakeetUnifiedEngine` (wrapping FluidAudio's
-`StreamingUnifiedAsrManager`) that `STTRuntime` routes to when the persisted
-`ParakeetModelVariant` is `.unified` — the same way the Nemotron engine routes
-its English build. It is presented to users as a Parakeet model because that is
-how the feature was requested (issue #520) and how users reason about it.
+Architecturally Unified is **not** a TDT build: it has its own preprocessor/encoder/decoder CoreML chain and no `AsrModelVersion`, so it is served by a dedicated `ParakeetUnifiedEngine` (wrapping FluidAudio's `StreamingUnifiedAsrManager`) that `STTRuntime` routes to when the persisted `ParakeetModelVariant` is `.unified` — the same way the Nemotron engine routes its English build. It is presented to users as a Parakeet model because that is how the feature was requested (issue #520) and how users reason about it.
 
-Why it earns a slot: FluidAudio's v0.15.4 CoreML benchmark on the full
-LibriSpeech test-clean set (2620 files) puts the **offline** build at **2.15%
-average WER / 1.68% aggregate WER** with punctuation/capitalization, while
-NVIDIA's own model card reports 1.63% offline test-clean WER. It is a
-competitive English opt-in, not a v3 replacement. Unlike v2/v3 it was also
-trained for streaming; Sotto now uses the native streaming path for final
-transcripts because FluidAudio v0.15.4 exposes token timings there.
+Why it earns a slot: FluidAudio's v0.15.4 CoreML benchmark on the full LibriSpeech test-clean set (2620 files) puts the **offline** build at **2.15% average WER / 1.68% aggregate WER** with punctuation/capitalization, while NVIDIA's own model card reports 1.63% offline test-clean WER. It is a competitive English opt-in, not a v3 replacement. Unlike v2/v3 it was also trained for streaming; Sotto now uses the native streaming path for final transcripts because FluidAudio v0.15.4 exposes token timings there.
 
-Scope notes: file, meeting, final dictation-paste jobs, and live dictation
-preview use FluidAudio's native low-latency streaming build
-(`parakeet-unified-2080ms`, `StreamingUnifiedAsrManager`, ~2.08 s partials).
-The build exposes token-derived word-level timestamps through Sotto, so
-exports and speaker alignment work the same way they do for other timestamped
-engines. Build swaps follow the same scheduler guards as v2/v3 swaps (ADR-016).
-License posture: FluidAudio's conversion is Apache-2.0 and the
-upstream model is under the NVIDIA Open Model License Agreement, so — like every
-other model — it stays a user-triggered download, never bundled. Standard-path
-fresh installs still default to Parakeet v3.
+Scope notes: file, meeting, final dictation-paste jobs, and live dictation preview use FluidAudio's native low-latency streaming build (`parakeet-unified-2080ms`, `StreamingUnifiedAsrManager`, ~2.08 s partials). The build exposes token-derived word-level timestamps through Sotto, so exports and speaker alignment work the same way they do for other timestamped engines. Build swaps follow the same scheduler guards as v2/v3 swaps (ADR-016). License posture: FluidAudio's conversion is Apache-2.0 and the upstream model is under the NVIDIA Open Model License Agreement, so — like every other model — it stays a user-triggered download, never bundled. Standard-path fresh installs still default to Parakeet v3.
 
 ## Addendum: Cohere Transcribe Opt-In Engine (June 2026)
 
 > Date: 2026-06-19
 > Status: **Accepted** (integrated 2026-06-27 as opt-in, batch-only)
 
-A gold-standard cross-engine benchmark (`benchmarks/asr/`, hardened and
-independently verified in PR #568) evaluated Cohere Transcribe
-(`cohere-transcribe-03-2026`, 2B params, Apache-2.0, #1 on the HF Open ASR
-Leaderboard) as a candidate on-device engine. PR #602 integrates it as an
-explicit opt-in engine for accuracy-critical record-then-transcribe work.
+A gold-standard cross-engine benchmark (`benchmarks/asr/`, hardened and independently verified in PR #568) evaluated Cohere Transcribe (`cohere-transcribe-03-2026`, 2B params, Apache-2.0, #1 on the HF Open ASR Leaderboard) as a candidate on-device engine. PR #602 integrates it as an explicit opt-in engine for accuracy-critical record-then-transcribe work.
 
-**It is FluidAudio CoreML, not MLX.** FluidAudio ≥ 0.15.4 — the exact SDK
-Sotto already depends on — ships a public `CoherePipeline` actor and a q8
-CoreML model repo (`FluidInference/cohere-transcribe-03-2026-coreml`). So Cohere
-needs **no new runtime**: `CohereTranscribeEngine` wraps the FluidAudio pipeline,
-routes inside `STTRuntime`, and uses a user-triggered `cohere-transcribe` model
-download. This is what distinguishes it from the deferred MLX-only candidates
-(Qwen3-ASR, Moonshine).
+**It is FluidAudio CoreML, not MLX.** FluidAudio ≥ 0.15.4 — the exact SDK Sotto already depends on — ships a public `CoherePipeline` actor and a q8 CoreML model repo (`FluidInference/cohere-transcribe-03-2026-coreml`). So Cohere needs **no new runtime**: `CohereTranscribeEngine` wraps the FluidAudio pipeline, routes inside `STTRuntime`, and uses a user-triggered `cohere-transcribe` model download. This is what distinguishes it from the deferred MLX-only candidates (Qwen3-ASR, Moonshine).
 
-**Findings** (Apple M4 Pro; full LibriSpeech + FLEURS; one canonical normalizer;
-paired-bootstrap significance):
-- Most accurate on-device engine — English macro WER **2.07%** (vs 2.38%
-  Parakeet-unified, 3.00% Whisper); best Japanese (FLEURS CER 5.56 vs Whisper 13.42).
-- The accuracy lead is *statistically significant* only on **noisy English**
-  (`test-other`) and **Japanese**; clean English, Korean, and Chinese are ties
-  with the best alternative.
-- Cost is the decisive factor: **~11 GB peak resident memory** (constant across
-  file counts → model-resident, measured via the FluidAudio reference harness),
-  **~73 s one-time ANE compile**, **~11× realtime** (vs ~70× / ~120 MB for
-  Parakeet), ~2.1 GB download.
+**Findings** (Apple M4 Pro; full LibriSpeech + FLEURS; one canonical normalizer; paired-bootstrap significance):
+- Most accurate on-device engine — English macro WER **2.07%** (vs 2.38% Parakeet-unified, 3.00% Whisper); best Japanese (FLEURS CER 5.56 vs Whisper 13.42).
+- The accuracy lead is *statistically significant* only on **noisy English** (`test-other`) and **Japanese**; clean English, Korean, and Chinese are ties with the best alternative.
+- Cost is the decisive factor: **~11 GB peak resident memory** (constant across file counts → model-resident, measured via the FluidAudio reference harness), **~73 s one-time ANE compile**, **~11× realtime** (vs ~70× / ~120 MB for Parakeet), ~2.1 GB download.
 
-**Decision:** keep Parakeet v3 the default and WhisperKit the light multilingual
-option. Ship Cohere as an explicit opt-in engine with a clear download-size /
-memory warning, surfaced for accuracy-critical, noisy, or Japanese
-transcription. Do not hard-gate RAM in this integration; the Settings copy
-warns about higher memory use and the model is never bundled. Cohere is
-batch-only: dictation records first and transcribes on stop; meetings use
-Cohere only for final transcription, not live preview chunks; transcripts have
-no word timestamps or speaker alignment. Both Nemotron builds are dominated by
-Parakeet in this benchmark (settling #520).
+**Decision:** keep Parakeet v3 the default and WhisperKit the light multilingual option. Ship Cohere as an explicit opt-in engine with a clear download-size / memory warning, surfaced for accuracy-critical, noisy, or Japanese transcription. Do not hard-gate RAM in this integration; the Settings copy warns about higher memory use and the model is never bundled. Cohere is batch-only: dictation records first and transcribes on stop; meetings use Cohere only for final transcription, not live preview chunks; transcripts have no word timestamps or speaker alignment. Both Nemotron builds are dominated by Parakeet in this benchmark (settling #520).
 
-See `benchmarks/asr/README.md` (PR #568) for the full methodology, CIs, and
-speed/memory tables; `plans/active/asr-benchmark-and-model-expansion.md` for the
-candidate landscape.
+See `benchmarks/asr/README.md` (PR #568) for the full methodology, CIs, and speed/memory tables; `plans/active/asr-benchmark-and-model-expansion.md` for the candidate landscape.
 
 ## Addendum: Optional Orukeet Preview (September 2026)
 

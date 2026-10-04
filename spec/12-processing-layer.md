@@ -110,25 +110,15 @@ Additional categories are future schema decisions and are not part of this spec.
 
 ### Dictation AI Formatter Profiles
 
-Dictation AI Formatter app/category profile code is deliberately separate from
-the Prompt Library, but `AppFeatures.aiFormatterProfilesEnabled = false` keeps
-its routing and management out of the normal product surface. The
-`ai_formatter_profiles` table still migrates. When enabled, profiles resolve
-through `AIFormatterProfileMatcher`; otherwise dictation uses the dictation
-formatter prompt.
+Dictation AI Formatter app/category profile code is deliberately separate from the Prompt Library, but `AppFeatures.aiFormatterProfilesEnabled = false` keeps its routing and management out of the normal product surface. The `ai_formatter_profiles` table still migrates. When enabled, profiles resolve through `AIFormatterProfileMatcher`; otherwise dictation uses the dictation formatter prompt.
 
 Reasoning:
 
-- The AI Formatter fallback prompts (transcript vs dictation) are runtime
-  preferences, not Prompt Library rows.
-- Formatter profiles are keyed by local app context, not by a reusable
-  summary/transform prompt card.
-- Transform prompts already use `Prompt.Category.transform`; future per-app
-  Transform variants can reuse `AppPromptContext` and matcher concepts without
-  forcing Dictation Formatter storage into `prompts`.
+- The AI Formatter fallback prompts (transcript vs dictation) are runtime preferences, not Prompt Library rows.
+- Formatter profiles are keyed by local app context, not by a reusable summary/transform prompt card.
+- Transform prompts already use `Prompt.Category.transform`; future per-app Transform variants can reuse `AppPromptContext` and matcher concepts without forcing Dictation Formatter storage into `prompts`.
 
-See [spec/11-llm-integration.md](11-llm-integration.md) for provider behavior
-and [spec/01-data-model.md](01-data-model.md) for the profile table.
+See [spec/11-llm-integration.md](11-llm-integration.md) for provider behavior and [spec/01-data-model.md](01-data-model.md) for the profile table.
 
 ---
 
@@ -142,9 +132,7 @@ A **Summary** is a generated output tied to a specific transcript. Each transcri
 
 ### Data Model: Prompt
 
-The following row and SQL excerpts show the pre-versioning shape. Current
-version ownership, migrations, and result provenance are defined in the
-[data model](01-data-model.md#versioned-prompts-and-meeting-classification-2026-09-05).
+The following row and SQL excerpts show the pre-versioning shape. Current version ownership, migrations, and result provenance are defined in the [data model](01-data-model.md#versioned-prompts-and-meeting-classification-2026-09-05).
 
 ```swift
 public struct Prompt: Codable, Identifiable, Sendable {
@@ -213,27 +201,9 @@ public struct PromptResult: Codable, Identifiable, Sendable {
 }
 ```
 
-Each generated result stores `sourceCorrectionRevision` plus a SHA-256
-`sourceTranscriptHash` of cue words when an unedited transcript has timed cues,
-otherwise trimmed canonical `cleanTranscript` (falling back to `rawTranscript`
-when automatic clean text is empty). The text receipt catches retranscription
-even when the new transcript's correction revision resets to zero. Plain/rich
-context display settings and recording metadata do not affect this hash.
-Existing rows keep a `NULL` receipt in migration v0.48 because their source
-text cannot be proven from the current transcript. Missing receipts alone do
-not show a freshness banner: the normal Regenerate action explains the missing
-tracking in its help text. Only a known hash or correction-revision mismatch
-shows a transcript-change notice, using “result” for every prompt type.
-Regenerate replaces the result using the current transcript; it does not merely
-check freshness. Automation freshness fields retain their conservative unknown
-semantics.
+Each generated result stores `sourceCorrectionRevision` plus a SHA-256 `sourceTranscriptHash` of cue words when an unedited transcript has timed cues, otherwise trimmed canonical `cleanTranscript` (falling back to `rawTranscript` when automatic clean text is empty). The text receipt catches retranscription even when the new transcript's correction revision resets to zero. Plain/rich context display settings and recording metadata do not affect this hash. Existing rows keep a `NULL` receipt in migration v0.48 because their source text cannot be proven from the current transcript. Missing receipts alone do not show a freshness banner: the normal Regenerate action explains the missing tracking in its help text. Only a known hash or correction-revision mismatch shows a transcript-change notice, using “result” for every prompt type. Regenerate replaces the result using the current transcript; it does not merely check freshness. Automation freshness fields retain their conservative unknown semantics.
 
-Regeneration occupies the original result's tab position while queued,
-streaming, or failed. Success replaces that tab in place for the current visit,
-including same-recording reloads; reopening a recording uses creation order.
-Cancellation or dismissing a failure restores the saved result. The saved row
-remains intact until conditional replacement succeeds; external edits and
-source deletion still fail safely. Independent generations append new tabs.
+Regeneration occupies the original result's tab position while queued, streaming, or failed. Success replaces that tab in place for the current visit, including same-recording reloads; reopening a recording uses creation order. Cancellation or dismissing a failure restores the saved result. The saved row remains intact until conditional replacement succeeds; external edits and source deletion still fail safely. Independent generations append new tabs.
 
 ```sql
 CREATE TABLE summaries (
@@ -259,21 +229,7 @@ CREATE INDEX idx_summaries_transcription_id ON summaries(transcriptionId);
 
 **Why snapshot instead of reference:** Prompts can be edited or deleted after a result is generated. The result should always know exactly what instructions produced it. `promptName` is for display; `promptContent`, `userNotesSnapshot`, `includeMeetingNotesSnapshot`, `inferenceSettingsSnapshot`, and `outputLanguagePolicySnapshot` are request provenance, not a promise of identical future AI output. In-place user edits of `content` set `contentEditedAt` and do not rewrite those snapshots. The settings snapshot records the effective provider/model-filtered receipt. The Boolean remains meaningful when the generation had no notes, because regenerate can apply that captured preference to notes added later. The language snapshot records the meeting AI output-language policy used for that run; omitted/NULL means no policy was recorded, including earlier and imported results, and regeneration uses the current setting.
 
-Result and Transform prompts may carry typed generation settings. The active immutable version
-stores the requested `PromptInferenceSettings`; a queued generation copies that
-value together with the prompt text and per-run instructions, so later edits do
-not mutate work already queued. A completed `PromptResult` stores the
-provider/model-filtered effective settings actually sent. Retry reuses its
-queue snapshot, while regenerate reuses the selected result's stored settings
-receipt. The queue captures the selected model; execution resolves the current provider. Requested settings and unsupported-field metadata
-are not persisted on results. The CLI reads, preserves, and runs saved settings;
-`prompts set` configures or clears overrides through the same immutable-version
-editing service. Collection membership is mutable organization metadata and
-can be managed through `prompts collections` and prompt collection flags
-without creating a version. Transform execution also uses saved settings. Repository writes and
-execution independently reject invalid numeric values. Blank settings inherit
-the current Sotto prompt-result and adapter defaults. See
-[spec/14-per-prompt-inference-settings.md](14-per-prompt-inference-settings.md).
+Result and Transform prompts may carry typed generation settings. The active immutable version stores the requested `PromptInferenceSettings`; a queued generation copies that value together with the prompt text and per-run instructions, so later edits do not mutate work already queued. A completed `PromptResult` stores the provider/model-filtered effective settings actually sent. Retry reuses its queue snapshot, while regenerate reuses the selected result's stored settings receipt. The queue captures the selected model; execution resolves the current provider. Requested settings and unsupported-field metadata are not persisted on results. The CLI reads, preserves, and runs saved settings; `prompts set` configures or clears overrides through the same immutable-version editing service. Collection membership is mutable organization metadata and can be managed through `prompts collections` and prompt collection flags without creating a version. Transform execution also uses saved settings. Repository writes and execution independently reject invalid numeric values. Blank settings inherit the current Sotto prompt-result and adapter defaults. See [spec/14-per-prompt-inference-settings.md](14-per-prompt-inference-settings.md).
 
 **Migration from existing data:** Existing `transcriptions.summary` values migrate into the `summaries` table with classic `Summary` prompt metadata. The legacy `transcriptions.summary` column is dropped by `v0.7.6-drop-legacy-transcription-summary`.
 
@@ -297,21 +253,9 @@ When generating a result, the system prompt is assembled from the selected promp
 {extraInstructions}       ← only if user provided extra instructions; last so they can override language
 ```
 
-For meeting recordings, `Transcription.userNotes` is normalized and capped only
-for prompt input (8,000-word soft cap); the stored notes are not truncated. The
-same effective value is supplied to assembly and stored in
-`PromptResult.userNotesSnapshot`. The queued request also captures
-`Prompt.includeMeetingNotes`; the completed result persists it as
-`includeMeetingNotesSnapshot`. The queued request also captures the current
-AI output-language policy; the completed result persists it as
-`outputLanguagePolicySnapshot`. Extra instructions are appended last so they
-can ask the model to override that language request. This is prompt text, not
-a guaranteed runtime filter. Language is inferred from transcript text when
-following the transcript; Parakeet detected-language metadata is not used.
+For meeting recordings, `Transcription.userNotes` is normalized and capped only for prompt input (8,000-word soft cap); the stored notes are not truncated. The same effective value is supplied to assembly and stored in `PromptResult.userNotesSnapshot`. The queued request also captures `Prompt.includeMeetingNotes`; the completed result persists it as `includeMeetingNotesSnapshot`. The queued request also captures the current AI output-language policy; the completed result persists it as `outputLanguagePolicySnapshot`. Extra instructions are appended last so they can ask the model to override that language request. This is prompt text, not a guaranteed runtime filter. Language is inferred from transcript text when following the transcript; Parakeet detected-language metadata is not used.
 
-Automatic notes context is opt-in and result-prompt-only. Existing, built-in,
-and new prompts default false; Transforms cannot enable it. Assembly follows
-this decision table:
+Automatic notes context is opt-in and result-prompt-only. Existing, built-in, and new prompts default false; Transforms cannot enable it. Assembly follows this decision table:
 
 | Notes | Checkbox | Template contains `{{userNotes}}` | Result |
 |-------|----------|------------------------------------|--------|
@@ -322,15 +266,9 @@ this decision table:
 | Present | On | No | Append one delimited context block |
 | Present | On | Yes | Substitute at token; do not append |
 
-The automatic block labels notes as user-authored source material rather than
-instructions and says that the transcript wins factual conflicts. Retry reuses
-the failed queue snapshot. Regenerate reuses the result's checkbox snapshot
-with the meeting's current committed notes. Chat/Ask has a separate existing
-assembly path and remains unchanged.
+The automatic block labels notes as user-authored source material rather than instructions and says that the transcript wins factual conflicts. Retry reuses the failed queue snapshot. Regenerate reuses the result's checkbox snapshot with the meeting's current committed notes. Chat/Ask has a separate existing assembly path and remains unchanged.
 
-The checkbox, new columns, and automatic block were implemented and locally
-verified on 2026-09-05. Release availability follows the normal channel
-process.
+The checkbox, new columns, and automatic block were implemented and locally verified on 2026-09-05. Release availability follows the normal channel process.
 
 Edge cases:
 
@@ -368,9 +306,7 @@ The summary experience is tab-based rather than card-based.
 
 - `Transcript` remains the first tab.
 - Each completed summary gets its own tab.
-- A new (non-replacing) generation gets its own tab immediately; a
-  regeneration instead occupies its source result's existing tab position (see
-  Completed Summary Tabs).
+- A new (non-replacing) generation gets its own tab immediately; a regeneration instead occupies its source result's existing tab position (see Completed Summary Tabs).
 - `Chat` remains the final tab.
 - A dedicated `Summarize` affordance opens the generation popover.
 
@@ -382,8 +318,7 @@ The generation popover contains:
 
 - prompt chips for visible summary prompts
 - a manage button that opens the prompt-library sheet
-- model selector for the resolved analysis route; changes update its override
-  when present, or Default AI when analysis inherits
+- model selector for the resolved analysis route; changes update its override when present, or Default AI when analysis inherits
 - extra instructions field
 - queue status text when generations are pending
 - generate button
@@ -394,8 +329,7 @@ Summary generation uses a **single-worker queue**:
 
 - one summary may actively stream at a time
 - additional user-triggered generations are accepted immediately and appended to the queue
-- queued generations appear immediately, as a new tab unless they replace a
-  saved result, in which case they occupy that result's existing tab position
+- queued generations appear immediately, as a new tab unless they replace a saved result, in which case they occupy that result's existing tab position
 - when the active generation finishes, the next queued generation starts automatically
 - the app does **not** run multiple summary streams in parallel
 
@@ -415,58 +349,27 @@ When a generation completes:
 
 - completed summaries render through the shared rich Markdown surface
 - generate appends a new completed summary tab every time
-- regenerate occupies its source result's tab position from the moment it's
-  queued, through streaming and any failure; the slot's content swaps to the
-  new result only once it is durably saved, and cancelling or dismissing a
-  failure restores the saved result (see Data Model: PromptResult above)
+- regenerate occupies its source result's tab position from the moment it's queued, through streaming and any failure; the slot's content swaps to the new result only once it is durably saved, and cancelling or dismissing a failure restores the saved result (see Data Model: PromptResult above)
 - regeneration compares the original result's content and edit timestamp inside the replacement transaction; if either changed while generation ran, the user edit remains saved and replacement fails visibly
-- editing another saved result cannot replace a dirty draft; return to the
-  original result and Save or Cancel first. Re-entering the same edit retains
-  its draft. Switching result tabs alone does not discard it.
-- reloading the same recording preserves the draft's original content precondition;
-  an external edit or deletion must not silently become its new save baseline.
-  A stale save retains the draft and reports a conflict.
-- if an external deletion removes the edited result's tab, the result header
-  offers Copy Draft and Discard Draft so the retained draft remains recoverable.
+- editing another saved result cannot replace a dirty draft; return to the original result and Save or Cancel first. Re-entering the same edit retains its draft. Switching result tabs alone does not discard it.
+- reloading the same recording preserves the draft's original content precondition; an external edit or deletion must not silently become its new save baseline. A stale save retains the draft and reports a conflict.
+- if an external deletion removes the edited result's tab, the result header offers Copy Draft and Discard Draft so the retained draft remains recoverable.
 - copy is available from both the pane and tab context menu
 - delete requires confirmation
 
 #### Rich Markdown Result Rendering
 
-Prompt Results, saved assistant Chat messages, and live Ask responses share
-`MarkdownContentView`. The stored `PromptResult.content` and chat content remain
-the unchanged Markdown source; rendering is presentation-only and never rewrites
-saved results or export payloads.
+Prompt Results, saved assistant Chat messages, and live Ask responses share `MarkdownContentView`. The stored `PromptResult.content` and chat content remain the unchanged Markdown source; rendering is presentation-only and never rewrites saved results or export payloads.
 
-The supported result dialect covers headings, paragraphs, emphasis,
-strikethrough, links, inline and fenced code, block quotes, thematic breaks,
-ordered/unordered/nested lists, display-only task lists, and GFM pipe tables.
-Wide tables and code blocks manage their own horizontal overflow. Streaming
-surfaces re-render the latest complete text snapshot and may animate appended
-text; completed and partial results use the same parser and styling.
+The supported result dialect covers headings, paragraphs, emphasis, strikethrough, links, inline and fenced code, block quotes, thematic breaks, ordered/unordered/nested lists, display-only task lists, and GFM pipe tables. Wide tables and code blocks manage their own horizontal overflow. Streaming surfaces re-render the latest complete text snapshot and may animate appended text; completed and partial results use the same parser and styling.
 
-The renderer is isolated to the GUI target. Core processing and the CLI remain
-independent of the UI dependency.
+The renderer is isolated to the GUI target. Core processing and the CLI remain independent of the UI dependency.
 
 ### Management surface
 
-The prompt manager opens as a sheet from the Library header **Prompts** button,
-from the generation popover's **Manage Prompts** action, and from Meetings'
-**After each meeting** card. The initial view is one searchable list of
-transcript prompts with an optional collection filter. Built-in provenance is row metadata rather than a separate CRUD model.
-**New prompt** and **Manage collections** open separate sheets, leaving browsing
-and editing as the main page's purpose.
+The prompt manager opens as a sheet from the Library header **Prompts** button, from the generation popover's **Manage Prompts** action, and from Meetings' **After each meeting** card. The initial view is one searchable list of transcript prompts with an optional collection filter. Built-in provenance is row metadata rather than a separate CRUD model. **New prompt** and **Manage collections** open separate sheets, leaving browsing and editing as the main page's purpose.
 
-The editor retains Markdown source/preview, collection assignment, notes context,
-optional model override and typed generation settings, and label availability.
-Version history stays in a disclosure with source/settings comparisons and an
-explicit restore action that creates a new version. Empty searches distinguish
-no matching prompts from a library with no prompts. Deleted prompts remain
-recoverable. Existing visibility and source auto-run remain in the manager;
-Transform shortcuts remain in the Transforms editor and collection ordering in
-Manage collections. Prompt order and running-label metadata survive edits.
-The layout adds no prompt duplication, prompt-reordering control, or running-label
-editor; moving navigation does not change persistence or execution semantics.
+The editor retains Markdown source/preview, collection assignment, notes context, optional model override and typed generation settings, and label availability. Version history stays in a disclosure with source/settings comparisons and an explicit restore action that creates a new version. Empty searches distinguish no matching prompts from a library with no prompts. Deleted prompts remain recoverable. Existing visibility and source auto-run remain in the manager; Transform shortcuts remain in the Transforms editor and collection ordering in Manage collections. Prompt order and running-label metadata survive edits. The layout adds no prompt duplication, prompt-reordering control, or running-label editor; moving navigation does not change persistence or execution semantics.
 
 See [UI patterns](04-ui-patterns.md#prompts) for the current presentation contract.
 

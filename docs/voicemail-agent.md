@@ -54,8 +54,7 @@ Same capture UX, different destination.
    └──────────┘        └───────────┘
 ```
 
-**Sotto owns:** capture, transcription, inbox UI, delivery protocol.
-**The agent owns:** processing, reasoning, research, tools, actions.
+**Sotto owns:** capture, transcription, inbox UI, delivery protocol. **The agent owns:** processing, reasoning, research, tools, actions.
 
 This means Sotto ships with a built-in agent (using configured LLM providers) but the protocol is open — plug in your own agent when personal AI agents become a thing.
 

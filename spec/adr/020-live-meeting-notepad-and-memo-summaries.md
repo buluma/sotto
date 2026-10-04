@@ -10,52 +10,20 @@
 > Implementation status: implemented and locally verified on 2026-09-05;
 > release availability follows the normal channel process.
 
-Saved meeting details now expose an always-editable Notes tab, including empty
-and processing meetings. Edits auto-save after a 500 ms idle debounce; leaving
-the detail/tab, starting an AI action, and ordinary quit flush pending work.
-The debounce updates SQLite; flush boundaries also refresh derived files. A
-failed database flush blocks the AI action and preserves the draft for retry.
-This supersedes the original Add/Edit/Clear editor with Save and Cancel.
-Whitespace-only saves normalize to `NULL`. SQLite
-`transcriptions.userNotes` remains canonical; `notes.md`, `meeting.md`,
-`transcript.json`, and the manifest remain derived artifacts refreshed after a
-successful write. A derived-artifact failure does not roll back the canonical
-database value. Successive saves use database last-writer-wins semantics, and
-artifact refresh is ordered/latest-wins so an older completion cannot restore
-stale files after a newer commit. Cross-process conflict UI is out of scope.
+Saved meeting details now expose an always-editable Notes tab, including empty and processing meetings. Edits auto-save after a 500 ms idle debounce; leaving the detail/tab, starting an AI action, and ordinary quit flush pending work. The debounce updates SQLite; flush boundaries also refresh derived files. A failed database flush blocks the AI action and preserves the draft for retry. This supersedes the original Add/Edit/Clear editor with Save and Cancel. Whitespace-only saves normalize to `NULL`. SQLite `transcriptions.userNotes` remains canonical; `notes.md`, `meeting.md`, `transcript.json`, and the manifest remain derived artifacts refreshed after a successful write. A derived-artifact failure does not roll back the canonical database value. Successive saves use database last-writer-wins semantics, and artifact refresh is ordered/latest-wins so an older completion cannot restore stale files after a newer commit. Cross-process conflict UI is out of scope.
 
-Result prompts gain an `includeMeetingNotes` preference, exposed as an
-**Include meeting notes as context** checkbox for built-in and custom result
-prompts. It defaults to `false`, is unavailable for Transforms, and never opts
-existing prompts in implicitly. When enabled and non-empty meeting notes exist,
-the shared prompt assembler adds one delimited notes-context block while
-keeping the transcript as factual source of truth.
+Result prompts gain an `includeMeetingNotes` preference, exposed as an **Include meeting notes as context** checkbox for built-in and custom result prompts. It defaults to `false`, is unavailable for Transforms, and never opts existing prompts in implicitly. When enabled and non-empty meeting notes exist, the shared prompt assembler adds one delimited notes-context block while keeping the transcript as factual source of truth.
 
-`{{userNotes}}` remains a case-sensitive advanced custom-template variable.
-It substitutes notes even when the checkbox is off; when the checkbox is on,
-the assembler detects the variable and does not append a duplicate block.
-Empty notes leave the assembled prompt byte-identical regardless of checkbox
-state. Chat/Ask behavior is unchanged and continues to include the latest
-committed non-empty meeting notes at send time without a new toggle.
+`{{userNotes}}` remains a case-sensitive advanced custom-template variable. It substitutes notes even when the checkbox is off; when the checkbox is on, the assembler detects the variable and does not append a duplicate block. Empty notes leave the assembled prompt byte-identical regardless of checkbox state. Chat/Ask behavior is unchanged and continues to include the latest committed non-empty meeting notes at send time without a new toggle.
 
-Migration `v0.33-prompt-meeting-notes-context` adds two non-null Boolean
-columns, both defaulting to `false`, to record the current preference and its
-generation receipt:
+Migration `v0.33-prompt-meeting-notes-context` adds two non-null Boolean columns, both defaulting to `false`, to record the current preference and its generation receipt:
 
 - `prompts.includeMeetingNotes`
 - `summaries.includeMeetingNotesSnapshot`
 
-The existing nullable `summaries.userNotesSnapshot` is tightened to store the
-exact normalized, 8,000-word-capped notes value actually supplied to prompt
-assembly. The Boolean snapshot separately preserves whether automatic context
-was enabled even when no notes existed. Queueing captures both values; retry
-reuses the failed queue snapshot, while regenerate reuses the result's Boolean
-snapshot with the meeting's current committed notes.
+The existing nullable `summaries.userNotesSnapshot` is tightened to store the exact normalized, 8,000-word-capped notes value actually supplied to prompt assembly. The Boolean snapshot separately preserves whether automatic context was enabled even when no notes existed. Queueing captures both values; retry reuses the failed queue snapshot, while regenerate reuses the result's Boolean snapshot with the meeting's current committed notes.
 
-CLI parity is additive: `prompts set <prompt> --include-meeting-notes` and
-`--no-include-meeting-notes` are mutually exclusive, apply only to result
-prompts, and expose `includeMeetingNotes` in prompt JSON plus
-`includeMeetingNotesSnapshot` in saved result JSON.
+CLI parity is additive: `prompts set <prompt> --include-meeting-notes` and `--no-include-meeting-notes` are mutually exclusive, apply only to result prompts, and expose `includeMeetingNotes` in prompt JSON plus `includeMeetingNotesSnapshot` in saved result JSON.
 
 ## Amendment (2026-05-02, "Memo-Steered Notes" built-in prompt reverted)
 
@@ -207,12 +175,7 @@ Existing prompts that don't use the variables continue to work — they receive 
 
 ### 5. Superseded built-in prompt proposal: "Memo-Steered Notes"
 
-The original 2026-04-25 implementation added a built-in prompt to
-`Prompt.builtInPrompts()` and seeded it on next launch. This subsection is
-retained for historical context only: the 2026-05-02 amendment above removed
-the built-in prompt from the shipped prompt list and reserved its canonical
-UUID. Approximate historical copy (the literal prompt string -- no markdown
-formatting, the asterisks below are the spec's emphasis only):
+The original 2026-04-25 implementation added a built-in prompt to `Prompt.builtInPrompts()` and seeded it on next launch. This subsection is retained for historical context only: the 2026-05-02 amendment above removed the built-in prompt from the shipped prompt list and reserved its canonical UUID. Approximate historical copy (the literal prompt string -- no markdown formatting, the asterisks below are the spec's emphasis only):
 
 ```
 You are summarizing a meeting. The user took these notes during the meeting —
@@ -239,12 +202,7 @@ Output:
 
 ### 6. Snapshot user notes on the summary record
 
-Per the prompt-snapshot principle from ADR-013, each `PromptResult` record gains
-a `userNotesSnapshot: String?` column. The original implementation captured the
-row value at generation time. The 2026-09-05 amendment tightens this receipt to
-the exact normalized/capped notes value actually supplied to assembly, or
-`NULL` when that prompt sends no notes. Editing notes after a result has been
-generated does not retroactively change its metadata.
+Per the prompt-snapshot principle from ADR-013, each `PromptResult` record gains a `userNotesSnapshot: String?` column. The original implementation captured the row value at generation time. The 2026-09-05 amendment tightens this receipt to the exact normalized/capped notes value actually supplied to assembly, or `NULL` when that prompt sends no notes. Editing notes after a result has been generated does not retroactively change its metadata.
 
 This makes summaries self-contained for the same reason ADR-013 made them self-contained: a summary should always accurately reflect what produced it.
 
@@ -295,10 +253,7 @@ The `recording.lock` JSON schema gains a `notes: String?` field. `MeetingRecordi
 
 **Schema versioning.** The addition is backward-compatible at the existing schema version. The `notes` field is decoded with `decodeIfPresent`: lock files written by previous app versions (no `notes` key) decode with `notes = nil` and recover normally. New lock files include the key. **The schema version is not bumped.**
 
-The notes addition itself does not require a schema bump. The later independent
-speech-route change introduces schema v2; the reader now accepts versions less
-than or equal to its current version, so v1 locks remain recoverable across a
-Sparkle update while newer unknown versions are skipped.
+The notes addition itself does not require a schema bump. The later independent speech-route change introduces schema v2; the reader now accepts versions less than or equal to its current version, so v1 locks remain recoverable across a Sparkle update while newer unknown versions are skipped.
 
 **Notes decoded independently.** The `notes` field is decoded as a separate `try?` step *after* the structural fields decode successfully. A malformed `notes` string (or any future encoder bug specific to that field) causes the recovery scanner to fall back to `notes = nil` for that session, but the audio metadata and recoverability of the recording itself are preserved. The user loses the typed notes for one specific recovery, but the meeting itself is still recoverable. Without this split, a single corrupted notes byte would tank the entire recovery.
 

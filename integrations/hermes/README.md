@@ -1,9 +1,6 @@
 # Sotto skill for Hermes Agent
 
-A thin packaging entry point for Hermes Agent on macOS 14.2+ with Apple
-Silicon. Sotto provides local speech recognition, saved-transcript and
-meeting retrieval, and optional prompt automation; local retrieval does not
-require an LLM provider.
+A thin packaging entry point for Hermes Agent on macOS 14.2+ with Apple Silicon. Sotto provides local speech recognition, saved-transcript and meeting retrieval, and optional prompt automation; local retrieval does not require an LLM provider.
 
 ## Install and discover
 
@@ -14,31 +11,18 @@ sotto-cli spec --json
 sotto-cli health --json
 ```
 
-An installed app also bundles the CLI at
-`/Applications/Sotto.app/Contents/MacOS/sotto-cli`. Use the
-installed binary's catalog and health component statuses; do not assume it
-matches this checkout's unreleased candidate or automatically repair missing
-optional components.
+An installed app also bundles the CLI at `/Applications/Sotto.app/Contents/MacOS/sotto-cli`. Use the installed binary's catalog and health component statuses; do not assume it matches this checkout's unreleased candidate or automatically repair missing optional components.
 
 ## Package for Hermes
 
-- Adapt the existing [`sotto-stt` skill directory](../skill/sotto-stt/SKILL.md)
-  instead of maintaining another YAML command catalog or prompt sketch.
-- Verify the current Hermes skill format and `awesome-hermes-agent`
-  submission requirements at registration time. This entry point does not
-  claim a registry-specific manifest is validated.
-- Declare the macOS/Apple Silicon host requirement and `sotto-cli`
-  executable dependency. The Homebrew tap installs the host binary and its
-  media-helper dependencies; speech-model setup is described in the canonical
-  guide.
-- Keep the skill's explicit authorization rules for writes, generated output,
-  provider use, and shared preferences. Do not treat `--database` or
-  `--no-history` as a complete sandbox.
+- Adapt the existing [`sotto-stt` skill directory](../skill/sotto-stt/SKILL.md) instead of maintaining another YAML command catalog or prompt sketch.
+- Verify the current Hermes skill format and `awesome-hermes-agent` submission requirements at registration time. This entry point does not claim a registry-specific manifest is validated.
+- Declare the macOS/Apple Silicon host requirement and `sotto-cli` executable dependency. The Homebrew tap installs the host binary and its media-helper dependencies; speech-model setup is described in the canonical guide.
+- Keep the skill's explicit authorization rules for writes, generated output, provider use, and shared preferences. Do not treat `--database` or `--no-history` as a complete sandbox.
 
 ## Canonical references
 
-- [Integration guide](../README.md): command recipes, JSON/error handling,
-  retrieval citations, isolation, and privacy/network boundaries.
+- [Integration guide](../README.md): command recipes, JSON/error handling, retrieval citations, isolation, and privacy/network boundaries.
 - [Reusable agent skill](../skill/sotto-stt/SKILL.md): operating instructions.
 - Installed `sotto-cli spec --json`: runtime command/option catalog.
 - [CLI changelog](../../Sources/CLI/CHANGELOG.md): versioned compatibility.
@@ -46,7 +30,4 @@ optional components.
 
 ## Status
 
-This integration record notes a submission to `awesome-hermes-agent`, not
-verified acceptance or installation in the current registry. Track packaging
-work under the repository's
-[`integration` issues](https://github.com/moona3k/macparakeet/issues?q=is%3Aissue+label%3Aintegration).
+This integration record notes a submission to `awesome-hermes-agent`, not verified acceptance or installation in the current registry. Track packaging work under the repository's [`integration` issues](https://github.com/moona3k/macparakeet/issues?q=is%3Aissue+label%3Aintegration).

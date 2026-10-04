@@ -8,13 +8,11 @@ origin: docs/brainstorms/2026-06-03-app-aware-ai-profiles-requirements.md
 
 # App-Aware AI Formatter Profiles Plan
 
-Generated in the style of `/ce-plan` from the requirements doc and fresh
-research packet.
+Generated in the style of `/ce-plan` from the requirements doc and fresh research packet.
 
 ## Scope
 
-Implement the first vertical slice: app-aware prompt profiles for Dictation AI
-Formatter.
+Implement the first vertical slice: app-aware prompt profiles for Dictation AI Formatter.
 
 In scope:
 
@@ -53,19 +51,14 @@ Out of scope:
 
 ### KTD-1 - Dedicated Formatter Profile Table
 
-Use a dedicated table for Dictation AI Formatter profiles instead of adding
-`appVariants` to `Prompt`.
+Use a dedicated table for Dictation AI Formatter profiles instead of adding `appVariants` to `Prompt`.
 
 Reasoning:
 
-- `Prompt.appVariants` is a good Transform-specific shape because a Transform is
-  already a prompt entity.
-- Dictation AI Formatter currently lives in runtime preferences, not the prompt
-  library.
-- A dedicated formatter-profile table keeps v1 small and avoids pretending this
-  is a full shared workflow system.
-- The shared piece for future Transform work should be app-context and matching
-  utilities, not necessarily the same storage table.
+- `Prompt.appVariants` is a good Transform-specific shape because a Transform is already a prompt entity.
+- Dictation AI Formatter currently lives in runtime preferences, not the prompt library.
+- A dedicated formatter-profile table keeps v1 small and avoids pretending this is a full shared workflow system.
+- The shared piece for future Transform work should be app-context and matching utilities, not necessarily the same storage table.
 
 Proposed table: `ai_formatter_profiles`
 
@@ -77,16 +70,14 @@ Columns:
 - `targetKind` TEXT not null: `bundle` or `category`.
 - `bundleIdentifier` TEXT nullable, normalized lowercase for bundle matches.
 - `appDisplayName` TEXT nullable.
-- `appCategory` TEXT nullable, `TelemetryAppCategory.rawValue` for category
-  matches.
+- `appCategory` TEXT nullable, `TelemetryAppCategory.rawValue` for category matches.
 - `promptTemplate` TEXT not null.
 - `origin` TEXT not null default `custom`: `custom` or `template`.
 - `sortOrder` INTEGER not null default 0.
 - `createdAt` DATETIME not null.
 - `updatedAt` DATETIME not null.
 
-Repository: one table, one repository, following
-`Sources/SottoCore/Database/README.md`.
+Repository: one table, one repository, following `Sources/SottoCore/Database/README.md`.
 
 ### KTD-2 - Exact Context Is Local Runtime Data
 
@@ -97,17 +88,13 @@ Create a local app context model for prompt matching:
   - `displayName: String?`
   - `category: TelemetryAppCategory`
 
-The production app-context adapter can read `NSWorkspace.shared.frontmostApplication`
-on the main actor. It must stay adapter-shaped and not introduce UI ownership
-into Core.
+The production app-context adapter can read `NSWorkspace.shared.frontmostApplication` on the main actor. It must stay adapter-shaped and not introduce UI ownership into Core.
 
-Telemetry continues using `TelemetryAppCategory`; exact bundle IDs and display
-names remain local.
+Telemetry continues using `TelemetryAppCategory`; exact bundle IDs and display names remain local.
 
 ### KTD-3 - Async Prompt Resolver Replaces No-Arg Closure
 
-Replace the no-argument `aiFormatterPromptTemplate` closure in DictationService
-with a small async resolver:
+Replace the no-argument `aiFormatterPromptTemplate` closure in DictationService with a small async resolver:
 
 ```swift
 public struct AIFormatterPromptResolution: Sendable, Equatable {
@@ -123,8 +110,7 @@ public protocol AIFormatterPromptResolving: Sendable {
 }
 ```
 
-The app implementation reads enabled profiles and the current global runtime
-preference, then returns a resolution. Tests can inject a fake resolver.
+The app implementation reads enabled profiles and the current global runtime preference, then returns a resolution. Tests can inject a fake resolver.
 
 Reasoning:
 
@@ -134,19 +120,14 @@ Reasoning:
 
 ### KTD-4 - Stop-Time Context Wins
 
-Dictation prompt selection should use the same lifecycle moment as current
-paste-target telemetry: near stop/undo time, just before `stopRecording` or
-`undoCancel` enters the service.
+Dictation prompt selection should use the same lifecycle moment as current paste-target telemetry: near stop/undo time, just before `stopRecording` or `undoCancel` enters the service.
 
-Also capture a best-effort start-time snapshot before Sotto UI can become
-frontmost. Use it only as a fallback when stop/undo-time context is missing or
-identifies Sotto itself.
+Also capture a best-effort start-time snapshot before Sotto UI can become frontmost. Use it only as a fallback when stop/undo-time context is missing or identifies Sotto itself.
 
 Reasoning:
 
 - Current Sotto telemetry is intentionally paste-target oriented.
-- TypeWhisper, FluidVoice, and Hex show that app capture can be thrown off if
-  the app's own overlay steals focus.
+- TypeWhisper, FluidVoice, and Hex show that app capture can be thrown off if the app's own overlay steals focus.
 - A fallback snapshot gives us resilience without changing the primary contract.
 
 ### KTD-5 - Browser Domains Deferred
@@ -159,8 +140,7 @@ When it ships later, it should:
 - Normalize lowercase host.
 - Strip only a leading `www.`.
 - Match exact host or subdomain suffix.
-- Use deterministic precedence: manual override, app+host, host-only, exact app,
-  category, global fallback.
+- Use deterministic precedence: manual override, app+host, host-only, exact app, category, global fallback.
 - Avoid substring matching.
 - Require explicit browser/Apple Events permission and privacy copy.
 
@@ -212,8 +192,7 @@ Files:
 Tasks:
 
 1. Read `Sources/SottoCore/Database/README.md` before editing.
-2. Register a new forward-only migration with the next available version name.
-   Do not reuse the stale `v0.14` from old ADR-023.
+2. Register a new forward-only migration with the next available version name. Do not reuse the stale `v0.14` from old ADR-023.
 3. Create `ai_formatter_profiles`.
 4. Add optional local dictation metadata columns:
    - `aiFormatterProfileID`
@@ -225,8 +204,7 @@ Tasks:
    - delete
    - fetch by ID
    - normalize match keys
-6. Add tests for empty DB migration, CRUD, normalization, disabled filtering,
-   and dictation row round-trip.
+6. Add tests for empty DB migration, CRUD, normalization, disabled filtering, and dictation row round-trip.
 
 Verification:
 
@@ -248,25 +226,16 @@ Files:
 
 Tasks:
 
-1. Add a small AppKit-backed focused-app adapter. Keep it service-shaped and
-   local-only.
-2. Add `updateAIFormatterAppContext(_:phase:sessionID:)` to `DictationService` and
-   `DictationServiceSession`.
-3. Capture start-time context when recording starts, before any UI can become
-   frontmost, and pass it into the service as phase `start`.
-4. In `DictationFlowCoordinator.stopRecordingTask`, capture focused app once
-   and update both:
+1. Add a small AppKit-backed focused-app adapter. Keep it service-shaped and local-only.
+2. Add `updateAIFormatterAppContext(_:phase:sessionID:)` to `DictationService` and `DictationServiceSession`.
+3. Capture start-time context when recording starts, before any UI can become frontmost, and pass it into the service as phase `start`.
+4. In `DictationFlowCoordinator.stopRecordingTask`, capture focused app once and update both:
    - telemetry category
-   - formatter app context
-   with phase `finish`
+   - formatter app context with phase `finish`
 5. Mirror finish-context behavior in `undoCancelTask`.
-6. In service state, choose finish context when valid; otherwise fall back to
-   start context. Treat Sotto's own bundle ID as invalid for profile
-   routing.
+6. In service state, choose finish context when valid; otherwise fall back to start context. Treat Sotto's own bundle ID as invalid for profile routing.
 7. Replace no-arg prompt closure with async resolver.
-8. `formatTranscriptIfNeeded` asks resolver for prompt resolution, passes prompt
-   to `LLMService`, computes `defaultPromptUsed`, and returns resolution
-   metadata with the formatter outcome.
+8. `formatTranscriptIfNeeded` asks resolver for prompt resolution, passes prompt to `LLMService`, computes `defaultPromptUsed`, and returns resolution metadata with the formatter outcome.
 9. Save matched profile metadata on the dictation row when history is saved.
 10. Preserve fallback behavior on LLM failure.
 
@@ -302,15 +271,13 @@ Tasks:
 3. Add manual bundle ID entry for exact-app profiles.
 4. Add category picker using `TelemetryAppCategory.allCases`.
 5. Add prompt editor using the same `{{TRANSCRIPT}}` contract.
-6. Show precedence help in UI: exact app beats category, global prompt is
-   fallback.
+6. Show precedence help in UI: exact app beats category, global prompt is fallback.
 7. Defer running-app picker and profile templates to a later polish slice.
 
 Verification:
 
 - `swift test --filter LLMSettingsViewModelTests`
-- Manual: open Settings -> AI Formatter, create Slack/app profile, create Email
-  category profile, disable/delete both.
+- Manual: open Settings -> AI Formatter, create Slack/app profile, create Email category profile, disable/delete both.
 
 ### Unit 5 - Telemetry, Privacy, and Docs
 
@@ -327,13 +294,9 @@ Tasks:
 
 1. Keep formatter-profile routing metadata local in V1.
 2. Do not add formatter-profile telemetry fields in this branch.
-3. Verify no exact bundle ID, app name, profile id/name, match kind, hostname,
-   prompt, transcript, clipboard, selected text, or screen text can leave the
-   device through telemetry.
-4. Update docs to state that exact app context is local-only and AI Formatter
-   still sends transcript/prompt only to the user's configured provider.
-5. If future telemetry keys are added, update the website allowlist in the
-   paired `sotto-website` repo before calling that future slice done.
+3. Verify no exact bundle ID, app name, profile id/name, match kind, hostname, prompt, transcript, clipboard, selected text, or screen text can leave the device through telemetry.
+4. Update docs to state that exact app context is local-only and AI Formatter still sends transcript/prompt only to the user's configured provider.
+5. If future telemetry keys are added, update the website allowlist in the paired `sotto-website` repo before calling that future slice done.
 
 Verification:
 
@@ -344,19 +307,16 @@ Verification:
 
 Files:
 
-- `spec/adr/023-app-aware-ai-profiles.md` or an amended transform ADR when
-  implementation starts.
+- `spec/adr/023-app-aware-ai-profiles.md` or an amended transform ADR when implementation starts.
 
 Tasks:
 
-1. Capture the final v1 decisions in an ADR before code lands, if owner wants
-   locked decision text.
+1. Capture the final v1 decisions in an ADR before code lands, if owner wants locked decision text.
 2. Explicitly supersede stale parts of the old transform-only ADR:
    - stale migration number
    - duplicate `CaptureContext`
    - old coordinator capture assumption
-3. Keep Transform per-app variants as a follow-on that reuses context/matcher
-   utilities but stores variants on individual Transform prompts.
+3. Keep Transform per-app variants as a follow-on that reuses context/matcher utilities but stores variants on individual Transform prompts.
 
 ## Data Flow
 
@@ -385,8 +345,7 @@ Focused app at stop/undo
 - App category is existing bounded enum.
 - Browser hostname matching is absent in v1.
 - No selected text, clipboard, or screen context is read by this feature.
-- If stop/undo-time context resolves to Sotto itself, it is used only for
-  fallback detection, not as a match target.
+- If stop/undo-time context resolves to Sotto itself, it is used only for fallback detection, not as a match target.
 
 ## Manual Smoke Plan
 

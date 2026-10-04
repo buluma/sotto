@@ -6,26 +6,16 @@
 
 ## Why this doc
 
-We need a steady flow of demo videos — X/Twitter, Reddit, YouTube Shorts,
-blog posts, App Store-style screen recordings — and we'd like to scale that
-without scheduling Daniel to record every clip by hand. This doc maps the
-content-creation agent landscape, names the gap between "synthetic video
-hype" and "scripted demo loop you can ship today," and gives a concrete
-recipe Sotto can adopt now.
+We need a steady flow of demo videos — X/Twitter, Reddit, YouTube Shorts, blog posts, App Store-style screen recordings — and we'd like to scale that without scheduling Daniel to record every clip by hand. This doc maps the content-creation agent landscape, names the gap between "synthetic video hype" and "scripted demo loop you can ship today," and gives a concrete recipe Sotto can adopt now.
 
 ## Landscape at a glance
 
 ### Synthetic / generative video — **don't build on it for UI demos yet**
 
-In May 2026, no model (Sora 2, Veo 3.1, Runway Gen-4.5, Kling 3.0, Pika 2.5,
-Luma Ray3) can render a faithful, frame-stable macOS UI. They hallucinate
-menu bars, drift typography, melt cursors. **Sora 2's app shut down
-2026-04-26 and the API sunsets 2026-09-24** — don't build on it.
+In May 2026, no model (Sora 2, Veo 3.1, Runway Gen-4.5, Kling 3.0, Pika 2.5, Luma Ray3) can render a faithful, frame-stable macOS UI. They hallucinate menu bars, drift typography, melt cursors. **Sora 2's app shut down 2026-04-26 and the API sunsets 2026-09-24** — don't build on it.
 
-Use these tools only for B-roll, hero shots, "vibe" cuts at the head of a
-video, or 2-second cinematic stings. The day a model can take a screenshot
-+ a flow description and emit faithful-pixel UI demos, hand-recording dies —
-track Veo 4 / Gen-5 / Q3-Q4 2026 releases.
+Use these tools only for B-roll, hero shots, "vibe" cuts at the head of a video, or 2-second cinematic stings. The day a model can take a screenshot
++ a flow description and emit faithful-pixel UI demos, hand-recording dies — track Veo 4 / Gen-5 / Q3-Q4 2026 releases.
 
 ### Demo recording / editing platforms
 
@@ -57,30 +47,19 @@ track Veo 4 / Gen-5 / Q3-Q4 2026 releases.
 
 ### Does the "demo agent" exist yet? Almost — and there's an opening.
 
-The pieces are converging but no single product takes "describe a flow →
-finished Sotto demo video":
+The pieces are converging but no single product takes "describe a flow → finished Sotto demo video":
 
-- **`splitbrain/ndemo`** (Claude Code skill) — narrated demo videos of *web*
-  apps. Closest spiritual match. Browser-only.
-- **Claude Code Video Toolkit** (`digitalsamba`, `wilwaldon`) — Remotion +
-  screen recording + ffmpeg + Qwen3-TTS. Native, but you write the script.
-- **Demo Video Builder** (Claude skill on mcpmarket) — TTS + screen
-  recording + branded slides → MP4. Generic, not macOS-app-aware.
+- **`splitbrain/ndemo`** (Claude Code skill) — narrated demo videos of *web* apps. Closest spiritual match. Browser-only.
+- **Claude Code Video Toolkit** (`digitalsamba`, `wilwaldon`) — Remotion + screen recording + ffmpeg + Qwen3-TTS. Native, but you write the script.
+- **Demo Video Builder** (Claude skill on mcpmarket) — TTS + screen recording + branded slides → MP4. Generic, not macOS-app-aware.
 - **OpenAdapt** — record-once-replay-many on macOS. Brittle on UI changes.
-- **Anthropic Computer Use** — runs in Docker/VNC by default; can drive a
-  real Mac in research preview but too non-deterministic for repeatable
-  shipping demos.
+- **Anthropic Computer Use** — runs in Docker/VNC by default; can drive a real Mac in research preview but too non-deterministic for repeatable shipping demos.
 
-**The opportunity:** a `sotto/scripts/demo/` skill (or standalone
-Claude skill) that wraps the recipe below, parameterized by `(flow_name,
-narration_script, dictation_text, output_aspects)`. We'd be one of the first
-OSS native-macOS demo agents. Reuse the `granola-export` skill style — single
-self-contained dir.
+**The opportunity:** a `sotto/scripts/demo/` skill (or standalone Claude skill) that wraps the recipe below, parameterized by `(flow_name, narration_script, dictation_text, output_aspects)`. We'd be one of the first OSS native-macOS demo agents. Reuse the `granola-export` skill style — single self-contained dir.
 
 ## The Sotto recipe — use this today
 
-Build `scripts/demo/record_demo.sh` that produces a deterministic 60-second
-demo every run. No editor, no mouse. Everything scripted.
+Build `scripts/demo/record_demo.sh` that produces a deterministic 60-second demo every run. No editor, no mouse. Everything scripted.
 
 **One-time setup:**
 
@@ -149,28 +128,16 @@ ffmpeg -y -i /tmp/demo.mov -i /tmp/narration.aiff \
 
 **Why each piece:**
 
-- **ScreenCaptureKit** gives **window-scoped** capture so menu bar, mouse
-  outside the app, and other apps never bleed in.
-- `cliclick kp:f18` deterministically fires the dictation hotkey — F18 is
-  unbound by macOS and matches ADR-009 single-key support; no
-  accidental modifier collisions like the Fn-chord case.
-- `afplay -d BlackHole2ch` is the magic step: it sends a pre-recorded
-  utterance to the BlackHole virtual output, which Sotto sees as a
-  mic input. Same Parakeet pipeline, fully scripted, byte-identical every run.
-- Two `ffmpeg` outputs from one recording = X (1:1) + Shorts/Reels (9:16)
-  without re-recording.
+- **ScreenCaptureKit** gives **window-scoped** capture so menu bar, mouse outside the app, and other apps never bleed in.
+- `cliclick kp:f18` deterministically fires the dictation hotkey — F18 is unbound by macOS and matches ADR-009 single-key support; no accidental modifier collisions like the Fn-chord case.
+- `afplay -d BlackHole2ch` is the magic step: it sends a pre-recorded utterance to the BlackHole virtual output, which Sotto sees as a mic input. Same Parakeet pipeline, fully scripted, byte-identical every run.
+- Two `ffmpeg` outputs from one recording = X (1:1) + Shorts/Reels (9:16) without re-recording.
 
-**Hotkey behavior caveat:** the recipe assumes F18 toggles dictation
-on/off (press → start, press → stop). If Sotto's hotkey is
-press-and-hold, swap `cliclick kp:f18` for `cliclick kd:f18 ... ku:f18`
-around step 6.
+**Hotkey behavior caveat:** the recipe assumes F18 toggles dictation on/off (press → start, press → stop). If Sotto's hotkey is press-and-hold, swap `cliclick kp:f18` for `cliclick kd:f18 ... ku:f18` around step 6.
 
 ## Post-production: X / Twitter video prep
 
-X has the strictest acceptance ceiling of the social platforms; if it works
-there it'll work everywhere. The killer constraint people miss is **aspect
-ratio: ≤ 2.39:1**. A 3:1 screen recording will be rejected even if the
-codec is fine.
+X has the strictest acceptance ceiling of the social platforms; if it works there it'll work everywhere. The killer constraint people miss is **aspect ratio: ≤ 2.39:1**. A 3:1 screen recording will be rejected even if the codec is fine.
 
 | Constraint | Value |
 |---|---|
@@ -195,44 +162,24 @@ ffmpeg -y -i in.mov \
   out.mp4
 ```
 
-`#0E0F12` = brand `ink`. The pad fills with brand color so a 3:1 recording
-becomes a 16:9 frame X will accept.
+`#0E0F12` = brand `ink`. The pad fills with brand color so a 3:1 recording becomes a 16:9 frame X will accept.
 
 ## Polish toolchain (when scripted output isn't enough)
 
-Layer one or both of these on top of the raw recipe output for launch / hero
-videos:
+Layer one or both of these on top of the raw recipe output for launch / hero videos:
 
-- **Screen Studio** — auto-zoom on clicks + cursor smoothing. Drop the raw
-  `.mov` in, get a polished export. ~30 seconds of work for 80% of the
-  visual polish you'd hand-edit.
-- **Descript** — talk-track editing by transcript. Strip filler words,
-  smooth pacing, swap audio without re-recording. Pair with Overdub if
-  you've cloned a Parakeet voice.
-- **Opus Clip** — feed a 5-minute long-form demo, get 10 short-form clips
-  with auto-captions and viral-moment detection. The fastest way to fan
-  one demo into a week of social posts.
+- **Screen Studio** — auto-zoom on clicks + cursor smoothing. Drop the raw `.mov` in, get a polished export. ~30 seconds of work for 80% of the visual polish you'd hand-edit.
+- **Descript** — talk-track editing by transcript. Strip filler words, smooth pacing, swap audio without re-recording. Pair with Overdub if you've cloned a Parakeet voice.
+- **Opus Clip** — feed a 5-minute long-form demo, get 10 short-form clips with auto-captions and viral-moment detection. The fastest way to fan one demo into a week of social posts.
 
 ## Watch list
 
-1. **Veo 4 / Runway Gen-5 with grounded UI rendering.** When a model takes
-   a screenshot + flow description and emits faithful-pixel UI demos,
-   hand-recording dies. Track Q3-Q4 2026 releases.
-2. **Remotion + Claude Code as the dominant programmatic-video stack.**
-   126k+ installs, growing weekly. Worth seeding a `sotto-demo`
-   Remotion template even before we adopt it — community contributions
-   multiply.
-3. **Cartesia Sonic 2.x voice cloning at $5/mo.** Sub-$10/mo unlimited-clone
-   TTS at ElevenLabs quality unlocks a free branded "Parakeet voice" for
-   every demo, podcast intro, error tooltip narration.
-4. **OpenAdapt-class self-recovering computer-use agents.** When they
-   handle window-drift and modal popups deterministically, the recipe above
-   collapses to one prompt.
-5. **A native-macOS-aware demo skill.** The market gap is real — every
-   browser-demo tool exists, no native-Mac one does. First-mover OSS
-   Claude skill that drives any macOS app via cliclick + ScreenCaptureKit
-   + BlackHole + TTS would be widely forked. Could double as Sotto's
-   internal demo tooling and external dev-evangelism content.
+1. **Veo 4 / Runway Gen-5 with grounded UI rendering.** When a model takes a screenshot + flow description and emits faithful-pixel UI demos, hand-recording dies. Track Q3-Q4 2026 releases.
+2. **Remotion + Claude Code as the dominant programmatic-video stack.** 126k+ installs, growing weekly. Worth seeding a `sotto-demo` Remotion template even before we adopt it — community contributions multiply.
+3. **Cartesia Sonic 2.x voice cloning at $5/mo.** Sub-$10/mo unlimited-clone TTS at ElevenLabs quality unlocks a free branded "Parakeet voice" for every demo, podcast intro, error tooltip narration.
+4. **OpenAdapt-class self-recovering computer-use agents.** When they handle window-drift and modal popups deterministically, the recipe above collapses to one prompt.
+5. **A native-macOS-aware demo skill.** The market gap is real — every browser-demo tool exists, no native-Mac one does. First-mover OSS Claude skill that drives any macOS app via cliclick + ScreenCaptureKit
+   + BlackHole + TTS would be widely forked. Could double as Sotto's internal demo tooling and external dev-evangelism content.
 
 ## References
 

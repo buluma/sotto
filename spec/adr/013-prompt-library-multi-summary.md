@@ -32,66 +32,21 @@ Additionally, this feature is the first building block for a future processing l
 
 ### 2026-09-05 amendment: immutable versions and label context
 
-The `prompts` row owns a prompt's stable identity and mutable operational
-metadata. Its active content is resolved through `activeVersionId` to one
-immutable `prompt_versions` row. Prompt content, requested typed inference
-settings, and an optional active-provider model override are versioned. Name,
-technical category, organization collection, visibility, ordering, shortcut,
-running label, and routing policies are not versioned.
+The `prompts` row owns a prompt's stable identity and mutable operational metadata. Its active content is resolved through `activeVersionId` to one immutable `prompt_versions` row. Prompt content, requested typed inference settings, and an optional active-provider model override are versioned. Name, technical category, organization collection, visibility, ordering, shortcut, running label, and routing policies are not versioned.
 
-Creating a prompt creates version 1. Saving a change to versioned values creates
-and activates exactly one new version in the same transaction. A no-op save
-creates no version. Restoring a historical version copies its values into a new,
-monotonically numbered version; history is never rewritten and the active
-pointer is never moved backwards. The new version's `createdAt` and the prompt's
-`updatedAt` record the restoration time; historical timestamps remain unchanged.
-Runtime consumers obtain the resolved active
-prompt from `PromptRepository`; they do not join version tables themselves.
-The old `prompts.content` and `prompts.inferenceSettings` columns may exist only
-during a bounded migration window and are not maintained as permanent mirrors.
+Creating a prompt creates version 1. Saving a change to versioned values creates and activates exactly one new version in the same transaction. A no-op save creates no version. Restoring a historical version copies its values into a new, monotonically numbered version; history is never rewritten and the active pointer is never moved backwards. The new version's `createdAt` and the prompt's `updatedAt` record the restoration time; historical timestamps remain unchanged. Runtime consumers obtain the resolved active prompt from `PromptRepository`; they do not join version tables themselves. The old `prompts.content` and `prompts.inferenceSettings` columns may exist only during a bounded migration window and are not maintained as permanent mirrors.
 
-Built-in prompts and user-created prompts have the same rename, edit,
-reconfigure, recategorize, hide, route, and delete rights. `isBuiltIn` is
-provenance only. Delete is soft delete so history and generated-result
-snapshots remain recoverable, and so launch reconciliation cannot resurrect a
-deleted built-in. A canonical built-in update is applied automatically only
-when persisted provenance proves that the prompt has never been customized or
-deleted. Otherwise Sotto may present the bundled definition as a
-comparison candidate, but it does not insert or activate that candidate without
-an explicit user action.
+Built-in prompts and user-created prompts have the same rename, edit, reconfigure, recategorize, hide, route, and delete rights. `isBuiltIn` is provenance only. Delete is soft delete so history and generated-result snapshots remain recoverable, and so launch reconciliation cannot resurrect a deleted built-in. A canonical built-in update is applied automatically only when persisted provenance proves that the prompt has never been customized or deleted. Otherwise Sotto may present the bundled definition as a comparison candidate, but it does not insert or activate that candidate without an explicit user action.
 
-Queued work captures `promptId`, `promptVersionId`, prompt text, requested
-settings, and model selection. Retry and completed-result snapshots remain
-stable after later edits or classification changes. Result rows retain their
-self-contained name/content/settings snapshots even when the originating
-prompt or version is deleted.
+Queued work captures `promptId`, `promptVersionId`, prompt text, requested settings, and model selection. Retry and completed-result snapshots remain stable after later edits or classification changes. Result rows retain their self-contained name/content/settings snapshots even when the originating prompt or version is deleted.
 
-Model discovery supplies selection choices, not an exhaustive allowlist: valid
-provider aliases need not appear in that list. Runtime rejects empty or locally
-incompatible model identifiers and otherwise sends the requested identifier to
-the generation endpoint. Provider rejection is surfaced without switching models.
-Local CLI commands control their own model selection, so an override differing
-from the configured model is rejected before launching the command. An unchanged
-model snapshot and an inherited model continue to use that command.
+Model discovery supplies selection choices, not an exhaustive allowlist: valid provider aliases need not appear in that list. Runtime rejects empty or locally incompatible model identifiers and otherwise sends the requested identifier to the generation endpoint. Provider rejection is surfaced without switching models. Local CLI commands control their own model selection, so an override differing from the configured model is rejected before launching the command. An unchanged model snapshot and an inherited model continue to use that command.
 
-Version comparison runs away from the main actor and publishes only the current
-selection's result; rendering the history view does not recompute the diff.
+Version comparison runs away from the main actor and publishes only the current selection's result; rendering the history view does not recompute the diff.
 
-User-defined classification is label-only and applies to every transcription
-source. A result prompt may target zero or more labels. The common GUI choice is all transcriptions or any selected label (OR semantics).
-With no stored policies, availability defaults to everywhere. Explicit matching
-label policies take precedence (any available match wins); otherwise the all-label
-fallback applies, or availability is denied. Auto-run remains source-aware prompt metadata and is
-gated by the same availability result. The resolver drives both manual
-selection and automatic generation. Changing labels after enqueue never
-mutates queued work and never triggers generation retroactively.
+User-defined classification is label-only and applies to every transcription source. A result prompt may target zero or more labels. The common GUI choice is all transcriptions or any selected label (OR semantics). With no stored policies, availability defaults to everywhere. Explicit matching label policies take precedence (any available match wins); otherwise the all-label fallback applies, or availability is denied. Auto-run remains source-aware prompt metadata and is gated by the same availability result. The resolver drives both manual selection and automatic generation. Changing labels after enqueue never mutates queued work and never triggers generation retroactively.
 
-`prompt_label_policies` stores the fallback and label-specific availability
-rules. The Prompt Manager exposes the common subset as either “All
-transcriptions” or a set of labels. The legacy `prompt_meeting_policies` and
-meeting-type tables remain temporarily for downgrade compatibility; migration
-v0.38 copies their rules to labels and runtime selection no longer consults
-meeting types.
+`prompt_label_policies` stores the fallback and label-specific availability rules. The Prompt Manager exposes the common subset as either “All transcriptions” or a set of labels. The legacy `prompt_meeting_policies` and meeting-type tables remain temporarily for downgrade compatibility; migration v0.38 copies their rules to labels and runtime selection no longer consults meeting types.
 
 ### 1. Prompt Library stored in SQLite
 
@@ -125,40 +80,17 @@ This preserves the responsive UX of “let me ask for several summaries now” w
 
 ### 6. Auto-run uses selected prompt cards
 
-Auto-run after transcription uses visible result prompt cards marked
-`isAutoRun = true` whose `appliesToSources` scope includes that source (`nil`
-means all sources). This is user-configurable in the prompt library rather than fixed to the first built-in prompt.
+Auto-run after transcription uses visible result prompt cards marked `isAutoRun = true` whose `appliesToSources` scope includes that source (`nil` means all sources). This is user-configurable in the prompt library rather than fixed to the first built-in prompt.
 
 Zero auto-run prompt cards is a valid state. In that configuration, transcription still completes normally, chat remains available, and users add prompt tabs manually from the summary UI.
 
 ### 7. Per-prompt inference settings use typed snapshots
 
-A custom result prompt may store optional `temperature`, `topP`, `topK`,
-`maxTokens`, thinking mode, and reasoning effort values. Reasoning
-effort is retained only while thinking is explicitly enabled. This is a typed domain model,
-not an arbitrary request-body editor. Built-in prompts and Transform prompts
-keep these settings unset in the initial contract.
+A custom result prompt may store optional `temperature`, `topP`, `topK`, `maxTokens`, thinking mode, and reasoning effort values. Reasoning effort is retained only while thinking is explicitly enabled. This is a typed domain model, not an arbitrary request-body editor. Built-in prompts and Transform prompts keep these settings unset in the initial contract.
 
-The blank state means inherit Sotto's current prompt-result and adapter
-defaults, including the existing `temperature = 0.7` operation baseline and
-native Ollama thinking-off behavior. It does not force raw upstream-provider
-defaults. When generation is queued, prompt text, per-run context, and requested
-settings become one immutable work receipt. The adapter then allow-lists fields
-for its provider/model and returns the effective settings actually serialized;
-that normalized receipt is stored on the `PromptResult`. Unsupported fields
-are omitted and surfaced in GUI compatibility information, not persisted as
-per-result omission metadata. Invalid numeric values are rejected rather than
-omitted, with neutral validation at decoding/repository/execution boundaries
-and provider-compatible range checks before dispatch. Anthropic Top P takes
-precedence over temperature; effective temperature must be in `0...1`.
-Its inherited 4096 output-token limit is reserved equally on initial runs and
-regeneration. Provider/model configuration is resolved at execution, not stored
-in the queue receipt.
+The blank state means inherit Sotto's current prompt-result and adapter defaults, including the existing `temperature = 0.7` operation baseline and native Ollama thinking-off behavior. It does not force raw upstream-provider defaults. When generation is queued, prompt text, per-run context, and requested settings become one immutable work receipt. The adapter then allow-lists fields for its provider/model and returns the effective settings actually serialized; that normalized receipt is stored on the `PromptResult`. Unsupported fields are omitted and surfaced in GUI compatibility information, not persisted as per-result omission metadata. Invalid numeric values are rejected rather than omitted, with neutral validation at decoding/repository/execution boundaries and provider-compatible range checks before dispatch. Anthropic Top P takes precedence over temperature; effective temperature must be in `0...1`. Its inherited 4096 output-token limit is reserved equally on initial runs and regeneration. Provider/model configuration is resolved at execution, not stored in the queue receipt.
 
-This preserves the original snapshot rationale while making it honest across
-provider-specific request contracts. It also keeps inference settings scoped
-to Prompt Library results: chat, Transforms, the AI formatter, knowledge cards,
-and speech recognition retain their existing behavior.
+This preserves the original snapshot rationale while making it honest across provider-specific request contracts. It also keeps inference settings scoped to Prompt Library results: chat, Transforms, the AI formatter, knowledge cards, and speech recognition retain their existing behavior.
 
 ## Rationale
 

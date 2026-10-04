@@ -1,8 +1,6 @@
 # Nemotron 3.5 STT Benchmark Report
 
-Last updated: 2026-06-08
-Status: smoke benchmark complete; product-corpus benchmark still required before
-promoting Nemotron beyond Beta.
+Last updated: 2026-06-08 Status: smoke benchmark complete; product-corpus benchmark still required before promoting Nemotron beyond Beta.
 
 ## Scope
 
@@ -12,22 +10,13 @@ This report compares the production Sotto CLI path for:
 - Nemotron 3.5 ASR Streaming 0.6B, CoreML via FluidAudio
 - Whisper Large v3 Turbo via WhisperKit
 
-The goal is decision support for the Nemotron Beta engine. This is not a final
-model-quality ranking. The current corpus is synthetic `say` audio and is good
-for integration, setup, latency, memory, and obvious transcript regressions. It
-is not enough to claim real-world accuracy or default-engine readiness.
+The goal is decision support for the Nemotron Beta engine. This is not a final model-quality ranking. The current corpus is synthetic `say` audio and is good for integration, setup, latency, memory, and obvious transcript regressions. It is not enough to claim real-world accuracy or default-engine readiness.
 
 ## Upstream Context
 
-NVIDIA describes `nvidia/nemotron-3.5-asr-streaming-0.6b` as a 600M parameter
-multilingual streaming ASR model released on 2026-06-04. The model card states
-support for 40 language-locales, punctuation/capitalization, automatic language
-detection, and configurable chunk sizes including 80 ms, 160 ms, 320 ms, 560 ms,
-and 1120 ms. Source:
-https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b
+NVIDIA describes `nvidia/nemotron-3.5-asr-streaming-0.6b` as a 600M parameter multilingual streaming ASR model released on 2026-06-04. The model card states support for 40 language-locales, punctuation/capitalization, automatic language detection, and configurable chunk sizes including 80 ms, 160 ms, 320 ms, 560 ms, and 1120 ms. Source: https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b
 
-Sotto currently exposes the 1120 ms multilingual CoreML path as the single
-Nemotron Beta model variant.
+Sotto currently exposes the 1120 ms multilingual CoreML path as the single Nemotron Beta model variant.
 
 ## Method
 
@@ -43,15 +32,11 @@ PHASE_LABEL=warm REPS=1 ENGINES='parakeet-v3 nemotron whisper' \
 Artifacts:
 
 - Warm raw TSV: `output/benchmarks/stt/stt-engine-benchmark-20260608-010344.tsv`
-- Warm summary TSV:
-  `output/benchmarks/stt/stt-engine-benchmark-20260608-010344-summary.tsv`
-- First-run setup sample:
-  `output/benchmarks/stt/logs/20260608-005353-*-english-short-1.stderr.tsv`
+- Warm summary TSV: `output/benchmarks/stt/stt-engine-benchmark-20260608-010344-summary.tsv`
+- First-run setup sample: `output/benchmarks/stt/logs/20260608-005353-*-english-short-1.stderr.tsv`
 - Corpus: `output/benchmarks/stt/smoke-corpus-20260608/corpus.tsv`
 
-The `output/benchmarks/...` files are local run artifacts, not tracked source
-files. The source rows and log-derived setup values used below are reproduced in
-this report so the PR carries the benchmark evidence.
+The `output/benchmarks/...` files are local run artifacts, not tracked source files. The source rows and log-derived setup values used below are reproduced in this report so the PR carries the benchmark evidence.
 
 Machine:
 
@@ -71,10 +56,7 @@ Metrics:
 - `wer`: normalized word error rate against synthetic references
 - punctuation and boundary columns are in the raw TSV
 
-Important limitation: the production CLI returns final transcripts and coarse
-progress, not streaming partial transcript text. True first partial latency and
-segment cadence still need a direct streaming probe or app live-preview
-instrumentation.
+Important limitation: the production CLI returns final transcripts and coarse progress, not streaming partial transcript text. True first partial latency and segment cadence still need a direct streaming probe or app live-preview instrumentation.
 
 ## Corpus
 
@@ -147,9 +129,7 @@ First run on `english-short` after release build and model download:
 | Nemotron | 33.67s | 0.078 GB |
 | Whisper | 212.70s | 0.245 GB |
 
-Interpretation: these numbers include CLI process start plus model load and any
-remaining CoreML compile/optimization cost. They are useful as first-use setup
-signals, not steady-state latency.
+Interpretation: these numbers include CLI process start plus model load and any remaining CoreML compile/optimization cost. They are useful as first-use setup signals, not steady-state latency.
 
 Source stderr excerpts:
 
@@ -173,34 +153,23 @@ real 212.70
 ## Quality Notes
 
 - Parakeet v3 was fastest and lowest WER on this synthetic corpus.
-- Nemotron was much faster than Whisper in warm steady-state and used less peak
-  process memory, but it had weaker transcript quality on this English-heavy
-  smoke set.
-- Nemotron output often had less punctuation than Parakeet/Whisper on short
-  English samples.
-- Whisper handled the Spanish-accented mixed-language text better than the
-  other two engines in this synthetic sample, but it was much slower.
-- The meeting-style sample shows why Beta labeling matters: Nemotron merged
-  words around owner names and produced "analytics parody"; Parakeet also had
-  "release days", and Whisper also had "analytics parody".
+- Nemotron was much faster than Whisper in warm steady-state and used less peak process memory, but it had weaker transcript quality on this English-heavy smoke set.
+- Nemotron output often had less punctuation than Parakeet/Whisper on short English samples.
+- Whisper handled the Spanish-accented mixed-language text better than the other two engines in this synthetic sample, but it was much slower.
+- The meeting-style sample shows why Beta labeling matters: Nemotron merged words around owner names and produced "analytics parody"; Parakeet also had "release days", and Whisper also had "analytics parody".
 
 ## Decision
 
 Ship Nemotron as an opt-in Beta engine, not as a default candidate.
 
-The integration is valuable because Nemotron is local, fast, and materially
-faster than Whisper in warm-path tests. The current Sotto smoke data does
-not justify replacing Parakeet v3 or making stronger quality claims.
+The integration is valuable because Nemotron is local, fast, and materially faster than Whisper in warm-path tests. The current Sotto smoke data does not justify replacing Parakeet v3 or making stronger quality claims.
 
 ## Remaining Benchmark Work
 
 Before calling the benchmark side complete:
 
-- Run a real product corpus with natural speech, laptop/headset quiet input,
-  meeting audio, mixed-language speech, and a 10-30 minute file.
-- Add a direct streaming probe for true first partial latency, partial cadence,
-  and boundary clipping.
+- Run a real product corpus with natural speech, laptop/headset quiet input, meeting audio, mixed-language speech, and a 10-30 minute file.
+- Add a direct streaming probe for true first partial latency, partial cadence, and boundary clipping.
 - Run at least 3 repetitions per engine/sample after warm-up.
 - Capture Parakeet v2 where English-only speed is relevant.
-- Re-run on an 8 GB or 16 GB Apple Silicon machine if the Beta is marketed to
-  lower-memory Macs.
+- Re-run on an 8 GB or 16 GB Apple Silicon machine if the Beta is marketed to lower-memory Macs.

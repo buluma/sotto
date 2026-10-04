@@ -122,18 +122,9 @@ Automatic fallback would be surprising and hard to debug: the same file could us
 
 ### 2026-05-19 amendment: locale-aware first-run setup
 
-First-run onboarding may choose Whisper as the initial engine when the local
-macOS preferred language is Korean, Japanese, Chinese, or Cantonese. This is
-not automatic fallback during transcription: no audio is sampled to infer a
-language, no transcript content is inspected, and every later STT job still
-uses the explicit selected engine. The onboarding branch only prevents CJK
-users from completing setup into a Parakeet-only path that cannot recognize
-their primary language.
+First-run onboarding may choose Whisper as the initial engine when the local macOS preferred language is Korean, Japanese, Chinese, or Cantonese. This is not automatic fallback during transcription: no audio is sampled to infer a language, no transcript content is inspected, and every later STT job still uses the explicit selected engine. The onboarding branch only prevents CJK users from completing setup into a Parakeet-only path that cannot recognize their primary language.
 
-The branch stores a canonical Whisper language hint locally (`ko`, `ja`, `zh`,
-or `yue`), downloads the configured local Whisper model if needed, switches the
-runtime through `STTScheduler.setSpeechEngine(.whisper)`, and still prepares
-speaker-detection assets when they are part of first-run readiness.
+The branch stores a canonical Whisper language hint locally (`ko`, `ja`, `zh`, or `yue`), downloads the configured local Whisper model if needed, switches the runtime through `STTScheduler.setSpeechEngine(.whisper)`, and still prepares speaker-detection assets when they are part of first-run readiness.
 
 ### Why not replace Parakeet
 

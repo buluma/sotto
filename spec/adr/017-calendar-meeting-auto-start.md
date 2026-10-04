@@ -110,51 +110,19 @@ Nothing about this ADR removes the manual flow. The meeting hotkey, the menu bar
 
 ### 11. Per-event skip — persist the user's "not this meeting" (IMPLEMENTED 2026-09-14)
 
-Coarse filters (mode, trigger, per-calendar include, RSVP) are not enough.
-Users need to mute **one calendar entry** without turning automation off or
-ignoring a whole calendar. Issue #609: optional-invite meetings still match
-the filters, and the only veto is a 5-second toast whose dismiss dies on
-relaunch.
+Coarse filters (mode, trigger, per-calendar include, RSVP) are not enough. Users need to mute **one calendar entry** without turning automation off or ignoring a whole calendar. Issue #609: optional-invite meetings still match the filters, and the only veto is a 5-second toast whose dismiss dies on relaunch.
 
 **Decision:**
 
-- Skip is a user decision stored as preference IDs, not an EventKit cache and
-  not SQLite (extends §6). Keys: occurrence = `CalendarEvent.dedupeKey`;
-  meeting/series = `eventKey` (`externalId ?? id`). Never title.
-  `externalId` is not a recurrence flag. Ingest `isRecurring` from
-  `hasRecurrenceRules || isDetached`. Series skip is offered only when
-  `isRecurring` is true.
-- Upcoming default is the whole meeting for one-off events and this
-  occurrence for recurring events. Toast ✕ is always this occurrence.
-- `MeetingMonitor.candidates` is shared by Upcoming and the coordinator.
-  Skipped events remain visible (annotated) and drop out of `evaluate`
-  (no reminder, no auto-start). CLI `calendar upcoming` keeps today's
-  membership and only annotates skips.
-- Undo: occurrence undo removes that `dedupeKey`. Event/series undo removes
-  the `eventKey` and the selected occurrence key; other occurrence skips
-  for that series stay.
-- Effect boundary: a skip prevents effects not yet committed. Recheck full
-  eligibility (mode, permission, trigger filter, excluded calendar, and skip)
-  after awaits, immediately before countdown presentation, and immediately
-  before notify/start. On any calendar settings change, re-evaluate only the
-  occurrence that owns the visible countdown under the new policy: close it
-  if it is no longer eligible, otherwise keep it. Countdowns for other
-  occurrences are never closed by a skip write (preserves post-#318
-  mid-flight teardown). Skip/unskip of the owning occurrence must clear that
-  occurrence’s `countdownShownEventIds` mark immediately, without waiting for
-  a calendar fetch, so undo inside the auto-start window can re-fire. Do not
-  clear `remindedEventIds` on skip (avoids a duplicate reminder).
-  Programmatic close never writes a skip. Skip never stops a live recording.
-- Skip blocks automation only. Manual Record / hotkey / menu bar still work
-  (same independence as §10).
-- Do **not** auto-exclude EventKit optional `participantRole`. Optional invite
-  is why users want mute, not the mute itself. Tentative RSVP stays eligible
-  for auto-start, as today. Overlapping-meeting choice, notification actions,
-  and menu-bar next-event (#875) are later work, not this amendment.
+- Skip is a user decision stored as preference IDs, not an EventKit cache and not SQLite (extends §6). Keys: occurrence = `CalendarEvent.dedupeKey`; meeting/series = `eventKey` (`externalId ?? id`). Never title. `externalId` is not a recurrence flag. Ingest `isRecurring` from `hasRecurrenceRules || isDetached`. Series skip is offered only when `isRecurring` is true.
+- Upcoming default is the whole meeting for one-off events and this occurrence for recurring events. Toast ✕ is always this occurrence.
+- `MeetingMonitor.candidates` is shared by Upcoming and the coordinator. Skipped events remain visible (annotated) and drop out of `evaluate` (no reminder, no auto-start). CLI `calendar upcoming` keeps today's membership and only annotates skips.
+- Undo: occurrence undo removes that `dedupeKey`. Event/series undo removes the `eventKey` and the selected occurrence key; other occurrence skips for that series stay.
+- Effect boundary: a skip prevents effects not yet committed. Recheck full eligibility (mode, permission, trigger filter, excluded calendar, and skip) after awaits, immediately before countdown presentation, and immediately before notify/start. On any calendar settings change, re-evaluate only the occurrence that owns the visible countdown under the new policy: close it if it is no longer eligible, otherwise keep it. Countdowns for other occurrences are never closed by a skip write (preserves post-#318 mid-flight teardown). Skip/unskip of the owning occurrence must clear that occurrence’s `countdownShownEventIds` mark immediately, without waiting for a calendar fetch, so undo inside the auto-start window can re-fire. Do not clear `remindedEventIds` on skip (avoids a duplicate reminder). Programmatic close never writes a skip. Skip never stops a live recording.
+- Skip blocks automation only. Manual Record / hotkey / menu bar still work (same independence as §10).
+- Do **not** auto-exclude EventKit optional `participantRole`. Optional invite is why users want mute, not the mute itself. Tentative RSVP stays eligible for auto-start, as today. Overlapping-meeting choice, notification actions, and menu-bar next-event (#875) are later work, not this amendment.
 
-Settings copy stays on the event, not a skipped-meetings manager. Full
-architecture, UI, types, and tests:
-[plans/active/2026-09-14-issue-609-calendar-event-skip.md](../../plans/active/2026-09-14-issue-609-calendar-event-skip.md).
+Settings copy stays on the event, not a skipped-meetings manager. Full architecture, UI, types, and tests: [plans/active/2026-09-14-issue-609-calendar-event-skip.md](../../plans/active/2026-09-14-issue-609-calendar-event-skip.md).
 
 ## Architecture
 

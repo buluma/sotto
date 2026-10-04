@@ -7,15 +7,9 @@
 
 ## Current implementation
 
-`EntitlementsService.currentState(now:)` always returns `.unlocked`;
-`assertCanTranscribe(now:)` does not throw. The retained trial and expiry types
-below describe the dormant design, not limits on the current public build.
+`EntitlementsService.currentState(now:)` always returns `.unlocked`; `assertCanTranscribe(now:)` does not throw. The retained trial and expiry types below describe the dormant design, not limits on the current public build.
 
-App setup still calls `refreshValidationIfNeeded()`. If Keychain contains a
-legacy license key and instance ID and the last successful validation is at
-least a day old, it can contact LemonSqueezy. CLI transcription invokes the
-same refresh with `--enforce-entitlements`. A missing activation makes refresh
-a no-op; failed or invalid validation never locks the free build.
+App setup still calls `refreshValidationIfNeeded()`. If Keychain contains a legacy license key and instance ID and the last successful validation is at least a day old, it can contact LemonSqueezy. CLI transcription invokes the same refresh with `--enforce-entitlements`. A missing activation makes refresh a no-op; failed or invalid validation never locks the free build.
 
 ## Context
 

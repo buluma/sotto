@@ -6,90 +6,27 @@
 
 ## Nemotron default decision (2026-09-25)
 
-Use **Nemotron 3 `fast128` through FluidAudio 0.17.4** for automatic speaker
-detection after recording. Keep the existing Community-1/WeSpeaker/VBx service
-for explicit Exact/Range choices and experimental voice-profile builds, whose
-identity embeddings Nemotron does not provide. The shared factory supplies the
-app, CLI transcription/retranscription, health and model preparation paths.
+Use **Nemotron 3 `fast128` through FluidAudio 0.17.4** for automatic speaker detection after recording. Keep the existing Community-1/WeSpeaker/VBx service for explicit Exact/Range choices and experimental voice-profile builds, whose identity embeddings Nemotron does not provide. The shared factory supplies the app, CLI transcription/retranscription, health and model preparation paths.
 
-Nemotron has eight activity channels per analyzed source. This is an accepted
-limit for the default meeting use case, not a way to detect or correctly split
-an arbitrary number of participants. Choosing an explicit speaker count keeps
-the existing Community-1 behavior, including counts above eight. Automatic
-calendar bounds remain advisory inputs: a natural Nemotron count within the
-bounds is accepted; a nonempty result outside them takes the existing constrained
-Community-1 path. If that advisory fallback is unavailable, retain the successful
-Nemotron result and log the unapplied bound; cancellation still propagates.
-Explicit count failures retain their existing behavior. Silence stays empty
-rather than inventing a minimum speaker.
+Nemotron has eight activity channels per analyzed source. This is an accepted limit for the default meeting use case, not a way to detect or correctly split an arbitrary number of participants. Choosing an explicit speaker count keeps the existing Community-1 behavior, including counts above eight. Automatic calendar bounds remain advisory inputs: a natural Nemotron count within the bounds is accepted; a nonempty result outside them takes the existing constrained Community-1 path. If that advisory fallback is unavailable, retain the successful Nemotron result and log the unapplied bound; cancellation still propagates. Explicit count failures retain their existing behavior. Silence stays empty rather than inventing a minimum speaker.
 
-The microphone track remains **Me**. Only isolated system audio is diarized in
-meetings. Neither live transcription, ASR selection, source reconciliation nor
-speaker-word smoothing changes. Nemotron preserves overlapping acoustic intervals
-and brief activity at the service boundary; words still receive one label through
-the existing merger. A model's overlapping output is not itself source separation
-or proof that simultaneous speech was transcribed correctly.
+The microphone track remains **Me**. Only isolated system audio is diarized in meetings. Neither live transcription, ASR selection, source reconciliation nor speaker-word smoothing changes. Nemotron preserves overlapping acoustic intervals and brief activity at the service boundary; words still receive one label through the existing merger. A model's overlapping output is not itself source separation or proof that simultaneous speech was transcribed correctly.
 
-Model assets are pinned to CoreML export revision
-`1b0b133f6f8820292010afd776d8f9fbc9fca17e`, with size and SHA-256 verification in
-an app-owned cache. The `fast128` download is approximately 199 MB. Setup also prepares the existing
-Community-1 assets for explicit count choices; cached/ready status covers both.
-Ordinary automatic inference needs only the Nemotron model. An upgrade from an
-unmarked 0.15.7 Community-1 cache needs one connected setup: the SDK now requires
-a matching revision marker. Readiness rejects old markers, and PLDA metadata
-repair uses the same pinned revision. Preparation
-runs outside the inference gate, shares one retryable load, and does not cancel
-other callers when one waiter cancels. Queued inference is cancellable; active
-inference checks cancellation between one-second feeds and runs off the service
-actor. Samples are staged in a temporary memory-mapped file, matching
-Community-1's memory profile, rather than a whole-recording array. A fresh diarizer resets stream
-state for every recording. macOS 14 uses CPU/GPU routing; the `offline` preset
-also uses CPU/GPU and is retained only for evaluation, not as a user setting.
+Model assets are pinned to CoreML export revision `1b0b133f6f8820292010afd776d8f9fbc9fca17e`, with size and SHA-256 verification in an app-owned cache. The `fast128` download is approximately 199 MB. Setup also prepares the existing Community-1 assets for explicit count choices; cached/ready status covers both. Ordinary automatic inference needs only the Nemotron model. An upgrade from an unmarked 0.15.7 Community-1 cache needs one connected setup: the SDK now requires a matching revision marker. Readiness rejects old markers, and PLDA metadata repair uses the same pinned revision. Preparation runs outside the inference gate, shares one retryable load, and does not cancel other callers when one waiter cancels. Queued inference is cancellable; active inference checks cancellation between one-second feeds and runs off the service actor. Samples are staged in a temporary memory-mapped file, matching Community-1's memory profile, rather than a whole-recording array. A fresh diarizer resets stream state for every recording. macOS 14 uses CPU/GPU routing; the `offline` preset also uses CPU/GPU and is retained only for evaluation, not as a user setting.
 
-The [matched evaluation](../../benchmarks/diarization/2026-09-25-nemotron-evaluation.md)
-records separate AMI manual/forced-reference results, AliMeeting conditions,
-ASR regression controls and product E2E evidence. The earlier evaluation-only
-Nemotron licensing note is superseded by the final model's OpenMDW-1.1 license;
-attribution and its full license accompany the app. FluidAudio itself uses
-Apache-2.0. No new runtime or cloud speech service is introduced.
+The [matched evaluation](../../benchmarks/diarization/2026-09-25-nemotron-evaluation.md) records separate AMI manual/forced-reference results, AliMeeting conditions, ASR regression controls and product E2E evidence. The earlier evaluation-only Nemotron licensing note is superseded by the final model's OpenMDW-1.1 license; attribution and its full license accompany the app. FluidAudio itself uses Apache-2.0. No new runtime or cloud speech service is introduced.
 
 ### Implementation qualification (2026-10-02 audit)
 
-The [October audit](../../docs/audits/2026-10-02-app-audit/diarization.md)
-re-executed both current backends on the public `wibky` and `ouvtt` regression
-fixtures with network access denied and cloned, hash-verified model caches.
-Nemotron returned one and three speakers against one and two reference
-speakers; Community-1 returned two and four. The audit records DER components,
-the exact scoring region and Debug-runtime limits. VoxConverse is in
-Nemotron's disclosed training data, so these are regression checks, not
-held-out generalization evidence or a replacement for the matched evaluation.
+The [October audit](../../docs/audits/2026-10-02-app-audit/diarization.md) re-executed both current backends on the public `wibky` and `ouvtt` regression fixtures with network access denied and cloned, hash-verified model caches. Nemotron returned one and three speakers against one and two reference speakers; Community-1 returned two and four. The audit records DER components, the exact scoring region and Debug-runtime limits. VoxConverse is in Nemotron's disclosed training data, so these are regression checks, not held-out generalization evidence or a replacement for the matched evaluation.
 
-The same audit passed the real-ASR meeting/file persistence and silence-reset
-test on a 180-second public crop with a separate microphone fixture. In its
-fixed-ASR diagnostic, Nemotron's 491 eligible word midpoints agreed with the
-reference speaker 487 times before smoothing and 486 afterwards. This is a
-narrow diagnostic excluding overlap and ASR errors, not cpWER. The meeting
-also retained a source-only `Others` word alongside two detected remote
-identities; today's roster count includes that fallback bucket as an entry.
-Neither result supports presenting roster size as a verified number of people.
+The same audit passed the real-ASR meeting/file persistence and silence-reset test on a 180-second public crop with a separate microphone fixture. In its fixed-ASR diagnostic, Nemotron's 491 eligible word midpoints agreed with the reference speaker 487 times before smoothing and 486 afterwards. This is a narrow diagnostic excluding overlap and ASR errors, not cpWER. The meeting also retained a source-only `Others` word alongside two detected remote identities; today's roster count includes that fallback bucket as an entry. Neither result supports presenting roster size as a verified number of people.
 
 Three implementation boundaries remain material:
 
-- The existing word merger can replace a real one-word reply with the
-  surrounding speaker and fill unknown gaps. This is deliberate smoothing,
-  tested as current behavior, not a guarantee of correct word attribution.
-  A policy change needs final-word evaluation, not only better acoustic DER.
-- A diarization failure preserves successful ASR, but the nonblocking warning
-  specified below is not yet implemented as a durable per-run GUI/CLI outcome.
-  Current completion telemetry also omits the actual backend and fallback
-  result; `speaker_prior` describes the requested policy and may be unapplied
-  when advisory fallback fails. Preserve the warning requirement rather than
-  presenting it as already shipped.
-- Files retain raw acoustic `diarizationSegments`; captured meetings rebuild
-  them from recognized words, and manual reassignment can also rebuild them.
-  They are therefore not a uniform acoustic-activity timeline. The separate
-  [audio speaker timeline contract](../contracts/audio-speaker-timeline-v1.md)
-  remains the intended boundary for preserving that evidence.
+- The existing word merger can replace a real one-word reply with the surrounding speaker and fill unknown gaps. This is deliberate smoothing, tested as current behavior, not a guarantee of correct word attribution. A policy change needs final-word evaluation, not only better acoustic DER.
+- A diarization failure preserves successful ASR, but the nonblocking warning specified below is not yet implemented as a durable per-run GUI/CLI outcome. Current completion telemetry also omits the actual backend and fallback result; `speaker_prior` describes the requested policy and may be unapplied when advisory fallback fails. Preserve the warning requirement rather than presenting it as already shipped.
+- Files retain raw acoustic `diarizationSegments`; captured meetings rebuild them from recognized words, and manual reassignment can also rebuild them. They are therefore not a uniform acoustic-activity timeline. The separate [audio speaker timeline contract](../contracts/audio-speaker-timeline-v1.md) remains the intended boundary for preserving that evidence.
 
 ## Context (original decision)
 
@@ -378,18 +315,7 @@ Skip diarization for: dictation (single speaker by design), or when the correspo
 > consolidation signal, stable IDs across re-runs, in-person microphone
 > diarization, and Nemotron-3 Diarization.
 
-**Model preparation (2026-09-07):** The service shares one model-loading task
-across speaker constraints and initializes each configured manager from those
-models. Downloads and loading run outside `ANEInferenceGate`; the service
-does not call FluidAudio's combined download-and-prewarm `prepareModels` API.
-Eager prewarming is skipped, so the first prediction happens inside the gated
-`process` call. This prevents a slow speaker-model download from blocking
-dictation on macOS 14. Cancelling one caller stops that caller's wait without
-cancelling the shared load. A failed load can be retried by a later caller.
-FluidAudio retains compiled-model recovery. An existing malformed PLDA metadata
-file is replaced atomically only after a valid replacement is downloaded;
-offline mode, cancellation, and failed downloads preserve the cached file and
-model bundles.
+**Model preparation (2026-09-07):** The service shares one model-loading task across speaker constraints and initializes each configured manager from those models. Downloads and loading run outside `ANEInferenceGate`; the service does not call FluidAudio's combined download-and-prewarm `prepareModels` API. Eager prewarming is skipped, so the first prediction happens inside the gated `process` call. This prevents a slow speaker-model download from blocking dictation on macOS 14. Cancelling one caller stops that caller's wait without cancelling the shared load. A failed load can be retried by a later caller. FluidAudio retains compiled-model recovery. An existing malformed PLDA metadata file is replaced atomically only after a valid replacement is downloaded; offline mode, cancellation, and failed downloads preserve the cached file and model bundles.
 
 > **Amendment (2026-09-05):** Automatic diarization is now an immutable
 > baseline beneath a transcript-scoped speaker-correction layer. Add, rename,
@@ -432,26 +358,13 @@ model bundles.
 
 ## Audio speaker timeline decision (2026-09-14)
 
-**Accepted direction; implementation pending ([issue #836](https://github.com/moona3k/macparakeet/issues/836)).**
-Preserve detected audio turns independently of word timing and expose a read-only timeline with playback navigation.
-This extends the audio-navigation intent above to Cohere and other wordless results; it does not make their text speaker-attributed.
-The [Audio Speaker Timeline v1 contract](../contracts/audio-speaker-timeline-v1.md) owns the planned payload, coverage, lifecycle, and consumer behavior.
-The [implementation plan](../../docs/plans/2026-09-14-2147-feat-audio-speaker-timeline-plan.md) records the source investigation and verification gates.
+**Accepted direction; implementation pending ([issue #836](https://github.com/moona3k/macparakeet/issues/836)).** Preserve detected audio turns independently of word timing and expose a read-only timeline with playback navigation. This extends the audio-navigation intent above to Cohere and other wordless results; it does not make their text speaker-attributed. The [Audio Speaker Timeline v1 contract](../contracts/audio-speaker-timeline-v1.md) owns the planned payload, coverage, lifecycle, and consumer behavior. The [implementation plan](../../docs/plans/2026-09-14-2147-feat-audio-speaker-timeline-plan.md) records the source investigation and verification gates.
 
-Use a separate optional `audioSpeakerTimeline` with its own automatic roster.
-Although this ADR originally described `diarizationSegments` as raw audio evidence, current meeting finalization derives that field from words, and effective correction projections can rebuild it from corrected assignments.
-Reinterpreting it as authoritative audio turns would mislabel legacy records and entangle the timeline with text corrections.
-Keep those existing semantics and text correction fingerprints intact; do not backfill audio evidence from them.
+Use a separate optional `audioSpeakerTimeline` with its own automatic roster. Although this ADR originally described `diarizationSegments` as raw audio evidence, current meeting finalization derives that field from words, and effective correction projections can rebuild it from corrected assignments. Reinterpreting it as authoritative audio turns would mislabel legacy records and entangle the timeline with text corrections. Keep those existing semantics and text correction fingerprints intact; do not backfill audio evidence from them.
 
-Existing archived-source meetings cover only isolated system audio, shifted onto playback time once.
-Canonical-only saved/imported/split meetings retain their existing single-file analysis path and must identify coverage as canonical recording audio, not isolated system audio.
-This clarifies the earlier mixed-playback prohibition: do not substitute the mixed artifact when isolated archived sources exist.
-No microphone speech intervals are inferred from untimed text or channel duration.
+Existing archived-source meetings cover only isolated system audio, shifted onto playback time once. Canonical-only saved/imported/split meetings retain their existing single-file analysis path and must identify coverage as canonical recording audio, not isolated system audio. This clarifies the earlier mixed-playback prohibition: do not substitute the mixed artifact when isolated archived sources exist. No microphone speech intervals are inferred from untimed text or channel duration.
 
-Keep the existing offline service, model readiness, inference serialization, preferences, and speaker-count policy.
-Initial timeline interaction is read-only; audio-cluster correction and text alignment remain follow-ups.
-This decision changes neither voiceprint consent/eligibility nor audio-retention policy.
-Source analysis establishes feasibility; real-audio and native-playback qualification are still required before claiming reliability or availability.
+Keep the existing offline service, model readiness, inference serialization, preferences, and speaker-count policy. Initial timeline interaction is read-only; audio-cluster correction and text alignment remain follow-ups. This decision changes neither voiceprint consent/eligibility nor audio-retention policy. Source analysis establishes feasibility; real-audio and native-playback qualification are still required before claiming reliability or availability.
 
 ## Rationale
 
@@ -565,53 +478,21 @@ Rejected. Speaker attribution is a core expectation for file transcription. Ever
 
 Two claims above are now wrong, and this records why.
 
-**`SpeakerManager` is not the route.** It is in-memory only and explicitly
-unsupported with `OfflineDiarizerManager`, the only manager the app instantiates.
-The comparison table's "possible via SpeakerManager" was never actionable for us.
+**`SpeakerManager` is not the route.** It is in-memory only and explicitly unsupported with `OfflineDiarizerManager`, the only manager the app instantiates. The comparison table's "possible via SpeakerManager" was never actionable for us.
 
-**The route that works is post-hoc matching on `speakerDatabase`.** The offline
-result already carries one 256-d vector per detected speaker, which the adapter
-used to discard. Enrolled voices are stored as exemplars and scored against it
-after the transcript is saved. No additional embedding model is introduced. Matching and persistence add work
-after transcription; their latency still needs measurement. Diarization itself is untouched — a cluster that cannot be matched is
-simply left as `Others N`.
+**The route that works is post-hoc matching on `speakerDatabase`.** The offline result already carries one 256-d vector per detected speaker, which the adapter used to discard. Enrolled voices are stored as exemplars and scored against it after the transcript is saved. No additional embedding model is introduced. Matching and persistence add work after transcription; their latency still needs measurement. Diarization itself is untouched — a cluster that cannot be matched is simply left as `Others N`.
 
 Two facts made this harder than the old line suggests:
 
-- `speakerDatabase` holds the **VBx clustering centroid**, un-normalized, not a
-  mean of per-segment embeddings. A bare dot product scales distance by
-  `‖a‖·‖b‖`, and that bias grows with intra-cluster dispersion — so it penalizes
-  hardest exactly the recordings worth rescuing. Vectors are normalized once, at
-  the adapter boundary.
-- The centroid moves with the clustering configuration, not only with the model.
-  Two identities are stored: `embeddingModelId` (a mismatch makes vectors
-  incomparable) and `aggregationProfileId` (a mismatch stays comparable at a
-  tightened threshold).
+- `speakerDatabase` holds the **VBx clustering centroid**, un-normalized, not a mean of per-segment embeddings. A bare dot product scales distance by `‖a‖·‖b‖`, and that bias grows with intra-cluster dispersion — so it penalizes hardest exactly the recordings worth rescuing. Vectors are normalized once, at the adapter boundary.
+- The centroid moves with the clustering configuration, not only with the model. Two identities are stored: `embeddingModelId` (a mismatch makes vectors incomparable) and `aggregationProfileId` (a mismatch stays comparable at a tightened threshold).
 
-Speaker ids remain positional. Nothing here changes that, which is why every
-stored decision is scoped by transcript fingerprint: after re-diarization, `S1`
-can be someone else.
+Speaker ids remain positional. Nothing here changes that, which is why every stored decision is scoped by transcript fingerprint: after re-diarization, `S1` can be someone else.
 
-Scope, gating and the release conditions live in
-[F13a](../02-features.md) and
-[the plan](../../plans/active/2026-07-03-speaker-voiceprints.md). The internal
-boundary is [`spec/contracts/speaker-voiceprints.md`](../contracts/speaker-voiceprints.md).
+Scope, gating and the release conditions live in [F13a](../02-features.md) and [the plan](../../plans/active/2026-07-03-speaker-voiceprints.md). The internal boundary is [`spec/contracts/speaker-voiceprints.md`](../contracts/speaker-voiceprints.md).
 
 ## Cancellation boundary amendment (2026-10-02)
 
-Optional speaker-detection failure remains non-fatal only while its owning task
-is not cancelled. After SDK/native inference returns, adapters check the task
-before accepting success, interpreting no-speech as empty success, or forwarding
-a generic backend error. Advisory fallback follows the same rule. Active
-native work is still awaited under its inference permit; this does not promise
-immediate interruption of a CoreML kernel.
+Optional speaker-detection failure remains non-fatal only while its owning task is not cancelled. After SDK/native inference returns, adapters check the task before accepting success, interpreting no-speech as empty success, or forwarding a generic backend error. Advisory fallback follows the same rule. Active native work is still awaited under its inference permit; this does not promise immediate interruption of a CoreML kernel.
 
-File and meeting orchestration also check cancellation before interpreting
-optional detection outcomes and after awaited post-processing. The last check
-precedes search invalidation and canonical transcript publication. Cancellation
-observed there preserves an existing retranscription and its index; cancellation
-arriving after that boundary may commit and does not roll back saved work.
-The [regression record](../../docs/audits/2026-10-02-diarization-cancellation.md)
-covers late backend, formatter and title outcomes plus uncancelled controls.
-Durable speaker-detection outcome/provenance remains a
-[separate planned slice](../../plans/active/2026-10-02-diarization-outcomes.md).
+File and meeting orchestration also check cancellation before interpreting optional detection outcomes and after awaited post-processing. The last check precedes search invalidation and canonical transcript publication. Cancellation observed there preserves an existing retranscription and its index; cancellation arriving after that boundary may commit and does not roll back saved work. The [regression record](../../docs/audits/2026-10-02-diarization-cancellation.md) covers late backend, formatter and title outcomes plus uncancelled controls. Durable speaker-detection outcome/provenance remains a [separate planned slice](../../plans/active/2026-10-02-diarization-outcomes.md).

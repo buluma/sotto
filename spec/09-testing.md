@@ -85,11 +85,7 @@ The suite includes targeted regressions for progress behavior in URL transcripti
 
 ### Dictation Flow Timing Tests
 
-`DictationFlowCoordinatorLoadCaptionTests` uses intentionally compressed async
-timing windows to keep first-install/model-load caption coverage fast. If one
-of those tests fails once in CI, rerun it before calling it a product
-regression; if it fails reproducibly or frequently, investigate the coordinator
-timing instead of ignoring it.
+`DictationFlowCoordinatorLoadCaptionTests` uses intentionally compressed async timing windows to keep first-install/model-load caption coverage fast. If one of those tests fails once in CI, rerun it before calling it a product regression; if it fails reproducibly or frequently, investigate the coordinator timing instead of ignoring it.
 
 ### Meeting Recording Tests
 
@@ -174,14 +170,7 @@ The process test uses `SOTTO_CLI_TEST_EXECUTABLE` when provided; otherwise it us
 
 ## Running Tests
 
-Keep `SOTTO_DEBUG_APP_STATE_DIR` scoped to the specific runtime/model or
-fixture command that needs it. Do not export it across the full test suite:
-default-path tests intentionally assert ordinary path/preference resolution,
-and the manual Split QA fixture treats its presence as an explicit seeding
-request with a fresh-temporary-directory guard. Normal tests inject isolated
-databases/defaults as needed. The October audit documents the resulting
-environment-induced failures and corrected focused run in its
-[validation record](../docs/audits/2026-10-02-app-audit/validation.md).
+Keep `SOTTO_DEBUG_APP_STATE_DIR` scoped to the specific runtime/model or fixture command that needs it. Do not export it across the full test suite: default-path tests intentionally assert ordinary path/preference resolution, and the manual Split QA fixture treats its presence as an explicit seeding request with a fresh-temporary-directory guard. Normal tests inject isolated databases/defaults as needed. The October audit documents the resulting environment-induced failures and corrected focused run in its [validation record](../docs/audits/2026-10-02-app-audit/validation.md).
 
 ```bash
 # Full suite: final gate, at most once per task (see AGENTS.md)
@@ -195,15 +184,11 @@ swift test --filter STTClientTests
 swift test --filter WhisperLanguageCatalogTests
 ```
 
-**Note:** Normal `swift test` does not exercise a real in-process MLX model.
-The app requires the Xcode app-build path; optional runtime build gates and
-canonical commands are documented in [AGENTS.md](../AGENTS.md).
+**Note:** Normal `swift test` does not exercise a real in-process MLX model. The app requires the Xcode app-build path; optional runtime build gates and canonical commands are documented in [AGENTS.md](../AGENTS.md).
 
 ## Continuous Integration
 
-The [CI workflow](../.github/workflows/ci.yml) validates PRs and the integrated
-`main` branch. Its trigger policy avoids running the entire pipeline twice for
-the same feature-branch update:
+The [CI workflow](../.github/workflows/ci.yml) validates PRs and the integrated `main` branch. Its trigger policy avoids running the entire pipeline twice for the same feature-branch update:
 
 | Event | CI behavior |
 |-------|-------------|
@@ -213,17 +198,9 @@ the same feature-branch update:
 | Tag push | Run; tag validation is retained explicitly |
 | Manual dispatch | Run against the selected ref |
 
-The existing `docs/**` and `plans/**` exclusions still apply to push and PR
-path filtering. GitHub does not apply path filters to tag pushes. PR updates
-cancel superseded runs for that PR. The `swift-test` check is an aggregate
-verdict: both the behavior and distribution jobs must succeed, and an explicitly
-requested cache-qualification job must also succeed. That optional job may be
-skipped only when not requested. Failed, skipped, or cancelled required jobs
-cannot produce a green aggregate. See GitHub's
-[branch and tag filter semantics](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onpushbranchestagsbranches-ignoretags-ignore).
+The existing `docs/**` and `plans/**` exclusions still apply to push and PR path filtering. GitHub does not apply path filters to tag pushes. PR updates cancel superseded runs for that PR. The `swift-test` check is an aggregate verdict: both the behavior and distribution jobs must succeed, and an explicitly requested cache-qualification job must also succeed. That optional job may be skipped only when not requested. Failed, skipped, or cancelled required jobs cannot produce a green aggregate. See GitHub's [branch and tag filter semantics](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onpushbranchestagsbranches-ignoretags-ignore).
 
-For a branch that needs hosted validation before a PR exists, select it under
-Actions → CI → Run workflow, or use:
+For a branch that needs hosted validation before a PR exists, select it under Actions → CI → Run workflow, or use:
 
 ```bash
 gh workflow run ci.yml --ref <branch>
@@ -231,8 +208,7 @@ gh workflow run ci.yml --ref <branch>
 
 ### Execution and evidence
 
-Two macOS jobs run independently so behavioral regressions no longer wait for
-Release packaging:
+Two macOS jobs run independently so behavioral regressions no longer wait for Release packaging:
 
 | Job | Validation |
 |---|---|
@@ -241,35 +217,13 @@ Release packaging:
 | Build Cache Invalidation | Manual opt-in; restores exact distribution caches and proves changed app source/resources reach the rebuilt package |
 | `swift-test` | Requires both standard jobs and any requested cache qualification to succeed; preserves the existing overall check name |
 
-`swift build --build-tests -Xswiftc -warn-concurrency` compiles the normal
-application/dependency graph and test targets. `swift test --skip-build
---parallel -Xswiftc -warn-concurrency` then runs those exact products. Separate
-Actions steps expose compile and execution cost without a second debug build
-with different flags. Concurrency warnings remain diagnostics, not a zero-warning
-gate. The separate Swift 6 build omits WhisperKit and the Markdown dependency
-graph and does not compile test targets; retain this distinction when reporting
-coverage.
+`swift build --build-tests -Xswiftc -warn-concurrency` compiles the normal application/dependency graph and test targets. `swift test --skip-build --parallel -Xswiftc -warn-concurrency` then runs those exact products. Separate Actions steps expose compile and execution cost without a second debug build with different flags. Concurrency warnings remain diagnostics, not a zero-warning gate. The separate Swift 6 build omits WhisperKit and the Markdown dependency graph and does not compile test targets; retain this distinction when reporting coverage.
 
-Each macOS job uploads its nonhidden `ci-logs/` directory even on failure, as
-`swift-test-evidence` or `swift-distribution-evidence`, retained for seven days.
-Missing files are an artifact failure rather than a silent success. Evidence
-includes the tested SHA, OS/architecture/CPU/memory, Xcode/Swift versions, and
-build logs. Distribution also preserves Xcode output/build timing summaries.
+Each macOS job uploads its nonhidden `ci-logs/` directory even on failure, as `swift-test-evidence` or `swift-distribution-evidence`, retained for seven days. Missing files are an artifact failure rather than a silent success. Evidence includes the tested SHA, OS/architecture/CPU/memory, Xcode/Swift versions, and build logs. Distribution also preserves Xcode output/build timing summaries.
 
-The test job emits xUnit XML and a step summary with reported case/failure/error
-counts and the ten slowest case durations. SwiftPM's XCTest XML does not reliably
-represent skipped cases, so the summary discloses missing skip counts instead
-of calling every XML case a pass. Swift Testing's log summary is reported
-separately. Case durations include runner overhead and overlap under parallel
-execution; their sum is not test-step wall time. Missing or malformed expected
-XML fails the evidence step. The test command's exit status remains authoritative.
+The test job emits xUnit XML and a step summary with reported case/failure/error counts and the ten slowest case durations. SwiftPM's XCTest XML does not reliably represent skipped cases, so the summary discloses missing skip counts instead of calling every XML case a pass. Swift Testing's log summary is reported separately. Case durations include runner overhead and overlap under parallel execution; their sum is not test-step wall time. Missing or malformed expected XML fails the evidence step. The test command's exit status remains authoritative.
 
-The CLI persistence smoke invokes the built executable in separate processes
-against a fresh temporary database, exercising prompt/collection creation,
-readback, rename, collection deletion with prompt preservation, and a missing-ID
-JSON error. It disables telemetry, selects an owned AppPaths root, and does not
-change preferences or invoke models/providers. This proves executable/persistence
-composition, not audio, GUI, or model behavior. Run it explicitly with:
+The CLI persistence smoke invokes the built executable in separate processes against a fresh temporary database, exercising prompt/collection creation, readback, rename, collection deletion with prompt preservation, and a missing-ID JSON error. It disables telemetry, selects an owned AppPaths root, and does not change preferences or invoke models/providers. This proves executable/persistence composition, not audio, GUI, or model behavior. Run it explicitly with:
 
 ```bash
 python3 scripts/ci/cli-persistence-smoke.py "$PWD/.build/debug/sotto-cli"
@@ -277,46 +231,19 @@ python3 scripts/ci/cli-persistence-smoke.py "$PWD/.build/debug/sotto-cli"
 
 ### Timing baseline and follow-up decisions
 
-The [September 25 audit](../docs/research/2026-09-25-ci-cost-and-test-strategy.md)
-measured 24 successful jobs from a 70-run sample: 52.7 minutes median, with four
-pre-test build stages consuming 77.5% of aggregate job time. In three inspected
-logs, XCTest execution occupied about 7–8 minutes. These are measurements of the
-previous sequential workflow, not a speedup claim for this revision.
+The [September 25 audit](../docs/research/2026-09-25-ci-cost-and-test-strategy.md) measured 24 successful jobs from a 70-run sample: 52.7 minutes median, with four pre-test build stages consuming 77.5% of aggregate job time. In three inspected logs, XCTest execution occupied about 7–8 minutes. These are measurements of the previous sequential workflow, not a speedup claim for this revision.
 
-The current workflow retains the complete test suite, full Release product build,
-Xcode resource probe and Swift 6 compatibility check. It caches compiled SwiftPM
-state separately for behavior and distribution, plus a separate Xcode
-DerivedData cache. Keys include toolchain/SDK/OS/architecture, package graph and
-workflow identity. Restored state is always rebuilt before `--skip-build` tests;
-cache restoration alone is not correctness evidence.
+The current workflow retains the complete test suite, full Release product build, Xcode resource probe and Swift 6 compatibility check. It caches compiled SwiftPM state separately for behavior and distribution, plus a separate Xcode DerivedData cache. Keys include toolchain/SDK/OS/architecture, package graph and workflow identity. Restored state is always rebuilt before `--skip-build` tests; cache restoration alone is not correctness evidence.
 
-The [October 2 audit](../docs/audits/2026-10-02-app-audit/README.md) records exact
-baseline run `37041613709`: 35m02s total workflow elapsed, 28m41s behavior and
-34m46s distribution job time. SwiftPM caches missed while Xcode restored; this
-is an observed run, not a controlled warm-cache benchmark. Compare elapsed time,
-summed runner-minutes, cache availability and source invalidation before further
-parallelization or narrowing gates. Include queue time and cancelled runs when
-interpreting developer wait time.
+The [October 2 audit](../docs/audits/2026-10-02-app-audit/README.md) records exact baseline run `37041613709`: 35m02s total workflow elapsed, 28m41s behavior and 34m46s distribution job time. SwiftPM caches missed while Xcode restored; this is an observed run, not a controlled warm-cache benchmark. Compare elapsed time, summed runner-minutes, cache availability and source invalidation before further parallelization or narrowing gates. Include queue time and cancelled runs when interpreting developer wait time.
 
-The same run's telemetry allowlist step **skipped** because the private receiver
-contract was unavailable. Its zero exit status is not compatibility evidence.
-The audit independently checked the fetched current receiver (all 104 emitted
-event names accepted); release qualification still needs receiver revision and
-property-contract/deployment evidence.
+The same run's telemetry allowlist step **skipped** because the private receiver contract was unavailable. Its zero exit status is not compatibility evidence. The audit independently checked the fetched current receiver (all 104 emitted event names accepted); release qualification still needs receiver revision and property-contract/deployment evidence.
 
 ## AI Agent Testing Loop
 
-Follow [AGENTS.md](../AGENTS.md#commands), not a second full-suite loop here:
-iterate with focused tests for the changed area, then run the full suite at
-most once as the final gate unless the user specifies another scope. A reported
-hardware failure is evidence; do not erase it with a passing mock-based suite.
+Follow [AGENTS.md](../AGENTS.md#commands), not a second full-suite loop here: iterate with focused tests for the changed area, then run the full suite at most once as the final gate unless the user specifies another scope. A reported hardware failure is evidence; do not erase it with a passing mock-based suite.
 
-For a bug fix, keep a focused reproduction that fails before the fix and passes
-afterward when practical. Verify UI/capture changes on the real surface as
-well, and distinguish fixture results, live hardware checks, and checks not run.
-Never run destructive CLI smoke commands against the user's database or model
-cache. Use the [integration isolation rules](../integrations/README.md#safe-automation-and-isolation);
-`--database` alone is not full application-state isolation.
+For a bug fix, keep a focused reproduction that fails before the fix and passes afterward when practical. Verify UI/capture changes on the real surface as well, and distinguish fixture results, live hardware checks, and checks not run. Never run destructive CLI smoke commands against the user's database or model cache. Use the [integration isolation rules](../integrations/README.md#safe-automation-and-isolation); `--database` alone is not full application-state isolation.
 
 ## Test Quality Rules
 
@@ -376,10 +303,7 @@ func testCapitalizationStage() {
 
 ### Fixture Data
 
-Tests construct synthetic audio/transcript fixtures near the owning suite or
-in its test helpers. Real-model and hardware suites accept explicitly provided
-fixtures/assets and remain opt-in. Use test-owned temporary directories for
-media and persistence; do not assume a shared `Tests/Fixtures/` directory exists.
+Tests construct synthetic audio/transcript fixtures near the owning suite or in its test helpers. Real-model and hardware suites accept explicitly provided fixtures/assets and remain opt-in. Use test-owned temporary directories for media and persistence; do not assume a shared `Tests/Fixtures/` directory exists.
 
 ## Test File Organization
 
@@ -471,13 +395,6 @@ These flows must be tested manually after any overlay or hotkey changes. Automat
 
 ### Distribution policy fixtures
 
-The distribution CI job runs `scripts/dist/test_verify_app_privacy_surface.sh`
-and `scripts/dist/test_verify_release_version.sh` alongside the meeting echo
-packaging fixtures. They invoke the production release verifiers against valid
-and deliberately invalid bundles: extra ATS domains/attributes, malformed
-privacy metadata, and missing, malformed, or development version strings.
+The distribution CI job runs `scripts/dist/test_verify_app_privacy_surface.sh` and `scripts/dist/test_verify_release_version.sh` alongside the meeting echo packaging fixtures. They invoke the production release verifiers against valid and deliberately invalid bundles: extra ATS domains/attributes, malformed privacy metadata, and missing, malformed, or development version strings.
 
-These fixtures test release policy rejection paths. Their synthetic bundle
-metadata and fake signing output do not qualify a signed app, notarization, or
-macOS networking behavior. Run either script directly with `bash` for a focused
-check; CI retains each script's output in the distribution evidence artifact.
+These fixtures test release policy rejection paths. Their synthetic bundle metadata and fake signing output do not qualify a signed app, notarization, or macOS networking behavior. Run either script directly with `bash` for a focused check; CI retains each script's output in the distribution evidence artifact.

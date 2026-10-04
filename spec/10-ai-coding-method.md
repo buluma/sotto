@@ -4,48 +4,31 @@
 
 ## Purpose
 
-This document explains how agents and humans should use Sotto's specs,
-plans, tests, and review loops without turning process into the product.
+This document explains how agents and humans should use Sotto's specs, plans, tests, and review loops without turning process into the product.
 
-The goal is simple: keep changes grounded, verifiable, and easy for the next
-person or agent to continue.
+The goal is simple: keep changes grounded, verifiable, and easy for the next person or agent to continue.
 
-Rationale and external references for this approach live in
-[`../docs/research/coding-agent-instructions-2026-06.md`](../docs/research/coding-agent-instructions-2026-06.md).
+Rationale and external references for this approach live in [`../docs/research/coding-agent-instructions-2026-06.md`](../docs/research/coding-agent-instructions-2026-06.md).
 
 ## Principles
 
 1. ADRs record accepted decisions. Do not second-guess them casually.
 2. Narrative specs explain product behavior, architecture, and rationale.
-3. Plans are working memory for substantial or long-running tasks, not a
-   mandatory ceremony for every edit.
-4. Tests, current code, and `git` history are the reliable source for
-   implementation and coverage discovery.
-5. Use the lightest process that still protects correctness, privacy, user
-   data, and product quality.
+3. Plans are working memory for substantial or long-running tasks, not a mandatory ceremony for every edit.
+4. Tests, current code, and `git` history are the reliable source for implementation and coverage discovery.
+5. Use the lightest process that still protects correctness, privacy, user data, and product quality.
 
 ## Source Of Truth
 
-For intended product behavior, accepted ADRs and active narrative specs govern;
-an active plan narrows the assignment when that plan is being executed. For
-what is actually implemented, use current code, feature gates, tests, and git
-history. For what users can install, use release metadata rather than the
-presence of code on a development branch.
+For intended product behavior, accepted ADRs and active narrative specs govern; an active plan narrows the assignment when that plan is being executed. For what is actually implemented, use current code, feature gates, tests, and git history. For what users can install, use release metadata rather than the presence of code on a development branch.
 
-Do not treat stale implementation notes as proof that a feature ships. Resolve
-conflicts deliberately: fix an implementation defect or amend the governing
-doc with evidence, preserving historical decisions and explaining the change.
+Do not treat stale implementation notes as proof that a feature ships. Resolve conflicts deliberately: fix an implementation defect or amend the governing doc with evidence, preserving historical decisions and explaining the change.
 
 ## Retired Kernel Workflow
 
-The old manual requirements and traceability workflow is retired.
-`spec/kernel/traceability.md` was removed, and the legacy requirements index now
-lives at [`../docs/historical/requirements-legacy.yaml`](../docs/historical/requirements-legacy.yaml).
+The old manual requirements and traceability workflow is retired. `spec/kernel/traceability.md` was removed, and the legacy requirements index now lives at [`../docs/historical/requirements-legacy.yaml`](../docs/historical/requirements-legacy.yaml).
 
-That file exists only so old plans, ADRs, audits, and commits that mention
-`REQ-*` IDs remain understandable. Do not add new REQ IDs as part of normal
-work. For current implementation discovery, use code search, tests, and git
-history.
+That file exists only so old plans, ADRs, audits, and commits that mention `REQ-*` IDs remain understandable. Do not add new REQ IDs as part of normal work. For current implementation discovery, use code search, tests, and git history.
 
 ## Context Zone
 
@@ -56,8 +39,7 @@ For behavior changes, define the context zone before editing:
 3. Which ADRs/specs/code paths govern the work.
 4. Which tests or runtime checks will prove the change.
 
-This does not need a long document. A few bullets in a plan, PR, or working
-notes are enough when the scope is clear.
+This does not need a long document. A few bullets in a plan, PR, or working notes are enough when the scope is clear.
 
 ## Plans
 
@@ -69,12 +51,9 @@ Use plans when they help the work stay coherent:
 - Long-running agent tasks
 - Work likely to be resumed by another agent
 
-Skip plans for typos, copy edits, simple bug fixes, small internal refactors,
-and obvious one-file changes.
+Skip plans for typos, copy edits, simple bug fixes, small internal refactors, and obvious one-file changes.
 
-Plans should be useful to agents: state the goal, constraints, phases,
-verification, and current status. Archive or mark them historical when they stop
-representing active work.
+Plans should be useful to agents: state the goal, constraints, phases, verification, and current status. Archive or mark them historical when they stop representing active work.
 
 ## Documentation Updates
 
@@ -87,40 +66,27 @@ Update docs when the change affects:
 - Release framing, feature flags, onboarding, or support guidance
 - ADR/spec decisions
 
-Do not update docs just to satisfy a checklist. Stale mechanical docs are worse
-than no docs.
+Do not update docs just to satisfy a checklist. Stale mechanical docs are worse than no docs.
 
 ## Testing
 
-Use the canonical [AGENTS.md testing policy](../AGENTS.md#commands): focused
-tests during iteration, and the full suite at most once as the final gate for
-code changes unless the user scopes verification differently. Do not start
-competing builds or suites in a shared worktree. Report exactly which checks
-ran and which did not; an old green run is not proof for the current candidate.
+Use the canonical [AGENTS.md testing policy](../AGENTS.md#commands): focused tests during iteration, and the full suite at most once as the final gate for code changes unless the user scopes verification differently. Do not start competing builds or suites in a shared worktree. Report exactly which checks ran and which did not; an old green run is not proof for the current candidate.
 
-Higher-risk areas need stronger proof: audio capture, meeting recovery,
-database migrations, CLI contracts, telemetry/privacy, concurrency, and shared
-runtime scheduling.
+Higher-risk areas need stronger proof: audio capture, meeting recovery, database migrations, CLI contracts, telemetry/privacy, concurrency, and shared runtime scheduling.
 
 ## Review
 
 Review rigor should match the risk:
 
 - Trivial changes can go straight in after a quick check.
-- Small contained fixes need focused verification and, when useful, one
-  fresh-eye review.
-- Substantial changes should use the full PR loop in
-  [`../docs/pr-review-workflow.md`](../docs/pr-review-workflow.md): branch from
-  `origin/main`, run CI, get independent review, address valid findings, and
-  stop when findings converge to trivial or duplicative.
+- Small contained fixes need focused verification and, when useful, one fresh-eye review.
+- Substantial changes should use the full PR loop in [`../docs/pr-review-workflow.md`](../docs/pr-review-workflow.md): branch from `origin/main`, run CI, get independent review, address valid findings, and stop when findings converge to trivial or duplicative.
 
-Model review is input, not authority. Fix valid issues, decline wrong findings
-with evidence, and avoid worse designs just to satisfy a reviewer.
+Model review is input, not authority. Fix valid issues, decline wrong findings with evidence, and avoid worse designs just to satisfy a reviewer.
 
 ## Agent Discretion
 
-Agents are expected to choose the simplest path that preserves correctness and
-quality. Good discretion looks like:
+Agents are expected to choose the simplest path that preserves correctness and quality. Good discretion looks like:
 
 - Reading the local subsystem README before touching a load-bearing subsystem.
 - Using the existing architecture instead of inventing a parallel one.
@@ -135,10 +101,8 @@ Avoid:
 
 1. Treating old `REQ-*` IDs as required workflow.
 2. Creating plans that only restate obvious steps.
-3. Updating release or feature status in multiple places instead of linking to
-   the source.
-4. Shipping behavior changes without updating the governing ADR/spec when they
-   conflict.
+3. Updating release or feature status in multiple places instead of linking to the source.
+4. Shipping behavior changes without updating the governing ADR/spec when they conflict.
 5. Running elaborate review loops for trivial edits.
 6. Obeying review comments without deciding whether they are correct.
 7. Leaving dead code from abandoned approaches.

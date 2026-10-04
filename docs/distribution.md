@@ -2,11 +2,7 @@
 
 > Status: **ACTIVE** - Build, sign, notarize, and auto-update workflow
 
-This repo uses Swift packages. App distribution builds those packages through
-Xcode and assembles a `.app` bundle for Developer ID distribution. Xcode compiles
-asset catalogs and generates resource lookups that work after installation on
-another Mac. `BUILD_SYSTEM=swiftpm` is rejected for app distribution; ordinary
-`swift build`, `swift test`, and SwiftPM CLI builds remain supported.
+This repo uses Swift packages. App distribution builds those packages through Xcode and assembles a `.app` bundle for Developer ID distribution. Xcode compiles asset catalogs and generates resource lookups that work after installation on another Mac. `BUILD_SYSTEM=swiftpm` is rejected for app distribution; ordinary `swift build`, `swift test`, and SwiftPM CLI builds remain supported.
 
 ## 1) Build the app bundle
 
@@ -23,19 +19,7 @@ This creates `dist/Sotto.app` and bundles:
 - Standalone helper binaries (FFmpeg, yt-dlp helper seed, and optional Node runtime) into `Contents/Resources/` when configured by the build scripts
 - No Python runtime or `uv` bootstrap is bundled (FluidAudio/CoreML STT is native Swift)
 
-The Ask workspace uses a private JavaScript helper bundle. The app and
-standalone CLI bundle the pinned Pi agent-core helper plus the official Node.js
-24.13.1 runtime; `scripts/build_ask_helper.sh` installs npm packages at build
-time with `npm ci` and esbuild, not when the app launches. The app places the
-helper and its generated per-package notices under
-`Contents/Resources/AskAgentHelper/Legal/`; its Node license is at
-`Contents/Resources/Legal/Node/LICENSE`. The standalone CLI uses
-`libexec/sotto-cli/AskAgentHelper/Legal/` and
-`libexec/sotto-cli/Legal/Node/LICENSE`. Keep
-`AskAgentHelper/Legal/dependencies.json` and every package license listed by it
-with the bundle. The helper receives no provider credentials; Swift retains
-provider calls and source access. See [THIRD_PARTY_LICENSES.md](../THIRD_PARTY_LICENSES.md)
-for the bundled package inventory and notice policy.
+The Ask workspace uses a private JavaScript helper bundle. The app and standalone CLI bundle the pinned Pi agent-core helper plus the official Node.js 24.13.1 runtime; `scripts/build_ask_helper.sh` installs npm packages at build time with `npm ci` and esbuild, not when the app launches. The app places the helper and its generated per-package notices under `Contents/Resources/AskAgentHelper/Legal/`; its Node license is at `Contents/Resources/Legal/Node/LICENSE`. The standalone CLI uses `libexec/sotto-cli/AskAgentHelper/Legal/` and `libexec/sotto-cli/Legal/Node/LICENSE`. Keep `AskAgentHelper/Legal/dependencies.json` and every package license listed by it with the bundle. The helper receives no provider credentials; Swift retains provider calls and source access. See [THIRD_PARTY_LICENSES.md](../THIRD_PARTY_LICENSES.md) for the bundled package inventory and notice policy.
 
 `build_app_bundle.sh` automatically downloads a **statically-linked FFmpeg** from [ffmpeg.martin-riedl.de](https://ffmpeg.martin-riedl.de/) (macOS arm64, SHA256-verified). No Homebrew dependency. To use a custom binary instead, set `FFMPEG_PATH`:
 
@@ -45,46 +29,20 @@ FFMPEG_PATH=/absolute/path/to/static-ffmpeg scripts/dist/build_app_bundle.sh
 
 The script verifies the bundled binary has no non-system dylib dependencies (portability check via `otool -L`).
 
-`yt-dlp` is bundled as a signed helper seed. At runtime, the app/CLI copies it
-to `~/Library/Application Support/Sotto/bin/yt-dlp` before first YouTube
-transcription so future helper updates never mutate the signed app bundle. To
-use a pre-fetched helper in release builds, set `YTDLP_PATH`; set
-`BUNDLE_YTDLP=0` only for diagnostic builds.
+`yt-dlp` is bundled as a signed helper seed. At runtime, the app/CLI copies it to `~/Library/Application Support/Sotto/bin/yt-dlp` before first YouTube transcription so future helper updates never mutate the signed app bundle. To use a pre-fetched helper in release builds, set `YTDLP_PATH`; set `BUNDLE_YTDLP=0` only for diagnostic builds.
 
-Meeting echo suppression assets are optional for local/dev bundles, but
-AEC-ready release builds should require them. With
-`REQUIRE_MEETING_ECHO_ASSETS=1`, the bundle script builds the pinned LocalVQE
-runtime from source and downloads the selected v1.4 echo-only GGUF into
-`.build/meeting-echo-assets/` when explicit asset paths are not supplied:
+Meeting echo suppression assets are optional for local/dev bundles, but AEC-ready release builds should require them. With `REQUIRE_MEETING_ECHO_ASSETS=1`, the bundle script builds the pinned LocalVQE runtime from source and downloads the selected v1.4 echo-only GGUF into `.build/meeting-echo-assets/` when explicit asset paths are not supplied:
 
 ```bash
 export REQUIRE_MEETING_ECHO_ASSETS=1
 VERSION=X.Y.Z scripts/dist/build_app_bundle.sh
 ```
 
-The default model is `localvqe-v1.4-aec-200K-f32.gguf`
-(`SHA256=b6e43138588a83bfe903ab5e143b4020b91c1e1629f5a575ac5855ff0003c731`).
-It is roughly 2.9 MB before compression. The source-built runtime is copied to
-`Contents/Frameworks/liblocalvqe.dylib`, and the selected model is copied under
-`Contents/Resources/MeetingEchoSuppression/`. Release bundles must contain
-exactly one GGUF model so asset verification and runtime model resolution cannot
-drift.
+The default model is `localvqe-v1.4-aec-200K-f32.gguf` (`SHA256=b6e43138588a83bfe903ab5e143b4020b91c1e1629f5a575ac5855ff0003c731`). It is roughly 2.9 MB before compression. The source-built runtime is copied to `Contents/Frameworks/liblocalvqe.dylib`, and the selected model is copied under `Contents/Resources/MeetingEchoSuppression/`. Release bundles must contain exactly one GGUF model so asset verification and runtime model resolution cannot drift.
 
-The native CMake build uses host parallelism by default; if that build fails,
-the script cleans the build directory and retries once with `-j1`. If an
-interrupted prior build leaves a Git index lock in the default generated
-LocalVQE source checkout under `.build/`, the prep script discards that generated
-checkout and clones it again. Custom `LOCALVQE_SOURCE_DIR` checkouts are left in
-place and require manual cleanup on lock errors.
+The native CMake build uses host parallelism by default; if that build fails, the script cleans the build directory and retries once with `-j1`. If an interrupted prior build leaves a Git index lock in the default generated LocalVQE source checkout under `.build/`, the prep script discards that generated checkout and clones it again. Custom `LOCALVQE_SOURCE_DIR` checkouts are left in place and require manual cleanup on lock errors.
 
-`prepare_meeting_echo_assets.sh` passes `CMAKE_OSX_DEPLOYMENT_TARGET` to the
-LocalVQE build, aligned with the app's `MIN_MACOS_VERSION` (default `14.2`) so
-the shipped `liblocalvqe.dylib` never requires a newer macOS than the app
-advertises support for. `build_app_bundle.sh` propagates its own
-`MIN_MACOS_VERSION` into the auto-prepared build automatically. The runtime
-cache stamp keys on the deployment target, so changing it (or picking up this
-fix over an older cached build) forces a rebuild rather than reusing a stale
-dylib.
+`prepare_meeting_echo_assets.sh` passes `CMAKE_OSX_DEPLOYMENT_TARGET` to the LocalVQE build, aligned with the app's `MIN_MACOS_VERSION` (default `14.2`) so the shipped `liblocalvqe.dylib` never requires a newer macOS than the app advertises support for. `build_app_bundle.sh` propagates its own `MIN_MACOS_VERSION` into the auto-prepared build automatically. The runtime cache stamp keys on the deployment target, so changing it (or picking up this fix over an older cached build) forces a rebuild rather than reusing a stale dylib.
 
 For a deliberately serialized release build, set:
 
@@ -94,8 +52,7 @@ export REQUIRE_MEETING_ECHO_ASSETS=1
 VERSION=X.Y.Z scripts/dist/build_app_bundle.sh
 ```
 
-To use prebuilt assets instead of the pinned auto-prep path, set both source
-paths explicitly:
+To use prebuilt assets instead of the pinned auto-prep path, set both source paths explicitly:
 
 ```bash
 export SOTTO_MEETING_ECHO_LIBRARY=/absolute/path/to/liblocalvqe.dylib
@@ -105,38 +62,11 @@ export REQUIRE_MEETING_ECHO_ASSETS=1
 VERSION=X.Y.Z scripts/dist/build_app_bundle.sh
 ```
 
-`build_app_bundle.sh` preserves the source GGUF filename by default; override
-with `SOTTO_MEETING_ECHO_MODEL_NAME=<filename>.gguf` only when the source
-path is not the intended bundled name. Set
-`SOTTO_MEETING_ECHO_AUTO_PREPARE=0` to force explicit prebuilt paths and
-fail if they are absent.
+`build_app_bundle.sh` preserves the source GGUF filename by default; override with `SOTTO_MEETING_ECHO_MODEL_NAME=<filename>.gguf` only when the source path is not the intended bundled name. Set `SOTTO_MEETING_ECHO_AUTO_PREPARE=0` to force explicit prebuilt paths and fail if they are absent.
 
-`scripts/dist/verify_meeting_echo_assets.sh dist/Sotto.app` is the release
-gate. With `REQUIRE_MEETING_ECHO_ASSETS=1`, it fails if either asset is missing,
-if the model checksum does not match, if `liblocalvqe.dylib` is not executable,
-if required LocalVQE C symbols are not exported, or if `otool -L` shows
-non-portable dylib references outside `@rpath`, `@loader_path`, `/System/Library`,
-or `/usr/lib`. Without `REQUIRE_MEETING_ECHO_ASSETS=1`, missing assets are
-accepted and the app intentionally runs the meeting echo path as passthrough.
+`scripts/dist/verify_meeting_echo_assets.sh dist/Sotto.app` is the release gate. With `REQUIRE_MEETING_ECHO_ASSETS=1`, it fails if either asset is missing, if the model checksum does not match, if `liblocalvqe.dylib` is not executable, if required LocalVQE C symbols are not exported, or if `otool -L` shows non-portable dylib references outside `@rpath`, `@loader_path`, `/System/Library`, or `/usr/lib`. Without `REQUIRE_MEETING_ECHO_ASSETS=1`, missing assets are accepted and the app intentionally runs the meeting echo path as passthrough.
 
-The verifier also inspects every bundled LocalVQE dylib (`liblocalvqe.dylib`
-and any dependency copied into `Contents/Frameworks/`) and every architecture
-slice of each, reading the Mach-O minimum-OS-version load command
-(`LC_BUILD_VERSION minos`, or legacy `LC_VERSION_MIN_MACOSX`) and rejecting
-any slice higher than the app's `LSMinimumSystemVersion`. A missing/malformed
-version is always a hard failure; a missing `otool`/`lipo` is a hard failure
-only under `STRICT_MEETING_ECHO_ASSETS=1` (implied by
-`REQUIRE_MEETING_ECHO_ASSETS=1`) and otherwise a skipped-check warning. When
-run as part of `build_app_bundle.sh`, the expected minimum is the build's
-`MIN_MACOS_VERSION`; run standalone against an already-built bundle, it reads
-`LSMinimumSystemVersion` from the bundle's `Info.plist`.
-`SOTTO_MEETING_ECHO_MIN_MACOS_VERSION` can supply or tighten this: it
-is used on its own if the bundle has no `Info.plist` yet, but once the
-bundle's `Info.plist` exists, it must contain a valid minimum even when an
-override is supplied. The effective ceiling is the lower of the
-override and `LSMinimumSystemVersion` — an override can only make the check
-stricter, never raise it above what the bundle's `Info.plist` actually
-advertises.
+The verifier also inspects every bundled LocalVQE dylib (`liblocalvqe.dylib` and any dependency copied into `Contents/Frameworks/`) and every architecture slice of each, reading the Mach-O minimum-OS-version load command (`LC_BUILD_VERSION minos`, or legacy `LC_VERSION_MIN_MACOSX`) and rejecting any slice higher than the app's `LSMinimumSystemVersion`. A missing/malformed version is always a hard failure; a missing `otool`/`lipo` is a hard failure only under `STRICT_MEETING_ECHO_ASSETS=1` (implied by `REQUIRE_MEETING_ECHO_ASSETS=1`) and otherwise a skipped-check warning. When run as part of `build_app_bundle.sh`, the expected minimum is the build's `MIN_MACOS_VERSION`; run standalone against an already-built bundle, it reads `LSMinimumSystemVersion` from the bundle's `Info.plist`. `SOTTO_MEETING_ECHO_MIN_MACOS_VERSION` can supply or tighten this: it is used on its own if the bundle has no `Info.plist` yet, but once the bundle's `Info.plist` exists, it must contain a valid minimum even when an override is supplied. The effective ceiling is the lower of the override and `LSMinimumSystemVersion` — an override can only make the check stricter, never raise it above what the bundle's `Info.plist` actually advertises.
 
 Retained purchase activation config (normally unset in current free builds):
 
@@ -146,11 +76,7 @@ export SOTTO_LS_VARIANT_ID="12345"
 scripts/dist/build_app_bundle.sh
 ```
 
-Current public Sotto builds are free/GPL-3.0 and
-`EntitlementsService.currentState()` returns unlocked. These variables are
-retained for future GPL-compatible official paid distribution/support and are
-not required for current free production builds. When set, they are embedded
-into `Info.plist` as:
+Current public Sotto builds are free/GPL-3.0 and `EntitlementsService.currentState()` returns unlocked. These variables are retained for future GPL-compatible official paid distribution/support and are not required for current free production builds. When set, they are embedded into `Info.plist` as:
 - `SottoCheckoutURL`
 - `SottoLemonSqueezyVariantID`
 
@@ -189,9 +115,7 @@ Outputs:
 
 The signed DMG is hosted on Cloudflare R2 at `downloads.macparakeet.com`.
 
-**Bucket:** `sotto-downloads` (Cloudflare R2)
-**Custom domain:** `downloads.macparakeet.com`
-**Public URL:** `https://downloads.macparakeet.com/MacParakeet.dmg`
+**Bucket:** `sotto-downloads` (Cloudflare R2) **Custom domain:** `downloads.macparakeet.com` **Public URL:** `https://downloads.macparakeet.com/MacParakeet.dmg`
 
 Upload a new release:
 
@@ -214,10 +138,7 @@ Because Cloudflare may serve a cached object briefly, also verify with a cache-b
 curl -sI "https://downloads.macparakeet.com/MacParakeet.dmg?ts=$(date +%s)" | head -10
 ```
 
-Confirm `content-length` and the downloaded object's SHA-256 match the signed
-local DMG. `last-modified` and `etag` help diagnose cache behavior, but neither
-establishes artifact identity. Run the exact enclosure-URL digest check in
-Step 3 below.
+Confirm `content-length` and the downloaded object's SHA-256 match the signed local DMG. `last-modified` and `etag` help diagnose cache behavior, but neither establishes artifact identity. Run the exact enclosure-URL digest check in Step 3 below.
 
 ## Full release workflow
 
@@ -256,19 +177,11 @@ curl -s "https://macparakeet.com/appcast.xml" | grep -E "sparkle:version|sparkle
 
 Decide on the version number (see Version bumping below).
 
-Do not ship new CLI behavior under a previously published CLI version. The
-standalone Homebrew formula may remain on the prior version until its matching
-signed/notarized archive is published, but the CLI embedded in a new app bundle
-must report the promoted semver from `Sources/CLI/CHANGELOG.md`.
+Do not ship new CLI behavior under a previously published CLI version. The standalone Homebrew formula may remain on the prior version until its matching signed/notarized archive is published, but the CLI embedded in a new app bundle must report the promoted semver from `Sources/CLI/CHANGELOG.md`.
 
 ### Version bumping
 
-The current app release is **0.8.9**, continuing the 0.8.x release train.
-**0.9.0 is reserved for qualified, publicly enabled Jev Voice Control.**
-This deliberate milestone policy takes precedence over the generic guidance
-below. Voice Control remains release-gated; additive improvements to the
-existing capture and Library workflows do not by themselves change that
-milestone. The CLI has its own semver and must be versioned independently.
+The current app release is **0.8.9**, continuing the 0.8.x release train. **0.9.0 is reserved for qualified, publicly enabled Jev Voice Control.** This deliberate milestone policy takes precedence over the generic guidance below. Voice Control remains release-gated; additive improvements to the existing capture and Library workflows do not by themselves change that milestone. The CLI has its own semver and must be versioned independently.
 
 The build script accepts `VERSION` and `BUILD_NUMBER` env vars:
 
@@ -281,9 +194,7 @@ scripts/dist/build_app_bundle.sh                   # local/dev only: VERSION def
 - **Minor bump** (0.x.0): New user-facing features (e.g., speaker diarization GUI, batch processing)
 - **Build number**: Auto-generated UTC timestamp — always increases, which is what Sparkle uses to detect updates
 - Both new downloads (R2 DMG) and existing users (Sparkle appcast) get the same DMG
-- **Release builds must set `VERSION=X.Y.Z` explicitly.** The script's default
-  `0.0.0` is intentionally non-release metadata so local bundles cannot be
-  mistaken for a production Sparkle update.
+- **Release builds must set `VERSION=X.Y.Z` explicitly.** The script's default `0.0.0` is intentionally non-release metadata so local bundles cannot be mistaken for a production Sparkle update.
 
 ### Step 1: Build
 
@@ -330,8 +241,7 @@ npx wrangler r2 object put sotto-downloads/Sotto.dmg \
   --remote
 ```
 
-Verify the bytes served through the enclosure URL's cache key. **Both size and
-SHA-256 MUST match `dist/Sotto.dmg` exactly:**
+Verify the bytes served through the enclosure URL's cache key. **Both size and SHA-256 MUST match `dist/Sotto.dmg` exactly:**
 ```bash
 set -o pipefail
 BUILD_NUMBER=$(plutil -extract CFBundleVersion raw -o - dist/Sotto.app/Contents/Info.plist)
@@ -394,45 +304,25 @@ Verify appcast is live:
 curl -s "https://macparakeet.com/appcast.xml?ts=$(date +%s)" | grep "sparkle:version"
 ```
 
-Keep current website download buttons on `latestRelease.downloadUrl` from the
-website's shared release data, using the same versioned URL as the appcast.
-The unversioned URL can remain cached after an upload. Verify with a full GET:
-a HEAD response can describe the new object while a cached GET serves the old
-DMG. Do not infer artifact identity from headers alone.
+Keep current website download buttons on `latestRelease.downloadUrl` from the website's shared release data, using the same versioned URL as the appcast. The unversioned URL can remain cached after an upload. Verify with a full GET: a HEAD response can describe the new object while a cached GET serves the old DMG. Do not infer artifact identity from headers alone.
 
 ### Step 7: Verify end-to-end
 
-1. Repeat the Step 3 size and SHA-256 checks for the published enclosure URL;
-   confirm its length matches the appcast `length`.
+1. Repeat the Step 3 size and SHA-256 checks for the published enclosure URL; confirm its length matches the appcast `length`.
 2. Confirm appcast `sparkle:version` is newer than the installed app's build number
 3. Launch the app → "Check for Updates..." from the menu bar → should find and validate the update
-4. Confirm the GitHub release `vX.Y.Z` includes an asset named **exactly**
-   `Sotto.dmg`. The official Homebrew cask fetches
-   `…/releases/download/v#{version}/Sotto.dmg` — the version lives in the
-   tag path, **not** the filename. BrewTestBot cannot autobump the cask until
-   that plain-named asset exists on the new tag. (Attaching only a
-   `Sotto-X.Y.Z.dmg` is not enough; v0.6.20 shipped without the plain
-   `Sotto.dmg` and the cask could not bump to it.) Create the GitHub
-   release **without** the DMG, then attach the verified R2 object from Linux
-   curl — do not `gh release upload` the 174 MB file from this Mac (gotcha #1b).
+4. Confirm the GitHub release `vX.Y.Z` includes an asset named **exactly** `Sotto.dmg`. The official Homebrew cask fetches `…/releases/download/v#{version}/Sotto.dmg` — the version lives in the tag path, **not** the filename. BrewTestBot cannot autobump the cask until that plain-named asset exists on the new tag. (Attaching only a `Sotto-X.Y.Z.dmg` is not enough; v0.6.20 shipped without the plain `Sotto.dmg` and the cask could not bump to it.) Create the GitHub release **without** the DMG, then attach the verified R2 object from Linux curl — do not `gh release upload` the 174 MB file from this Mac (gotcha #1b).
 
 ## Standalone CLI Homebrew release
 
-The app DMG/Sparkle channel and the standalone CLI Homebrew channel are
-separate releases. The CLI release ships a signed standalone
-`sotto-cli` binary attached to a `cli-vX.Y.Z` GitHub release, then
-updates the formula in <https://github.com/moona3k/homebrew-tap>.
+The app DMG/Sparkle channel and the standalone CLI Homebrew channel are separate releases. The CLI release ships a signed standalone `sotto-cli` binary attached to a `cli-vX.Y.Z` GitHub release, then updates the formula in <https://github.com/moona3k/homebrew-tap>.
 
-Use [`scripts/dist/homebrew-tap-scaffold/HOWTO.md`](../scripts/dist/homebrew-tap-scaffold/HOWTO.md)
-for the exact checklist. At minimum:
+Use [`scripts/dist/homebrew-tap-scaffold/HOWTO.md`](../scripts/dist/homebrew-tap-scaffold/HOWTO.md) for the exact checklist. At minimum:
 
-1. Bump `Sources/CLI/SottoCLI.swift` and
-   `Sources/CLI/CHANGELOG.md`.
+1. Bump `Sources/CLI/SottoCLI.swift` and `Sources/CLI/CHANGELOG.md`.
 2. Build `swift build -c release --product sotto-cli`.
-3. Sign the binary with Developer ID, notarize the zip, and publish the
-   tarball/checksums to `cli-vX.Y.Z`.
-4. Update `Formula/sotto-cli.rb` in `moona3k/homebrew-tap` with the
-   release URL, version, and tarball SHA256.
+3. Sign the binary with Developer ID, notarize the zip, and publish the tarball/checksums to `cli-vX.Y.Z`.
+4. Update `Formula/sotto-cli.rb` in `moona3k/homebrew-tap` with the release URL, version, and tarball SHA256.
 5. Verify from the tap:
 
 ```bash
@@ -442,8 +332,7 @@ sotto-cli health --json
 brew test moona3k/tap/sotto-cli
 ```
 
-Do not call the CLI fully released until both the GitHub release asset and
-the tap formula are live and the fresh Homebrew install path passes.
+Do not call the CLI fully released until both the GitHub release asset and the tap formula are live and the fresh Homebrew install path passes.
 
 ### Quick reference (copy-paste)
 
@@ -487,16 +376,9 @@ These are bugs and edge cases discovered during actual releases. Read before you
 
 #### 1. A `notarytool` crash is an incomplete upload — resubmit the same bytes
 
-**Do not use `--wait`.** Default `notarytool submit` (progress + S3 acceleration)
-also SIGBUS-crashes on this Mac (exit 138) *without* `--wait`. Apple then lists
-a new ID that can stay `In Progress` indefinitely because the file never
-finished uploading. That history row is a reservation, not a receipt. Polling
-it cannot converge. 0.8.5 burned ~55 minutes this way; 0.8.4 morning left seven
-ghost DMG IDs before one Accepted. Evidence:
-[`docs/audits/2026-09-17-0.8.5-release-postmortem.md`](audits/2026-09-17-0.8.5-release-postmortem.md).
+**Do not use `--wait`.** Default `notarytool submit` (progress + S3 acceleration) also SIGBUS-crashes on this Mac (exit 138) *without* `--wait`. Apple then lists a new ID that can stay `In Progress` indefinitely because the file never finished uploading. That history row is a reservation, not a receipt. Polling it cannot converge. 0.8.5 burned ~55 minutes this way; 0.8.4 morning left seven ghost DMG IDs before one Accepted. Evidence: [`docs/audits/2026-09-17-0.8.5-release-postmortem.md`](audits/2026-09-17-0.8.5-release-postmortem.md).
 
-**Instead:** submit with the flags that printed `Successfully uploaded file`
-and Accepted in under a minute:
+**Instead:** submit with the flags that printed `Successfully uploaded file` and Accepted in under a minute:
 
 ```bash
 xcrun notarytool submit dist/Sotto.app.zip \
@@ -516,53 +398,29 @@ After SIGBUS / exit 138 / any submit without `Successfully uploaded file`:
 3. Resubmit the **same** zip or DMG with the flags above.
 4. Staple only after that new ID is `Accepted`.
 
-`sign_notarize.sh` now uses those flags and refuses to poll a submit that did
-not report a finished upload. Rerunning the whole script still re-signs; if
-submit crashed, call `notarytool submit` on the existing artifact instead of
-starting the script over.
+`sign_notarize.sh` now uses those flags and refuses to poll a submit that did not report a finished upload. Rerunning the whole script still re-signs; if submit crashed, call `notarytool submit` on the existing artifact instead of starting the script over.
 
 #### 1a. Bound polling only after the upload actually finished
 
-Gotcha #1a applies **after** `Successfully uploaded file`. Then `In Progress`
-is real Apple processing, not a ghost. Apple notes that some uploads take
-longer. [Apple Developer Technical Support](https://developer.apple.com/forums/thread/818575).
+Gotcha #1a applies **after** `Successfully uploaded file`. Then `In Progress` is real Apple processing, not a ghost. Apple notes that some uploads take longer. [Apple Developer Technical Support](https://developer.apple.com/forums/thread/818575).
 
-Poll that exact ID at a sensible interval, for example once per 60 seconds for
-up to 30 minutes. Stop on `Accepted`, `Invalid`, or `Rejected`. The script's
-polling timeout and interval are `NOTARY_TIMEOUT_SECONDS` and
-`NOTARY_POLL_INTERVAL_SECONDS`.
+Poll that exact ID at a sensible interval, for example once per 60 seconds for up to 30 minutes. Stop on `Accepted`, `Invalid`, or `Rejected`. The script's polling timeout and interval are `NOTARY_TIMEOUT_SECONDS` and `NOTARY_POLL_INTERVAL_SECONDS`.
 
-If the deadline expires while Apple still reports `In Progress` **on an ID
-that already printed `Successfully uploaded file`**, stop the local poller,
-preserve the artifact and ID, and check
-[Apple's service status](https://developer.apple.com/system-status/).
-Do not blindly rebuild. Resume bounded read-only polling of the same ID.
+If the deadline expires while Apple still reports `In Progress` **on an ID that already printed `Successfully uploaded file`**, stop the local poller, preserve the artifact and ID, and check [Apple's service status](https://developer.apple.com/system-status/). Do not blindly rebuild. Resume bounded read-only polling of the same ID.
 
-For `Invalid` or `Rejected`, retrieve `notarytool log <SUBMISSION_ID>` with the
-same profile, fix the artifact, and submit a new archive. Only staple or
-distribute the exact artifact whose submission is `Accepted`. Never treat an
-older candidate's acceptance as approval of a new build.
+For `Invalid` or `Rejected`, retrieve `notarytool log <SUBMISSION_ID>` with the same profile, fix the artifact, and submit a new archive. Only staple or distribute the exact artifact whose submission is `Accepted`. Never treat an older candidate's acceptance as approval of a new build.
 
 #### 1b. Attach the GitHub DMG from Linux curl of the verified R2 object
 
-Sparkle downloads from R2. GitHub needs the same bytes named exactly
-`Sotto.dmg` so Homebrew can autobump. On this Mac, local
-`gh release upload` of the ~174 MB DMG fails (HTTP 500, `tls: bad record MAC`,
-LibreSSL stall around 18 MB). `gh release upload` from GitHub Actions also hung
-for 18 minutes with no asset.
+Sparkle downloads from R2. GitHub needs the same bytes named exactly `Sotto.dmg` so Homebrew can autobump. On this Mac, local `gh release upload` of the ~174 MB DMG fails (HTTP 500, `tls: bad record MAC`, LibreSSL stall around 18 MB). `gh release upload` from GitHub Actions also hung for 18 minutes with no asset.
 
 Working path for 0.8.5:
 
 1. Upload `dist/Sotto.dmg` to R2 and confirm `content-length` plus SHA-256.
 2. `gh release create vX.Y.Z --notes-file notes.md` **with no files**.
-3. From a GitHub-hosted Ubuntu job, download the R2 object, check size and
-   SHA-256 against the local values, then POST to
-   `https://uploads.github.com/repos/moona3k/macparakeet/releases/<id>/assets?name=Sotto.dmg`
-   with `Content-Type: application/x-apple-diskimage`. 0.8.5 finished in 29 s
-   ([run 35253733335](https://github.com/moona3k/macparakeet/actions/runs/35253733335)).
+3. From a GitHub-hosted Ubuntu job, download the R2 object, check size and SHA-256 against the local values, then POST to `https://uploads.github.com/repos/moona3k/macparakeet/releases/<id>/assets?name=Sotto.dmg` with `Content-Type: application/x-apple-diskimage`. 0.8.5 finished in 29 s ([run 35253733335](https://github.com/moona3k/macparakeet/actions/runs/35253733335)).
 
-Do not combine tag creation with the DMG upload: a TLS failure then delays the
-public tag. Delete one-shot upload branches after the asset lands.
+Do not combine tag creation with the DMG upload: a TLS failure then delays the public tag. Delete one-shot upload branches after the asset lands.
 
 #### 2. Cloudflare CDN caches R2 objects — Sparkle cache-busting is mandatory
 
@@ -579,9 +437,7 @@ Cloudflare CDN caches R2 objects with a ~4 hour TTL based on the full URL includ
 
 R2 ignores query params and serves the current object. Cloudflare CDN treats the new URL as a cache miss and fetches fresh. Each build has a unique build number, so each release gets its own cache slot.
 
-**How to verify:** After uploading, run the size and SHA-256 checks in Step 3
-against the exact `?v={BUILD_NUMBER}` URL used in the appcast. If either value
-differs, stop and resolve the stale or overwritten object before publishing.
+**How to verify:** After uploading, run the size and SHA-256 checks in Step 3 against the exact `?v={BUILD_NUMBER}` URL used in the appcast. If either value differs, stop and resolve the stale or overwritten object before publishing.
 
 #### 3. DMG must include Applications symlink
 
@@ -607,31 +463,20 @@ If another process or agent overwrites the R2 object between steps 2 and 3, the 
 
 #### 5. `yt-dlp_macos` is PyInstaller and needs a special signing entitlement
 
-Sotto bundles `yt-dlp` as a helper seed. Fresh installs copy that seed
-from `Contents/Resources/yt-dlp` into
-`~/Library/Application Support/Sotto/bin/yt-dlp` before first YouTube
-transcription. Existing users may already have a working managed helper, so a
-bad bundled seed can appear as a fresh-install-only bug.
+Sotto bundles `yt-dlp` as a helper seed. Fresh installs copy that seed from `Contents/Resources/yt-dlp` into `~/Library/Application Support/Sotto/bin/yt-dlp` before first YouTube transcription. Existing users may already have a working managed helper, so a bad bundled seed can appear as a fresh-install-only bug.
 
-The official `yt-dlp_macos` asset is a PyInstaller binary. If the release script
-re-signs it with Developer ID + hardened runtime but does not include
-`com.apple.security.cs.disable-library-validation=true`, macOS library
-validation blocks PyInstaller's extracted embedded `Python.framework` at runtime:
+The official `yt-dlp_macos` asset is a PyInstaller binary. If the release script re-signs it with Developer ID + hardened runtime but does not include `com.apple.security.cs.disable-library-validation=true`, macOS library validation blocks PyInstaller's extracted embedded `Python.framework` at runtime:
 
 ```text
 [PYI:ERROR] Failed to load Python shared library ... different Team IDs
 ```
 
-This fails when a user starts YouTube transcription or opens the YouTube video
-playback stream extraction path. It does not affect dictation, local file
-transcription, meeting recording, or STT model loading.
+This fails when a user starts YouTube transcription or opens the YouTube video playback stream extraction path. It does not affect dictation, local file transcription, meeting recording, or STT model loading.
 
 Release requirements:
 - Sign bundled `yt-dlp` with hardened runtime plus `com.apple.security.cs.disable-library-validation=true`, or do not apply hardened runtime to that helper.
 - Smoke-test after signing: `dist/Sotto.app/Contents/Resources/yt-dlp --version`.
-- If a bad build shipped, repair existing users by replacing
-  `~/Library/Application Support/Sotto/bin/yt-dlp`; a fixed bundled seed
-  alone will not help users who already copied the bad managed helper.
+- If a bad build shipped, repair existing users by replacing `~/Library/Application Support/Sotto/bin/yt-dlp`; a fixed bundled seed alone will not help users who already copied the bad managed helper.
 
 ## Auto-Updates (Sparkle)
 
@@ -712,10 +557,7 @@ These are set automatically by `build_app_bundle.sh`:
 
 ### Privacy Strings and Entitlements
 
-Permission prompts require both the appropriate `Info.plist` usage string and
-the matching signed app entitlement when macOS gates access through TCC. The
-release signing script runs `scripts/dist/verify_app_privacy_surface.sh` after
-codesigning to catch drift before notarization.
+Permission prompts require both the appropriate `Info.plist` usage string and the matching signed app entitlement when macOS gates access through TCC. The release signing script runs `scripts/dist/verify_app_privacy_surface.sh` after codesigning to catch drift before notarization.
 
 | Capability | Info.plist key | Entitlement |
 |------------|----------------|-------------|
@@ -723,9 +565,7 @@ codesigning to catch drift before notarization.
 | System audio capture | `NSAudioCaptureUsageDescription` | macOS TCC prompt, no app entitlement |
 | Calendar event read access | `NSCalendarsFullAccessUsageDescription` | `com.apple.security.personal-information.calendars` |
 
-Microphone-only meeting capture uses only the Microphone permission and never
-triggers the System Audio (Screen Recording) prompt; system audio is requested
-only for source modes that capture it.
+Microphone-only meeting capture uses only the Microphone permission and never triggers the System Audio (Screen Recording) prompt; system audio is requested only for source modes that capture it.
 
 ### Settings UI
 

@@ -2,14 +2,7 @@
 
 ## Personal Sotto amendment — 2026-10-04
 
-This amendment supersedes the inherited Discover, telemetry and app-update
-network descriptions below for this personal fork. Discover is off by default
-and reads only bundled, original Rick-and-Morty-style banter. It ignores old
-feed caches, never refreshes over HTTP, and has no thoughts submission surface.
-Remote analytics/crash transport and Sparkle app updates are removed. Explicit
-feedback and configured AI/media/model network integrations remain separate.
-See [personal Discover](../../docs/discover.md) and
-[telemetry contract](../contracts/telemetry-v1.md).
+This amendment supersedes the inherited Discover, telemetry and app-update network descriptions below for this personal fork. Discover is off by default and reads only bundled, original Rick-and-Morty-style banter. It ignores old feed caches, never refreshes over HTTP, and has no thoughts submission surface. Remote analytics/crash transport and Sparkle app updates are removed. Explicit feedback and configured AI/media/model network integrations remain separate. See [personal Discover](../../docs/discover.md) and [telemetry contract](../contracts/telemetry-v1.md).
 
 ## Inherited upstream decision
 
@@ -20,9 +13,7 @@ See [personal Discover](../../docs/discover.md) and
 
 ## Context
 
-The competitor examples, ratings, prices, and model-quality comparisons below
-are historical decision inputs from February–March 2026, not a current market
-survey or a benchmark of today's providers.
+The competitor examples, ratings, prices, and model-quality comparisons below are historical decision inputs from February–March 2026, not a current market survey or a benchmark of today's providers.
 
 Sotto is entering a market where the dominant player (WisprFlow) relies on cloud processing. WisprFlow sends audio to remote servers for transcription and AI refinement, which creates three problems users consistently report:
 
@@ -44,59 +35,32 @@ LLM-powered features (summaries, chat/Meeting Ask, AI Formatter, and Transforms)
 - **Audio capture**: All microphone and file audio stays on-device
 - **Text processing**: Deterministic pipeline runs locally (ADR-004)
 - **Database**: All dictations, transcriptions, history stored locally (SQLite/GRDB)
-- **Derived retrieval**: Segment search, transcript context reads, and existing
-  knowledge-card reads are local. Generating cards is a separate LLM operation.
+- **Derived retrieval**: Segment search, transcript context reads, and existing knowledge-card reads are local. Generating cards is a separate LLM operation.
 
 ### What uses external providers (opt-in, user-configured)
 
-- **LLM features**: Summaries, transcript/meeting chat, AI Formatter, Transforms,
-  automatic titles, and knowledge-card generation (ADR-011)
-  - Text context (transcripts, notes, selected text, or conversation as needed),
-    never captured audio, is sent to the user's chosen provider
+- **LLM features**: Summaries, transcript/meeting chat, AI Formatter, Transforms, automatic titles, and knowledge-card generation (ADR-011)
+  - Text context (transcripts, notes, selected text, or conversation as needed), never captured audio, is sent to the user's chosen provider
   - User configures their own API key, Ollama runtime, or Local CLI tool
   - No default provider — user must explicitly opt in
   - Features work without any provider configured (they're just unavailable)
 
 ### Other network surfaces
 
-- **Media imports**: User-requested public media downloads through yt-dlp and
-  Apple Podcasts directory/RSS/enclosure requests.
-- **Model/helper setup**: Required model downloads, explicitly requested local
-  model preparation, and helper installation/update paths.
+- **Media imports**: User-requested public media downloads through yt-dlp and Apple Podcasts directory/RSS/enclosure requests.
+- **Model/helper setup**: Required model downloads, explicitly requested local model preparation, and helper installation/update paths.
 - **App updates**: Sparkle update checks.
-- **Analytics**: Non-identifying, opt-out telemetry/crash reporting via the
-  self-hosted endpoint (ADR-012); no transcript/audio content or persistent IDs.
-- **Discover**: A default-on launch-time GET of
-  `https://macparakeet.com/api/discover.json`, with cached/bundled offline
-  fallback. It is independent of telemetry and does not require opening the
-  Discover page. Turning off **Show Discover in the sidebar** in Settings →
-  System → Appearance hides Discover, cancels pending feed requests, clears
-  the displayed feed, and stops new feed loads until re-enabled. Late results
-  cannot republish the feed after disabling or replace a newer enabled session.
-  Already-queued bounded local cache I/O may finish; the on-disk cache is retained.
-  Disabling telemetry does not disable Discover, or vice versa.
-- **Explicit submissions**: Feedback and Discover thoughts send the user's
-  submitted content and associated diagnostics; these are not STT uploads.
-- **Encrypted share snapshots (implemented, release-gated)**: [ADR-029](029-encrypted-shareable-transcript-snapshots.md)
-  defines an explicit, text-only publication surface at `share.macparakeet.com`.
-  The user previews the selected snapshot, the Mac encrypts it before upload,
-  the content key stays in the recipient URL fragment, and source audio remains
-  structurally excluded. This is not Library sync. The app implementation is
-  behind `AppFeatures.shareLinksEnabled = false`; release builds do not expose
-  the sharing flow.
-- **Dormant licensing**: Free public builds do not require activation.
-  Retained activation/deactivation methods use LemonSqueezy when invoked. App
-  setup also refreshes a previously stored activation when the last successful
-  validation is at least a day old; CLI transcription does so with
-  `--enforce-entitlements`. Without a stored key and instance ID, refresh makes
-  no request. Validation results do not gate the free build (ADR-006).
+- **Analytics**: Non-identifying, opt-out telemetry/crash reporting via the self-hosted endpoint (ADR-012); no transcript/audio content or persistent IDs.
+- **Discover**: A default-on launch-time GET of `https://macparakeet.com/api/discover.json`, with cached/bundled offline fallback. It is independent of telemetry and does not require opening the Discover page. Turning off **Show Discover in the sidebar** in Settings → System → Appearance hides Discover, cancels pending feed requests, clears the displayed feed, and stops new feed loads until re-enabled. Late results cannot republish the feed after disabling or replace a newer enabled session. Already-queued bounded local cache I/O may finish; the on-disk cache is retained. Disabling telemetry does not disable Discover, or vice versa.
+- **Explicit submissions**: Feedback and Discover thoughts send the user's submitted content and associated diagnostics; these are not STT uploads.
+- **Encrypted share snapshots (implemented, release-gated)**: [ADR-029](029-encrypted-shareable-transcript-snapshots.md) defines an explicit, text-only publication surface at `share.macparakeet.com`. The user previews the selected snapshot, the Mac encrypts it before upload, the content key stays in the recipient URL fragment, and source audio remains structurally excluded. This is not Library sync. The app implementation is behind `AppFeatures.shareLinksEnabled = false`; release builds do not expose the sharing flow.
+- **Dormant licensing**: Free public builds do not require activation. Retained activation/deactivation methods use LemonSqueezy when invoked. App setup also refreshes a previously stored activation when the last successful validation is at least a day old; CLI transcription does so with `--enforce-entitlements`. Without a stored key and instance ID, refresh makes no request. Validation results do not gate the free build (ADR-006).
 
 ## Rationale
 
 ### Audio privacy is the brand
 
-"Your voice never leaves your Mac" remains the core promise. This is unchanged. Captured audio is always processed on-device; the selected speech engine
-and compute policy determine whether inference uses the ANE, GPU, or CPU. What changed is recognizing that *transcript text* has a different privacy profile than *audio recordings*, and users should choose their own tradeoff.
+"Your voice never leaves your Mac" remains the core promise. This is unchanged. Captured audio is always processed on-device; the selected speech engine and compute policy determine whether inference uses the ANE, GPU, or CPU. What changed is recognizing that *transcript text* has a different privacy profile than *audio recordings*, and users should choose their own tradeoff.
 
 ### The quality gap is real
 
@@ -112,16 +76,9 @@ A local 8B model produces mediocre summaries. Cloud models (Claude, GPT-4) produ
 | Apple Intelligence provider | No | No; Sotto uses the on-device Foundation Models API only | Depends on the system model |
 | Cloud API key | No | Yes, for configured AI workflows | Depends on configured model |
 
-Users make an informed choice. The UI makes the tradeoff explicit. Apple's
-broader Intelligence platform may use Private Cloud Compute, but Sotto's
-Apple Intelligence provider uses the on-device Foundation Models API with no
-cloud fallback.
+Users make an informed choice. The UI makes the tradeoff explicit. Apple's broader Intelligence platform may use Private Cloud Compute, but Sotto's Apple Intelligence provider uses the on-device Foundation Models API with no cloud fallback.
 
-Core capture, local-file transcription, and local retrieval remain usable
-offline after model setup. Local LLM servers can keep generated text on-device,
-and telemetry and Discover can each be disabled independently. Neither setting
-constitutes a global network opt-out; updates and other external surfaces retain
-their own behavior.
+Core capture, local-file transcription, and local retrieval remain usable offline after model setup. Local LLM servers can keep generated text on-device, and telemetry and Discover can each be disabled independently. Neither setting constitutes a global network opt-out; updates and other external surfaces retain their own behavior.
 
 ### Official paid distribution still works
 
@@ -132,8 +89,7 @@ Cloud LLM costs are paid directly by the user to their provider (Anthropic, Open
 - Cursor ($20/mo) — bring your own API key for AI features
 - Raycast — optional AI features with user's API key
 - Char (fastrepl/char) — meeting transcription with cloud + local-provider support
-- Apple Intelligence platform — on-device processing and, in other Apple
-  surfaces, Private Cloud Compute; Sotto uses only its on-device model
+- Apple Intelligence platform — on-device processing and, in other Apple surfaces, Private Cloud Compute; Sotto uses only its on-device model
 
 ## Consequences
 
@@ -162,6 +118,4 @@ Cloud LLM costs are paid directly by the user to their provider (Anthropic, Open
 - ADR-008: Previous local LLM approach (HISTORICAL — removed 2026-02-23)
 - WisprFlow Trustpilot reviews: 2.8/5 average, common complaints about delays and reliability
 - Reddit r/macapps sentiment: strong preference for local processing
-- Apple Intelligence platform strategy: on-device processing plus optional
-  Private Cloud Compute in other Apple surfaces; this app's provider uses only
-  on-device Foundation Models
+- Apple Intelligence platform strategy: on-device processing plus optional Private Cloud Compute in other Apple surfaces; this app's provider uses only on-device Foundation Models

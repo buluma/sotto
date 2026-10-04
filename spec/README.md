@@ -26,53 +26,30 @@
 | 14 | [Per-Prompt Inference Settings](14-per-prompt-inference-settings.md) | Version-owned generation settings and effective-setting snapshots | Implemented; shipped in 0.8.0 via [PR #968](https://github.com/moona3k/macparakeet/pull/968) and [PR #961](https://github.com/moona3k/macparakeet/pull/961) |
 | 15 | [Shareable Transcript Snapshots](15-shareable-transcripts.md) | Explicit encrypted text sharing, recipient experience, lifecycle, and privacy boundary | Implemented behind a default-off flag; public release pending |
 
-Ask is a default-off development workspace governed by ADR-034. Debug app and CLI builds require `--enable-ask-workspace`; release builds
-ignore this opt-in. Model and native qualification are required before enabling it.
+Ask is a default-off development workspace governed by ADR-034. Debug app and CLI builds require `--enable-ask-workspace`; release builds ignore this opt-in. Model and native qualification are required before enabling it.
 
 ## Boundary Contracts
 
-[`spec/contracts/`](contracts/) is the canonical home for tested public and
-semi-public boundaries such as meeting artifact folders, recovery/retention
-safety, and CLI JSON output. Update the matching contract doc and focused tests
-when changing one of those surfaces.
+[`spec/contracts/`](contracts/) is the canonical home for tested public and semi-public boundaries such as meeting artifact folders, recovery/retention safety, and CLI JSON output. Update the matching contract doc and focused tests when changing one of those surfaces.
 
-[Speaker Voiceprints](contracts/speaker-voiceprints.md) defines the experimental
-voice-profile gate, local storage lifecycle and export exclusion. Implementation
-behind that gate is separate from accuracy evaluation and official release.
+[Speaker Voiceprints](contracts/speaker-voiceprints.md) defines the experimental voice-profile gate, local storage lifecycle and export exclusion. Implementation behind that gate is separate from accuracy evaluation and official release.
 
-[Share Link and Bundle v1](contracts/share-link-bundle-v1.md) and
-[Share Service v1](contracts/share-service-v1.md) define the encrypted
-recipient-link, bundle, anonymous owner, lifecycle, and deletion boundaries.
-The [Ask workspace contract](contracts/ask-workspace.md) defines independent
-conversation ownership, source revisions, run leases, citations, remote
-consent, and additive CLI behavior.
+[Share Link and Bundle v1](contracts/share-link-bundle-v1.md) and [Share Service v1](contracts/share-service-v1.md) define the encrypted recipient-link, bundle, anonymous owner, lifecycle, and deletion boundaries. The [Ask workspace contract](contracts/ask-workspace.md) defines independent conversation ownership, source revisions, run leases, citations, remote consent, and additive CLI behavior.
 
-[Voice Control](contracts/voice-control.md) defines explicit command capture,
-cloud consent, target authority, effect receipts and browser pairing. Its
-[capability matrix](../docs/research/2026-09-19-jev-voice-control/release-scope.md)
-separates current implementation from the broader research design.
+[Voice Control](contracts/voice-control.md) defines explicit command capture, cloud consent, target authority, effect receipts and browser pairing. Its [capability matrix](../docs/research/2026-09-19-jev-voice-control/release-scope.md) separates current implementation from the broader research design.
 
 ## Design References
 
 ### Planned speaker timeline
 
-[Audio Speaker Timeline v1](contracts/audio-speaker-timeline-v1.md) and its
-[implementation plan](../docs/plans/2026-09-14-2147-feat-audio-speaker-timeline-plan.md)
-define the accepted direction for #836: detected audio turns and playback navigation independent of word timings.
-This is planned work, including for Cohere; it does not change current text-alignment capabilities or release status.
+[Audio Speaker Timeline v1](contracts/audio-speaker-timeline-v1.md) and its [implementation plan](../docs/plans/2026-09-14-2147-feat-audio-speaker-timeline-plan.md) define the accepted direction for #836: detected audio turns and playback navigation independent of word timings. This is planned work, including for Cohere; it does not change current text-alignment capabilities or release status.
 
 ### Current design references
 
 - [UI Patterns](04-ui-patterns.md) is the active product UI contract.
-- [`docs/brand-identity.md`](../docs/brand-identity.md) is the active runtime
-  brand identity reference: canonical parakeet mark, app accent color, sizing,
-  and usage rules.
-- [`brand-assets/README.md`](../brand-assets/README.md) is the active
-  promotional/editorial asset library: recolorable vector mark, Pop palette,
-  composition templates, and regenerated PNG exports.
-- [`docs/design-overhaul.md`](../docs/design-overhaul.md) is historical design
-  context only; do not treat it as the current source of truth when it conflicts
-  with the active brand docs or this spec.
+- [`docs/brand-identity.md`](../docs/brand-identity.md) is the active runtime brand identity reference: canonical parakeet mark, app accent color, sizing, and usage rules.
+- [`brand-assets/README.md`](../brand-assets/README.md) is the active promotional/editorial asset library: recolorable vector mark, Pop palette, composition templates, and regenerated PNG exports.
+- [`docs/design-overhaul.md`](../docs/design-overhaul.md) is historical design context only; do not treat it as the current source of truth when it conflicts with the active brand docs or this spec.
 
 ## Root Decisions (Locked)
 
@@ -87,11 +64,7 @@ These decisions are final. Do not second-guess them.
 
 ## Release Channels And Feature Flags
 
-This checkout is a personal Sotto fork. It has no public release, distribution
-channel, auto-update feed, or remote telemetry transport. Updates are manual.
-Version identifiers and historical release documents come from upstream and do
-not establish a Sotto release. Original model download sources and explicit
-optional network integrations remain separate from the app identity.
+This checkout is a personal Sotto fork. It has no public release, distribution channel, auto-update feed, or remote telemetry transport. Updates are manual. Version identifiers and historical release documents come from upstream and do not establish a Sotto release. Original model download sources and explicit optional network integrations remain separate from the app identity.
 
 Feature gates in the current source (`Sources/SottoCore/AppFeatures.swift`); an implemented gated surface is not a shipped feature:
 
@@ -114,20 +87,13 @@ Feature gates in the current source (`Sources/SottoCore/AppFeatures.swift`); an 
 | `aiFormatterProfilesEnabled` | `false` | App-aware AI Formatter profile code is present, but normal Settings/routing surfaces remain disabled |
 | `inProcessLocalLLMEnabled` | `false` | In-process MLX provider/setup code remains developer-gated. The real runtime links only in opt-in `SOTTO_ENABLE_MLX_LOCAL_LLM=1` app builds; developer visibility overrides do not make it available in a build without that runtime |
 
-The 0.8.0 preparation evidence lives in
-[the dated QA package](../docs/qa/2026-09-07-0.8.0/README.md). Its results apply to
-the candidates named there, not automatically to later merges.
+The 0.8.0 preparation evidence lives in [the dated QA package](../docs/qa/2026-09-07-0.8.0/README.md). Its results apply to the candidates named there, not automatically to later merges.
 
-Implementation status is not release verification. Candidate hardware capture,
-long-transcript interaction, signed upgrade, and full-suite evidence must be
-reported separately; a source/doc review does not establish those gates.
+Implementation status is not release verification. Candidate hardware capture, long-transcript interaction, signed upgrade, and full-suite evidence must be reported separately; a source/doc review does not establish those gates.
 
 ## Architecture Decision Records (ADRs)
 
-All ADRs live in `spec/adr/`. Accepted decisions govern implementation; explicit
-amendments supersede older implementation details. Historical, dormant,
-partially implemented and proposed portions retain their stated status. An
-accepted direction is not proof that every phase is implemented or released.
+All ADRs live in `spec/adr/`. Accepted decisions govern implementation; explicit amendments supersede older implementation details. Historical, dormant, partially implemented and proposed portions retain their stated status. An accepted direction is not proof that every phase is implemented or released.
 
 | ADR | Decision |
 |-----|----------|
@@ -375,18 +341,10 @@ Voice profiles, encrypted share links, activity-based meeting detection, app-awa
 
 ## Documentation audit
 
-The [2026-09-07 alignment audit](../docs/audits/2026-09-07-documentation-alignment.md)
-records source coverage, corrected drift and verification limits. Its separate
-[improvement notes](../docs/research/2026-09-07-documentation-audit-followups.md)
-are proposals, not accepted architecture or release requirements.
+The [2026-09-07 alignment audit](../docs/audits/2026-09-07-documentation-alignment.md) records source coverage, corrected drift and verification limits. Its separate [improvement notes](../docs/research/2026-09-07-documentation-audit-followups.md) are proposals, not accepted architecture or release requirements.
 
 ## For Coding Agents
 
-Start with [`../AGENTS.md`](../AGENTS.md) for build commands, repo conventions,
-and the active agent workflow. This spec index is the map to product behavior,
-architecture, and accepted decisions.
+Start with [`../AGENTS.md`](../AGENTS.md) for build commands, repo conventions, and the active agent workflow. This spec index is the map to product behavior, architecture, and accepted decisions.
 
-Old `REQ-*` IDs are historical. The manual requirements/traceability workflow
-is retired; the legacy index lives at
-[`../docs/historical/requirements-legacy.yaml`](../docs/historical/requirements-legacy.yaml)
-for old references only.
+Old `REQ-*` IDs are historical. The manual requirements/traceability workflow is retired; the legacy index lives at [`../docs/historical/requirements-legacy.yaml`](../docs/historical/requirements-legacy.yaml) for old references only.

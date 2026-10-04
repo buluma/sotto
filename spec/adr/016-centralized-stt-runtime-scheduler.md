@@ -65,8 +65,7 @@ That runtime is the sole owner of:
 - shutdown / cleanup
 - model cache clearing
 
-No feature service (`DictationService`, `MeetingRecordingService`, `TranscriptionService`) owns its own STT runtime.
-Multiple internal managers/executors may exist behind the runtime owner, but that multiplicity remains hidden behind one shared lifecycle boundary.
+No feature service (`DictationService`, `MeetingRecordingService`, `TranscriptionService`) owns its own STT runtime. Multiple internal managers/executors may exist behind the runtime owner, but that multiplicity remains hidden behind one shared lifecycle boundary.
 
 ### 3. Audio capture remains owned outside the STT scheduler
 
@@ -119,8 +118,7 @@ This means:
 - queued file transcription yields priority to meeting work; already-running file work is not preempted
 - file transcription does not receive dedicated always-on capacity
 
-Meeting recordings use `meetingFinalize` from the background finalization queue after durable stop and during archived retranscribe when the saved folder still contains `meeting-recording-metadata.json` plus the per-source files.
-Legacy meeting rows without that archived metadata fall back to `fileTranscription` on the stored `transcriptions.filePath` audio.
+Meeting recordings use `meetingFinalize` from the background finalization queue after durable stop and during archived retranscribe when the saved folder still contains `meeting-recording-metadata.json` plus the per-source files. Legacy meeting rows without that archived metadata fall back to `fileTranscription` on the stored `transcriptions.filePath` audio.
 
 Reference shape:
 
@@ -144,10 +142,7 @@ TranscriptionService -------┘
 
 ### 6. Backpressure is explicit
 
-Meeting live chunk transcription is best-effort and droppable under backlog.
-The current scheduler caps pending live chunks at 120 by default and drops
-the oldest pending live chunk when another arrives at the limit. Durable
-file/finalization jobs are not dropped by this admission rule.
+Meeting live chunk transcription is best-effort and droppable under backlog. The current scheduler caps pending live chunks at 120 by default and drops the oldest pending live chunk when another arrives at the limit. Durable file/finalization jobs are not dropped by this admission rule.
 
 If the control plane exceeds configured queue or latency thresholds, it may:
 
@@ -210,16 +205,7 @@ The control plane supports both unrouted and routed transcription calls:
 - `beginSpeechEngineSession()` returns a lease containing the current live selection and capabilities; `endSpeechEngineSession(_:)` releases it.
 - Engine switching is rejected while any lease is active.
 
-Meeting recording always acquires the current Live Speech lease at start—even
-when that engine cannot render preview—so engine and model-variant switches
-remain excluded for the full capture. It resolves one immutable
-`MeetingSpeechPlan` from that lease plus the resolved Final Transcription
-preference. Preview admission is a capability decision derived from word-timing
-support; there is no fallback engine. The final selection is persisted in the
-existing lock field for recovery and in archived metadata for immediate and
-later retranscription. Optional preview provenance is metadata-only. Final
-model loading remains lazy and enters through normal scheduler admission after
-durable stop; the meeting feature never constructs or downloads an engine.
+Meeting recording always acquires the current Live Speech lease at start—even when that engine cannot render preview—so engine and model-variant switches remain excluded for the full capture. It resolves one immutable `MeetingSpeechPlan` from that lease plus the resolved Final Transcription preference. Preview admission is a capability decision derived from word-timing support; there is no fallback engine. The final selection is persisted in the existing lock field for recovery and in archived metadata for immediate and later retranscription. Optional preview provenance is metadata-only. Final model loading remains lazy and enters through normal scheduler admission after durable stop; the meeting feature never constructs or downloads an engine.
 
 ## Consequences
 

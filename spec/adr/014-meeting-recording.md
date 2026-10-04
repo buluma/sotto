@@ -48,18 +48,7 @@ Key components:
 - `MeetingAudioCaptureService` — Actor combining the selected source streams into an `AsyncStream<MeetingAudioCaptureEvent>`
 - `MeetingAudioStorageWriter` — Writes separate M4A files per selected source (mic and/or system)
 
-`SystemAudioStream` continues to await ordered `SCStream` start and stop, but
-those callback bridges have deadlines because ScreenCaptureKit is not trusted
-to invoke a completion handler. The deadline covers the complete startup
-attempt, including shareable-content discovery. Timeout or cancellation
-invalidates attempt ownership, removes outputs, and runs bounded teardown; a
-late successful start receives another non-blocking stop request and cannot
-install running state.
-The stream does not publish `idle` until old outputs have been removed and the
-bounded stop has settled, preventing callbacks from crossing into a replacement
-recording.
-`MeetingAudioCaptureService` likewise owns `starting` as a real lifecycle state
-and tears down any microphone/system source already created when Stop arrives.
+`SystemAudioStream` continues to await ordered `SCStream` start and stop, but those callback bridges have deadlines because ScreenCaptureKit is not trusted to invoke a completion handler. The deadline covers the complete startup attempt, including shareable-content discovery. Timeout or cancellation invalidates attempt ownership, removes outputs, and runs bounded teardown; a late successful start receives another non-blocking stop request and cannot install running state. The stream does not publish `idle` until old outputs have been removed and the bounded stop has settled, preventing callbacks from crossing into a replacement recording. `MeetingAudioCaptureService` likewise owns `starting` as a real lifecycle state and tears down any microphone/system source already created when Stop arrives.
 
 ### 3. Reuse Transcription model with sourceType column
 
@@ -96,30 +85,9 @@ idle → checkingPermissions → starting → recording(elapsedSeconds)
   → stopping → queued(transcriptionID) → idle | error
 ```
 
-2026-06 amendment: `queued(transcriptionID)` is not a long-lived UI state.
-It marks the durable stop boundary: source audio, `meeting-playback.m4a`,
-`recording.lock(state=awaitingTranscription)`, and the processing Library row
-exist on disk, so the recorder returns to idle and another meeting can start.
-Final STT runs through `MeetingTranscriptionQueue` and updates that row later.
-The green completion check and "Saved to Library" copy acknowledge this
-durable boundary, not transcript completion. Opening the processing row shows
-an indeterminate transcription state that explicitly says the audio is saved
-and background work is continuing. Transcript editing and manual
-retranscription stay unavailable until that queued finalization reaches a
-terminal state. If the detail is already open, both completion and terminal
-failure refresh that same row in place without navigating or stealing focus.
-Recorder-idle queued completion may still present the finished meeting.
-Manual retry and crash recovery claim the session lock with the current PID and
-a unique lease before admission; startup reconciliation shares the same
-per-folder mutex so it cannot mark newly claimed work as interrupted.
+2026-06 amendment: `queued(transcriptionID)` is not a long-lived UI state. It marks the durable stop boundary: source audio, `meeting-playback.m4a`, `recording.lock(state=awaitingTranscription)`, and the processing Library row exist on disk, so the recorder returns to idle and another meeting can start. Final STT runs through `MeetingTranscriptionQueue` and updates that row later. The green completion check and "Saved to Library" copy acknowledge this durable boundary, not transcript completion. Opening the processing row shows an indeterminate transcription state that explicitly says the audio is saved and background work is continuing. Transcript editing and manual retranscription stay unavailable until that queued finalization reaches a terminal state. If the detail is already open, both completion and terminal failure refresh that same row in place without navigating or stealing focus. Recorder-idle queued completion may still present the finished meeting. Manual retry and crash recovery claim the session lock with the current PID and a unique lease before admission; startup reconciliation shares the same per-folder mutex so it cannot mark newly claimed work as interrupted.
 
-Stop is durable even in `starting`. It immediately enters `stopping` and runs
-the normal stop-and-queue effect instead of waiting for a `recordingStarted`
-event. The service marks that session as stop-owned before its first teardown
-await, so a stale startup task cannot run failed-start deletion afterward.
-Matching late start success/failure events are ignored once stopping owns the
-generation; they cannot trigger a second stop, overwrite the UI, or emit stale
-start telemetry. Cancel retains its existing discard semantics.
+Stop is durable even in `starting`. It immediately enters `stopping` and runs the normal stop-and-queue effect instead of waiting for a `recordingStarted` event. The service marks that session as stop-owned before its first teardown await, so a stale startup task cannot run failed-start deletion afterward. Matching late start success/failure events are ignored once stopping owns the generation; they cannot trigger a second stop, overwrite the UI, or emit stale start telemetry. Cancel retains its existing discard semantics.
 
 ### 5. New MeetingAudioCaptureService, not an extension of AudioProcessor
 
@@ -129,34 +97,21 @@ The existing `AudioProcessor` is a single-stream actor wrapping `AudioRecorder` 
 
 ### 6. Source mode controls permission requirements
 
-Meeting source mode is explicit user configuration, not an implicit fallback.
-The default remains microphone + system audio because that is the normal
-meeting-capture case. Users may instead choose microphone-only or
-system-audio-only when that better matches the call setup.
+Meeting source mode is explicit user configuration, not an implicit fallback. The default remains microphone + system audio because that is the normal meeting-capture case. Users may instead choose microphone-only or system-audio-only when that better matches the call setup.
 
 Permission checks are scoped to the selected source mode:
 
-- microphone + system audio requires Microphone and Screen & System Audio
-  Recording permissions.
-- microphone-only requires Microphone permission and does not prompt for Screen
-  & System Audio Recording.
-- system-audio-only requires Screen & System Audio Recording permission and does
-  not start the mic stream.
+- microphone + system audio requires Microphone and Screen & System Audio Recording permissions.
+- microphone-only requires Microphone permission and does not prompt for Screen & System Audio Recording.
+- system-audio-only requires Screen & System Audio Recording permission and does not start the mic stream.
 
-If a required permission for the selected mode is denied, recording is blocked
-with the matching settings action. The Transcribe tile/menu-bar/hotkey first-use
-path requests Screen & System Audio Recording only when the selected source mode
-needs it; first-run onboarding no longer includes Meeting Recording setup.
+If a required permission for the selected mode is denied, recording is blocked with the matching settings action. The Transcribe tile/menu-bar/hotkey first-use path requests Screen & System Audio Recording only when the selected source mode needs it; first-run onboarding no longer includes Meeting Recording setup.
 
 ### 7. Batch transcription first; live preview implemented later
 
 Batch transcription (transcribe after recording stops) was the MVP. Current Parakeet builds measure roughly 81–93x steady realtime on the M4 Pro reference benchmark, depending on the build. Real-time chunked transcription (5-second chunks during recording) shipped in Phase 2 and is best-effort; final post-stop transcription remains authoritative.
 
-2026-05 hardening: the live preview path now supports a `MeetingLiveAudioChunking`
-strategy layer. The fixed strategy preserves the original 5-second / 1-second
-overlap cadence, and flag-on Parakeet sessions can use Silero VAD speech
-boundaries when the model is cached. VAD missing/error paths fall back to fixed;
-the post-stop final transcription path is unchanged.
+2026-05 hardening: the live preview path now supports a `MeetingLiveAudioChunking` strategy layer. The fixed strategy preserves the original 5-second / 1-second overlap cadence, and flag-on Parakeet sessions can use Silero VAD speech boundaries when the model is cached. VAD missing/error paths fall back to fixed; the post-stop final transcription path is unchanged.
 
 ### 8. Source-aware meeting finalization
 
@@ -164,46 +119,18 @@ Keeping mic and system audio as separate streams enables source-aware attributio
 
 ### 9. Speech engine captured at recording start
 
-The meeting service first acquires the current Live Speech scheduler lease,
-unconditionally, and then captures an immutable `MeetingSpeechPlan`:
+The meeting service first acquires the current Live Speech scheduler lease, unconditionally, and then captures an immutable `MeetingSpeechPlan`:
 
-- `preview` is the lease selection when its capabilities provide the word
-  timings required by the current live renderer *and* the user has not
-  turned off the "Live transcription during recording" setting
-  (`meetingLiveTranscriptionEnabled`, default on); otherwise it is absent. No
-  unrelated fallback engine is selected. This setting is a preference gate
-  layered on top of engine capability, not a capability itself — an engine
-  that can preview is simply not asked to when the user has opted out, to
-  save CPU/GPU during the meeting.
-- `final` is the resolved Final Transcription selection, which follows Live
-  Speech unless the user enabled the Advanced override.
+- `preview` is the lease selection when its capabilities provide the word timings required by the current live renderer *and* the user has not turned off the "Live transcription during recording" setting (`meetingLiveTranscriptionEnabled`, default on); otherwise it is absent. No unrelated fallback engine is selected. This setting is a preference gate layered on top of engine capability, not a capability itself — an engine that can preview is simply not asked to when the user has opted out, to save CPU/GPU during the meeting.
+- `final` is the resolved Final Transcription selection, which follows Live Speech unless the user enabled the Advanced override.
 
-The preference is read once at recording start. Changing it during a meeting
-affects the next recording; Settings states this explicitly. When preview is
-absent, the recording panel says "Live transcription is off" and confirms
-that audio will be transcribed after stop, regardless of whether the user
-disabled preview or the selected engine does not support it.
+The preference is read once at recording start. Changing it during a meeting affects the next recording; Settings states this explicitly. When preview is absent, the recording panel says "Live transcription is off" and confirms that audio will be transcribed after stop, regardless of whether the user disabled preview or the selected engine does not support it.
 
-Live chunks and warm-up use only `preview`. The authoritative post-stop pass
-re-reads durable source audio and uses only `final`; preview text is never
-promoted into the saved transcript. The existing lock schema remains v2 and
-its `speechEngine` field keeps the recovery-critical final selection.
-`meeting-recording-metadata.json` stores the same final selection plus optional
-preview provenance for diagnostics. Legacy metadata without preview provenance
-remains readable.
+Live chunks and warm-up use only `preview`. The authoritative post-stop pass re-reads durable source audio and uses only `final`; preview text is never promoted into the saved transcript. The existing lock schema remains v2 and its `speechEngine` field keeps the recovery-critical final selection. `meeting-recording-metadata.json` stores the same final selection plus optional preview provenance for diagnostics. Legacy metadata without preview provenance remains readable.
 
-Recovery treats that lock field as authoritative only when a schema-v2 lock
-actually contains it. Schema-v1 locks used `speechEngine` for the former shared
-route, and schema-v2 locks can omit the field; both cases use the current
-resolved Final Transcription route. This compatibility rule is not an engine
-fallback from a captured failure.
+Recovery treats that lock field as authoritative only when a schema-v2 lock actually contains it. Schema-v1 locks used `speechEngine` for the former shared route, and schema-v2 locks can omit the field; both cases use the current resolved Final Transcription route. This compatibility rule is not an engine fallback from a captured failure.
 
-Settings cannot switch engine models or delete model data while the live lease
-is active. For back-to-back recording, that lease ends at the durable stop
-boundary; queued finalization still uses the captured final selection through
-the routed STT job. Cohere cannot preview, but it may be the final route behind
-a different live preview engine; Cohere final output remains plain text without
-word timestamps or speaker labels.
+Settings cannot switch engine models or delete model data while the live lease is active. For back-to-back recording, that lease ends at the durable stop boundary; queued finalization still uses the captured final selection through the routed STT job. Cohere cannot preview, but it may be the final route behind a different live preview engine; Cohere final output remains plain text without word timestamps or speaker labels.
 
 ### 10. Meeting mic echo mitigation (v0.6 hardening)
 

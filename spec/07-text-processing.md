@@ -19,8 +19,7 @@ Raw STT Text → Filler Removal → Custom Words → Trailing Action Extraction 
 Removes hesitation sounds that are safe for English Clean processing:
 
 - Always: "uh", "umm", "uhh"
-- By default: "um" (English hesitation). Turn **Also remove “um”** off in
-  Vocabulary if you dictate Portuguese or German, where `um` is a real word.
+- By default: "um" (English hesitation). Turn **Also remove “um”** off in Vocabulary if you dictate Portuguese or German, where `um` is a real word.
 
 Implementation uses `NSRegularExpression` with word boundaries (`\b`) to avoid partial matches. Words like "like", "so", "right", and phrases like "you know" are intentionally not stripped because they can carry meaning.
 
@@ -39,16 +38,7 @@ Two categories:
 - **Disabled** words are skipped (user can toggle without deleting)
 - Applied in the order they appear in the database
 
-**Meetings (REQ-PIPE-003):** these custom-word corrections also run on
-finalized meeting transcripts — applied to both the plain text and the
-per-word timestamp tokens that drive the speaker-segmented transcript view and
-the SRT/VTT/speaker-paragraph exports. Meeting correction is **always-on**,
-independent of the Raw/Clean processing mode (custom words a user entered are
-intentional corrections, and the default mode is Raw). Only this custom-word
-step is reused; filler removal, snippet expansion, and insertion styling stay
-dictation-only so the verbatim meeting record is preserved. The shared
-matching logic lives in `CustomWordReplacer`; the meeting entry point is
-`MeetingTranscriptVocabularyApplier`.
+**Meetings (REQ-PIPE-003):** these custom-word corrections also run on finalized meeting transcripts — applied to both the plain text and the per-word timestamp tokens that drive the speaker-segmented transcript view and the SRT/VTT/speaker-paragraph exports. Meeting correction is **always-on**, independent of the Raw/Clean processing mode (custom words a user entered are intentional corrections, and the default mode is Raw). Only this custom-word step is reused; filler removal, snippet expansion, and insertion styling stay dictation-only so the verbatim meeting record is preserved. The shared matching logic lives in `CustomWordReplacer`; the meeting entry point is `MeetingTranscriptVocabularyApplier`.
 
 ### Step 3: Trailing Action Extraction
 
@@ -68,15 +58,7 @@ Trigger phrases are replaced with their full expansion text.
 - Matching is **case-insensitive** with **whole-phrase boundaries**
 - Expanded snippet IDs are tracked so use counts can be updated after processing
 - Example: `"my signature"` → `"Best regards, David"`
-- After user snippets, Clean mode optionally converts spoken punctuation
-  commands (`question mark` → `?`, `exclamation mark` / `exclamation point` → `!`,
-  plus DE/ES/FR/PT/PL aliases). Prefix `literal` (or `wörtlich` / `littéral` /
-  `dosłownie`) keeps the words. User snippets of the same trigger still win.
-  Default on; Vocabulary and `config set spoken-punctuation` can opt out.
-  This runs on dictation only; `vocab process` also applies it because it
-  previews the dictation Clean pipeline on typed text. File, URL, and meeting
-  transcripts keep the words, because recorded speech that mentions "a
-  question mark" means them.
+- After user snippets, Clean mode optionally converts spoken punctuation commands (`question mark` → `?`, `exclamation mark` / `exclamation point` → `!`, plus DE/ES/FR/PT/PL aliases). Prefix `literal` (or `wörtlich` / `littéral` / `dosłownie`) keeps the words. User snippets of the same trigger still win. Default on; Vocabulary and `config set spoken-punctuation` can opt out. This runs on dictation only; `vocab process` also applies it because it previews the dictation Clean pipeline on typed text. File, URL, and meeting transcripts keep the words, because recorded speech that mentions "a question mark" means them.
 
 ### Step 5: Whitespace Cleanup + Insertion Style
 
@@ -104,14 +86,9 @@ Final normalization pass:
 
 **Clean** (opt-in): Run the deterministic 5-step pipeline, including trailing action extraction.
 
-Clean dictation also has an insertion-style preference. Sentence style keeps
-the historical sentence-shaped output. Inline style keeps the same deterministic
-pipeline but shapes the final output for selected-text replacement, search
-fields, forms, terminal commands, and hybrid typing.
+Clean dictation also has an insertion-style preference. Sentence style keeps the historical sentence-shaped output. Inline style keeps the same deterministic pipeline but shapes the final output for selected-text replacement, search fields, forms, terminal commands, and hybrid typing.
 
-Clean filler removal includes standalone `um` by default (English hesitation).
-Portuguese and German speakers can turn **Also remove “um”** off in Vocabulary
-so counting words and prepositions stay in the transcript.
+Clean filler removal includes standalone `um` by default (English hesitation). Portuguese and German speakers can turn **Also remove “um”** off in Vocabulary so counting words and prepositions stay in the transcript.
 
 ---
 
@@ -131,10 +108,7 @@ Stores user-defined vocabulary anchors and corrections.
 | createdAt | DATETIME | When created |
 | updatedAt | DATETIME | When last modified |
 
-Custom word management supports confirmed deletion of selected rules, including
-all search matches. Deletion changes future vocabulary application; it does not
-rewrite existing transcripts or delete other user data. See the
-[deletion contract](contracts/custom-word-deletion.md).
+Custom word management supports confirmed deletion of selected rules, including all search matches. Deletion changes future vocabulary application; it does not rewrite existing transcripts or delete other user data. See the [deletion contract](contracts/custom-word-deletion.md).
 
 ### text_snippets
 
@@ -155,17 +129,9 @@ Stores trigger-to-expansion mappings.
 
 ## Optional AI Formatting
 
-AI formatting runs after deterministic cleanup. The complete rendered system and
-user messages must fit the selected provider's existing round-trip character
-budget, including repeated transcript placeholders and appended transcript
-separators. Oversized requests fail before calling the provider; formatting never
-truncates or chunks the transcript. Responses ending in `length` or `max_tokens`,
-and detailed results marked as having truncated input, also fail formatting.
+AI formatting runs after deterministic cleanup. The complete rendered system and user messages must fit the selected provider's existing round-trip character budget, including repeated transcript placeholders and appended transcript separators. Oversized requests fail before calling the provider; formatting never truncates or chunks the transcript. Responses ending in `length` or `max_tokens`, and detailed results marked as having truncated input, also fail formatting.
 
-These failures preserve the full deterministic cleanup result. A failed attempt
-is recorded without provider output or successful prompt-profile attribution.
-Existing transcription lane caps, cancellation, and lifecycle notifications remain
-unchanged.
+These failures preserve the full deterministic cleanup result. A failed attempt is recorded without provider output or successful prompt-profile attribution. Existing transcription lane caps, cancellation, and lifecycle notifications remain unchanged.
 
 ---
 
