@@ -1,13 +1,13 @@
 # Issue 1046 baseline freeze — VoxConverse Auto over-split
 
-Frozen 2026-09-15. This is the source of truth for the [#1046](https://github.com/moona3k/macparakeet/issues/1046) A/B. Do not retune thresholds on these files.
+Frozen 2026-09-15. This is the source of truth for the #1046 A/B. Do not retune thresholds on these files.
 
 ## Claims under test
 
 1. Unconstrained Auto (`--speaker-detection on`, no `--speaker-count` / min / max) over-splits some recordings. A cluster-consolidation post-pass must move those rosters toward the RTTM speaker count without collapsing files that are already correct.
 2. Neighbor-agreement smoothing can remove isolated word-level speaker artifacts without changing the underlying roster.
 
-This is **not** a DER harness. It is **not** the Exact / max-cap path from [#1023](https://github.com/moona3k/macparakeet/issues/1023). Exact-1 and max-2 JSON in the same results directory are constraint tests; they must not be scored as Auto quality.
+This is **not** a DER harness. It is **not** the Exact / max-cap path from #1023. Exact-1 and max-2 JSON in the same results directory are constraint tests; they must not be scored as Auto quality.
 
 ## Oracle
 

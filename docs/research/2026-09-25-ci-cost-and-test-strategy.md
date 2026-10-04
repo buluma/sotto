@@ -4,7 +4,7 @@ Research date: 25 September 2026, Pacific time. Source snapshot: [`59e7adf085277
 
 ## Implemented result
 
-Merged [PR #1161](https://github.com/moona3k/macparakeet/pull/1161) split behavior and distribution into independent required jobs, reused one consistent test build, retained the full Release product and Xcode bundle checks, and repaired downloadable evidence. The aggregate `swift-test` verdict requires both jobs to succeed. Release product narrowing, compiled caches, framework migration, and broad test deletion were deliberately not part of this change.
+Merged PR #1161 split behavior and distribution into independent required jobs, reused one consistent test build, retained the full Release product and Xcode bundle checks, and repaired downloadable evidence. The aggregate `swift-test` verdict requires both jobs to succeed. Release product narrowing, compiled caches, framework migration, and broad test deletion were deliberately not part of this change.
 
 | Observation | Before: [36205356185](https://github.com/moona3k/macparakeet/actions/runs/36205356185) | Reviewed CI head: [36209359562](https://github.com/moona3k/macparakeet/actions/runs/36209359562) |
 | --- | ---: | ---: |
@@ -26,9 +26,9 @@ All three qualification PRs merged. The following are separate successful PR-hea
 
 | Merged PR | Reviewed head | Successful CI run | Whole-pipeline wall time |
 | --- | --- | --- | ---: |
-| [#1171: model driver](https://github.com/moona3k/macparakeet/pull/1171) | `498a58f1` | [36220535782](https://github.com/moona3k/macparakeet/actions/runs/36220535782) | 34m 56s |
-| [#1172: native Library driver](https://github.com/moona3k/macparakeet/pull/1172) | `ce36cfc3` | [36219773490](https://github.com/moona3k/macparakeet/actions/runs/36219773490) | 31m 09s |
-| [#1173: process recovery](https://github.com/moona3k/macparakeet/pull/1173) | `b4742e67` | [36221389691](https://github.com/moona3k/macparakeet/actions/runs/36221389691) | 34m 19s |
+| #1171: model driver | `498a58f1` | [36220535782](https://github.com/moona3k/macparakeet/actions/runs/36220535782) | 34m 56s |
+| #1172: native Library driver | `ce36cfc3` | [36219773490](https://github.com/moona3k/macparakeet/actions/runs/36219773490) | 31m 09s |
+| #1173: process recovery | `b4742e67` | [36221389691](https://github.com/moona3k/macparakeet/actions/runs/36221389691) | 34m 19s |
 
 The combined-main run [36247644540](https://github.com/moona3k/macparakeet/actions/runs/36247644540) at `529e23ad` passed on 26 September 2026 in **27m 05s** from creation to final required job completion. Both behavior/Swift 6 and Release/bundle jobs passed; occupied macOS job time summed to 47m 58s. The dedicated process-recovery test ran again with one test, zero failures, in 10.203 seconds. Successful PR checks prove neither actual native GUI execution nor real model inference or physical capture. The dedicated synthetic writer/SIGKILL/recovery test did execute successfully in the final recovery run; its [guide](../testing/meeting-process-recovery.md#hosted-verification) records the earlier FFmpeg prerequisite failure and final passing evidence.
 

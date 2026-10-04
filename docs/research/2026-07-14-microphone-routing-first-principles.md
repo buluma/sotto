@@ -1,6 +1,6 @@
 # Microphone Routing from First Principles
 
-> Research and decision proposal for [issue #796](https://github.com/moona3k/macparakeet/issues/796), checked against `origin/main` at `f27d6eabc098351ba50e37c177869c62e9c16484` on 2026-07-14.
+> Research and decision proposal for issue #796, checked against `origin/main` at `f27d6eabc098351ba50e37c177869c62e9c16484` on 2026-07-14.
 >
 > Status: reviewed and accepted by Claude Fable. Change 1 is implemented with
 > this decision record; the stricter named-microphone contract remains a
@@ -42,25 +42,25 @@ than AVAudioEngine's implicit default path.
 
 The project had already learned this lesson twice:
 
-1. [Issue #218](https://github.com/moona3k/macparakeet/issues/218) found that an
+1. Issue #218 found that an
    OBSBOT Meet 2 worked as the implicit system default but failed when the same
-   default device was explicitly set. [PR #220](https://github.com/moona3k/macparakeet/pull/220)
+   default device was explicitly set. PR #220
    restored the implicit path; the reporter confirmed the fix.
-2. [PR #411](https://github.com/moona3k/macparakeet/pull/411) later put an
+2. PR #411 later put an
    explicit default-device attempt before the implicit path to address
-   Bluetooth call-mode audio. [Issue #421](https://github.com/moona3k/macparakeet/issues/421)
-   reported intermittent no-audio behavior in that release. [PR #422](https://github.com/moona3k/macparakeet/pull/422)
+   Bluetooth call-mode audio. Issue #421
+   reported intermittent no-audio behavior in that release. PR #422
    reverted the pin, and the reporter confirmed the regression disappeared in
    v0.6.18.
 
-[PR #613](https://github.com/moona3k/macparakeet/pull/613) reintroduced the
+PR #613 reintroduced the
 same risky operation under a more elaborate condition: when output is Bluetooth
 or cannot be resolved, it can replace an implicit system-default route with an
 explicit built-in-microphone route. The new preference defaults on. That policy
 was intended to avoid the real A2DP-to-HFP/SCO transition race from
-[issues #481](https://github.com/moona3k/macparakeet/issues/481),
-[#541](https://github.com/moona3k/macparakeet/issues/541), and
-[#409](https://github.com/moona3k/macparakeet/issues/409), but it invalidated the
+issues #481,
+#541, and
+#409, but it invalidated the
 earlier compatibility invariant.
 
 The failure was not that nobody considered edge cases. The PR added many branch
@@ -80,7 +80,7 @@ Their screenshot shows:
 - Input Test fails and meeting capture reports **Microphone Unavailable**.
 - Downgrading to v0.6.24 fixes the problem.
 
-Sources: [issue #796](https://github.com/moona3k/macparakeet/issues/796),
+Sources: issue #796,
 [screenshot 1](https://raw.githubusercontent.com/moona3k/macparakeet/main/screenshots/1783993183563-1-Screen-Shot-2026-07-14-at-11.38.19-2x.png),
 [screenshot 2](https://raw.githubusercontent.com/moona3k/macparakeet/main/screenshots/1783993185510-2-Screen-Shot-2026-07-14-at-11.39.11-2x.png).
 
@@ -93,7 +93,7 @@ invariant in
 [`testSystemDefaultRemainsImplicitWhenBuiltInIsDefault`](../../Tests/SottoTests/Audio/MicrophoneCaptureTests.swift).
 
 There is also direct field evidence for the exact compatibility hazard. The
-diagnostic log attached to [issue #787](https://github.com/moona3k/macparakeet/issues/787)
+diagnostic log attached to issue #787
 comes from an M1 Max running macOS 26.5.1 and spans v0.7.0/v0.7.1. On four
 starts after PR #613, it records:
 
@@ -535,17 +535,17 @@ as an emergency diagnostic patch, not the final design.
 
 ## Primary sources
 
-- [Issue #218: explicit System Default regression](https://github.com/moona3k/macparakeet/issues/218)
-- [PR #220: restore implicit System Default](https://github.com/moona3k/macparakeet/pull/220)
-- [Issue #409: Bluetooth output enters call mode despite Mac input default](https://github.com/moona3k/macparakeet/issues/409)
-- [PR #411: pin resolved System Default before implicit fallback](https://github.com/moona3k/macparakeet/pull/411)
-- [Issue #421: v0.6.17 intermittent no-audio regression](https://github.com/moona3k/macparakeet/issues/421)
-- [PR #422: revert System Default pinning](https://github.com/moona3k/macparakeet/pull/422)
-- [Issue #481: AirPods route transitions and explicit Mac-mic workaround](https://github.com/moona3k/macparakeet/issues/481)
-- [Issue #541: Bluetooth transition/silent-capture diagnostic report](https://github.com/moona3k/macparakeet/issues/541)
-- [PR #613: output-dependent built-in-mic policy and toggle](https://github.com/moona3k/macparakeet/pull/613)
-- [Issue #787 and its field log: explicit built-in fails while implicit default succeeds](https://github.com/moona3k/macparakeet/issues/787)
-- [Issue #796: v0.7.2 System Default failure, v0.6.24 works](https://github.com/moona3k/macparakeet/issues/796)
+- Issue #218: explicit System Default regression
+- PR #220: restore implicit System Default
+- Issue #409: Bluetooth output enters call mode despite Mac input default
+- PR #411: pin resolved System Default before implicit fallback
+- Issue #421: v0.6.17 intermittent no-audio regression
+- PR #422: revert System Default pinning
+- Issue #481: AirPods route transitions and explicit Mac-mic workaround
+- Issue #541: Bluetooth transition/silent-capture diagnostic report
+- PR #613: output-dependent built-in-mic policy and toggle
+- Issue #787 and its field log: explicit built-in fails while implicit default succeeds
+- Issue #796: v0.7.2 System Default failure, v0.6.24 works
 - [`-10868` telemetry audit across app/OS versions](../audits/2026-05-05-telemetry-error-count-verification.md)
 - [Apple: Bluetooth microphone reduces headphone sound quality](https://support.apple.com/en-ca/102217)
 - [Apple: change input and output in macOS Sound settings](https://support.apple.com/guide/mac-help/change-sound-settings-on-mac-mchl9777ee30/mac)

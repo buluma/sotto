@@ -16,8 +16,8 @@ The clean implementation is to keep EventKit as the only calendar backend and ad
 
 ## What the issues establish
 
-- [Issue #502](https://github.com/moona3k/macparakeet/issues/502) asks for Outlook calendar integration rather than “the macOS calendar.” It was filed from stable app 0.6.22 on 2026-06-12.
-- [Issue #1013](https://github.com/moona3k/macparakeet/issues/1013) repeats the request from stable app 0.7.3 on 2026-09-12.
+- Issue #502 asks for Outlook calendar integration rather than “the macOS calendar.” It was filed from stable app 0.6.22 on 2026-06-12.
+- Issue #1013 repeats the request from stable app 0.7.3 on 2026-09-12.
 - Neither issue has comments, logs, or a report that an Exchange account configured in macOS Calendar failed. They establish a recurring product-understanding gap, not a demonstrated EventKit compatibility defect.
 - The second report arrived after the current calendar feature was already in the stable app. Repository-only documentation is therefore insufficient; the explanation belongs at the in-app connection point.
 
@@ -91,7 +91,7 @@ Until that physical test passes, the accurate claim is: **the code and platform 
 
 ## Sources
 
-- [Sotto issue #502](https://github.com/moona3k/macparakeet/issues/502) and [issue #1013](https://github.com/moona3k/macparakeet/issues/1013) — two first-party user requests.
+- Sotto issue #502 and issue #1013 — two first-party user requests.
 - [Sotto CalendarService and ADR-017](https://github.com/moona3k/macparakeet/blob/978238cb864009b36f36d1cbfb9f63c96236b74b/spec/adr/017-calendar-meeting-auto-start.md) — current implementation and local-first decision.
 - [Apple EventKit source/calendar types](https://developer.apple.com/documentation/eventkit/eksourcetype) — official Exchange source support.
 - [Apple Internet Accounts and Exchange Calendar guides](https://support.apple.com/en-gb/guide/mac-help/mh35565/mac) — native account setup and Exchange behavior.

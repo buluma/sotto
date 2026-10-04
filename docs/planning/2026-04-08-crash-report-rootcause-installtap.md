@@ -2,7 +2,7 @@
 
 > The user-facing version of this (what affected users should do right now,
 > in plain English) lives at the top of
-> [issue #91](https://github.com/moona3k/macparakeet/issues/91). This
+> issue #91. This
 > document is the engineering investigation record.
 
 > Status: **HISTORICAL / RESOLVED** — investigation complete; fix shipped in

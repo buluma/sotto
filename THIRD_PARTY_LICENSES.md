@@ -2,7 +2,7 @@
 
 This project bundles or downloads third-party software components. The following attributions summarize the relevant source, license, and usage information for those components.
 
-The Markdown dependency graph below has verbatim copyright, license, and NOTICE material in [`MarkdownDependencies.txt`](Sources/MacParakeet/Resources/Legal/MarkdownDependencies.txt), also copied to `Contents/Resources/Legal/MarkdownDependencies.txt` in dev and distribution bundles. It includes Highlight.js and Latin Modern Math resource notices (GUST Font License and LPPL 1.3c), not just library names/links. The font notice also identifies the complete, unmodified Latin Modern Math 1.959 distribution, since iosMath ships only a subset of that upstream package. Equatable and swift-syntax are build/macro support; including their licenses does not claim their compiler executables are redistributed in the app.
+The Markdown dependency graph below has verbatim copyright, license, and NOTICE material in [`MarkdownDependencies.txt`](Sources/Sotto/Resources/Legal/MarkdownDependencies.txt), also copied to `Contents/Resources/Legal/MarkdownDependencies.txt` in dev and distribution bundles. It includes Highlight.js and Latin Modern Math resource notices (GUST Font License and LPPL 1.3c), not just library names/links. The font notice also identifies the complete, unmodified Latin Modern Math 1.959 distribution, since iosMath ships only a subset of that upstream package. Equatable and swift-syntax are build/macro support; including their licenses does not claim their compiler executables are redistributed in the app.
 
 ## FFmpeg
 
@@ -79,7 +79,7 @@ Pi's four package license files are from the pinned published source tree's MIT 
 - Model source: <https://huggingface.co/nvidia/Nemotron-3-Diarization>
 - CoreML conversion: <https://huggingface.co/FluidInference/nemotron-3-diarization-coreml>, by Fluid Inference
 - Used for: Local speaker activity detection, up to eight speakers per analyzed source
-- Model files download separately. Attribution and the license text are included in [`NemotronDiarization.txt`](Sources/MacParakeet/Resources/Legal/NemotronDiarization.txt), copied into app bundles under `Contents/Resources/Legal/`.
+- Model files download separately. Attribution and the license text are included in [`NemotronDiarization.txt`](Sources/Sotto/Resources/Legal/NemotronDiarization.txt), copied into app bundles under `Contents/Resources/Legal/`.
 
 ### WhisperKit
 
@@ -91,7 +91,7 @@ Pi's four package license files are from the pinned published source tree's MIT 
 
 - License: Apache License 2.0
 - Source: <https://github.com/huggingface/swift-transformers>
-- Used for: WhisperKit model/tokenizer support. In `MACPARAKEET_ENABLE_MLX_LOCAL_LLM` builds, MacParakeet also uses the `Tokenizers` product for local-directory tokenizer loading.
+- Used for: WhisperKit model/tokenizer support. In `SOTTO_ENABLE_MLX_LOCAL_LLM` builds, Sotto also uses the `Tokenizers` product for local-directory tokenizer loading.
 - Local MLX pin: `Package.swift` allows `1.1.6..<1.2.0`; the current lockfile resolves `1.1.9`.
 
 ### mlx-swift-lm
@@ -99,7 +99,7 @@ Pi's four package license files are from the pinned published source tree's MIT 
 - Version: 3.31.4
 - License: MIT License
 - Source: <https://github.com/ml-explore/mlx-swift-lm>
-- Build scope: Only present in `MACPARAKEET_ENABLE_MLX_LOCAL_LLM` builds
+- Build scope: Only present in `SOTTO_ENABLE_MLX_LOCAL_LLM` builds
 - Used for: Developer-gated in-process Local MLX model loading and generation (`MLXLLM`, `MLXLMCommon`, `MLXHuggingFace`)
 
 ### mlx-swift
@@ -107,7 +107,7 @@ Pi's four package license files are from the pinned published source tree's MIT 
 - Version: 0.31.4
 - License: MIT License
 - Source: <https://github.com/ml-explore/mlx-swift>
-- Build scope: Only present in `MACPARAKEET_ENABLE_MLX_LOCAL_LLM` builds
+- Build scope: Only present in `SOTTO_ENABLE_MLX_LOCAL_LLM` builds
 - Used for: MLX tensor/runtime support for the developer-gated in-process Local MLX path; directly pinned so `mlx-swift-lm` resolves the Swift-5.9-compatible MLX version
 
 ### swift-jinja

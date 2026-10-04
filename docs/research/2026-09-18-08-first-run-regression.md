@@ -8,8 +8,8 @@ shipped first-run regression?
 Companion: [2026-09-18-onboarding-activation-leak.md](./2026-09-18-onboarding-activation-leak.md).
 Sources: tags `v0.7.3` (`d6321f87`, 2026-07-16) and `v0.8.0`
 (`76c126b1`, 2026-09-09), GitHub PRs
-[#984](https://github.com/moona3k/macparakeet/pull/984) and
-[#1099](https://github.com/moona3k/macparakeet/pull/1099), D1
+#984 and
+#1099, D1
 `sotto-telemetry`, current `HotkeyManager` at those tags.
 
 ## Verdict
@@ -31,7 +31,7 @@ What changed that can produce “they never start”:
    down. **Caps Lock (key 57) stays “down” while latched.** Every Fn
    hold and double-tap is rejected. Onboarding teaches exactly those
    two gestures. No `dictation_started` fires. Fixed in
-   **[#1099](https://github.com/moona3k/macparakeet/pull/1099) /
+   **#1099 /
    v0.8.7** (2026-09-18). 0.8.0–0.8.6 all have the bug.
 2. **Launch-week mix, also real.** 0.8.0’s first full day (Sep 10) is
    **32.5%** T0 — only ~5 points under 0.7.3 weekdays. Sep 11 and 14
@@ -108,7 +108,7 @@ why the entire gap sits in try rate.
 
 **Accepted as a shipped regression. Magnitude unquantified.**
 
-[#984](https://github.com/moona3k/macparakeet/pull/984) “Make built-in
+#984 “Make built-in
 Fn dictation passive and reject mixed gestures” merged
 **2026-09-08T07:31:56Z**, ~36 hours before `v0.8.0`. It extracted the
 Fn-only half of open CRT-123 (#870). Design:
@@ -120,7 +120,7 @@ Fn-only half of open CRT-123 (#870). Design:
   `passiveFnInputIsContaminated` ⇒ gesture cancelled, no start.
 - PR text said “Stable latched Caps Lock remains allowed.”
 
-[#1099](https://github.com/moona3k/macparakeet/pull/1099) (merged into
+#1099 (merged into
 **v0.8.7**, 2026-09-18) found the opposite in the field while verifying
 #1096/#1097:
 

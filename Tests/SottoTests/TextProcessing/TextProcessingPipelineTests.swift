@@ -456,7 +456,7 @@ final class TextProcessingPipelineTests: XCTestCase {
 
     // Regression: Parakeet adds punctuation after trigger phrase.
     // Step 4b's \s+ was eating newlines before punctuation, producing ".." or ",,".
-    // https://github.com/moona3k/macparakeet-community/issues/24
+    // Upstream community issue #24.
 
     func testNewlineSnippetPreservedBeforePeriod() {
         let snippets = [

@@ -19,9 +19,9 @@ Sotto is a hybrid of latency-sensitive dictation and long-context meeting intell
 | Analysis | Summary, Ask, custom prompts, knowledge cards | Capable, long context |
 | Transforms | Selected-text rewrites | Latency like dictation, generality like analysis |
 
-[#408](https://github.com/moona3k/macparakeet/issues/408) asked to separate dictation/transform AI from meeting AI on model size, latency, and cost. The latency half first shipped as independent formatter **enablement** toggles ("Use for dictation", "Use for transcripts") plus a transcription input cap. Settings retains one default `LLMProviderConfig` and now also stores optional full-route overrides for cleanup and analysis. The resolver selects the task route. Prompt and Transform `modelOverride` values, and `--model` on commands that use the saved Settings route, overlay that route and are not removed by this ADR. Inline CLI commands that pass a full provider context are independent configs; they do not require the saved Settings route.
+#408 asked to separate dictation/transform AI from meeting AI on model size, latency, and cost. The latency half first shipped as independent formatter **enablement** toggles ("Use for dictation", "Use for transcripts") plus a transcription input cap. Settings retains one default `LLMProviderConfig` and now also stores optional full-route overrides for cleanup and analysis. The resolver selects the task route. Prompt and Transform `modelOverride` values, and `--model` on commands that use the saved Settings route, overlay that route and are not removed by this ADR. Inline CLI commands that pass a full provider context are independent configs; they do not require the saved Settings route.
 
-[#930](https://github.com/moona3k/macparakeet/issues/930) is a cleanup-tuned chat model that is a poor summarizer. [#265](https://github.com/moona3k/macparakeet/issues/265) and [#939](https://github.com/moona3k/macparakeet/issues/939) ask for specialist normalizers (Sotto, Superwhisper S1-mini) with control over what is sent and returned. [#1003](https://github.com/moona3k/macparakeet/issues/1003) asks for Hy-MT2 as local meeting **translation**, which is a different job (spec F31, not implemented).
+#930 is a cleanup-tuned chat model that is a poor summarizer. #265 and #939 ask for specialist normalizers (Sotto, Superwhisper S1-mini) with control over what is sent and returned. #1003 asks for Hy-MT2 as local meeting **translation**, which is a different job (spec F31, not implemented).
 
 The wrong generalizations are (1) a model picker on every AI feature and (2) treating every Hugging Face checkpoint as another name in the default Claude/Ollama list.
 
@@ -93,7 +93,7 @@ Ship zero or more **built-in** recipes after they beat the current path on real 
 
 The first proven specialist is one typed adapter behind that task (`TranscriptFormatter` for cleanup). Extract shared download/pin/fallback machinery when a second specialist needs it. Do not add llama.cpp for one checkpoint. Do not auto-download.
 
-S1-mini stays English dictation cleanup: deterministic Clean still runs first; failures fall back to Clean; meetings, files, summaries, Ask, Transforms, and app formatter profiles do not use it. Those surfaces keep the general cleanup, analysis, or transform route (inherit or that task's general override), not an implicit second specialist. Identify it as **S1-mini by Superwhisper** where the model is chosen and in Third-Party Notices. See [#939](https://github.com/moona3k/macparakeet/issues/939).
+S1-mini stays English dictation cleanup: deterministic Clean still runs first; failures fall back to Clean; meetings, files, summaries, Ask, Transforms, and app formatter profiles do not use it. Those surfaces keep the general cleanup, analysis, or transform route (inherit or that task's general override), not an implicit second specialist. Identify it as **S1-mini by Superwhisper** where the model is chosen and in Third-Party Notices. See #939.
 
 Hy-MT2 is machine translation, not cleanup. It must not occupy the cleanup or analysis slot.
 
@@ -154,4 +154,4 @@ Rejected as the answer to #408. The enablement toggles already cover "skip dicta
 
 - `spec/11-llm-integration.md` — current provider/client contract
 - `plans/active/2026-06-27-on-device-local-llm.md` — first-party single general model
-- [#939](https://github.com/moona3k/macparakeet/issues/939) — S1-mini as a cleanup recipe candidate
+- #939 — S1-mini as a cleanup recipe candidate

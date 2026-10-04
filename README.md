@@ -36,7 +36,7 @@ SOTTO_SKIP_WHISPERKIT=1 SOTTO_CLI_ONLY=1 swift build --product sotto-cli
 
 Automated XCTest suites and native GUI verification require full Xcode.
 
-The dev script owns bundle wrapping, signing, permissions, and macro validation. The working directory is intentionally still named `macparakeet`; no neighboring Sotto project is overwritten.
+The dev script owns bundle wrapping, signing, permissions, and macro validation.
 
 ## Code map
 

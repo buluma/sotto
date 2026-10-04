@@ -16,4 +16,4 @@ Requires **Apple Silicon and macOS 14.2 or later**. Update with **Check for Upda
 
 Coming from 0.8.7 or earlier? This update also includes [everything in 0.8.8](https://github.com/moona3k/macparakeet/releases/tag/v0.8.8): failed-dictation retry, transcript and saved-result editing, a faster Library, and updated speech-model options.
 
-[Changes since 0.8.8](https://github.com/moona3k/macparakeet/compare/v0.8.8...v0.8.9) · [Fix details: #1190](https://github.com/moona3k/macparakeet/pull/1190)
+[Changes since 0.8.8](https://github.com/moona3k/macparakeet/compare/v0.8.8...v0.8.9) · Fix details: #1190

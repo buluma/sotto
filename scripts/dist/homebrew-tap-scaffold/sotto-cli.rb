@@ -3,7 +3,7 @@
 # This file is the sotto repo's reference copy for review and
 # version control. The live tap publishes from a separate repo:
 #
-#   https://github.com/moona3k/homebrew-tap
+#   https://github.com/buluma/homebrew-tap
 #
 # Keep this file in sync with:
 #
@@ -13,10 +13,10 @@
 
 require "json"
 
-class MacparakeetCli < Formula
+class SottoCli < Formula
   desc "Local STT, transcription, and prompt automation for Apple Silicon"
-  homepage "https://macparakeet.com"
-  url "https://github.com/moona3k/macparakeet/releases/download/cli-v3.1.0/sotto-cli-3.1.0-darwin-arm64.tar.gz"
+  homepage "https://github.com/buluma/sotto"
+  url "https://github.com/buluma/sotto/releases/download/cli-v3.1.0/sotto-cli-3.1.0-darwin-arm64.tar.gz"
   version "3.1.0"
   sha256 "05d0cb95ac4fb26bc18c5adecb7bb19d2a1892a42dd69bd5fce388f2138426bc"
   license "GPL-3.0-or-later"
@@ -59,10 +59,10 @@ class MacparakeetCli < Formula
         sotto-cli health --json
 
       Compatibility policy (semver):
-        https://github.com/moona3k/macparakeet/blob/main/Sources/CLI/CHANGELOG.md
+        https://github.com/buluma/sotto/blob/main/Sources/CLI/CHANGELOG.md
 
       Agent integration docs (OpenClaw, Hermes, generic):
-        https://github.com/moona3k/macparakeet/tree/main/integrations
+        https://github.com/buluma/sotto/tree/main/integrations
     EOS
   end
 

@@ -17,7 +17,7 @@ more explicit rather than making it more authoritative.
 
 ## Sources and current state
 
-- Live request: [GitHub issue #850](https://github.com/moona3k/macparakeet/issues/850),
+- Live request: GitHub issue #850,
   opened 2026-07-20 by DAPT editor Nigel Megitt, asks for a DAPT
   `originalTranscript` output carrying speaker and language metadata.
 - Baseline: `origin/main` at `1e5502c1d9951457e91725e2fbd1cc69a29b3b29`.

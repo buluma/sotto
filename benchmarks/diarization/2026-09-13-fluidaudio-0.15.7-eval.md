@@ -1,6 +1,6 @@
 # FluidAudio 0.15.6 → 0.15.7 eval (2026-09-13)
 
-Record of the pin bump for [#1023](https://github.com/moona3k/macparakeet/issues/1023).
+Record of the pin bump for #1023.
 Replay recipe: [fluidaudio-0.15.7-ab.md](fluidaudio-0.15.7-ab.md). Harness:
 [README.md](README.md).
 
@@ -10,7 +10,7 @@ counts. LibriSpeech Parakeet v3 WER did not regress. Diarization *quality*
 (Auto over-split) did not improve. The bump still ships FluidAudio [#891](https://github.com/FluidInference/FluidAudio/pull/891),
 a dual-census cap fix whose published counterexample is synthetic.
 
-This does **not** close [#944](https://github.com/moona3k/macparakeet/issues/944).
+This does **not** close #944.
 
 ## Environment
 

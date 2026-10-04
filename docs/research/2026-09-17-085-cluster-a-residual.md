@@ -11,7 +11,7 @@ Question: what is the single 0.8.5 incident on the public crash-free card
 
 ## Verdict
 
-**The 0.8.5 incident is Cluster A ([#997](https://github.com/moona3k/macparakeet/issues/997)),
+**The 0.8.5 incident is Cluster A (#997),
 still alive after the 0.8.1 concurrency fix.** It is not a wrapping-up-tile
 bug, not Tahoe Cluster G, and not a 0.8.5-only crash.
 
@@ -29,13 +29,13 @@ the 0.8.5 row is the shipped DMG:
 
 `A17B0B6F-5D29-3103-9145-C696B7E19E61` (build `20260917153344`).
 
-[#998](https://github.com/moona3k/macparakeet/pull/998)
+#998
 (`ASRConfig(parallelChunkConcurrency: 1)` on macOS 14) **is in both
 binaries**. `v0.8.5` is a descendant of `e43e9b1d`. FluidAudio is **0.15.7**.
 The 4-wide inner pool is not what killed this user.
 
 Serial Sonoma Core ML still SIGBUS/SIGSEGV during long-file Parakeet v3. That
-is the residual [#997](https://github.com/moona3k/macparakeet/issues/997)
+is the residual #997
 already flagged: if concurrency 1 still dies, the next lever is encoder
 compute units, not another dashboard tweak. Related upstream:
 FluidAudio [#661](https://github.com/FluidInference/FluidAudio/issues/661)
@@ -240,7 +240,7 @@ Every 0.8.1+ row has interrupted PC ending in `360` and frame 1 ending in
 
 ## What this is not
 
-- **Not 0.8.5’s wrapping-up tile.** [#1082](https://github.com/moona3k/macparakeet/pull/1082) is a status label after stop. This process died in Core ML during file STT.
+- **Not 0.8.5’s wrapping-up tile.** #1082 is a status label after stop. This process died in Core ML during file STT.
 - **Not Tahoe Cluster G.** Those are 11-frame / 131-byte `SIGSEGV` on macOS 26/27. This is 18-frame / 215-byte on macOS 14.
 - **Not a 0.8.5 fleet crash rate.** 48 sessions in three hours plus one known Sonoma file-STT death. The honest current 24h version is 0.8.3 at 2/357. Ignore the ranking.
 - **Not proven overlapping live ANE from dictation.** v3 cannot start native live dictation. Both holds started and never finalized.
@@ -262,7 +262,7 @@ The #997 report already ordered this:
 5. Hardware confirm still needs a macOS 14 Apple Silicon Mac. A 20 s clip
    should succeed; an hour-class file on 14.8 must finish.
 
-Re-open or extend [#997](https://github.com/moona3k/macparakeet/issues/997)
+Re-open or extend #997
 with this residual rather than filing a new 0.8.5 crash issue. The 0.8.4
 sibling is the same user and should travel with it.
 

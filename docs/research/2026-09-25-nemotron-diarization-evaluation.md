@@ -2,7 +2,7 @@
 
 > Research snapshot before implementation. Subsequent matched runs, integration and the adoption decision are recorded in [the evaluation report](../../benchmarks/diarization/2026-09-25-nemotron-evaluation.md). Historical present-tense statements below describe the reviewed baseline.
 
-Date: 2026-09-25. Follow-up to the [Omarchy review](2026-09-25-omarchy-meeting-recorder-diarization-review.md) and [issue #1046](https://github.com/moona3k/macparakeet/issues/1046). Research and source inspection only; no local model inference or matched audio benchmark has been run. The [next-agent plan](../plans/2026-09-25-nemotron-diarization-evaluation-plan.md) defines the experiment and conditional adoption path.
+Date: 2026-09-25. Follow-up to the [Omarchy review](2026-09-25-omarchy-meeting-recorder-diarization-review.md) and issue #1046. Research and source inspection only; no local model inference or matched audio benchmark has been run. The [next-agent plan](../plans/2026-09-25-nemotron-diarization-evaluation-plan.md) defines the experiment and conditional adoption path.
 
 ## Recommendation
 

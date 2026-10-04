@@ -1,6 +1,6 @@
 # Sotto 0.8.0 release verification
 
-**The candidate is validated for final user QA.** The combined app and DMG are signed, notarized and verified; the exercised GUI, CLI and regression checks passed within the scopes below. Both exact-head CI runs passed, and [PR #979](https://github.com/moona3k/macparakeet/pull/979) merged into main at `e476f156` on 2026-09-08 00:07:14 UTC. This is not certification of every matrix combination, and no release download, appcast or GitHub asset has been published by this QA task.
+**The candidate is validated for final user QA.** The combined app and DMG are signed, notarized and verified; the exercised GUI, CLI and regression checks passed within the scopes below. Both exact-head CI runs passed, and PR #979 merged into main at `e476f156` on 2026-09-08 00:07:14 UTC. This is not certification of every matrix combination, and no release download, appcast or GitHub asset has been published by this QA task.
 
 ## Candidate and evidence provenance
 
@@ -64,6 +64,6 @@ Curated media contains inspected app-window synthetic/public content only. Raw A
 - Code-block Copy lacks a working AX activation route and did not produce verified content with targeted clicks. Full-summary/table copying work; whether the code-label click failure is automation or product behavior remains unresolved.
 - Sparkle upgrade from an installed stable app, a second physical Mac, and live external-provider requests remain unverified. Saved seeded Markdown/chat and loopback requests do not cover live streaming/provider combinations.
 - The inherited stale Library snippet after transcript editing and completed-session repeated-discard UX remain documented follow-ups. Missing recovery locks must not authorize deleting retained audio.
-- [PR #979](https://github.com/moona3k/macparakeet/pull/979) merged after both CI checks passed at the tested head. The accepted local artifacts have not been published. Final user QA and release publication are subsequent decisions.
+- PR #979 merged after both CI checks passed at the tested head. The accepted local artifacts have not been published. Final user QA and release publication are subsequent decisions.
 
 Additional source and method reports: [release inventory](release-inventory.md), [audio/recovery review](audio-review.md), [CLI/data review](cli-data-review.md), [UI review](ui-source-review.md), [hosted review dispositions](pr-review-disposition.md), [reusable GUI fixtures](gui-fixtures.md), and [historical setup log](runtime-log.md).

@@ -44,14 +44,14 @@ The principle: if a use case can be automated, scripted, or driven by an agent, 
 **Recommended for agents/headless Macs:**
 
 ```bash
-brew install moona3k/tap/sotto-cli
+brew install buluma/tap/sotto-cli
 sotto-cli --version
 sotto-cli health --json
 ```
 
 This installs the standalone CLI plus its Homebrew-managed `ffmpeg` and `yt-dlp` runtime dependencies. It does not require `Sotto.app`. Parakeet, Nemotron, and Cohere CoreML caches are managed by FluidAudio. WhisperKit model downloads live under `~/Library/Application Support/Sotto/models/stt/whisper/`.
 
-**Bundled app alternative:** after installing [Sotto](https://macparakeet.com), the same CLI surface is available at:
+**Bundled app alternative:** after installing [Sotto](https://github.com/buluma/sotto), the same CLI surface is available at:
 
 ```bash
 /Applications/Sotto.app/Contents/MacOS/sotto-cli --help
@@ -600,7 +600,7 @@ The reusable skill lives at [`integrations/skill/sotto-stt/SKILL.md`](skill/sott
 
 ## Reporting issues
 
-Open an issue at <https://github.com/moona3k/macparakeet/issues> with the `integration` label. Include the agent platform, the CLI version (`sotto-cli --version`), and a minimal repro.
+Open an issue at <https://github.com/buluma/sotto/issues> with the `integration` label. Include the agent platform, the CLI version (`sotto-cli --version`), and a minimal repro.
 
 ### Updating prompt label availability
 

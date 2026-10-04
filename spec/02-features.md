@@ -1453,7 +1453,7 @@ The governing behavior is [ADR-031](adr/031-timed-transcript-corrections.md).
 | Lifetime | until deleted | 7 days, per-row expiry |
 | Used as matching references | yes, for named profiles | never |
 
-Candidates exist because naming happens after the meeting, when the vector the pipeline computed has already been discarded. They are never compared with one another, which is what keeps recurring-unknown detection (the literal ask in [#662](https://github.com/moona3k/macparakeet/issues/662)) out of scope.
+Candidates exist because naming happens after the meeting, when the vector the pipeline computed has already been discarded. They are never compared with one another, which is what keeps recurring-unknown detection (the literal ask in #662) out of scope.
 
 **Privacy:** user-facing wording in [`docs/voice-profiles-privacy.md`](../docs/voice-profiles-privacy.md).
 
@@ -1806,7 +1806,7 @@ The additive schema stores `prompts.includeMeetingNotes` and `summaries.includeM
 
 > Status: **IMPLEMENTED**
 
-**What:** Pause and resume an in-flight meeting recording without ending the session, per [issue #235](https://github.com/moona3k/macparakeet/issues/235). Resumed audio appends gap-free into the same `.m4a` file so the user can re-transcribe the recording later with another model. The elapsed timer freezes during pause; the persisted `MeetingRecordingOutput.durationSeconds` reflects time actually recording, not wallclock since start.
+**What:** Pause and resume an in-flight meeting recording without ending the session, per issue #235. Resumed audio appends gap-free into the same `.m4a` file so the user can re-transcribe the recording later with another model. The elapsed timer freezes during pause; the persisted `MeetingRecordingOutput.durationSeconds` reflects time actually recording, not wallclock since start.
 
 **Acceptance criteria:**
 - [x] `MeetingRecordingService.pauseRecording()` / `resumeRecording()` are idempotent no-ops when no session is active or already in the requested state
@@ -1930,7 +1930,7 @@ The existing completion handler reads the auto-open preference before presenting
 
 ### F48: Per-Event Calendar Skip
 
-> Status: **IMPLEMENTED** — ADR-017 Phase 2b / [issue #609](https://github.com/moona3k/macparakeet/issues/609). Design accepted 2026-09-14, then corrected from independent review and implemented. Plan: [`plans/active/2026-09-14-issue-609-calendar-event-skip.md`](../plans/active/2026-09-14-issue-609-calendar-event-skip.md).
+> Status: **IMPLEMENTED** — ADR-017 Phase 2b / issue #609. Design accepted 2026-09-14, then corrected from independent review and implemented. Plan: [`plans/active/2026-09-14-issue-609-calendar-event-skip.md`](../plans/active/2026-09-14-issue-609-calendar-event-skip.md).
 
 **What:** Mute one calendar meeting so Sotto will not remind or auto-start for it, without turning calendar automation off or ignoring a whole calendar. Optional-invitee is the reason users want this, not an automatic filter. Skip persists across launches. Upcoming default is the whole meeting for one-off events (`eventKey` = `externalId ?? id`) and this occurrence for recurring events (`dedupeKey`). Toast ✕ is always this occurrence. Series skip is offered only when `isRecurring` (not merely when `externalId` is set). Skipped rows stay on Upcoming so undo is visible. Manual Record still works.
 
@@ -1953,7 +1953,7 @@ The existing completion handler reads the auto-open preference before presenting
 
 ### F49: Start Meetings Muted
 
-> Status: **IMPLEMENTED** — [issue #882](https://github.com/moona3k/macparakeet/issues/882) remainder. Governing ADR: [ADR-014 §12](adr/014-meeting-recording.md).
+> Status: **IMPLEMENTED** — issue #882 remainder. Governing ADR: [ADR-014 §12](adr/014-meeting-recording.md).
 
 **What:** Optional default-off preference to start microphone-capturing meetings muted until the setting is turned off, then unmute from the live panel. Mute-during-recording already existed; this slice silences the microphone **before the first captured frame** so joining a call does not leak the first seconds of room audio. System-audio-only capture ignores the preference. Unmute still appends the completed mute host-time range so in-flight buffers stay silent.
 
@@ -1984,7 +1984,7 @@ These are implemented in current source. Meeting import/split, timed corrections
 | DAPT export | Timed speaker-attributed events at automatic word or corrected segment alignment; untimed fallback otherwise. | [DAPT contract](contracts/dapt-export-v1.md) |
 | Split and transcribe | User-approved cuts create independently owned saved meetings while preserving the original; sequential transcription and enabled completion can continue or resume from durable receipts in the app and public CLI. | [Split contract](contracts/meeting-splitting.md) |
 | Live transcription toggle | "Live transcription during recording" in Meeting Recording settings (`meetingLiveTranscriptionEnabled`, default on). Off skips the live STT pass entirely — recording is unaffected, and the final transcript still runs a full post-stop STT pass over the saved audio, same as when an engine can't support live preview at all. The Transcript empty-state seed-of-life sits still and faded while preview is off; it does not spin. | [ADR-014 §9](adr/014-meeting-recording.md), [UI patterns](04-ui-patterns.md#meeting-recording-panel-v06) |
-| Language of AI results | One searchable AI Settings picker and the matching `meeting-ai-output-language` CLI key (`follow-transcript` by default, or any `WhisperLanguageCatalog` language). Applies to every prompt result, whatever the transcript source. Settings shows the exact instruction and where it sits in the prompt. Injected at prompt assembly from transcript text, not Parakeet metadata. Extra instructions are appended last so they can ask the model to override that request; this is not a hard runtime filter. Each result snapshots the policy used. | [Issue #975](https://github.com/moona3k/macparakeet/issues/975) |
+| Language of AI results | One searchable AI Settings picker and the matching `meeting-ai-output-language` CLI key (`follow-transcript` by default, or any `WhisperLanguageCatalog` language). Applies to every prompt result, whatever the transcript source. Settings shows the exact instruction and where it sits in the prompt. Injected at prompt assembly from transcript text, not Parakeet metadata. Extra instructions are appended last so they can ask the model to override that request; this is not a hard runtime filter. Each result snapshots the policy used. | Issue #975 |
 | Start meetings muted | Default-off Meeting Recording setting (`startMeetingsMuted`). While on, every microphone-capturing meeting starts with the mic off until the setting is turned off; unmute from the live panel. System-audio-only capture ignores it. | [F49](02-features.md#f49-start-meetings-muted), [ADR-014 §12](adr/014-meeting-recording.md) |
 | Escape cancels dictation | Default-on Dictation setting (`escapeCancelsDictation`). Off leaves Escape for other apps and does not cancel a live dictation. Pending gestures that have not started a take still clear. | [F1](02-features.md#f1-system-wide-dictation) |
 | Preserve discarded dictations | Default-off Dictation setting (`preserveDiscardedDictations`). Cancel and undo-window expiry transcribe into History as `cancelled` instead of deleting. Requires Save dictation history. Nothing is pasted, and menu-bar Paste Last / Recent Dictations stay completed-only. Voice stats still count only completed takes. | [F1](02-features.md#f1-system-wide-dictation) |
@@ -1993,7 +1993,7 @@ These are implemented in current source. Meeting import/split, timed corrections
 | Skip-microphone onboarding | The microphone row on the first-run Permissions page stays visible, but Continue is not gated on grant. File-only users can skip it. Dictation and mic-backed meetings still request access on first use. | [ADR-005](adr/005-onboarding-first-run.md) |
 | AI Formatter routing | New installs leave “Use for transcripts” and “Use for dictation” off. Each surface has its own prompt. Inherited transcript-on stays on. | [F8](02-features.md#f8-ai-formatter) |
 | Streaming cursor | Optional Settings → Dictation insert path (default off). Finished text types at the caret; Reduce Motion, unknown IMEs, and newline/tab still paste. | [F1](02-features.md#f1-system-wide-dictation) |
-| Edit saved AI results | Saved summaries, chapters, and action items can be edited in place with Cancel/Save. Save or cancel an edit before regenerating; editing is unavailable while its replacement is queued or streaming. Prompt snapshots stay the generation receipt; `contentEditedAt` marks a recorded user edit and meeting artifacts refresh. | [Issue #884](https://github.com/moona3k/macparakeet/issues/884) |
+| Edit saved AI results | Saved summaries, chapters, and action items can be edited in place with Cancel/Save. Save or cancel an edit before regenerating; editing is unavailable while its replacement is queued or streaming. Prompt snapshots stay the generation receipt; `contentEditedAt` marks a recorded user edit and meeting artifacts refresh. | Issue #884 |
 
 These do not enable activity-based meeting detection, app-aware AI Formatter profiles or public in-process MLX. Implicit whole-Library Ask and cross-file speaker identity remain future work.
 

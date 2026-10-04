@@ -4,7 +4,7 @@
 > Date: 2026-09-13
 > Related: [ADR-010](010-speaker-diarization.md),
 > [ADR-027](027-product-north-star.md),
-> [issue #893](https://github.com/moona3k/macparakeet/issues/893)
+> issue #893
 
 ## Context
 

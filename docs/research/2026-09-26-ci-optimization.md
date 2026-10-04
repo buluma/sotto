@@ -56,7 +56,7 @@ qualification retain the prerequisites in [the qualification guides](../testing/
 
 ## Results and decision
 
-[PR #1175](https://github.com/moona3k/macparakeet/pull/1175) merged as
+PR #1175 merged as
 `3dde9219c20cf4c1fb5eefdcae492ef11c0d508c`. The fixed acceptance rule required
 at least 5% elapsed improvement without more than 10% occupied-runner regression,
 all correctness gates, an identical-head warm rerun, and actual consumer invalidation.

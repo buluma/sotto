@@ -25,8 +25,8 @@ The original issue and the later comment must remain separate investigations:
 | Original, 0.7.3 | Whole system tracks reportedly zero; long-lived process; a separate SCK probe worked; app restart restored a `say` control | Consistent with process-local capture state; native cause unresolved. The control was not the same failing call. |
 | Rodentia, 0.8.3 | Phone/FaceTime specific; ringing retained; call speech absent; restarts/reinstall do not help | Stronger fit for a call-specific capture/route limitation than stale app state. |
 
-Sources: [original issue](https://github.com/moona3k/macparakeet/issues/912) and
-[Rodentia's report](https://github.com/moona3k/macparakeet/issues/912#issuecomment-5704649136).
+Sources: original issue and
+Rodentia's report.
 
 ## Scope and invariants
 

@@ -342,8 +342,8 @@ final class MenuBarCoordinator: NSObject, NSMenuDelegate {
 
         let helpMenuItem = NSMenuItem()
         let helpMenu = NSMenu(title: "Help")
-        helpMenu.addItem(makeMenuItem(title: "Upstream Help", action: #selector(openHelp), key: ""))
-        helpMenu.addItem(makeMenuItem(title: "Upstream Source on GitHub", action: #selector(openGitHub), key: ""))
+        helpMenu.addItem(makeMenuItem(title: "Help", action: #selector(openHelp), key: ""))
+        helpMenu.addItem(makeMenuItem(title: "Source on GitHub", action: #selector(openGitHub), key: ""))
         helpMenuItem.submenu = helpMenu
         mainMenu.addItem(helpMenuItem)
         NSApp.helpMenu = helpMenu
@@ -720,11 +720,11 @@ final class MenuBarCoordinator: NSObject, NSMenuDelegate {
     }
 
     @objc private func openHelp() {
-        openExternalURL("https://macparakeet.com")
+        openExternalURL("https://github.com/buluma/sotto")
     }
 
     @objc private func openGitHub() {
-        openExternalURL("https://github.com/moona3k/macparakeet")
+        openExternalURL("https://github.com/buluma/sotto")
     }
 
     @objc private func quitApp() {

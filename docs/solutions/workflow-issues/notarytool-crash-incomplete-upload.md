@@ -72,7 +72,7 @@ R2 object attached `Sotto.dmg` in 29 seconds.
 4. Upload R2 first. Create the GitHub `vX.Y.Z` release without assets. Attach
    `Sotto.dmg` from a GitHub-hosted Ubuntu job that downloads the R2
    object and checks size + SHA-256 before POSTing to
-   `uploads.github.com`. Recipe: `docs/distribution.md` gotcha 1b.
+   `uploads.github.com`. This recipe was removed from `docs/distribution.md` with the R2 flow.
 
 ## Why this works
 

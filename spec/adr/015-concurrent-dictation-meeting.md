@@ -2,7 +2,7 @@
 
 > Status: ACCEPTED
 > Date: 2026-04-06
-> Related: ADR-014 (meeting recording), ADR-009 (custom hotkeys), ADR-016 (centralized STT runtime and scheduler), [GitHub #57](https://github.com/moona3k/macparakeet/issues/57), [PR #189](https://github.com/moona3k/macparakeet/pull/189)
+> Related: ADR-014 (meeting recording), ADR-009 (custom hotkeys), ADR-016 (centralized STT runtime and scheduler), GitHub #57, PR #189
 > Amended by: ADR-016 for STT runtime ownership, scheduling, and backpressure policy
 > Amendment note (2026-09-07): ADR-028 governs the current offline cleaned-microphone echo path. Earlier joined live-AEC notes below describe prior implementation stages; the shared raw capture and dictation isolation decisions remain active.
 > Amendment note (2026-04-10, historical): meeting mic capture remains raw at device tap time; echo mitigation is applied in meeting-only joined software-AEC processing while dictation remains raw. Concurrency isolation remains unchanged.

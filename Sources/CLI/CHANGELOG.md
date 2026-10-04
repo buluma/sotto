@@ -630,13 +630,13 @@ End-to-end validation of the brew-installed 1.0.0 binary surfaced a single stdou
 
 ## [1.0.0] -- 2026-04-25
 
-First release of the CLI as a versioned public surface. The CLI has existed since v0.1 of the Sotto app and powered AI-assisted testing through v0.4--v0.6. With the prompts subcommand and JSON sweep landing in [PR #138](https://github.com/moona3k/macparakeet/pull/138), the surface is complete enough to commit to. This release marks that commitment.
+First release of the CLI as a versioned public surface. The CLI has existed since v0.1 of the Sotto app and powered AI-assisted testing through v0.4--v0.6. With the prompts subcommand and JSON sweep landing in PR #138, the surface is complete enough to commit to. This release marks that commitment.
 
 ### Added
 
-- `prompts` subcommand: `list` / `show` / `add` / `set` / `delete` / `restore-defaults` / `run`. UUID-or-name lookup with prefix matching, error surfacing for ambiguous prefixes, refusal to delete built-ins. `prompts run` invokes any LLM provider configured via `--provider --api-key --model`. ([PR #138](https://github.com/moona3k/macparakeet/pull/138))
-- `--json` flag on read-only commands: `history dictations`, `history transcriptions`, `history search`, `history search-transcriptions`, `history favorites`, `stats`, `flow words list`, `flow snippets list`, `health`, `models status`. Convention: ISO-8601 datetimes, pretty-printed output, sorted keys, top-level array for list commands and object for single-record / status commands. Matches the existing `calendar upcoming --json` shape. ([PR #138](https://github.com/moona3k/macparakeet/pull/138))
-- `flow words list --source manual|learned|all` filter. Default `all`. Surfaces the source distinction (user-typed vs vocabulary-learned) that the schema has carried for two releases but the CLI hadn't exposed. ([PR #138](https://github.com/moona3k/macparakeet/pull/138))
+- `prompts` subcommand: `list` / `show` / `add` / `set` / `delete` / `restore-defaults` / `run`. UUID-or-name lookup with prefix matching, error surfacing for ambiguous prefixes, refusal to delete built-ins. `prompts run` invokes any LLM provider configured via `--provider --api-key --model`. (PR #138)
+- `--json` flag on read-only commands: `history dictations`, `history transcriptions`, `history search`, `history search-transcriptions`, `history favorites`, `stats`, `flow words list`, `flow snippets list`, `health`, `models status`. Convention: ISO-8601 datetimes, pretty-printed output, sorted keys, top-level array for list commands and object for single-record / status commands. Matches the existing `calendar upcoming --json` shape. (PR #138)
+- `flow words list --source manual|learned|all` filter. Default `all`. Surfaces the source distinction (user-typed vs vocabulary-learned) that the schema has carried for two releases but the CLI hadn't exposed. (PR #138)
 
 ### Changed
 

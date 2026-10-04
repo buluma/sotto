@@ -1,6 +1,6 @@
 # Instant Dictation Warm Mic Research
 
-> Checked on 2026-06-02 while triaging [issue #414](https://github.com/moona3k/macparakeet/issues/414).
+> Checked on 2026-06-02 while triaging issue #414.
 
 ## Finding
 
@@ -19,7 +19,7 @@ promotion.
 ## Issue #450 Evidence
 
 Checked again on 2026-06-07 while triaging
-[issue #450](https://github.com/moona3k/macparakeet/issues/450).
+issue #450.
 
 The report is a controlled timing test: speaking immediately at button press
 often loses the first one to three spoken numbers, while waiting until the

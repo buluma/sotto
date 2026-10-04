@@ -19,7 +19,7 @@ tags: [external-review, cursor-cli, claude-code, non-interactive, pr-workflow, a
 ## Context
 
 The first Cursor Grok 4.6 and Claude Sonnet 5 final-review attempts for
-[PR #1029](https://github.com/moona3k/macparakeet/pull/1029) did real analysis,
+PR #1029 did real analysis,
 but neither produced a qualifying terminal verdict. Local project records show
 that both [Cursor/Grok](../../qa/2026-09-09-release-readiness.md) and
 [Claude/Sonnet](../../research/2026-09-11-issue-895-meeting-split/report.md)
@@ -237,5 +237,5 @@ CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0 claude -p \
 - [PR review workflow](../../pr-review-workflow.md)
 - [AI coding method](../../../spec/10-ai-coding-method.md)
 - [Agent memory governance](../../agent-memory-governance.md)
-- [PR #1029](https://github.com/moona3k/macparakeet/pull/1029), the open
+- PR #1029, the open
   review where these invocation exceptions were observed

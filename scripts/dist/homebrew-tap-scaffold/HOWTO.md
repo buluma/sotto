@@ -2,7 +2,7 @@
 
 This file lives in the sotto repo for reference. The tap repo
 itself is a separate GitHub repository at
-<https://github.com/moona3k/homebrew-tap>. The usual local clone is
+<https://github.com/buluma/homebrew-tap>. The usual local clone is
 `~/code/homebrew-tap`.
 
 ## One-time tap setup (already done)
@@ -13,14 +13,14 @@ creating a new tap from scratch.
 ### 1. Create the tap repo on GitHub
 
 ```bash
-gh repo create moona3k/homebrew-tap --public \
-  --description "Homebrew tap for moona3k packages (sotto-cli, ...)"
+gh repo create buluma/homebrew-tap --public \
+  --description "Homebrew tap for buluma packages (sotto-cli, ...)"
 ```
 
 Local clone + initial commit:
 
 ```bash
-git clone https://github.com/moona3k/homebrew-tap ~/code/homebrew-tap
+git clone https://github.com/buluma/homebrew-tap ~/code/homebrew-tap
 cd ~/code/homebrew-tap
 mkdir -p Formula
 cp ~/code/sotto/scripts/dist/homebrew-tap-scaffold/README.md .
@@ -142,15 +142,15 @@ release commit.
 
 ```bash
 brew update
-brew reinstall moona3k/tap/sotto-cli
+brew reinstall buluma/tap/sotto-cli
 
 sotto-cli --version    # should print ${VERSION}
 sotto-cli health --json
-brew test moona3k/tap/sotto-cli
+brew test buluma/tap/sotto-cli
 ```
 
 For a fully fresh install check, uninstall the formula first and then run
-`brew install moona3k/tap/sotto-cli`.
+`brew install buluma/tap/sotto-cli`.
 
 ## Recurring maintenance
 

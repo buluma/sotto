@@ -1,17 +1,17 @@
-# `moona3k/homebrew-tap` README reference
+# `buluma/homebrew-tap` README reference
 
 This is the sotto repo's reference copy of the live
-**`moona3k/homebrew-tap`** README. The actual tap lives at
-<https://github.com/moona3k/homebrew-tap>.
+**`buluma/homebrew-tap`** README. The actual tap lives at
+<https://github.com/buluma/homebrew-tap>.
 
 Keep this file in sync when the tap README changes. See `HOWTO.md` for the
 CLI release flow and tap update checklist.
 
 ---
 
-# moona3k/homebrew-tap
+# buluma/homebrew-tap
 
-Homebrew tap for [moona3k](https://github.com/moona3k) packages.
+Homebrew tap for [buluma](https://github.com/buluma) packages.
 
 ## Available formulae
 
@@ -22,7 +22,7 @@ Silicon. ~155&times; realtime on the Apple Neural Engine, ~2.5% WER,
 GPL-3.0.
 
 ```bash
-brew tap moona3k/tap
+brew tap buluma/tap
 brew install sotto-cli
 
 sotto-cli --version
@@ -38,10 +38,10 @@ model. Parakeet, Nemotron, and Cohere models are cached under
 use `~/Library/Application Support/Sotto/models/stt/whisper/`.
 Subsequent transcription with that model is fully offline.
 
-**Source:** <https://github.com/moona3k/macparakeet>
-**Compatibility policy (semver):** [`Sources/CLI/CHANGELOG.md`](https://github.com/moona3k/macparakeet/blob/main/Sources/CLI/CHANGELOG.md)
-**Agent integration docs:** [`integrations/README.md`](https://github.com/moona3k/macparakeet/tree/main/integrations)
-**For agent operators:** <https://macparakeet.com/agents>
+**Source:** <https://github.com/buluma/sotto>
+**Compatibility policy (semver):** [`Sources/CLI/CHANGELOG.md`](https://github.com/buluma/sotto/blob/main/Sources/CLI/CHANGELOG.md)
+**Agent integration docs:** [`integrations/README.md`](https://github.com/buluma/sotto/tree/main/integrations)
+**For agent operators:** <https://github.com/buluma/sotto>
 
 > Why a tap and not homebrew-core? `sotto-cli` ships as a signed,
 > precompiled Apple-Silicon binary, and homebrew-core only accepts formulae

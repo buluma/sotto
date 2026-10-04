@@ -109,4 +109,3 @@ Commit messages should help a future reader understand the change. The rich form
 - Agent instruction research: [`docs/research/coding-agent-instructions-2026-06.md`](./docs/research/coding-agent-instructions-2026-06.md)
 - Distribution/release steps: [`docs/distribution.md`](./docs/distribution.md)
 - CLI automation contract: [`integrations/README.md`](./integrations/README.md)
-- Human-readable PR/issue walkthroughs: publish self-contained HTML at `https://macparakeet.com/dev/pr/<number>` or `/dev/issue/<number>`. Conventions live in the website repo [`public/dev/README.md`](https://github.com/moona3k/macparakeet-website/blob/main/public/dev/README.md). Link the live URL from the GitHub thread. Skip for typos and one-line fixes.

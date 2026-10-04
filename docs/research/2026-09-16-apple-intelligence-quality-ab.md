@@ -2,8 +2,8 @@
 
 > Status: live product-task bake-off on one Tahoe host, not a Phase 0 gold-set
 > Date: 2026-09-16 (ran 2026-09-17 UTC)
-> PR: [#1077](https://github.com/moona3k/macparakeet/pull/1077)
-> Issue: [#1062](https://github.com/moona3k/macparakeet/issues/1062)
+> PR: #1077
+> Issue: #1062
 
 ## What this is (and is not)
 

@@ -3,7 +3,7 @@ Record of the 2026-09-13 run (tables, commands, eight ASR diffs):
 
 # FluidAudio 0.15.7 speaker-count A/B
 
-Issue [#1023](https://github.com/moona3k/macparakeet/issues/1023). App change is
+Issue #1023. App change is
 the pin plus `pipelineRevision`. This note is the measurement contract for that
 bump, not a substitute for ADR-010 after numbers exist.
 
@@ -14,7 +14,7 @@ On FluidAudio 0.15.6, Exact / `--speaker-count` / `maxSpeakers` can fail to bind
 in 0.15.7). Sotto maps GUI **Other speakers → Exact N** and CLI
 `--speaker-count N` to `withSpeakers(exactly:)`.
 
-This is **not** [#944](https://github.com/moona3k/macparakeet/issues/944) (Auto
+This is **not** #944 (Auto
 1:1 split on 0.7.3 / 0.15.4). Auto still uses `MeetingSpeakerPrior` `max = n + 1`.
 0.15.7 will not close that.
 

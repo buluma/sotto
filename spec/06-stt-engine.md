@@ -620,7 +620,7 @@ The automatic path uses the `fast128` preset, a 0.5 activity threshold and no mi
 
 For the explicit-count path, `DiarizationService.highAccuracyConfig` starts from the library default and sets segmentation `stepRatio = 0.1`, embedding `minSegmentDurationSeconds = 0`, and zero-vote re-embedding enabled. Speaker-count constraints are applied to this preset per request.
 
-For both paths, isolated one-word speaker flips and unlabeled gaps are smoothed at word assignment (`SpeakerMerger`) only when both neighboring runs agree ([issue #1046](https://github.com/moona3k/macparakeet/issues/1046)). This does not change diarizer output, and it can erase a brief reply.
+For both paths, isolated one-word speaker flips and unlabeled gaps are smoothed at word assignment (`SpeakerMerger`) only when both neighboring runs agree (issue #1046). This does not change diarizer output, and it can erase a brief reply.
 
 The app pins FluidAudio 0.17.4. Older Community-1 measurements under 0.15.x are not current app accuracy or throughput guarantees. Asset sizes above also do not measure peak process memory. See ADR-010's 2026-09-25 Nemotron amendment and its earlier amendments for provenance and the remaining DER gap.
 

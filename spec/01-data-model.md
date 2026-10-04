@@ -820,7 +820,7 @@ CREATE UNIQUE INDEX idx_ai_formatter_profiles_category_unique
 
 ### `lifetime_dictation_stats` (v0.7.4)
 
-Single-row counter table. Headline voice stats (total words, total duration, total count, longest dictation) survive deletion of the underlying `dictations` rows. Fixes [#124](https://github.com/moona3k/macparakeet/issues/124) — clearing dictation history used to wipe stats too because they were SQL aggregates.
+Single-row counter table. Headline voice stats (total words, total duration, total count, longest dictation) survive deletion of the underlying `dictations` rows. Fixes #124 — clearing dictation history used to wipe stats too because they were SQL aggregates.
 
 ```sql
 CREATE TABLE lifetime_dictation_stats (

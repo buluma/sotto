@@ -5,7 +5,7 @@ description: Use when the user asks to transcribe audio or video, search Sotto's
 
 # Sotto STT
 
-Use `sotto-cli`, not a second transcription implementation. Read the [canonical integration guide](../../README.md) for command examples, installed version differences, JSON/errors, privacy, and isolation. If packaging this skill alone, use the [published guide](https://github.com/moona3k/macparakeet/blob/main/integrations/README.md) and prefer the installed binary's contract when versions differ. Coding agents modifying Sotto itself should use [AGENTS.md](../../../AGENTS.md).
+Use `sotto-cli`, not a second transcription implementation. Read the [canonical integration guide](../../README.md) for command examples, installed version differences, JSON/errors, privacy, and isolation. If packaging this skill alone, use the [published guide](https://github.com/buluma/sotto/blob/main/integrations/README.md) and prefer the installed binary's contract when versions differ. Coding agents modifying Sotto itself should use [AGENTS.md](../../../AGENTS.md).
 
 ## Discover before acting
 

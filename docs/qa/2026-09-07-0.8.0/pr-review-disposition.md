@@ -4,10 +4,10 @@
 
 ## Reviewed snapshot
 
-- PR: [#979](https://github.com/moona3k/macparakeet/pull/979).
+- PR: #979.
 - Hosted and local source head: `250bbe2994a4b60b4ef81ac257f0ee6bb70874d3`.
-- [Initial CodeRabbit review](https://github.com/moona3k/macparakeet/pull/979#pullrequestreview-5135747611): `3827999ddb84c8a8e0edcb3ac190e66813fc95fe`, submitted 2026-09-07 23:20:19 UTC.
-- [Latest CodeRabbit review](https://github.com/moona3k/macparakeet/pull/979#pullrequestreview-5135835303): `250bbe29`, submitted 2026-09-07 23:36:14 UTC. CodeRabbit and cubic checks report success; both Swift CI jobs were still running at this refresh.
+- Initial CodeRabbit review: `3827999ddb84c8a8e0edcb3ac190e66813fc95fe`, submitted 2026-09-07 23:20:19 UTC.
+- Latest CodeRabbit review: `250bbe29`, submitted 2026-09-07 23:36:14 UTC. CodeRabbit and cubic checks report success; both Swift CI jobs were still running at this refresh.
 - Nine review threads fetched with no further page. All nine were unresolved at the read-only snapshot. Latest review body also contains three outside-diff comments, assessed below.
 - No GitHub posts, replies, review submissions, or thread resolutions were made by this reviewer. Proposed replies below are for the root agent after it pushes the matching corrections.
 
@@ -17,19 +17,19 @@ Hosted review limits remain explicit: Greptile skipped the initial 117-file PR b
 
 ### 1. Original audio evidence paths — corrected locally
 
-Thread `PRRT_kwDORMx8l86gC770`, [comment r3953090199](https://github.com/moona3k/macparakeet/pull/979#discussion_r3953090199).
+Thread `PRRT_kwDORMx8l86gC770`, comment r3953090199.
 
 > Replaced workstation-specific prefixes with `<PUBLIC_CORPUS>`, `<QA_WORKTREE>`, and `<QA_RUN>` in the requested audio evidence files and made the audio-review recipes use explicit local variables. Replacement handles both plain and JSON-escaped slashes. Parsed JSON comparison confirms every non-path value is unchanged; transcript results, timings, hashes, and candidate identifiers are preserved. The path-redaction receipt records source and curated hashes.
 
 ### 2. Additional original audio stdout paths — corrected locally
 
-Thread `PRRT_kwDORMx8l86gC774`, [comment r3953090206](https://github.com/moona3k/macparakeet/pull/979#discussion_r3953090206).
+Thread `PRRT_kwDORMx8l86gC774`, comment r3953090206.
 
 > Applied the same path-only redaction to the four cited stdout files and the other original audio stdout receipts. Swift JSON escapes slashes, so validation now inspects decoded strings as well as the serialized text. All non-path values remain identical; source hashes are preserved in the redaction receipt.
 
 ### 3. GUI duration interpretation — preserve the raw receipt
 
-Thread `PRRT_kwDORMx8l86gC779`, [comment r3953090213](https://github.com/moona3k/macparakeet/pull/979#discussion_r3953090213).
+Thread `PRRT_kwDORMx8l86gC779`, comment r3953090213.
 
 > This file is the raw observed GUI persistence receipt: `durationMs` was 9600. It does not assert a 10560 expected value. Preserving the receipt avoids rewriting observed evidence. `TranscriptionService` uses its metadata baseline and may extend it to the latest word end; stream duration alone is not a persistence oracle. No full-duration correctness pass is inferred from this receipt.
 
@@ -37,13 +37,13 @@ Assessment: the interpretation caution is useful, but changing the measured valu
 
 ### 4. Stale release-status inventory — corrected locally
 
-Thread `PRRT_kwDORMx8l86gC78A`, [comment r3953090216](https://github.com/moona3k/macparakeet/pull/979#discussion_r3953090216).
+Thread `PRRT_kwDORMx8l86gC78A`, comment r3953090216.
 
 > Updated `release-inventory.md` to mark the baseline documentation findings as corrected in this branch. The per-prompt settings status now reflects implemented on development main and unreleased; the old catalog/search/cards wording is explicitly historical.
 
 ### 5. Health command mutation claim — not supported by current code
 
-Thread `PRRT_kwDORMx8l86gC78F`, [comment r3953090222](https://github.com/moona3k/macparakeet/pull/979#discussion_r3953090222).
+Thread `PRRT_kwDORMx8l86gC78F`, comment r3953090222.
 
 > The specific health contract already says its database probe does not create or migrate the database and default invocation does not create application directories (`cli-json-v1.md`, Health section). `HealthCommand` calls `probeHealthDirectories` and `DatabaseManager(readOnlyPath:)`, rather than the creating/migrating database initializer. The earlier catalog paragraph describes read commands generally; it does not override this explicit health guarantee. Keeping the inventory row consistent with the implementation and specific contract.
 
@@ -51,7 +51,7 @@ Assessment: confirmed through `Sources/CLI/Commands/HealthCommand.swift` and the
 
 ### 6. Repeated completed-session discard — accepted narrow UX follow-up
 
-Thread `PRRT_kwDORMx8l86gC78J`, [comment r3953090228](https://github.com/moona3k/macparakeet/pull/979#discussion_r3953090228).
+Thread `PRRT_kwDORMx8l86gC78J`, comment r3953090228.
 
 > Confirmed a narrow stale-dialog UX case: repeating discard after completed-row settlement retains audio but finds no lock and reports `missingLock`. The current contract requires claiming the current lock and only guarantees a no-op for a missing folder. This does not delete completed audio. Keeping completed-row idempotence as a follow-up; a fix must verify the matching completed meeting row and preserve live-writer/lease refusal, rather than suppressing all `missingLock` errors.
 
@@ -59,7 +59,7 @@ Assessment: the existing tests cover repeated missing-folder discard, completed-
 
 ### 7. Extended Cohere paths and report — corrected locally
 
-Thread `PRRT_kwDORMx8l86gDFsH`, [comment r3953153369](https://github.com/moona3k/macparakeet/pull/979#discussion_r3953153369).
+Thread `PRRT_kwDORMx8l86gDFsH`, comment r3953153369.
 
 > Redacted the escaped fixture paths in all three extended Cohere stdout files and the workstation paths in `cohere-extended.md`, using the existing `<PUBLIC_FLEURS>` and `<QA_ROOT>` placeholders. Recomputed each changed stdout artifact's `curatedSHA256` and `sizeBytes`; `sourceSHA256` is unchanged. Parsed JSON comparison confirms all other values are preserved. The original audio stdout files were checked for the same escaped-slash issue and corrected as well.
 
@@ -67,19 +67,19 @@ Assessment: this resolves the specifically cited Cohere files and the correspond
 
 ### 8. Extended Cohere stdout hashes — corrected locally
 
-Thread `PRRT_kwDORMx8l86gDFsI`, [comment r3953153373](https://github.com/moona3k/macparakeet/pull/979#discussion_r3953153373).
+Thread `PRRT_kwDORMx8l86gDFsI`, comment r3953153373.
 
 > Replaced the Japanese and Korean `filePath` prefixes with `<PUBLIC_FLEURS>`, and fixed the identical Mandarin encoding case. The manifest now records the corrected `curatedSHA256` and `sizeBytes` for each. Original `sourceSHA256` values are preserved, and every manifest artifact's curated hash and byte count was verified.
 
 ### 9. Temporary browser evidence links — corrected locally
 
-Thread `PRRT_kwDORMx8l86gDFsK`, [comment r3953153377](https://github.com/moona3k/macparakeet/pull/979#discussion_r3953153377).
+Thread `PRRT_kwDORMx8l86gDFsK`, comment r3953153377.
 
 > Curated the inspected browser screenshots, results, logs, and portable runners under `evidence/report-browser/` and replaced the temporary links with relative links. The manifest records source/curated hashes and sanitization. Historical 106/107-before-fix and 26/26-after-fix results retain their snapshot provenance; later data-only synchronization is recorded separately. Local link existence and runner/JavaScript syntax checks passed.
 
 ## Latest outside-diff comments
 
-These appear in [the latest review body](https://github.com/moona3k/macparakeet/pull/979#pullrequestreview-5135835303) and have no separate review-thread IDs.
+These appear in the latest review body and have no separate review-thread IDs.
 
 1. **`MeetingRecordingRecoveryService.swift:418–422`, Major, `missingLock` discard.** This repeats the known stale-dialog concern but proposes broader lockless-folder removal. Do not implement that fallback. Recovery discovery requires a lock; a later missing lock can mean another process completed and settled the recording, leaving valid audio. The current partial-deletion correction restores a removed lock under the ownership mutex; restoration I/O failures remain errors with surviving audio preserved. A generic lockless deletion would undo the safety boundary. Proposed reply:
 

@@ -2,7 +2,7 @@
 
 Date: 2026-09-17, America/Los_Angeles.
 
-**Issue:** [#1085](https://github.com/moona3k/macparakeet/issues/1085).
+**Issue:** #1085.
 
 ## Verdict
 

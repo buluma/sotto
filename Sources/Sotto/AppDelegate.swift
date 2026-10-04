@@ -1272,7 +1272,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func showAboutPanel() {
-        let repoLink = "https://github.com/moona3k/macparakeet"
+        let repoLink = "https://github.com/buluma/sotto"
         guard let repoURL = URL(string: repoLink) else { return }
         let credits = NSMutableAttributedString()
 

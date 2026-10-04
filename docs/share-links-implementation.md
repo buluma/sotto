@@ -6,8 +6,8 @@ Sharing is implemented but **not publicly enabled**. `AppFeatures.shareLinksEnab
 
 Both implementations merged on September 12, 2026:
 
-- [App PR #1019](https://github.com/moona3k/macparakeet/pull/1019), merge `9e449e381874d16f507511373bad69e96345c598`.
-- [Website PR #44](https://github.com/moona3k/macparakeet-website/pull/44), merge `d74739b7e9c77c2c9f9d21768ee77af5a0282b35`.
+- App PR #1019, merge `9e449e381874d16f507511373bad69e96345c598`.
+- Website PR #44, merge `d74739b7e9c77c2c9f9d21768ee77af5a0282b35`.
 
 The [public walkthrough](https://macparakeet.com/dev/pr/1019/) is engineering documentation, not an enabled sharing service. The website [deployment runbook](https://github.com/moona3k/macparakeet-website/blob/main/docs/share-service-deployment.md) owns environment setup; this handoff owns the cross-repository release status. The original implementation plan and research remain historical context, not an instruction to rebuild the feature.
 

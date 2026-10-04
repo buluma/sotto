@@ -1,6 +1,6 @@
 # 0.8.0 final release review
 
-The reviewed fixes are merged in [PR #992](https://github.com/moona3k/macparakeet/pull/992)
+The reviewed fixes are merged in PR #992
 and final CI passed. The app and final DMG are signed, notarized, stapled, and
 Gatekeeper accepted. **The 0.8.0 distribution candidate is ready.** Earlier
 submissions remain `In Progress`, but the final clean submission below was
@@ -200,10 +200,10 @@ restart remains pending closure of that sheet.
 
 | Item | Disposition |
 | --- | --- |
-| [PR #865](https://github.com/moona3k/macparakeet/pull/865), transcribe.cpp Cohere | Defer. Open/conflicting, significant backend and packaging change. Retain current FluidAudio/CoreML Cohere. |
-| [PR #974](https://github.com/moona3k/macparakeet/pull/974), FluidAudio 0.15.6 | Already merged and included; no new inclusion decision. |
-| [#933](https://github.com/moona3k/macparakeet/issues/933), [#949](https://github.com/moona3k/macparakeet/issues/949), [#952](https://github.com/moona3k/macparakeet/issues/952) | Existing hardware/hotkey/Whisper reports remain unresolved. Do not advertise them as fixed by this review. |
-| [#976](https://github.com/moona3k/macparakeet/issues/976), [#977](https://github.com/moona3k/macparakeet/issues/977) | Existing capture/Line In reports; affected hardware not exercised here. |
+| PR #865, transcribe.cpp Cohere | Defer. Open/conflicting, significant backend and packaging change. Retain current FluidAudio/CoreML Cohere. |
+| PR #974, FluidAudio 0.15.6 | Already merged and included; no new inclusion decision. |
+| #933, #949, #952 | Existing hardware/hotkey/Whisper reports remain unresolved. Do not advertise them as fixed by this review. |
+| #976, #977 | Existing capture/Line In reports; affected hardware not exercised here. |
 | GUI, live external providers, Bluetooth/system-audio combinations, stable-to-candidate Sparkle upgrade | Not certified by these source reviews or mocked tests. |
 | Standalone CLI/Homebrew 4.0.0 | Separate publication; the app may embed 4.0.0 while Homebrew remains on 3.1.0. |
 

@@ -1,8 +1,8 @@
 # Per-Prompt LLM Inference Settings
 
 > Status: **IMPLEMENTED** — shipped in 0.8.0 through
-> [PR #968](https://github.com/moona3k/macparakeet/pull/968), integrating the work
-> from [PR #956](https://github.com/moona3k/macparakeet/pull/956).
+> PR #968, integrating the work
+> from PR #956.
 > Default semantics and the conditional reasoning-effort extension are recorded in
 > [`plans/active/2026-09-03-per-prompt-inference-settings.md`](../plans/active/2026-09-03-per-prompt-inference-settings.md).
 >

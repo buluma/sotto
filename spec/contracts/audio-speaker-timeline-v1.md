@@ -1,6 +1,6 @@
 # Audio Speaker Timeline v1
 
-> Status: **Planned; not implemented.** Accepted direction for [issue #836](https://github.com/moona3k/macparakeet/issues/836), 2026-09-14.
+> Status: **Planned; not implemented.** Accepted direction for issue #836, 2026-09-14.
 > Governing decision: [ADR-010](../adr/010-speaker-diarization.md#audio-speaker-timeline-decision-2026-09-14).
 > Implementation: [speaker timeline plan](../../docs/plans/2026-09-14-2147-feat-audio-speaker-timeline-plan.md).
 

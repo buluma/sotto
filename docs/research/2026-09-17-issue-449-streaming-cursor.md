@@ -6,7 +6,7 @@ Question: what is Superwhisper’s “streaming cursor with 1-character-at-a-tim
 
 ## What #449 actually asks for
 
-Issue [#449](https://github.com/moona3k/macparakeet/issues/449) (2026-06-07, app 0.6.21) is praise plus one miss:
+Issue #449 (2026-06-07, app 0.6.21) is praise plus one miss:
 
 > streaming cursor with 1-character-at-a-time output (from SuperWhisper). Cutesy and pointless but also kinda nice!!
 

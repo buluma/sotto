@@ -8,7 +8,7 @@ Speaker detection separates voices within one recording. Voice profiles add an o
 
 Enable meeting speaker detection, turn on **Remember speakers**, and acknowledge the permission notice. After a meeting, rename a speaker and choose **Remember** if a suitable temporary sample remains. Simply typing a label does not enroll a voice. Ordinary transcript editing continues to work without voice profiles.
 
-This version covers meeting recordings. It does not group recurring unnamed voices across historical recordings or offer a configurable recurrence threshold. Those parts of [issue #662](https://github.com/moona3k/macparakeet/issues/662) remain outside this implementation's scope. Temporary samples and identity writes apply to diarized system-audio clusters, not the microphone (`Me`) capture track.
+This version covers meeting recordings. It does not group recurring unnamed voices across historical recordings or offer a configurable recurrence threshold. Those parts of issue #662 remain outside this implementation's scope. Temporary samples and identity writes apply to diarized system-audio clusters, not the microphone (`Me`) capture track.
 
 ## What is stored locally
 

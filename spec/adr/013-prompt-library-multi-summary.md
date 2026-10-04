@@ -22,7 +22,7 @@
 
 ## Context
 
-Sotto's LLM summary feature (spec/11 §1) uses a single hardcoded system prompt and stores one summary per transcript (`transcriptions.summary` column). Users have requested control over how summaries are generated — different transcript types (meetings, lectures, podcasts) need different summarization approaches ([GitHub issue #51](https://github.com/moona3k/macparakeet/issues/51)).
+Sotto's LLM summary feature (spec/11 §1) uses a single hardcoded system prompt and stores one summary per transcript (`transcriptions.summary` column). Users have requested control over how summaries are generated — different transcript types (meetings, lectures, podcasts) need different summarization approaches (GitHub issue #51).
 
 The feature request also revealed a broader need: users want to run multiple different prompts against the same transcript and keep all the results. A meeting transcript might need both "Meeting Notes" and "Action Items" summaries simultaneously.
 

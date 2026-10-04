@@ -8,7 +8,7 @@ encoder `.cpuAndGPU` on 14 is the follow-up. Field replay:
 
 **Verdict:** Hour-class Parakeet TDT file / YouTube / meeting transcription was
 broken on macOS 14. The YouTube URL in
-[#997](https://github.com/moona3k/macparakeet/issues/997) is valid. The crash is
+#997 is valid. The crash is
 four concurrent Core ML `prediction()` calls on a shared ANE model, which
 FluidAudio documents as non-reentrant. Sotto's `ANEInferenceGate` does
 not serialize those inner workers. macOS 15+ rewrote the ANE runtime and

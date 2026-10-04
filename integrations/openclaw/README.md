@@ -5,7 +5,7 @@ A thin packaging entry point for an OpenClaw agent running on macOS 14.2+ with A
 ## Install and discover
 
 ```bash
-brew install moona3k/tap/sotto-cli
+brew install buluma/tap/sotto-cli
 sotto-cli --version
 sotto-cli spec --json
 sotto-cli health --json
@@ -17,7 +17,7 @@ An installed app also bundles the CLI at `/Applications/Sotto.app/Contents/MacOS
 
 - Adapt the existing [`sotto-stt` skill directory](../skill/sotto-stt/SKILL.md), rather than maintaining a second command catalog or prompt here.
 - Use `SKILL.md` with frontmatter, not `SOUL.md`. Verify ClawHub's current [skill format](https://docs.openclaw.ai/clawhub/skill-format) and publishing instructions before registration; this repository does not pin an external registry manifest or publication command.
-- Declare the macOS/Apple Silicon host requirement and `sotto-cli` executable dependency. The host binary is available through the [`moona3k/tap` Homebrew tap](https://github.com/moona3k/homebrew-tap).
+- Declare the macOS/Apple Silicon host requirement and `sotto-cli` executable dependency. The host binary is available through the [`buluma/tap` Homebrew tap](https://github.com/buluma/homebrew-tap).
 - Preserve the skill's consent, evidence, privacy, and isolation guidance. Optional provider credentials are not prerequisites for local speech recognition or deterministic transcript retrieval.
 
 ## Canonical references
@@ -30,4 +30,4 @@ An installed app also bundles the CLI at `/Applications/Sotto.app/Contents/MacOS
 
 ## Status
 
-Publication to ClawHub remains pending in this integration record; this candidate documentation update does not establish registry publication. Track packaging work under the repository's [`integration` issues](https://github.com/moona3k/macparakeet/issues?q=is%3Aissue+label%3Aintegration).
+Publication to ClawHub remains pending in this integration record; this candidate documentation update does not establish registry publication. Track packaging work under the repository's [`integration` issues](https://github.com/buluma/sotto/issues?q=is%3Aissue+label%3Aintegration).

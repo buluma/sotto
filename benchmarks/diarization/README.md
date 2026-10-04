@@ -130,11 +130,11 @@ RTTM speaker identity counts from [VoxConverse v0.3](https://github.com/joonson/
 (CC BY 4.0).
 
 This older count-only slice does **not** measure DER or close Auto 1:1 over-splits
-([#944](https://github.com/moona3k/macparakeet/issues/944)). Auto still allows
-`max = n + 1`. This suite tests the constraint path ([#1023](https://github.com/moona3k/macparakeet/issues/1023)).
+(#944). Auto still allows
+`max = n + 1`. This suite tests the constraint path (#1023).
 
 Unconstrained Auto over-split on the same seven files is a separate gate:
-[2026-09-15-issue-1046-baseline.md](2026-09-15-issue-1046-baseline.md) ([#1046](https://github.com/moona3k/macparakeet/issues/1046)).
+[2026-09-15-issue-1046-baseline.md](2026-09-15-issue-1046-baseline.md) (#1046).
 
 Nemotron trained on VoxConverse development and test, so this slice is a
 regression check rather than held-out evidence for its model quality.

@@ -2,7 +2,7 @@
 
 > Research snapshot before implementation. Subsequent matched runs, integration and the adoption decision are recorded in [the evaluation report](../../benchmarks/diarization/2026-09-25-nemotron-evaluation.md). Historical present-tense statements below describe the reviewed baseline.
 
-Date: 2026-09-25. Scope: source review, upstream benchmark evidence, and small isolated algorithm probes for [issue #1046](https://github.com/moona3k/macparakeet/issues/1046). This is research, not an implementation or a model accuracy comparison.
+Date: 2026-09-25. Scope: source review, upstream benchmark evidence, and small isolated algorithm probes for issue #1046. This is research, not an implementation or a model accuracy comparison.
 
 ## Recommendation
 
@@ -32,7 +32,7 @@ The reviewed reference is the clean local checkout at `references/omarchy-meetin
 
 Sotto's local checkout is `779e9b30fa084e9f56c9a68b2e69ab9e3fdd62b3`; fetched `origin/main` is `7ad569afae560266b37a0003e9e2b9f17a2dfa47`. The diarization service, merger, finalizer, segmenter, and FluidAudio package pin compared here are unchanged between those revisions. The later `MeetingRecordingOutput` change factors archive engine metadata lookup/validation; it does not change the attribution conclusions. Unrelated working-tree changes were preserved. Sotto implementation links identify the inspected local files; the analysis concerns development code, not qualification of a distributed DMG.
 
-The issue and its comments were read live. `k1n0b0n` reports both false one-word speaker switches and short stretches from different people being merged, and recommended this repository on September 25. The recording behind the screenshot was not available for this review, so the report does not claim its root cause. [Issue and recommendation](https://github.com/moona3k/macparakeet/issues/1046#issuecomment-5831424112).
+The issue and its comments were read live. `k1n0b0n` reports both false one-word speaker switches and short stretches from different people being merged, and recommended this repository on September 25. The recording behind the screenshot was not available for this review, so the report does not claim its root cause. Issue and recommendation.
 
 Verification performed: source tracing in both repositories, inspection of the exact-reference upstream CI run and public transcript artifact, direct Python scorer probes, and isolated executions of actual Rust/Swift helper code. **No local diarization model inference, model download, app build, physical recording test, or head-to-head audio benchmark was performed.** The follow-up comparison and plan are linked above.
 

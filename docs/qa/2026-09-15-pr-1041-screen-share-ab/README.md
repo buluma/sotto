@@ -6,14 +6,14 @@ system-audio capture, final transcription, and the shared workload's frame
 pacing. No actionable defect or merge blocker was found.
 
 This report preserves the evidence collected for
-[PR #1041](https://github.com/moona3k/macparakeet/pull/1041). The runtime test
+PR #1041. The runtime test
 used source head `8e6ebb957dd920bf32f40a72793f96bdb10b25e2`. The report commit changes
 documentation and QA evidence only.
 
 GitHub later merged the reviewed source to `main` as `58a7c42f` in PR #1041.
 
 The detailed result was also published in the
-[PR screen-share comment](https://github.com/moona3k/macparakeet/pull/1041#issuecomment-5677142731).
+PR screen-share comment.
 
 ## Code and review gates
 

@@ -10,7 +10,7 @@
     "verification": "Artifact hashes, local document links and edited Markdown whitespace checked. HTML and native experiment unchanged; their earlier verification was not rerun."
   },
   "scope": "Local research documents, synthetic audio spike, and standalone HTML concept. No production implementation.",
-  "issue": "https://github.com/moona3k/macparakeet/issues/895",
+  "issue": "#895",
   "currentMain": "aaf3dc261536e5fc5158c4b1ca714bd3f4cece19",
   "initialCheckout": "1159dfca8ae53a15ffcc1562b1efb9220f95cd88",
   "delegation": {

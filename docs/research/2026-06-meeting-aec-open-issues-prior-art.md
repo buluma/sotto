@@ -10,12 +10,12 @@
 
 Prioritize acoustic echo cancellation for speaker-mode meetings before more
 meeting polish or diarization work. The highest-priority issue cluster is
-[#605](https://github.com/moona3k/macparakeet/issues/605),
-[#480](https://github.com/moona3k/macparakeet/issues/480),
-[#430](https://github.com/moona3k/macparakeet/issues/430),
-[#501](https://github.com/moona3k/macparakeet/issues/501),
-[#542](https://github.com/moona3k/macparakeet/issues/542), and
-[#106](https://github.com/moona3k/macparakeet/issues/106). The user-visible
+#605,
+#480,
+#430,
+#501,
+#542, and
+#106. The user-visible
 failure is not only "diarization is imperfect." It is that remote speaker audio
 physically leaks from laptop speakers into the microphone track, so the same
 words appear as both `Others` and false `Me` text. In #605 the report says the
@@ -35,7 +35,7 @@ The recommended implementation path is:
    testing showed it can affect the user's outgoing call microphone.
 
 This should be the next meeting focus. Open PR
-[#537](https://github.com/moona3k/macparakeet/pull/537) can improve speaker
+#537 can improve speaker
 diarization and evaluation, but it does not remove system-audio bleed from the
 mic. Shipping diarization controls before AEC risks labeling duplicated content
 more neatly rather than removing the duplicate content.
@@ -43,9 +43,9 @@ more neatly rather than removing the duplicate content.
 ## Current open backlog map
 
 Live state at review time: 49 open issues and 3 open PRs
-([#621](https://github.com/moona3k/macparakeet/pull/621),
-[#537](https://github.com/moona3k/macparakeet/pull/537),
-[#363](https://github.com/moona3k/macparakeet/pull/363)).
+(#621,
+#537,
+#363).
 
 | Priority | Cluster | Issues | Why it ranks here |
 | --- | --- | --- | --- |

@@ -10,7 +10,7 @@ Reviewed on 2026-09-07. This is a source and existing-CI review, not a GUI execu
 | --- | --- |
 | Earlier main / release GUI baseline | `8548c099af5ee2ab0ed4dd9efe757d85c498cca0` |
 | New main | `c14b1ed43543dde1e73805f48bbabfcb4e03909d` |
-| Merged PR | [#959 — Autosave saved meeting notes and capture explicit prompt context](https://github.com/moona3k/macparakeet/pull/959) |
+| Merged PR | #959 — Autosave saved meeting notes and capture explicit prompt context |
 | PR author | `alfred-sa` |
 | PR final head | `8fa552d3c26ea27b79a1f871caf8fcb7f509e5c5` |
 | Merge time | `2026-09-07T23:13:58Z` |
@@ -19,7 +19,7 @@ Reviewed on 2026-09-07. This is a source and existing-CI review, not a GUI execu
 
 The new-main merge parents are the earlier baseline and the exact PR head above. GitHub's [CI run 34166760222](https://github.com/moona3k/macparakeet/actions/runs/34166760222) completed successfully at that PR head. Its [swift-test job](https://github.com/moona3k/macparakeet/actions/runs/34166760222/job/101879267574) reports successful release build, CLI contract smoke, release bundle smoke, concurrency safety, Swift 6 language mode, and Swift Test steps. The log reaches `[5552/5552]` parallel XCTest items and reports 29 Swift Testing tests passed. The progress denominator is not a verified non-skipped XCTest pass count; this review did not derive a skip inventory from that CI log.
 
-All 43 review threads were resolved when queried, with no remaining GraphQL page. Exact-head check runs include successful `swift-test` and a completed, neutral `cubic · AI code reviewer`. The PR check rollup also reports CodeRabbit success. `reviewDecision` is empty and exact-head submitted reviews are `COMMENTED`, including [the owner's final review entry](https://github.com/moona3k/macparakeet/pull/959#pullrequestreview-5135549242); this is not evidence of a formal `APPROVED` review. Earlier bot summary comments reference older commits and were not used as an exact-head verdict.
+All 43 review threads were resolved when queried, with no remaining GraphQL page. Exact-head check runs include successful `swift-test` and a completed, neutral `cubic · AI code reviewer`. The PR check rollup also reports CodeRabbit success. `reviewDecision` is empty and exact-head submitted reviews are `COMMENTED`, including the owner's final review entry; this is not evidence of a formal `APPROVED` review. Earlier bot summary comments reference older commits and were not used as an exact-head verdict.
 
 Evidence was obtained with read-only `gh pr view`, commit check-runs, PR reviews/review-thread queries, `gh run view --json`, and the existing run log. No GitHub state was changed.
 

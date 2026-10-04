@@ -2,7 +2,7 @@
 
 Date: 2026-09-21, America/Los_Angeles.
 
-**PR:** [#1091](https://github.com/moona3k/macparakeet/pull/1091).
+**PR:** #1091.
 
 Independent check of the optional Orukeet preview against Parakeet v3, using
 the repo ASR harness. Orukeet stays a Parakeet variant

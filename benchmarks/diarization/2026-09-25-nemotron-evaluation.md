@@ -1,6 +1,6 @@
 # Nemotron 3 diarization: matched evaluation and integration
 
-Date: 2026-09-25. Related: [#1046](https://github.com/moona3k/macparakeet/issues/1046),
+Date: 2026-09-25. Related: #1046,
 [research](../../docs/research/2026-09-25-nemotron-diarization-evaluation.md),
 [Omarchy review](../../docs/research/2026-09-25-omarchy-meeting-recorder-diarization-review.md),
 [implementation decision](../../spec/adr/010-speaker-diarization.md#nemotron-default-decision-2026-09-25).

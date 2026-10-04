@@ -5,7 +5,7 @@ A thin packaging entry point for Hermes Agent on macOS 14.2+ with Apple Silicon.
 ## Install and discover
 
 ```bash
-brew install moona3k/tap/sotto-cli
+brew install buluma/tap/sotto-cli
 sotto-cli --version
 sotto-cli spec --json
 sotto-cli health --json
@@ -30,4 +30,4 @@ An installed app also bundles the CLI at `/Applications/Sotto.app/Contents/MacOS
 
 ## Status
 
-This integration record notes a submission to `awesome-hermes-agent`, not verified acceptance or installation in the current registry. Track packaging work under the repository's [`integration` issues](https://github.com/moona3k/macparakeet/issues?q=is%3Aissue+label%3Aintegration).
+This integration record notes a submission to `awesome-hermes-agent`, not verified acceptance or installation in the current registry. Track packaging work under the repository's [`integration` issues](https://github.com/buluma/sotto/issues?q=is%3Aissue+label%3Aintegration).

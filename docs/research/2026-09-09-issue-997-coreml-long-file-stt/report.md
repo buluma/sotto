@@ -1,8 +1,8 @@
 # Long-file Parakeet STT dies on macOS 14 with a Core ML ML Program error
 
 Date: 2026-09-09
-Issues: [#997](https://github.com/moona3k/macparakeet/issues/997) (open),
-[#995](https://github.com/moona3k/macparakeet/issues/995) (closed as duplicate)
+Issues: #997 (open),
+#995 (closed as duplicate)
 App: 0.7.3 (`d6321f87`, build `20260717011712`)
 Pin: FluidAudio **0.15.6** on current `main` (was 0.15.4 on 0.7.3). Default
 `parallelChunkConcurrency` is still **4** in 0.15.6.
@@ -20,7 +20,7 @@ fixed **15 s / 240,000-sample** windows and, by default, runs **four of those
 windows at once** on **the same** `MLModel` instances. FluidAudio's own
 architecture notes say Core ML prediction is **not reentrant**. On macOS 14
 that concurrent ANE use is the class of bug `ANEInferenceGate` was added to
-stop ([#614](https://github.com/moona3k/macparakeet/pull/614) /
+stop (#614 /
 FluidAudio [#661](https://github.com/FluidInference/FluidAudio/issues/661)).
 The gate wraps the outer `transcribe(audioURL:)` call. It does **not** wrap the
 four inner chunk workers.
@@ -48,8 +48,8 @@ Transcription failed: Unable to compute the asynchronous prediction using ML Pro
 It can be an invalid input data or broken/unsupported model.
 ```
 
-[#995](https://github.com/moona3k/macparakeet/issues/995) at 16:24:25Z, no URL.
-[#997](https://github.com/moona3k/macparakeet/issues/997) at 16:45:46Z with
+#995 at 16:24:25Z, no URL.
+#997 at 16:45:46Z with
 `https://youtu.be/613IwdXRQT4` — public ~55 min sermon, duration **3311 s**.
 
 0.7.3 telemetry does not store `error_detail` on `transcription_failed`, so D1
@@ -245,7 +245,7 @@ This is a platform bug in our configuration, not a one-user sermon.
 | Chunk-seam quality bugs (FluidAudio #212, #747) | Missing words or blank last window, not a throw at t=0 |
 | macOS 26 ANE compiler (FluidAudio PR #482) | Reporter is 14.6.1 |
 | Idle-first-prediction (VoiceInk #614) | Four retries in 20 minutes all failed |
-| [#883](https://github.com/moona3k/macparakeet/issues/883) E5RT zero-shape | Post-success log on macOS 26 CLI / Unified; different error |
+| #883 E5RT zero-shape | Post-success log on macOS 26 CLI / Unified; different error |
 
 Related but different: FluidAudio [#320](https://github.com/FluidInference/FluidAudio/issues/320)
 is the same OS (14.6.1) and model (v3 TDT) with E5RT/IOSurface allocation
@@ -321,8 +321,8 @@ would likely succeed anyway.
 
 ## Sources
 
-- GitHub [#997](https://github.com/moona3k/macparakeet/issues/997),
-  [#995](https://github.com/moona3k/macparakeet/issues/995)
+- GitHub #997,
+  #995
 - D1 `sotto-telemetry`, queries in
   [evidence/d1-queries.md](evidence/d1-queries.md)
 - FluidAudio 0.15.4: `ASRConstants.swift`, `AsrTypes.swift`,
@@ -333,4 +333,4 @@ would likely succeed anyway.
   `TelemetryEvent.swift`
 - FluidAudio [#661](https://github.com/FluidInference/FluidAudio/issues/661),
   [#320](https://github.com/FluidInference/FluidAudio/issues/320)
-- Sotto [#614](https://github.com/moona3k/macparakeet/pull/614)
+- Sotto #614
