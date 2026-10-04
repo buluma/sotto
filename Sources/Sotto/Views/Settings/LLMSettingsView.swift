@@ -269,7 +269,7 @@ struct LLMSettingsView: View {
                             .foregroundStyle(DesignSystem.Colors.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    Text("This overview shows saved settings. Save changes before testing the route you intend to use.")
+                    Text("This overview shows saved settings. Test Connection checks the current Default AI settings.")
                         .font(DesignSystem.Typography.micro)
                         .foregroundStyle(DesignSystem.Colors.textTertiary)
                 }
@@ -2235,7 +2235,7 @@ struct LLMSettingsView: View {
                         .font(DesignSystem.Typography.caption)
                         .foregroundStyle(DesignSystem.Colors.errorRed)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text("Check the model and connection settings. For a server, confirm it is running; for a CLI tool, check installation and sign-in.")
+                    Text("Check the API key, model, and endpoint. For a server, confirm it is running; for a CLI tool, check installation and sign-in.")
                         .font(DesignSystem.Typography.micro)
                         .foregroundStyle(DesignSystem.Colors.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
