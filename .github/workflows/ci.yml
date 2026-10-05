@@ -436,7 +436,7 @@ jobs:
   swift-test:
     if: always()
     needs: [behavior, distribution, cache-qualification]
-    runs-on: macos-26
+    runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
       - name: Require Every CI Lane
