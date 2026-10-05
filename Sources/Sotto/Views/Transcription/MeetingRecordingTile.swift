@@ -102,7 +102,7 @@ struct MeetingRecordingTile: View {
 
     private var background: some View {
         RoundedRectangle(cornerRadius: tileCornerRadius)
-            .fill(DesignSystem.Colors.surfaceElevated)
+            .fill(DesignSystem.Colors.cardGradient)
             .overlay(
                 RoundedRectangle(cornerRadius: tileCornerRadius)
                     .strokeBorder(borderColor, lineWidth: 0.6)

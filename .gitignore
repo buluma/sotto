@@ -101,3 +101,4 @@ spike/
 
 # Local CI evidence (uploaded by GitHub Actions).
 /ci-logs/
+/plans

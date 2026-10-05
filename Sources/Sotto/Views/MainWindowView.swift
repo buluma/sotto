@@ -16,6 +16,9 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    /// Keep persisted route identity separate from the visible destination name.
+    var displayName: String { self == .transcribe ? "Capture" : rawValue }
+
     var icon: String {
         switch self {
         case .transcribe: return "waveform"
@@ -64,6 +67,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 
 struct MainWindowView: View {
     @Bindable var state: MainWindowState
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showGlobalCancelConfirmation = false
     @State private var showingPromptLibrary = false
     @State private var askHandoffError: String?
@@ -117,7 +121,6 @@ struct MainWindowView: View {
                     }
                 }
                 .listStyle(.sidebar)
-                .tint(DesignSystem.Colors.accent)
                 .safeAreaInset(edge: .bottom, spacing: 0) {
                     if settingsViewModel.showDiscover {
                         DiscoverSidebarCard(
@@ -338,16 +341,25 @@ struct MainWindowView: View {
                         )
                     }
                 }
-            }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .transaction { transaction in
+                    if reduceMotion {
+                        transaction.animation = nil
+                        transaction.disablesAnimations = true
+                    }
+                }
 
-            if showGlobalProgressBar {
-                globalTranscriptionBottomBar
+                if showGlobalProgressBar {
+                    globalTranscriptionBottomBar
+                }
             }
         }
         .frame(
             minWidth: 860,
             minHeight: DesignSystem.Layout.windowMinHeight
         )
+        .background { WindowCanvasBackground() }
+        .toolbarBackground(.hidden, for: .windowToolbar)
         .environment(\.shareManagement, shareManagementViewModel)
         // Presented from the window root, not the Library list: a finishing
         // transcription or menu navigation replaces the list while the sheet
@@ -609,7 +621,7 @@ private struct SidebarItemLabel: View {
                 .frame(width: Self.iconSlotWidth, alignment: .center)
                 .accessibilityHidden(true)
 
-            Text(item.rawValue)
+            Text(item.displayName)
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

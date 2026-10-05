@@ -238,7 +238,9 @@ struct TranscriptTextView: NSViewRepresentable {
     }
 
     private static func nsColor(_ color: Color, alpha: CGFloat = 1.0) -> NSColor {
-        NSColor(color).withAlphaComponent(alpha)
+        let nativeColor = NSColor(color)
+        // Preserve semantic colors' appearance-dependent resolution at full opacity.
+        return alpha == 1.0 ? nativeColor : nativeColor.withAlphaComponent(alpha)
     }
 }
 

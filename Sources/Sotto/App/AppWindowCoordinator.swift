@@ -259,7 +259,7 @@ final class AppWindowCoordinator: NSObject, NSWindowDelegate {
                 width: DesignSystem.Layout.sidebarMinWidth + DesignSystem.Layout.contentMinWidth,
                 height: DesignSystem.Layout.windowMinHeight
             ),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )

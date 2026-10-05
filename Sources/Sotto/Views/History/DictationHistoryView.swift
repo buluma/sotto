@@ -419,7 +419,7 @@ struct DictationCardRow: View {
 
                         Text(dictation.durationMs.formattedDuration)
                             .font(DesignSystem.Typography.duration)
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(DesignSystem.Colors.textSecondary)
 
                         if dictation.status == .cancelled {
                             Text("\u{2009}\u{00B7}\u{2009}")
@@ -428,7 +428,7 @@ struct DictationCardRow: View {
 
                             Text("Cancelled")
                                 .font(DesignSystem.Typography.caption)
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(DesignSystem.Colors.textSecondary)
                         }
 
                         if isFailed {
@@ -448,7 +448,7 @@ struct DictationCardRow: View {
 
                             Image(systemName: "mic.fill")
                                 .font(.system(size: 8))
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(DesignSystem.Colors.textSecondary)
                         }
 
                         if let provenance = formatterProvenanceText {
@@ -459,10 +459,10 @@ struct DictationCardRow: View {
                             HStack(spacing: 3) {
                                 Image(systemName: "wand.and.stars")
                                     .font(.system(size: 8))
-                                    .foregroundStyle(.tertiary)
+                                    .foregroundStyle(DesignSystem.Colors.textSecondary)
                                 Text(provenance)
                                     .font(DesignSystem.Typography.caption)
-                                    .foregroundStyle(.tertiary)
+                                    .foregroundStyle(DesignSystem.Colors.textSecondary)
                                     .lineLimit(1)
                             }
                             .help(formatterProvenanceHelp(for: provenance))
@@ -634,7 +634,7 @@ struct DictationCardRow: View {
                 if let errorMessage = dictation.errorMessage, !errorMessage.isEmpty {
                     Text(errorMessage)
                         .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
                         .lineLimit(2)
                         .textSelection(.enabled)
                 }

@@ -5,6 +5,14 @@ import SottoViewModels
 
 @MainActor
 final class MainWindowStateTests: XCTestCase {
+    func testCaptureDisplayNamePreservesTranscribeRouteIdentity() {
+        XCTAssertEqual(SidebarItem.transcribe.displayName, "Capture")
+        XCTAssertEqual(SidebarItem.transcribe.rawValue, "Transcribe")
+        XCTAssertEqual(SidebarItem.transcribe.id, "Transcribe")
+        XCTAssertEqual(SidebarItem(rawValue: "Transcribe"), .transcribe)
+        XCTAssertEqual(SidebarItem.dictations.displayName, "Dictations")
+    }
+
     func testNavigateToSettingsSelectsSettingsAndRecordsRequestedTab() {
         let state = MainWindowState()
 

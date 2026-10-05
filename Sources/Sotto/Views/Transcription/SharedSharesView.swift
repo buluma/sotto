@@ -48,7 +48,6 @@ struct SharedSharesView: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(DesignSystem.Colors.background)
         .task { await model.refresh() }
         .sheet(isPresented: $showingRecovery) { ShareRecoveryView(model: model) }
         .sheet(item: $changingExpiry) { share in
