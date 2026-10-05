@@ -59,6 +59,8 @@ Minimum window width: 800pt.
 
 The main window's detail column fills every destination with `DesignSystem.Colors.contentBackground`; page backgrounds must not fall through to the system window color. Cards and controls keep their own surface colors.
 
+Keep navigation in standard SwiftUI components so supported macOS releases can provide their native appearance. The Dictations History/Stats selector uses a tinted Liquid Glass selection pill on macOS 26 and the accent capsule on earlier supported versions.
+
 ### Sidebar
 
 The sidebar uses NavigationSplitView with flat items (icon + label):

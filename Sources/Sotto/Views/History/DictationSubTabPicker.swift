@@ -1,10 +1,9 @@
 import SwiftUI
 import SottoViewModels
 
-/// Coral-tinted Capsule picker for the Dictations sub-tabs. Replaces the
-/// system `.segmented` style so the selected tab uses the app's accent
-/// rather than system blue, and a `matchedGeometryEffect` slides the pill
-/// between options for a small moment of delight.
+/// Capsule picker for the Dictations sub-tabs. Its selected tab uses a tinted
+/// Liquid Glass pill on macOS 26+, with the accent capsule retained on older
+/// systems. A `matchedGeometryEffect` slides the selection between options.
 struct DictationSubTabPicker: View {
     @Binding var selection: DictationHistoryViewModel.SubTab
     @Namespace private var pillNamespace
@@ -40,17 +39,13 @@ struct DictationSubTabPicker: View {
         } label: {
             Text(label(for: tab))
                 .font(.system(size: 12.5, weight: .semibold, design: .rounded))
-                .foregroundStyle(isSelected ? Color.white : Color.primary.opacity(isHovered ? 0.85 : 0.65))
+                .foregroundStyle(
+                    isSelected ? DesignSystem.Colors.onAccent : Color.primary.opacity(isHovered ? 0.85 : 0.65))
                 .padding(.horizontal, 16)
                 .padding(.vertical, 6)
                 .frame(minWidth: 70)
                 .background {
-                    if isSelected {
-                        Capsule()
-                            .fill(DesignSystem.Colors.accent)
-                            .shadow(color: DesignSystem.Colors.accent.opacity(0.30), radius: 6, x: 0, y: 2)
-                            .matchedGeometryEffect(id: "pill", in: pillNamespace)
-                    }
+                    selectionIndicator(isSelected: isSelected)
                 }
                 .contentShape(Capsule())
         }
@@ -59,6 +54,26 @@ struct DictationSubTabPicker: View {
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .onHover { hovering in
             hoveredTab = hovering ? tab : (hoveredTab == tab ? nil : hoveredTab)
+        }
+    }
+
+    @ViewBuilder
+    private func selectionIndicator(isSelected: Bool) -> some View {
+        if isSelected {
+            if #available(macOS 26.0, *) {
+                Capsule()
+                    .fill(.clear)
+                    .glassEffect(
+                        .regular.tint(DesignSystem.Colors.accent).interactive(),
+                        in: Capsule()
+                    )
+                    .matchedGeometryEffect(id: "pill", in: pillNamespace)
+            } else {
+                Capsule()
+                    .fill(DesignSystem.Colors.accent)
+                    .shadow(color: DesignSystem.Colors.accent.opacity(0.30), radius: 6, x: 0, y: 2)
+                    .matchedGeometryEffect(id: "pill", in: pillNamespace)
+            }
         }
     }
 
