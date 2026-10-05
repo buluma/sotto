@@ -51,7 +51,7 @@ extension View {
     }
 
     /// Brand-consistent switch styling. Use for every `Toggle` styled as a
-    /// switch so on-state follows the brand accent rather than the system blue that
+    /// switch so on-state reads consistently app-wide rather than the system blue that
     /// an untinted `.switch` falls back to. Keeps sibling toggles consistent.
     func sottoSwitch() -> some View {
         self.toggleStyle(.switch)

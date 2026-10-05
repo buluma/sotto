@@ -123,20 +123,18 @@ final class TranscriptionLibraryViewModelTests: XCTestCase {
         let gate = StaleFetchGate()
         let mockRepo = MockTranscriptionRepository()
         mockRepo.fetchHandler = { id in
-            if id == first.id {
-                gate.blockFirstFetchUntilAllowed()
-            }
+            if id == first.id { gate.blockFirstFetchUntilAllowed() }
             return id == first.id ? first : second
         }
         let viewModel = try XCTUnwrap(vm)
         viewModel.configure(transcriptionRepo: mockRepo)
         let earlier = Task { await viewModel.loadForOpening(first) }
         defer { gate.allowFirstFetchToFinish() }
-        let started = await Task.detached { gate.waitForFirstFetchStarted() }.value
-        XCTAssertTrue(started, "The first open must be in flight before the second begins")
-        guard started else { return }
-
-        let laterResult = await viewModel.loadForOpening(second)
+        let firstFetchStarted = await Task.detached { gate.waitForFirstFetchStarted() }.value
+        XCTAssertTrue(firstFetchStarted, "The first open must be in flight before the second begins")
+        guard firstFetchStarted else { return }
+        let later = Task { await viewModel.loadForOpening(second) }
+        let laterResult = await later.value
         gate.allowFirstFetchToFinish()
         let earlierResult = await earlier.value
         XCTAssertNil(earlierResult)

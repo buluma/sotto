@@ -76,7 +76,7 @@ struct AskSourcePickerView: View {
             .padding(18)
         }
         .frame(minWidth: 760, idealWidth: 890, minHeight: 610, idealHeight: 700)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(DesignSystem.Colors.contentBackground)
         .sheet(item: $preview) { source in
             AskSourcePreviewView(source: source)
         }

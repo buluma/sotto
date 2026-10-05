@@ -52,7 +52,7 @@ struct EngineOptionTile: View {
                 header
                 Text(tagline)
                     .font(DesignSystem.Typography.bodySmall.weight(.medium))
-                    .foregroundStyle(DesignSystem.Colors.accent)
+                    .foregroundStyle(isSelected ? DesignSystem.Colors.accent : DesignSystem.Colors.textSecondary)
                     .padding(.top, 2)
 
                 VStack(alignment: .leading, spacing: 6) {
@@ -159,20 +159,20 @@ struct EngineOptionTile: View {
             needsFirstOptimize: needsFirstOptimize,
             unavailableReason: isUnavailable ? unavailableReason : nil
         )
-        return HStack(alignment: .center, spacing: DesignSystem.Spacing.xs) {
-            Circle()
-                .fill(info.color)
-                .frame(width: 6, height: 6)
-            Text(info.label)
-                .font(DesignSystem.Typography.micro.weight(.medium))
-                .foregroundStyle(info.color)
+        return VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
+            HStack(spacing: DesignSystem.Spacing.xs) {
+                Circle()
+                    .fill(info.color)
+                    .frame(width: 6, height: 6)
+                Text(info.label)
+                    .font(DesignSystem.Typography.micro.weight(.medium))
+                    .foregroundStyle(info.color)
+            }
             Text(info.detail)
                 .font(DesignSystem.Typography.micro)
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .lineLimit(isUnavailable ? 2 : 1)
-                .truncationMode(.tail)
-                .fixedSize(horizontal: false, vertical: isUnavailable)
-            Spacer(minLength: DesignSystem.Spacing.xs)
+                .lineLimit(isUnavailable ? nil : 2)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.top, DesignSystem.Spacing.xs)
         .padding(.horizontal, 2)

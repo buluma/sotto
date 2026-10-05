@@ -8,11 +8,7 @@ import SottoViewModels
 /// tile) → footer with reseed-missing affordance. Calmer no-provider
 /// banner replaces the hero when no LLM is configured.
 ///
-/// Visual continuity: rounded display type (no serif — we use
-/// `.rounded` system font, not a literal serif copy of the reference
-/// screenshots), warm coral accent only on the keycap badges + primary
-/// CTAs, generous whitespace, hover lift on cards via the existing
-/// `cardRest`/`cardHover` shadow tokens.
+/// Uses shared typography, neutral card surfaces, and native actions.
 struct TransformsView: View {
     @Bindable var viewModel: TransformsViewModel
     let reservedHotkeys: [TransformShortcutReservedHotkey]
@@ -59,11 +55,10 @@ struct TransformsView: View {
 
                 footerActions
             }
-            .padding(.horizontal, DesignSystem.Spacing.xl)
+            .padding(.horizontal, DesignSystem.Spacing.lg)
             .padding(.vertical, DesignSystem.Spacing.lg)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(DesignSystem.Colors.background)
         .onAppear {
             Task { await viewModel.loadHistory() }
         }
@@ -124,15 +119,14 @@ struct TransformsView: View {
     private var heroHeader: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
             Text("Transforms")
-                .font(DesignSystem.Typography.heroTitle)
+                .font(DesignSystem.Typography.pageTitle)
                 .foregroundStyle(DesignSystem.Colors.textPrimary)
 
-            Text("Press a hotkey on any selected text to rewrite it through your LLM provider — in Slack, Notes, Gmail, your editor, anywhere on Mac.")
-                .font(DesignSystem.Typography.bodyLarge)
+            Text("Rewrite selected text in any app using a transform shortcut.")
+                .font(DesignSystem.Typography.body)
                 .foregroundStyle(DesignSystem.Colors.textSecondary)
                 .frame(maxWidth: 640, alignment: .leading)
         }
-        .padding(.top, DesignSystem.Spacing.md)
     }
 
     @ViewBuilder
@@ -152,7 +146,7 @@ struct TransformsView: View {
             .padding(.vertical, DesignSystem.Spacing.lg)
             .padding(.horizontal, DesignSystem.Spacing.lg)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(DesignSystem.Colors.surfaceElevated)
+            .background(DesignSystem.Colors.cardGradient)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius))
             .overlay {
                 RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius)
@@ -385,7 +379,7 @@ private struct TransformHistoryEmptyState: View {
             Spacer()
         }
         .padding(DesignSystem.Spacing.lg)
-        .background(DesignSystem.Colors.cardBackground)
+        .background(DesignSystem.Colors.cardGradient)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius))
         .overlay {
             RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius)
@@ -422,7 +416,7 @@ private struct TransformHistoryNoResultsState: View {
                 .controlSize(.small)
         }
         .padding(DesignSystem.Spacing.lg)
-        .background(DesignSystem.Colors.cardBackground)
+        .background(DesignSystem.Colors.cardGradient)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius))
         .overlay {
             RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius)
@@ -490,7 +484,7 @@ private struct TransformHistoryRow: View {
         .padding(DesignSystem.Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius)
-                .fill(isHovered ? DesignSystem.Colors.surfaceElevated.opacity(0.7) : DesignSystem.Colors.cardBackground)
+                .fill(DesignSystem.Colors.cardGradient)
                 .cardShadow(isHovered ? DesignSystem.Shadows.cardHover : DesignSystem.Shadows.cardRest)
         )
         .overlay {
@@ -946,7 +940,7 @@ private struct TransformCard: View {
         }
         .padding(DesignSystem.Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DesignSystem.Colors.cardBackground)
+        .background(DesignSystem.Colors.cardGradient)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius))
         .overlay {
             RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius)

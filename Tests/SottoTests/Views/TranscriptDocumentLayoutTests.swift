@@ -11,6 +11,15 @@ import XCTest
 /// Parsing is awaited explicitly so assertions cannot pass on an empty view.
 @MainActor
 final class TranscriptDocumentLayoutTests: XCTestCase {
+    /// AppKit normally clamps titled windows to the attached screen's height.
+    /// These offscreen layout fixtures must offer the requested size even on
+    /// a CI runner whose display is shorter than the test's larger viewport.
+    private final class LayoutWindow: NSWindow {
+        override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect {
+            frameRect
+        }
+    }
+
     private final class Host<Content: View>: NSHostingView<Content> {
         var layouts = 0
         override func layout() {
@@ -73,7 +82,7 @@ final class TranscriptDocumentLayoutTests: XCTestCase {
                 chatViewModel: TranscriptChatViewModel(), promptResultsViewModel: results,
                 promptsViewModel: PromptsViewModel()
             ).defaultAppStorage(defaults))
-        let window = NSWindow(
+        let window = LayoutWindow(
             contentRect: NSRect(x: -20_000, y: -20_000, width: 1_100, height: 650),
             styleMask: [.titled, .resizable], backing: .buffered, defer: false
         )
@@ -96,14 +105,19 @@ final class TranscriptDocumentLayoutTests: XCTestCase {
         host.layoutSubtreeIfNeeded()
         RunLoop.main.run(until: Date().addingTimeInterval(0.2))
         let editor = try XCTUnwrap(descendants(host).compactMap { $0 as? NSTextView }.first(where: \.isEditable))
+        XCTAssertEqual(host.bounds.height, 650, accuracy: 1)
         let smallHeight = try XCTUnwrap(editor.enclosingScrollView).contentView.bounds.height
         pane.setFrameSize(NSSize(width: 1_100, height: 950))
-        host.layoutSubtreeIfNeeded()
-        RunLoop.main.run(until: Date().addingTimeInterval(0.2))
-        XCTAssertEqual(host.bounds.height, 950, accuracy: 1)
-        // SwiftUI may replace the native text view during a layout update.
-        let resizedEditor = try XCTUnwrap(descendants(host).compactMap { $0 as? NSTextView }.first(where: \.isEditable))
-        let largeHeight = try XCTUnwrap(resizedEditor.enclosingScrollView).contentView.bounds.height
+        var resizedEditor = try XCTUnwrap(descendants(host).compactMap { $0 as? NSTextView }.first(where: \.isEditable))
+        var largeHeight = try XCTUnwrap(resizedEditor.enclosingScrollView).contentView.bounds.height
+        let layoutDeadline = Date().addingTimeInterval(2)
+        while largeHeight - smallHeight <= 200, Date() < layoutDeadline {
+            host.layoutSubtreeIfNeeded()
+            RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+            resizedEditor = try XCTUnwrap(descendants(host).compactMap { $0 as? NSTextView }.first(where: \.isEditable))
+            largeHeight = try XCTUnwrap(resizedEditor.enclosingScrollView).contentView.bounds.height
+        }
+        XCTAssertEqual(host.bounds.height, 950, accuracy: 1, "The fixture must actually offer the larger viewport")
         print("Result editor viewport: \(smallHeight) -> \(largeHeight) for +300 pt window height")
         XCTAssertGreaterThan(
             largeHeight - smallHeight, 200,
@@ -140,7 +154,7 @@ final class TranscriptDocumentLayoutTests: XCTestCase {
                 }
                 .padding(24)
             })
-        let window = NSWindow(
+        let window = LayoutWindow(
             contentRect: NSRect(x: -20_000, y: -20_000, width: width, height: 650),
             styleMask: [.titled, .resizable], backing: .buffered, defer: false
         )

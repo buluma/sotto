@@ -57,6 +57,10 @@ Design philosophy: **Simple, native, stays out of the way.** No chrome, no clutt
 
 Minimum window width: 800pt.
 
+The main window keeps its SwiftUI hosting view as the window content view so native toolbars and search remain available. Its detail column draws one behind-window material with a light graphite or mint tint through `WindowCanvasBackground`. Page roots leave that shared canvas visible; cards and controls retain opaque surfaces for readability.
+
+Prefer standard SwiftUI controls for navigation and selection so each supported macOS release can provide its native appearance. The Dictations History/Stats selector uses a segmented `Picker`, which adopts the system's Liquid Glass appearance when available.
+
 ### Sidebar
 
 The sidebar uses NavigationSplitView with flat items (icon + label):
@@ -1160,7 +1164,7 @@ Hard rules — coral is brand, not chrome:
 | `accentLight` | coral 92% / coral 12% | Hover/selection backgrounds tied to accent |
 | `accentDark` | deeper coral | Pressed states, accent variants |
 | **Surfaces** | | |
-| `background` | warm off-white / near-black | App-level background |
+| `background` | warm off-white / graphite (`#1D1D1F`) | App-level background |
 | `surface` | white / dark gray | Cards, sheet content |
 | `surfaceElevated` | warm cream / lighter dark | Elevated surfaces, hover targets |
 | `cardBackground` | white / dark gray | Card body fill |
@@ -1390,3 +1394,11 @@ Sidebar tips display their full body directly, including multiline banter, with 
 AI Settings shows each saved task route's provider, model, and processing location. Loopback servers are identified as running on this Mac; other HTTP endpoints are remote regardless of provider name. CLI processing depends on the selected tool's configuration, and Apple Intelligence is managed by macOS. The existing connection test applies to the current default-provider draft; the route overview describes saved configurations.
 
 Single file and media-link transcription failures offer Retry Transcription using the original input and audio-track selection. Unrelated errors and dismissed errors clear that retry action; batch and existing-record retranscription retain their existing recovery flows. Model preparation explains that transcription starts automatically when ready.
+
+## Current UI polish (personal fork)
+
+The existing Transcribe route is displayed as **Capture**; its identifier and navigation behavior remain unchanged. Dictations stays separate from Library, and Settings retains Capture, Engine, AI, and System tabs.
+
+The main window owns one behind-window canvas extending beneath its native titlebar and toolbar. Reduce Transparency replaces this with the solid background token. Content cards share a diagonal gradient from the neutral card token to a translucent elevated surface, with semantic primary/secondary labels; primary actions use the brand accent while native selection and focus styling remain intact. Dictation statistic cards retain three equal-width columns at supported window sizes, scaling their text when space is tight.
+
+Capture import cards stack when horizontal space is insufficient and scroll vertically. Its meeting tile is compact. Library header actions wrap below the heading in compact windows, filters scroll horizontally, and the unfiltered empty state offers the existing creation action. Meeting recovery alerts precede upcoming and saved content; configuration remains secondary without changing its links or behavior.

@@ -10,7 +10,6 @@ struct VocabularyView: View {
 
     @State private var showCustomWords = false
     @State private var showTextSnippets = false
-    @State private var hoveredCardTitle: String?
     @State private var hoveredModeTitle: String?
 
     private var selectedMode: Dictation.ProcessingMode {
@@ -40,7 +39,6 @@ struct VocabularyView: View {
             }
             .padding(DesignSystem.Spacing.lg)
         }
-        .background(DesignSystem.Colors.background)
         .sheet(isPresented: $showCustomWords) {
             settingsViewModel.refreshStats()
         } content: {
@@ -48,7 +46,7 @@ struct VocabularyView: View {
                 viewModel: customWordsViewModel,
                 recognitionStatus: settingsViewModel.customVocabularyRecognitionStatus
             )
-                .frame(width: 640, height: 560)
+            .frame(width: 640, height: 560)
         }
         .sheet(isPresented: $showTextSnippets) {
             settingsViewModel.refreshStats()
@@ -144,7 +142,8 @@ struct VocabularyView: View {
                 pipelineStep(
                     number: 3,
                     title: "Expand snippets",
-                    detail: "\(settingsViewModel.snippetCount) phrase snippet\(settingsViewModel.snippetCount == 1 ? "" : "s")",
+                    detail:
+                        "\(settingsViewModel.snippetCount) phrase snippet\(settingsViewModel.snippetCount == 1 ? "" : "s")",
                     actionTitle: "Manage snippets",
                     action: {
                         textSnippetsViewModel.loadSnippets()
@@ -270,9 +269,11 @@ struct VocabularyView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Spoken punctuation")
                     .font(DesignSystem.Typography.body)
-                Text("“question mark” → ? · “literal question mark” keeps the words. Dictation only; file and meeting transcripts stay verbatim.")
-                    .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(.secondary)
+                Text(
+                    "“question mark” → ? · “literal question mark” keeps the words. Dictation only; file and meeting transcripts stay verbatim."
+                )
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(.secondary)
             }
 
             Spacer()
@@ -314,7 +315,8 @@ struct VocabularyView: View {
                                 .foregroundStyle(DesignSystem.Colors.warningAmber)
                         } else {
                             VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
-                                ForEach(Array(settingsViewModel.voiceReturnTriggers.enumerated()), id: \.element) { index, trigger in
+                                ForEach(Array(settingsViewModel.voiceReturnTriggers.enumerated()), id: \.element) {
+                                    index, trigger in
                                     voiceReturnTriggerRow(trigger: trigger, index: index)
                                 }
                             }
@@ -328,19 +330,26 @@ struct VocabularyView: View {
                             Image(systemName: "info.circle")
                                 .font(.system(size: 12, weight: .semibold))
                                 .foregroundStyle(.secondary)
-                            Text("Say any listed phrase at the end of a dictation to simulate a Return keypress. The trigger must be the last words spoken — if it appears mid-sentence, it's pasted as normal text.")
-                                .font(DesignSystem.Typography.caption)
-                                .foregroundStyle(.secondary)
+                            Text(
+                                "Say any listed phrase at the end of a dictation to simulate a Return keypress. The trigger must be the last words spoken — if it appears mid-sentence, it's pasted as normal text."
+                            )
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(.secondary)
                         }
 
                         let trigger = settingsViewModel.voiceReturnExampleTrigger
                         VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
-                            exampleRow(input: "git status \(trigger)", result: "Pastes \"git status\" + presses ⏎", fires: true)
+                            exampleRow(
+                                input: "git status \(trigger)", result: "Pastes \"git status\" + presses ⏎", fires: true
+                            )
                             exampleRow(input: "\(trigger)", result: "Just presses ⏎ (nothing to paste)", fires: true)
                             if let secondaryTrigger = settingsViewModel.voiceReturnTriggers.dropFirst().first {
-                                exampleRow(input: "git status \(secondaryTrigger)", result: "Also presses ⏎", fires: true)
+                                exampleRow(
+                                    input: "git status \(secondaryTrigger)", result: "Also presses ⏎", fires: true)
                             }
-                            exampleRow(input: "the \(trigger) was broken", result: "Pastes as-is — trigger is mid-sentence", fires: false)
+                            exampleRow(
+                                input: "the \(trigger) was broken", result: "Pastes as-is — trigger is mid-sentence",
+                                fires: false)
                             exampleRow(input: "git status", result: "Pastes as-is — no trigger spoken", fires: false)
                         }
                         .padding(.leading, DesignSystem.Spacing.lg)
@@ -419,9 +428,11 @@ struct VocabularyView: View {
             subtitle: "Text processing is off.",
             icon: "waveform.badge.exclamationmark"
         ) {
-            Text("Switch to Clean mode when you want post-processing before paste/export.")
-                .font(DesignSystem.Typography.bodySmall)
-                .foregroundStyle(.secondary)
+            Text(
+                "Corrections and snippets are applied only in Clean mode. Switch modes above to use them on your next dictation."
+            )
+            .font(DesignSystem.Typography.bodySmall)
+            .foregroundStyle(.secondary)
         }
     }
 
@@ -438,7 +449,6 @@ struct VocabularyView: View {
         icon: String,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        let isHovered = hoveredCardTitle == title
         return VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
             HStack(alignment: .top, spacing: DesignSystem.Spacing.sm) {
                 Image(systemName: icon)
@@ -465,21 +475,17 @@ struct VocabularyView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius)
-                .fill(DesignSystem.Colors.cardBackground)
-                .cardShadow(isHovered ? DesignSystem.Shadows.cardHover : DesignSystem.Shadows.cardRest)
+                .fill(DesignSystem.Colors.cardGradient)
+                .cardShadow(DesignSystem.Shadows.cardRest)
         )
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius)
                 .strokeBorder(
-                    isHovered ? DesignSystem.Colors.accent.opacity(0.2) : DesignSystem.Colors.border.opacity(0.6),
+                    DesignSystem.Colors.border.opacity(0.6),
                     lineWidth: 0.5
                 )
         )
-        .onHover { hovering in
-            withAnimation(DesignSystem.Animation.hoverTransition) {
-                hoveredCardTitle = hovering ? title : nil
-            }
-        }
+
     }
 
     private func exampleRow(input: String, result: String, fires: Bool) -> some View {
@@ -492,7 +498,7 @@ struct VocabularyView: View {
                 .foregroundStyle(.primary)
             Text("→")
                 .font(DesignSystem.Typography.caption)
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
             Text(result)
                 .font(DesignSystem.Typography.caption)
                 .foregroundStyle(.secondary)
@@ -532,7 +538,7 @@ struct VocabularyView: View {
 
                 Text(detail)
                     .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(DesignSystem.Spacing.md)

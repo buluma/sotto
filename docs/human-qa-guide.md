@@ -48,8 +48,9 @@ For packaged-app QA, use a locally built DMG. There is no Sparkle release candid
 
 ## First-run gotchas for the dev build
 
-- The dev build is a **separate app** to macOS, so it requests its **own permissions** — Microphone, Accessibility, and (for system-audio meeting modes) Screen & System Audio Recording. Grant them when prompted.
+- The dev build is a **separate app** to macOS, so it requests its **own permissions** — Microphone, Input Monitoring for global hotkeys, Accessibility (Device Control and Data Access on some macOS versions) for paste, and (for system-audio meeting modes) Screen & System Audio Recording. Grant them when prompted.
 - If permissions act stuck after a re-sign, inspect the affected permission in System Settings → Privacy & Security and confirm it belongs to the running dev app.
+- If the on-screen dictation control works but Fn does not, check Input Monitoring and the macOS Keyboard setting **Press fn key to**; see the [permission recovery guide](permissions-and-keyboard-shortcuts.md).
 - GUI settings can start fresh while history remains shared. Confirm the resolved data paths before treating the dev build as a clean slate.
 
 ## Markdown regression checks

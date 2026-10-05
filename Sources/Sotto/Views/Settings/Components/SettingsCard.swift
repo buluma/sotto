@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Hover-aware card shell used across all Settings tabs.
+/// Neutral section shell used across all Settings tabs.
 ///
 /// API surface (kept small on purpose):
 /// - `title` + `subtitle` + `icon` — required, drives the header
@@ -22,8 +22,6 @@ struct SettingsCard<Content: View>: View {
     let statusChip: SettingsCardStatus?
     @ViewBuilder let content: () -> Content
 
-    @State private var isHovered = false
-
     init(
         title: String,
         subtitle: String,
@@ -43,7 +41,7 @@ struct SettingsCard<Content: View>: View {
     }
 
     var body: some View {
-        let resolvedIconTint = iconTint ?? DesignSystem.Colors.accent
+        let resolvedIconTint = iconTint ?? DesignSystem.Colors.textSecondary
         return VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
             HStack(alignment: .top, spacing: DesignSystem.Spacing.sm) {
                 Image(systemName: icon)
@@ -84,21 +82,17 @@ struct SettingsCard<Content: View>: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius)
-                .fill(DesignSystem.Colors.cardBackground)
-                .cardShadow(isHovered ? DesignSystem.Shadows.cardHover : DesignSystem.Shadows.cardRest)
+                .fill(DesignSystem.Colors.cardGradient)
+                .cardShadow(DesignSystem.Shadows.cardRest)
         )
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius)
                 .strokeBorder(
-                    isHovered ? DesignSystem.Colors.accent.opacity(0.2) : DesignSystem.Colors.border.opacity(0.6),
+                    DesignSystem.Colors.border.opacity(0.6),
                     lineWidth: 0.5
                 )
         )
-        .onHover { hovering in
-            withAnimation(DesignSystem.Animation.hoverTransition) {
-                isHovered = hovering
-            }
-        }
+
     }
 }
 

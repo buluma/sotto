@@ -14,7 +14,7 @@ concurrency:
 jobs:
   dmg:
     name: Build Apple Silicon DMG
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 120
     permissions:
       contents: write
@@ -42,7 +42,7 @@ jobs:
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: "27.0"
 
       # Use the distribution cache identity and path so eligible CI caches
       # can seed releases. Always rebuild before packaging the release.
@@ -63,6 +63,7 @@ jobs:
           key: xcode-v1-${{ steps.xcode_cache.outputs.fingerprint }}-${{ steps.xcode_cache.outputs.commit }}
           restore-keys: |
             xcode-v1-${{ steps.xcode_cache.outputs.fingerprint }}-
+
 
       - name: Validate release version and architecture
         shell: bash

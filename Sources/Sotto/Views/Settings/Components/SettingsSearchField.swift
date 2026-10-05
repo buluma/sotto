@@ -74,8 +74,8 @@ struct SettingsSearchField: View {
         .overlay(
             Capsule()
                 .strokeBorder(
-                    isFocused ? DesignSystem.Colors.accent.opacity(0.5) : DesignSystem.Colors.border.opacity(0.4),
-                    lineWidth: isFocused ? 1 : 0.5
+                    isFocused ? Color.accentColor : DesignSystem.Colors.border.opacity(0.4),
+                    lineWidth: isFocused ? 1.5 : 0.5
                 )
         )
         // The bare `TextField` only takes focus when its (potentially tiny)
