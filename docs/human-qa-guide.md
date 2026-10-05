@@ -14,15 +14,15 @@ QA checks whether the feature works **for a human, on a real Mac, end to end.** 
 
 ## The workflow
 
-Every feature PR carries a **"Human QA checklist"** in its description (preconditions, happy path, guardrails, and screenshots to attach). The loop:
+Record a concrete checklist alongside the change or in a local baseline report. A PR can use the same checklist when the owner explicitly chooses that review flow.
 
-1. Get a testable build (below).
-2. Open the PR and walk its **Human QA checklist** top to bottom.
-3. Tick the boxes that pass; comment on anything that doesn't.
-4. Capture the requested screenshots and drag them into the PR.
-5. All green → the PR is human-verified.
+1. Get a testable local build (below).
+2. Walk the checklist and record observed outcomes.
+3. Tick only checks actually exercised; describe failures and skipped checks.
+4. Keep screenshots and other evidence with the local report.
+5. Mark the exercised workflow human-verified once its checks pass.
 
-Because PRs merge to `main` (the dev channel) before a tagged release, you can QA **before merging** (pull the branch) or **after merging** (QA `main` as a batch before the next release). Either is fine — the checklist is the same. This is the "merge the stack now, QA the batch later" flow.
+QA the exact branch or worktree that owns the change. This personal fork has no public stable channel; local validation and manual source updates govern qualification. [The Phase 1 baseline report](qa/phase1-capture-recovery-baseline.md) records the current capture/recovery pass and its limits.
 
 ## Getting a testable build
 
@@ -32,7 +32,7 @@ Because PRs merge to `main` (the dev channel) before a tagged release, you can Q
 scripts/dev/run_app.sh
 ```
 
-Builds, signs, and launches the dev build. Its separate bundle identifier (`com.sotto.dev`) separates standard GUI preferences and macOS permissions. It also uses `~/Library/Application Support/Sotto-Dev` for its database, artifacts, model caches, and logs, keeping stable app data untouched.
+Builds, signs, and launches the dev build. Its separate bundle identifier (`com.sotto.dev`) gives the dev app its own macOS permission identity. Preferences and Keychain remain shared. It uses `~/Library/Application Support/Sotto-Dev` for its database, artifacts, model caches, and logs, keeping stable app data untouched.
 
 Destructive QA requires verified throwaway data. Set `SOTTO_DEBUG_APP_STATE_DIR` to an absolute temporary directory to replace the default Dev state root for app data, artifacts, model caches, and logs. The launcher forwards that override in both Debug and optimized Release configurations. Verify the resolved path before testing deletion or recovery.
 
@@ -51,7 +51,7 @@ For packaged-app QA, use a locally built DMG. There is no Sparkle release candid
 - The dev build is a **separate app** to macOS, so it requests its **own permissions** — Microphone, Input Monitoring for global hotkeys, Accessibility (Device Control and Data Access on some macOS versions) for paste, and (for system-audio meeting modes) Screen & System Audio Recording. Grant them when prompted.
 - If permissions act stuck after a re-sign, inspect the affected permission in System Settings → Privacy & Security and confirm it belongs to the running dev app.
 - If the on-screen dictation control works but Fn does not, check Input Monitoring and the macOS Keyboard setting **Press fn key to**; see the [permission recovery guide](permissions-and-keyboard-shortcuts.md).
-- GUI settings can start fresh while history remains shared. Confirm the resolved data paths before treating the dev build as a clean slate.
+- Dev app data is separate by default, but preferences and Keychain remain shared. Confirm the resolved data paths before treating the dev build as a clean slate.
 
 ## Markdown regression checks
 
