@@ -44,7 +44,7 @@ The script intentionally passes `-skipMacroValidation` to `xcodebuild` because t
 
 The script also requests ordinary quit for this worktree’s replaced dev executables **before** rebuilding or re-signing the Dev bundle. Never reorder that shutdown after bundle wrapping: modifying a signed executable while macOS is running it can terminate the app later with `SIGKILL (Code Signature Invalid)`, often when the next menu or sheet loads code from the changed page. Shutdown requests a normal macOS app quit, including the existing meeting confirmation and pending-note save flow, and waits up to ten seconds for exit. Cancelled quit, ongoing finalization, failed process inspection, or a raw executable without a normal app-quit interface abort the build before modifying the bundle. Quit the app normally and rerun the script when ready; it never sends a termination signal or force-kills it. Process matching uses actual executable paths, so checkout punctuation and unrelated command-line arguments cannot select the wrong process.
 
-**Or** QA the Sparkle release candidate DMG — closest to what users receive. Use this for release-gating checks (signing, notarization, first-run onboarding, auto-update).
+For packaged-app QA, use a locally built DMG. There is no Sparkle release candidate or public stable channel in this fork. Verify local installation, permissions, and onboarding; signing/notarization checks apply only if explicitly configured for that local build.
 
 ## First-run gotchas for the dev build
 

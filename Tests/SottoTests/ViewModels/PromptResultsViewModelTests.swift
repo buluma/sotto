@@ -10,14 +10,16 @@ final class PromptResultsViewModelTests: XCTestCase {
     var promptResultRepo: MockPromptResultRepository!
     var transcriptionRepo: MockTranscriptionRepository!
 
-    override func setUp() {
-        viewModel = PromptResultsViewModel()
-        llm = MockLLMService()
-        promptRepo = MockPromptRepository()
-        promptResultRepo = MockPromptResultRepository()
-        transcriptionRepo = MockTranscriptionRepository()
-        promptRepo.prompts = Prompt.builtInPrompts()
-        viewModel.outputLanguagePolicyProvider = { .english }
+    override func setUp() async throws {
+        await MainActor.run {
+            viewModel = PromptResultsViewModel()
+            llm = MockLLMService()
+            promptRepo = MockPromptRepository()
+            promptResultRepo = MockPromptResultRepository()
+            transcriptionRepo = MockTranscriptionRepository()
+            promptRepo.prompts = Prompt.builtInPrompts()
+            viewModel.outputLanguagePolicyProvider = { .english }
+        }
     }
 
     private func waitUntil(

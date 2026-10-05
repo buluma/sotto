@@ -1,6 +1,8 @@
 # ADR-029: Explicit Encrypted Share Snapshots
 
-> Status: **Accepted; implemented behind a default-off release flag**
+> Historical upstream design, superseded for the personal Sotto fork. Remote telemetry, feedback submission, and hosted sharing transports are removed; debug arguments cannot enable sharing. Local records, formats, and injectable diagnostic hooks remain. See [the current fork scope](../../docs/network-boundaries.md).
+
+> Status: **Historical upstream decision; service removed in this personal fork**
 > Date: 2026-09-11
 
 ## Context

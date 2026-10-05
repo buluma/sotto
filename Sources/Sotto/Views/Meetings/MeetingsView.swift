@@ -1507,16 +1507,19 @@ private struct MeetingsInlineState: View {
                 .font(.system(size: 18, weight: .medium))
                 .foregroundStyle(DesignSystem.Colors.textTertiary)
                 .frame(width: 24)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(DesignSystem.Typography.body.weight(.semibold))
                     .foregroundStyle(DesignSystem.Colors.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(detail)
                     .font(DesignSystem.Typography.bodySmall)
                     .foregroundStyle(DesignSystem.Colors.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .fixedSize(horizontal: false, vertical: true)
         }
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     @ViewBuilder
@@ -1539,6 +1542,7 @@ private struct MeetingsInlineState: View {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
                 message
                 actionButton
+                    .padding(.leading, 24 + DesignSystem.Spacing.md)
             }
         }
         .padding(DesignSystem.Spacing.md)

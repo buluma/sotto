@@ -1,6 +1,8 @@
 # ADR-012: Self-Hosted Telemetry via Cloudflare
 
-> Status: **Accepted**
+> Historical upstream design, superseded for the personal Sotto fork. Remote telemetry, feedback submission, and hosted sharing transports are removed; debug arguments cannot enable sharing. Local records, formats, and injectable diagnostic hooks remain. See [the current fork scope](../../docs/network-boundaries.md).
+
+> Status: **Historical upstream decision; service removed in this personal fork**
 > Date: 2026-03-13
 
 ## Context

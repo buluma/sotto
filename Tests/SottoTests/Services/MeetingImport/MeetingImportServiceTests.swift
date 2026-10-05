@@ -27,7 +27,7 @@ final class MeetingImportServiceTests: XCTestCase {
     private func service(
         audioConverter: (any AudioFileConverting)? = nil,
         completion: ImportCompletion = ImportCompletion(),
-        fileManager: FileManager = .default,
+        fileManager: sending FileManager = FileManager(),
         lockStore: (any MeetingRecordingLockFileStoring & MeetingFinalizationOwnershipClaiming)? = nil,
         retentionConfig: @escaping @Sendable () -> MeetingAudioRetention = { .keepForever }
     ) -> MeetingImportService {

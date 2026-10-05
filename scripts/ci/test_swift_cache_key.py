@@ -53,16 +53,20 @@ class SwiftCacheIdentityTests(unittest.TestCase):
             with self.subTest(tool=tool):
                 self.assertNotEqual(before, self.key(**{f"FAKE_{tool}": "different"}))
 
-    def test_dependency_graph_workflow_and_key_policy_invalidate(self):
+    def test_dependency_graph_and_key_policy_invalidate(self):
         before = self.key()
-        for name in ("Package.swift", "Package.resolved", ".github/workflows/ci.yml",
-                     "scripts/ci/swift-cache-key.sh"):
+        for name in ("Package.swift", "Package.resolved", "scripts/ci/swift-cache-key.sh"):
             with self.subTest(file=name):
                 path = self.root / name
                 original = path.read_text()
                 path.write_text(original + "\n# changed\n")
                 self.assertNotEqual(before, self.key())
                 path.write_text(original)
+
+    def test_unrelated_workflow_changes_preserve_identity(self):
+        before = self.key()
+        (self.root / ".github/workflows/ci.yml").write_text("changed workflow metadata\n")
+        self.assertEqual(before, self.key())
 
     def test_missing_lockfile_fails_instead_of_using_partial_identity(self):
         (self.root / "Package.resolved").unlink()

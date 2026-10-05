@@ -62,43 +62,43 @@ private final class StubAdminService: SpeakerVoiceprintServicing, @unchecked Sen
 
     func enrolledVoices() async throws -> [EnrolledVoice] {
         if let listError { throw listError }
-        lock.lock(); defer { lock.unlock() }
-        return storedVoices
+        return lock.withLock { storedVoices }
     }
 
     func samples(profileId: UUID) async throws -> [SpeakerProfileExemplar] {
-        lock.lock()
-        storedSampleReads.append(profileId)
-        let result = storedSamples[profileId] ?? []
-        lock.unlock()
+        let result = lock.withLock {
+            storedSampleReads.append(profileId)
+            let result = storedSamples[profileId] ?? []
+            return result
+        }
         return result
     }
 
     func renameProfile(id: UUID, to displayName: String) async throws {
         if let renameError { throw renameError }
-        lock.lock()
-        storedVoices = storedVoices.map { voice in
-            guard voice.id == id else { return voice }
-            var profile = voice.profile
-            profile.displayName = displayName
-            return EnrolledVoice(
-                profile: profile,
-                sampleCount: voice.sampleCount,
-                maxSamples: voice.maxSamples,
-                recognizedCount: voice.recognizedCount,
-                usesRetiredModel: voice.usesRetiredModel,
-                lastEvaluatedDistance: voice.lastEvaluatedDistance,
-                acceptanceThreshold: voice.acceptanceThreshold
-            )
+        lock.withLock {
+            storedVoices = storedVoices.map { voice in
+                guard voice.id == id else { return voice }
+                var profile = voice.profile
+                profile.displayName = displayName
+                return EnrolledVoice(
+                    profile: profile,
+                    sampleCount: voice.sampleCount,
+                    maxSamples: voice.maxSamples,
+                    recognizedCount: voice.recognizedCount,
+                    usesRetiredModel: voice.usesRetiredModel,
+                    lastEvaluatedDistance: voice.lastEvaluatedDistance,
+                    acceptanceThreshold: voice.acceptanceThreshold
+                )
+            }
         }
-        lock.unlock()
     }
 
     func deleteSample(id: UUID, profileId: UUID) async throws -> Bool {
         if refusesLastSample { return false }
-        lock.lock()
-        storedSamples[profileId]?.removeAll { $0.id == id }
-        lock.unlock()
+        lock.withLock {
+            storedSamples[profileId]?.removeAll { $0.id == id }
+        }
         return true
     }
 
@@ -106,18 +106,18 @@ private final class StubAdminService: SpeakerVoiceprintServicing, @unchecked Sen
 
     func forgetVoice(profileId: UUID) async throws {
         if forgetFailsFor.contains(profileId) { throw ForgetFailed() }
-        lock.lock()
-        storedForgotten.append(profileId)
-        storedVoices.removeAll { $0.id == profileId }
-        lock.unlock()
+        lock.withLock {
+            storedForgotten.append(profileId)
+            storedVoices.removeAll { $0.id == profileId }
+        }
     }
 
     func forgetAllVoices() async throws {
-        lock.lock()
-        forgotAll = true
-        storedVoices = []
-        storedSamples = [:]
-        lock.unlock()
+        lock.withLock {
+            forgotAll = true
+            storedVoices = []
+            storedSamples = [:]
+        }
     }
 
     // Unused here.

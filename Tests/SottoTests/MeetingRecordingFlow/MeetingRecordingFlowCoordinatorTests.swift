@@ -7,16 +7,20 @@ import XCTest
 final class MeetingRecordingFlowCoordinatorTests: XCTestCase {
     private var telemetry: FlowTelemetrySpy!
 
-    override func setUp() {
-        super.setUp()
-        telemetry = FlowTelemetrySpy()
-        Telemetry.configure(telemetry)
+    override func setUp() async throws {
+        await MainActor.run {
+            super.setUp()
+            telemetry = FlowTelemetrySpy()
+            Telemetry.configure(telemetry)
+        }
     }
 
-    override func tearDown() {
-        Telemetry.configure(NoOpTelemetryService())
-        telemetry = nil
-        super.tearDown()
+    override func tearDown() async throws {
+        await MainActor.run {
+            Telemetry.configure(NoOpTelemetryService())
+            telemetry = nil
+            super.tearDown()
+        }
     }
 
     func testLivePreviewUsesReadingParagraphs() {

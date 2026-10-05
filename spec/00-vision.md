@@ -2,7 +2,7 @@
 
 > Status: **ACTIVE** - Authoritative, current
 > Fast, private, local-first voice app for Mac. Fully local speech with separately documented network surfaces, free and open-source (GPL-3.0).
-> Pricing amendment: The current public build is free, GPL-3.0, and fully unlocked. Older "$49 one-time purchase" and trial-tier language is historical, but GPL-compatible official paid distribution, support, hosted services, or future paid builds remain valid options. The retained purchase activation plumbing must not be removed as dead code without explicit owner direction and an ADR/spec update.
+> Fork scope: personal local use, GPLv3, no public distribution or automatic app updates. Upstream pricing/release history does not establish a Sotto release. Inert licensing compatibility and preserved credentials are documented in [network boundaries](../docs/network-boundaries.md).
 
 ---
 
@@ -82,11 +82,11 @@ Fully local speech is a core product property. Core workflows can run offline af
 
 - Local STT. No cloud speech processing, no accounts, no required backend for core speech.
 - Audio never leaves your Mac for dictation or transcription.
-- No email signup. No login. Optional self-hosted telemetry can be disabled in Settings.
-- Core capture and local-file speech workflows work in airplane-mode or air-gapped environments after the required models are installed. Media imports, models, updates, telemetry, and remote AI providers are separate network surfaces.
-- Discover requests its public feed at app launch by default, even with telemetry disabled and without opening the Discover page. It has cached/bundled offline content and an independent opt-out in Settings → System → Appearance. Turning Discover off hides the card and cancels feed work; it is not a global network switch. Explicit feedback/thought submissions also use the network.
+- No required product account. Remote telemetry and crash-event transport are removed; diagnostics remain local.
+- Core capture and local-file speech workflows work in airplane-mode or air-gapped environments after the required models are installed. Media/model/helper downloads and configured AI providers have separate network boundaries.
+- Discover is off by default and reads bundled offline cards only. No feed refresh, thoughts submission, feedback uploader, or hosted sharing transport remains.
 
-This is privacy by architecture at the speech boundary: recognition has no server path. [ADR-002](adr/002-local-only.md) documents the distinct provider, telemetry, media, and app-content I/O boundaries; disabling one is not a global network opt-out.
+This is privacy by architecture at the speech boundary: recognition has no server path. [ADR-002](adr/002-local-only.md) documents the current provider and media/model/helper I/O boundaries; disabling one is not a global network opt-out.
 
 ### 3. Simplicity Over Features
 
@@ -107,11 +107,11 @@ Simple does not mean basic. Sotto includes modern capabilities that cloud compet
 - **Custom Words** -- Teach it your vocabulary. Technical terms, proper nouns, acronyms. Anchors that improve recognition accuracy.
 - **Context Awareness** -- (Future) Reads the surrounding text to produce better transcriptions. Knows "React" in a code editor, "react" in a therapy note.
 
-### 5. Free and Open-Source, Monetizable Official Distribution
+### 5. Personal GPLv3 Fork
 
-The current public build has no paid feature limits or required subscription. Sotto is free and open-source (GPL-3.0). Development feature gates still keep unfinished or unreleased capabilities out of normal builds; see the [release/flag status](README.md#release-channels-and-feature-flags).
+Sotto is a personal local fork derived from MacParakeet. It has no paid feature limits, required subscription, public release channel, or hosted Sotto service. Development gates still hide unfinished capabilities; see the [flag inventory](README.md#release-channels-and-feature-flags). Original copyright and third-party notices remain intact.
 
-That does not mean monetization is permanently forbidden. GPL permits charging for distribution, and Sotto may later sell official signed/notarized builds, support, hosted services, team features, or paid official distribution while preserving recipients' GPL rights. The old LemonSqueezy/trial entitlement plumbing is intentionally retained for that future option and must not be removed as dead code without explicit owner direction and an ADR/spec update.
+Retained activation code is not a commercial roadmap. It performs no licensing network or stored-state I/O; see [network boundaries](../docs/network-boundaries.md). Preserve the local compatibility surface and stored credentials.
 
 ---
 
@@ -123,7 +123,7 @@ That does not mean monetization is permanently forbidden. GPL permits charging f
 | **Core function** | Voice dictation, file transcription, and meeting recording |
 | **Target users** | Developers, professionals, writers who want fast private voice input |
 | **Key differentiators** | Parakeet speed + optional local Nemotron/Cohere/Whisper engines + free/open-source |
-| **Business model** | Current public build is free/GPL/unlocked; official paid distribution, support, or hosted services remain possible |
+| **Fork scope** | Personal local use; GPLv3; no public distribution or hosted Sotto service |
 | **Platform** | macOS 14.2+, Apple Silicon only |
 
 ---
@@ -252,9 +252,9 @@ People who type quickly but prefer voice for long messages, thinking out loud, a
 
 ### Secondary: Privacy-Conscious Professionals
 
-People who handle sensitive notes, interviews, research, or internal material and want speech recognition to stay on their Mac. Sotto does not itself certify a user's regulatory compliance; users must evaluate their complete workflow, device controls, enabled telemetry, and configured AI providers.
+People who handle sensitive notes, interviews, research, or internal material and want speech recognition to stay on their Mac. Sotto does not itself certify a user's regulatory compliance; users must evaluate their complete workflow, device controls, local diagnostics, configured AI providers, and remaining network boundaries.
 
-**What they want:** Understandable data boundaries, no required product account, local core speech, and the ability to disable telemetry and avoid remote AI providers.
+**What they want:** Understandable data boundaries, no required product account, local core speech, and local diagnostics and the ability to avoid remote AI providers.
 
 ### Tertiary: Subscription-Fatigued Users
 
@@ -302,7 +302,7 @@ Sotto optimizes the default pipeline for Parakeet while routing optional Nemotro
 
 This is not "cloud by default with a local mode." Core speech recognition runs entirely on-device. There is no cloud STT path, no account system, and no requirement to send audio anywhere.
 
-Network surfaces remain separate from speech inference: configured LLM providers can receive text, models/media download assets, Sparkle checks updates, and self-hosted telemetry is opt-out. Discover refreshes its public feed at launch by default and has its own Settings opt-out, independent of telemetry. The privacy boundary is local speech, not a claim that all other app I/O is opt-in.
+Network surfaces remain separate from speech inference: configured AI providers may receive text; model/media/helper paths download assets. Remote telemetry, feedback, sharing, Discover feed requests, and automatic app updates are removed. See [network boundaries](../docs/network-boundaries.md).
 
 ### 3. Free and Open-Source
 
@@ -318,9 +318,9 @@ The product surface area is intentionally small. This means fewer bugs, faster i
 
 ## Licensing
 
-Sotto is open-source under the **GPL-3.0** license. Current public builds are free and fully unlocked. The source code is public at [github.com/moona3k/macparakeet](https://github.com/moona3k/macparakeet).
+Sotto is a personal local fork derived from [MacParakeet](https://github.com/moona3k/macparakeet), under the **GPL-3.0** license. Original copyright and third-party notices are retained. This fork has no public distribution channel.
 
-> Historical note: Sotto was originally planned as a $49 one-time purchase (see ADR-003). The decision to go free/open-source in v0.5 maximized adoption and community contribution. It did not permanently ban GPL-compatible paid official distribution, support, hosted services, or future paid builds.
+> Historical note: MacParakeet’s earlier pricing decisions are retained in ADR-003. They are not a commercial plan for this personal fork.
 
 ---
 
@@ -346,7 +346,7 @@ The comparison below records the original separate-product positioning. [ADR-027
 |  - YouTube import     |  - Knowledge graph                            |
 |  - Export formats     |  - Pre-meeting briefs                         |
 |  Simple, focused      |  Complex, powerful                            |
-|  Current public build free/GPL |  TBD                                  |
+|  Personal GPLv3 fork |  TBD                                  |
 +-----------------------+-----------------------------------------------+
 ```
 
@@ -359,7 +359,7 @@ The comparison below records the original separate-product positioning. [ADR-027
 | **Complexity** | Three capture modes + Transforms | Full knowledge system |
 | **User relationship** | Tool whose local library compounds over time ([ADR-027](adr/027-product-north-star.md)) | System (compounds over time) |
 | **Codebase** | Independent | Independent |
-| **Revenue** | Current public build free/GPL; official paid distribution/support possible | TBD |
+| **Revenue** | Personal local use; no public distribution | TBD |
 
 ### Strategic Relationship
 
@@ -372,16 +372,6 @@ The comparison below records the original separate-product positioning. [ADR-027
 ---
 
 ## Success Metrics
-
-### Year 1 Targets
-
-| Metric | Target | How We Measure |
-|--------|--------|----------------|
-| Downloads | 10,000 | Website analytics + telemetry |
-| GitHub stars | 1,000 | GitHub |
-| User satisfaction | 4.5+ stars equivalent | Community feedback + NPS |
-| Daily active users | 2,000 | Telemetry (opt-out, non-identifying) |
-| Dictation sessions/user/day | 5+ | Local metrics |
 
 ### Quality Metrics
 
@@ -397,7 +387,7 @@ The comparison below records the original separate-product positioning. [ADR-027
 
 A new user should be able to:
 
-1. Download Sotto
+1. Build and launch Sotto locally
 2. Open it
 3. Hold Fn and speak a sentence
 4. See clean text appear at their cursor
@@ -407,7 +397,9 @@ On first use, the user should reach this outcome as soon as the required model d
 
 ---
 
-## Product Roadmap
+## Inherited Upstream Product Roadmap
+
+These version milestones describe upstream history. Feedback, Sparkle, and public distribution listed below are removed or unavailable in this personal fork.
 
 ### v0.1: MVP -- Core Engine
 
@@ -479,8 +471,8 @@ Ship-quality polish. Direct distribution via notarized DMG.
 | **YouTube downloads** | Standalone yt-dlp | macOS binary, auto-updates via `--update`. No Python needed. |
 | **UI framework** | SwiftUI | Native Mac experience. Menu bar + window. |
 | **Structured records** | SQLite (GRDB) | Single local database for history, library, vocabulary, prompts/results and derived retrieval. Preferences use UserDefaults, credentials use Keychain, and retained audio/artifacts remain files. |
-| **Cloud option** | No cloud STT; optional LLM providers | Core speech stays local. AI and media downloads are user-triggered; updates and opt-out telemetry/crash reporting are product-managed network surfaces. Retained purchase activation endpoints remain in code but current public builds are free/unlocked. |
-| **Pricing** | Current public build free/GPL | Zero friction today; GPL-compatible official paid distribution/support remains available later. |
+| **Cloud option** | No cloud STT; configured AI providers are optional | Core speech stays local. Remaining network paths are documented in [network boundaries](../docs/network-boundaries.md); remote telemetry and automatic updates are removed. |
+| **Pricing** | Personal GPLv3 fork | No paid feature limits, required account, or public distribution channel. |
 
 ---
 
@@ -503,7 +495,7 @@ The parakeet bird is known for mimicking speech -- a fitting metaphor for a voic
 | **Local-First STT** | Speech stays on-device; optional networked AI | Strong privacy claim without pretending the app never uses the network |
 | **Clean Pipeline** | Deterministic text cleanup | Professional output without LLM overhead |
 | **Custom Words** | User-defined vocabulary anchors | Technical terms transcribed correctly every time |
-| **Free & Open-Source** | Current public build is GPL-3.0, no price, no accounts | Zero friction adoption today; official paid distribution/support remains possible. |
+| **GPLv3** | Personal fork with original legal notices retained | No required account or paid feature limits. |
 
 ---
 

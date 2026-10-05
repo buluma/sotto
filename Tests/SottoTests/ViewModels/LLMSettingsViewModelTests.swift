@@ -11,24 +11,37 @@ final class LLMSettingsViewModelTests: XCTestCase {
     var defaults: UserDefaults!
     var defaultsSuiteName: String!
 
-    override func setUp() {
-        defaultsSuiteName = makeIsolatedDefaultsSuite("test.llmsettings.")
-        routeLockURL = FileManager.default.temporaryDirectory.appendingPathComponent(defaultsSuiteName)
-            .appendingPathComponent("routes.lock")
-        defaults = UserDefaults(suiteName: defaultsSuiteName)!
-        defaults.removePersistentDomain(forName: defaultsSuiteName)
-        viewModel = LLMSettingsViewModel(defaults: defaults)
-        mockConfigStore = MockLLMConfigStore()
-        mockClient = MockLLMClient()
+    func testRouteLocationDoesNotMistakeRemoteLocalServerForOnDeviceProcessing() {
+        let remote = LLMProviderConfig(id: .ollama, baseURL: URL(string: "http://192.168.1.10:11434")!, apiKey: nil, modelName: "model", isLocal: true)
+        let loopback = LLMProviderConfig(id: .ollama, baseURL: URL(string: "http://localhost:11434")!, apiKey: nil, modelName: "model", isLocal: true)
+        XCTAssertEqual(LLMSettingsViewModel.routeLocationDescription(remote), "Text sent to a remote endpoint")
+        XCTAssertEqual(LLMSettingsViewModel.routeLocationDescription(loopback), "Local server on this Mac")
+        let cli = LLMProviderConfig(id: .localCLI, baseURL: URL(string: "http://localhost")!, apiKey: nil, modelName: "", isLocal: true)
+        XCTAssertEqual(LLMSettingsViewModel.routeLocationDescription(cli), "Processing depends on the CLI tool's configuration")
     }
 
-    override func tearDown() {
-        try? FileManager.default.removeItem(at: routeLockURL.deletingLastPathComponent())
-        defaults = nil
-        defaultsSuiteName = nil
-        viewModel = nil
-        mockConfigStore = nil
-        mockClient = nil
+    override func setUp() async throws {
+        await MainActor.run {
+            defaultsSuiteName = makeIsolatedDefaultsSuite("test.llmsettings.")
+            routeLockURL = FileManager.default.temporaryDirectory.appendingPathComponent(defaultsSuiteName)
+                .appendingPathComponent("routes.lock")
+            defaults = UserDefaults(suiteName: defaultsSuiteName)!
+            defaults.removePersistentDomain(forName: defaultsSuiteName)
+            viewModel = LLMSettingsViewModel(defaults: defaults)
+            mockConfigStore = MockLLMConfigStore()
+            mockClient = MockLLMClient()
+        }
+    }
+
+    override func tearDown() async throws {
+        await MainActor.run {
+            try? FileManager.default.removeItem(at: routeLockURL.deletingLastPathComponent())
+            defaults = nil
+            defaultsSuiteName = nil
+            viewModel = nil
+            mockConfigStore = nil
+            mockClient = nil
+        }
     }
 
     // MARK: - Defaults

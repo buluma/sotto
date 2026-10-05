@@ -2,14 +2,15 @@
 
 ## Personal Sotto amendment — 2026-10-04
 
-This amendment supersedes the inherited Discover, telemetry and app-update network descriptions below for this personal fork. Discover is off by default and reads only bundled, original Rick-and-Morty-style banter. It ignores old feed caches, never refreshes over HTTP, and has no thoughts submission surface. Remote analytics/crash transport and Sparkle app updates are removed. Explicit feedback and configured AI/media/model network integrations remain separate. See [personal Discover](../../docs/discover.md) and [telemetry contract](../contracts/telemetry-v1.md).
+This amendment supersedes the inherited Discover, telemetry and app-update network descriptions below for this personal fork. Discover is off by default and reads only bundled, original Rick-and-Morty-style banter. It ignores old feed caches, never refreshes over HTTP, and has no thoughts submission surface. Remote analytics/crash transport and Sparkle app updates are removed. Feedback submission and hosted sharing transports are also removed. Configured AI/media/model/helper integrations  remain separate. See [personal Discover](../../docs/discover.md) and [telemetry contract](../contracts/telemetry-v1.md).
 
-## Inherited upstream decision
+## Decision context
+
+The rationale and market inputs are inherited history. The network boundaries below describe this fork.
 
 > Status: **Accepted** (Amended 2026-03-11)
 > Date: 2026-02-08
 > Amended: 2026-03-11 — Refined scope from "no cloud processing" to local processing with optional external AI/telemetry surfaces (ADR-011)
-> Implementation clarification (2026-09-06): local speech is not a global no-network mode. Discover's public feed refresh is enabled by default at app launch, independent of telemetry consent, with its own runtime opt-out in Settings → System → Appearance.
 
 ## Context
 
@@ -49,12 +50,9 @@ LLM-powered features (summaries, chat/Meeting Ask, AI Formatter, and Transforms)
 
 - **Media imports**: User-requested public media downloads through yt-dlp and Apple Podcasts directory/RSS/enclosure requests.
 - **Model/helper setup**: Required model downloads, explicitly requested local model preparation, and helper installation/update paths.
-- **App updates**: Sparkle update checks.
-- **Analytics**: Non-identifying, opt-out telemetry/crash reporting via the self-hosted endpoint (ADR-012); no transcript/audio content or persistent IDs.
-- **Discover**: A default-on launch-time GET of `https://macparakeet.com/api/discover.json`, with cached/bundled offline fallback. It is independent of telemetry and does not require opening the Discover page. Turning off **Show Discover in the sidebar** in Settings → System → Appearance hides Discover, cancels pending feed requests, clears the displayed feed, and stops new feed loads until re-enabled. Late results cannot republish the feed after disabling or replace a newer enabled session. Already-queued bounded local cache I/O may finish; the on-disk cache is retained. Disabling telemetry does not disable Discover, or vice versa.
-- **Explicit submissions**: Feedback and Discover thoughts send the user's submitted content and associated diagnostics; these are not STT uploads.
-- **Encrypted share snapshots (implemented, release-gated)**: [ADR-029](029-encrypted-shareable-transcript-snapshots.md) defines an explicit, text-only publication surface at `share.macparakeet.com`. The user previews the selected snapshot, the Mac encrypts it before upload, the content key stays in the recipient URL fragment, and source audio remains structurally excluded. This is not Library sync. The app implementation is behind `AppFeatures.shareLinksEnabled = false`; release builds do not expose the sharing flow.
-- **Dormant licensing**: Free public builds do not require activation. Retained activation/deactivation methods use LemonSqueezy when invoked. App setup also refreshes a previously stored activation when the last successful validation is at least a day old; CLI transcription does so with `--enforce-entitlements`. Without a stored key and instance ID, refresh makes no request. Validation results do not gate the free build (ADR-006).
+- **Removed services**: Remote telemetry/crash uploads, feedback/thoughts submission, hosted sharing, and Sparkle app updates have no active transport in this fork. Debug sharing arguments cannot enable publication.
+- **Discover**: Bundled-only cards, off by default; no HTTP refresh or legacy feed-cache loading.
+- **Licensing**: Server validation and HTTP transport are removed. The compatibility service stays unlocked and never reads, writes, or clears stored credentials; see [the local entitlement contract](../contracts/licensing-local-only.md).
 
 ## Rationale
 
@@ -78,7 +76,7 @@ A local 8B model produces mediocre summaries. Cloud models (Claude, GPT-4) produ
 
 Users make an informed choice. The UI makes the tradeoff explicit. Apple's broader Intelligence platform may use Private Cloud Compute, but Sotto's Apple Intelligence provider uses the on-device Foundation Models API with no cloud fallback.
 
-Core capture, local-file transcription, and local retrieval remain usable offline after model setup. Local LLM servers can keep generated text on-device, and telemetry and Discover can each be disabled independently. Neither setting constitutes a global network opt-out; updates and other external surfaces retain their own behavior.
+Core capture, local-file transcription, and local retrieval remain usable offline after model setup. Local providers can keep generated text on-device. Remaining network paths are documented in the [network inventory](../../docs/network-boundaries.md); a local speech engine does not sandbox configured provider or download I/O.
 
 ### Official paid distribution still works
 
@@ -105,7 +103,7 @@ Cloud LLM costs are paid directly by the user to their provider (Anthropic, Open
 
 ### Negative
 
-- **Messaging complexity**: Local speech and offline core operation are narrower than a no-network app. Discover, updates, opted-in providers, and opt-out telemetry must be described independently.
+- **Messaging complexity**: Local speech is narrower than a no-network app. Configured providers, media/model/helper downloads must be described independently.
 - **Cloud providers require internet**: Summaries, chat/Meeting Ask, AI Formatter, and Transforms can run offline only when configured with an available local provider (eligible on-device Apple Intelligence covers dictation cleanup only). Transcription still works offline.
 - **Transcript text exposure**: When using cloud providers or cloud-backed CLI tools, transcript text is sent to third-party services. Must be clear in UI. Users with sensitive content should choose a local provider or skip LLM features.
 - **No cloud backup or sync**: User data stays on-device. If the Mac is lost, dictation history is lost. This is intentional.

@@ -5,12 +5,17 @@ import XCTest
 
 /// Value candidates, wire history, retries and usage accounting for `JevDecisionClient`.
 final class JevClientTransportTests: XCTestCase {
+    private func decodeBodies(_ data: [Data]) throws -> [[String: Any]] {
+        try data.map { try XCTUnwrap(JSONSerialization.jsonObject(with: $0) as? [String: Any]) }
+    }
+
     private actor Calls {
-        private(set) var bodies: [[String: Any]] = []
+        private(set) var bodyData: [Data] = []
+        var bodyCount: Int { bodyData.count }
         private(set) var decisions: [VoiceControlDecisionTrace] = []
         func record(_ data: Data?) {
-            if let data, let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                bodies.append(json)
+            if let data, let _ = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                bodyData.append(data)
             }
         }
         func note(_ decision: VoiceControlDecisionTrace) { decisions.append(decision) }
@@ -170,7 +175,7 @@ final class JevClientTransportTests: XCTestCase {
         let decision = try await client(statuses: [429, 529], calls: calls).decide(
             goal: "pick", snapshot: snapshot, history: [], events: events)
         guard case .action = decision else { return XCTFail("expected an action, got \(decision)") }
-        let bodies = await calls.bodies
+        let bodies = try decodeBodies(await calls.bodyData)
         XCTAssertEqual(bodies.count, 3)
         let trace = await calls.decisions.last
         XCTAssertEqual(trace?.retries, 2)
@@ -200,13 +205,13 @@ final class JevClientTransportTests: XCTestCase {
                 goal: "pick", snapshot: snapshot, history: [], events: events)
             XCTFail("expected unavailable")
         } catch { XCTAssertEqual(error as? JevDecisionError, .unavailable) }
-        let single = await calls.bodies.count
+        let single = await calls.bodyCount
         XCTAssertEqual(single, 1)
 
         let short = Calls()
         _ = try await client(statuses: [503], calls: short, retryAfter: "0").decide(
             goal: "pick", snapshot: snapshot, history: [], events: events)
-        let retried = await short.bodies.count
+        let retried = await short.bodyCount
         XCTAssertEqual(retried, 2)
     }
 
@@ -217,7 +222,7 @@ final class JevClientTransportTests: XCTestCase {
                 goal: "pick", snapshot: snapshot, history: [], events: events)
             XCTFail("expected unavailable")
         } catch { XCTAssertEqual(error as? JevDecisionError, .unavailable) }
-        let bounded = await calls.bodies.count
+        let bounded = await calls.bodyCount
         XCTAssertEqual(bounded, 1 + JevDecisionClient.maxRetries)
 
         let auth = Calls()
@@ -226,7 +231,7 @@ final class JevClientTransportTests: XCTestCase {
                 goal: "pick", snapshot: snapshot, history: [], events: events)
             XCTFail("expected unavailable")
         } catch { XCTAssertEqual(error as? JevDecisionError, .unavailable) }
-        let single = await auth.bodies.count
+        let single = await auth.bodyCount
         XCTAssertEqual(single, 1)
     }
 
@@ -241,7 +246,7 @@ final class JevClientTransportTests: XCTestCase {
         ]
         _ = try await client(statuses: [], calls: calls, usage: nil).decide(
             goal: "pick", snapshot: snapshot, history: history)
-        let bodies = await calls.bodies
+        let bodies = try decodeBodies(await calls.bodyData)
         let state = try XCTUnwrap(bodies.first?["state"] as? [String: Any])
         let executed = try XCTUnwrap(state["executed"] as? [[String: Any]])
         XCTAssertEqual(executed.first?["control"] as? String, "Search")

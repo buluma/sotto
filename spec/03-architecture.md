@@ -168,13 +168,13 @@ App-owned Markdown views render static and streaming results/chat using the pinn
 | Speech models and downloaded helper binaries | FluidAudio-managed caches, Sotto's Whisper cache and app `bin/` paths. |
 | Optional local LLM models | Explicitly downloaded `LLMModels/` directory; no model bundled or automatically downloaded. |
 | Ask runtime | Private bundled JavaScript helper plus official Node runtime in app/CLI packaging; model credentials and source access stay in Swift. |
-| Diagnostics | Bounded local audio log, OSLog and explicit exports; governed separately from transmitted telemetry. |
+| Diagnostics | Bounded local audio log, OSLog and explicit exports; no remote telemetry transport. |
 
 SQLite is the canonical structured record store, not a complete backup of all app state. `DatabaseManager(path:)` uses process-serialized migrations and a five-second busy timeout; CLI `health` uses read-only, non-migrating probes. Migration identifiers are historical schema labels, not app or CLI release versions. See [data model](01-data-model.md) and [AppPaths](../Sources/SottoCore/Services/AppPaths.swift).
 
 Core STT has no network dependency after model setup. Sotto removes remote analytics/crash transport and app auto-updates. Discover is bundled local Rick-and-Morty-style banter, off by default, with no cache, remote refresh or thought submission. See [Discover](../docs/discover.md).
 
-Other network surfaces include configured AI, model/helper/media downloads, retained activation plumbing. Calendar reads local EventKit data. See the [local-only ADR](adr/002-local-only.md) for inherited boundaries; optional network integrations are independent of local Discover.
+Other network surfaces include configured AI, model/helper/media downloads. Licensing has no network transport and preserves stored credentials. Calendar reads local EventKit data. See the [local-only ADR](adr/002-local-only.md) for inherited boundaries; optional network integrations are independent of local Discover.
 
 Sotto is rebuilt locally. The inherited distribution guide documents upstream packaging rather than an enabled personal update channel. Microphone, Accessibility, system-audio and Calendar permissions are requested in the appropriate product flows; see [ADR-005](adr/005-onboarding-first-run.md).
 
@@ -187,7 +187,6 @@ Package requirements below describe this audited revision; `Package.swift` and `
 | FluidAudio | Exact `0.17.4`; local STT, automatic Nemotron 3 diarization and Community-1 for explicit speaker constraints. Deliberate upgrades require speech/diarization validation; see ADR-010's matched evaluation. |
 | GRDB.swift | From `7.0.0`; database access and migrations. |
 | swift-argument-parser | From `1.3.0`; public CLI. |
-| Sparkle | From `2.9.0`; app updates and embedded framework packaging. |
 | yyjson | Exact `0.12.0`; exposed by FluidAudio's module graph. |
 | WhisperKit / argmax-oss-swift | Exact `0.18.0`; optional compatibility-build exclusion. |
 | SwiftStreamingMarkdown fork | Immutable revision pinned in `Package.swift`; app/test rendering and transitive macro plugin. |

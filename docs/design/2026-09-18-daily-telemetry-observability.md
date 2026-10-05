@@ -1,5 +1,7 @@
 # Daily telemetry observability briefing
 
+> Historical upstream design, superseded for the personal Sotto fork. Remote telemetry, feedback submission, and hosted sharing transports are removed; debug arguments cannot enable sharing. Local records, formats, and injectable diagnostic hooks remain. See [the current fork scope](../network-boundaries.md).
+
 > Status: **PROPOSED SPEC** — not implemented. Design + operating policy for
 > a morning health/usage briefing. Not an ADR. Concrete event semantics stay
 > in [`spec/contracts/telemetry-v1.md`](../../spec/contracts/telemetry-v1.md)
@@ -27,7 +29,7 @@ Fable 5.1 low and medium independently landed on the same split: reviewer owns b
 
 ## Why this exists
 
-The 2026-09-18 investigation ([Sparkle DAU](../research/2026-09-18-sparkle-dau-measurement.md), [user landscape](../research/2026-09-18-telemetry-user-landscape.md), [percentiles/gaps](../research/2026-09-15-telemetry-percentiles-and-observability.md)) took hours of live D1 + GraphQL and found things a dashboard tile will never say out loud:
+The 2026-09-18 investigation ([Sparkle DAU](../research/2026-09-18-sparkle-dau-measurement.md), [user landscape](../research/2026-09-18-telemetry-user-landscape.md), percentiles/gaps (historical reference; file absent from this checkout)) took hours of live D1 + GraphQL and found things a dashboard tile will never say out loud:
 
 - Weekday GUI usage is still compounding (sessions +32% vs August weekdays). Sparkle device-days fell 1,780 → ~1,130 because the 0.8.x firehose resets Sparkle’s ~24h last-check, not because 40% of users left.
 - T0 activation (same-process `dictation_completed` after `onboarding_completed`) decayed **45.2% Jun → 32.8% Sep**. That is the product leak. Public 30d agrees (34.2%).
@@ -261,7 +263,7 @@ Legend: **H** = headline daily, **A** = daily appendix, **W** = weekly deep, **R
 
 ### C. Activation and onboarding (session funnels)
 
-Governing audit: [`docs/audits/2026-06-03-activation-metrics-cohort-caveats.md`](../audits/2026-06-03-activation-metrics-cohort-caveats.md). June ~45–48% in that audit is now a **fixed reference line**, not “the current number.”
+Governing audit: `docs/audits/2026-06-03-activation-metrics-cohort-caveats.md` (historical reference; file absent from this checkout). June ~45–48% in that audit is now a **fixed reference line**, not “the current number.”
 
 | ID | Monitor | Cadence | Source | Notes |
 |---|---|---|---|---|
@@ -568,9 +570,9 @@ A session with `n > 0.20 * (SELECT COUNT(*) FROM events WHERE event = ? AND ts r
 | Website `docs/telemetry-rollups-plan.md` | Rollup cron; deletion still out of scope |
 | [`docs/research/2026-09-18-sparkle-dau-measurement.md`](../research/2026-09-18-sparkle-dau-measurement.md) | Why Sparkle broke as WoW |
 | [`docs/research/2026-09-18-telemetry-user-landscape.md`](../research/2026-09-18-telemetry-user-landscape.md) | What the 2026-09-18 pass actually found |
-| [`docs/research/2026-09-15-telemetry-percentiles-and-observability.md`](../research/2026-09-15-telemetry-percentiles-and-observability.md) | Means lie; SLO gap; no second vendor |
-| [`docs/audits/2026-06-03-activation-metrics-cohort-caveats.md`](../audits/2026-06-03-activation-metrics-cohort-caveats.md) | T0 vs first_dictation |
-| [`docs/audits/2026-07-04-onboarding-telemetry-review.md`](../audits/2026-07-04-onboarding-telemetry-review.md) | Speech-model blocker |
+| `docs/research/2026-09-15-telemetry-percentiles-and-observability.md` (historical reference; file absent from this checkout) | Means lie; SLO gap; no second vendor |
+| `docs/audits/2026-06-03-activation-metrics-cohort-caveats.md` (historical reference; file absent from this checkout) | T0 vs first_dictation |
+| `docs/audits/2026-07-04-onboarding-telemetry-review.md` (historical reference; file absent from this checkout) | Speech-model blocker |
 | Public `/stats` | Live marketing dashboard |
 
 The Sep 16 “telemetry observability followthrough” row in `plans/README.md` (e2e timings, cheaper activation SQL, Pages observability, health probe) is **instrumentation**, not this briefing. Both should happen; they are not substitutes.

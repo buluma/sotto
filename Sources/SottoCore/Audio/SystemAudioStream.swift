@@ -577,11 +577,11 @@ private final class ScreenCaptureKitLifecycleSession: ScreenCaptureLifecycleSess
         self.stream = stream
     }
 
-    func startCapture(completionHandler: @escaping (Error?) -> Void) {
+    func startCapture(completionHandler: @escaping @Sendable (Error?) -> Void) {
         stream.startCapture(completionHandler: completionHandler)
     }
 
-    func stopCapture(completionHandler: @escaping (Error?) -> Void) {
+    func stopCapture(completionHandler: @escaping @Sendable (Error?) -> Void) {
         stream.stopCapture(completionHandler: completionHandler)
     }
 

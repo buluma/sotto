@@ -1048,7 +1048,8 @@ final class MeetingRecordingServiceTests: XCTestCase {
             startReport: MeetingAudioCaptureStartReport(sourceMode: .microphoneOnly)
         )
         let lockStore = RecordingLockFileStore()
-        let fileManager = PendingSourceReadGuard()
+        let readGuard = PendingSourceReadGuard.State()
+        let fileManager = PendingSourceReadGuard(state: readGuard)
         let service = MeetingRecordingService(
             audioCaptureService: captureService,
             audioConverter: MockMeetingAudioFileConverter(),
@@ -1063,7 +1064,7 @@ final class MeetingRecordingServiceTests: XCTestCase {
         try await service.startRecording(sourceMode: .microphoneOnly)
         let folderURL = try XCTUnwrap(lockStore.writes.first?.folderURL)
         defer { try? FileManager.default.removeItem(at: folderURL) }
-        fileManager.forbidReads(at: folderURL.appendingPathComponent("system-raw.m4a"))
+        readGuard.forbidReads(at: folderURL.appendingPathComponent("system-raw.m4a"))
         let buffer = try XCTUnwrap(makeMonoFloatBuffer(frameCount: 16_000, sampleValue: 0.25))
         await captureService.yield(
             .microphoneBuffer(buffer, AVAudioTime(hostTime: AVAudioTime.hostTime(forSeconds: 100)))
@@ -1071,7 +1072,7 @@ final class MeetingRecordingServiceTests: XCTestCase {
 
         let output = try await service.stopRecording()
 
-        XCTAssertEqual(fileManager.attemptedReads, [])
+        XCTAssertEqual(readGuard.attemptedReads, [])
         XCTAssertNotNil(output.sourceAlignment.microphone)
         XCTAssertNil(output.sourceAlignment.system)
         XCTAssertNil(output.captureReport?.source(for: .system))
@@ -1591,7 +1592,7 @@ final class MeetingRecordingServiceTests: XCTestCase {
 
         try await service.startRecording()
         let stream = await service.captureFailureSignalForCurrentSession()
-        let signalTask = Task { await collectCaptureFailureSignals(from: stream) }
+        let signalTask = Task { @Sendable in await Self.collectCaptureFailureSignals(from: stream) }
 
         await captureService.yield(.error(.captureRuntimeFailure("simulated runtime failure")))
 
@@ -1617,7 +1618,7 @@ final class MeetingRecordingServiceTests: XCTestCase {
         try await waitForCaptureMode(service) { $0 == .stopped }
 
         let stream = await service.captureFailureSignalForCurrentSession()
-        let signalTask = Task { await collectCaptureFailureSignals(from: stream) }
+        let signalTask = Task { @Sendable in await Self.collectCaptureFailureSignals(from: stream) }
         let signals = try await value(
             of: signalTask,
             timeoutMessage: "Timed out waiting for late capture-failure signal"
@@ -1637,7 +1638,7 @@ final class MeetingRecordingServiceTests: XCTestCase {
 
         try await service.startRecording()
         let stream = await service.captureFailureSignalForCurrentSession()
-        let signalTask = Task { await collectCaptureFailureSignals(from: stream) }
+        let signalTask = Task { @Sendable in await Self.collectCaptureFailureSignals(from: stream) }
 
         await captureService.yield(.error(.captureRuntimeFailure("first runtime failure")))
         await captureService.yield(.error(.captureRuntimeFailure("duplicate runtime failure")))
@@ -1792,7 +1793,7 @@ final class MeetingRecordingServiceTests: XCTestCase {
 
         try await service.startRecording(sourceMode: .microphoneAndSystem)
         let failureStream = await service.captureFailureSignalForCurrentSession()
-        let failureTask = Task { await collectCaptureFailureSignals(from: failureStream) }
+        let failureTask = Task { @Sendable in await Self.collectCaptureFailureSignals(from: failureStream) }
         let microphoneBuffer = try XCTUnwrap(
             makeMonoFloatBuffer(frameCount: 16_000, sampleValue: 0.25)
         )
@@ -3347,7 +3348,7 @@ final class MeetingRecordingServiceTests: XCTestCase {
         }
     }
 
-    private func collectCaptureFailureSignals(
+    private static func collectCaptureFailureSignals(
         from stream: AsyncStream<MeetingCaptureFailureSignal>
     ) async -> [MeetingCaptureFailureSignal] {
         var signals: [MeetingCaptureFailureSignal] = []
@@ -5124,35 +5125,43 @@ private final class SourceInspectionFileManager: FileManager {
 /// Treat even an existence probe as a read of a writer-owned source. Returning
 /// false keeps a regressed consumer from opening that path after the deadline.
 private final class PendingSourceReadGuard: FileManager {
-    private let lock = NSLock()
-    private var pendingPath: String?
-    private var reads: [String] = []
+    /// The service exclusively owns the FileManager; the test shares only locked state.
+    final class State: @unchecked Sendable {
+        private let lock = NSLock()
+        private var pendingPath: String?
+        private var reads: [String] = []
 
-    var attemptedReads: [String] {
-        lock.withLock { reads }
+        var attemptedReads: [String] {
+            lock.withLock { reads }
+        }
+
+        func forbidReads(at url: URL) {
+            lock.withLock { pendingPath = url.path }
+        }
+
+        func recordIfForbidden(_ path: String) -> Bool {
+            lock.withLock {
+                guard path == pendingPath else { return false }
+                reads.append(path)
+                return true
+            }
+        }
     }
 
-    func forbidReads(at url: URL) {
-        lock.withLock { pendingPath = url.path }
+    private let state: State
+
+    init(state: State) {
+        self.state = state
+        super.init()
     }
 
     override func attributesOfItem(atPath path: String) throws -> [FileAttributeKey: Any] {
-        let forbidden = lock.withLock {
-            guard path == pendingPath else { return false }
-            reads.append(path)
-            return true
-        }
-        if forbidden { throw CocoaError(.fileReadNoPermission) }
+        if state.recordIfForbidden(path) { throw CocoaError(.fileReadNoPermission) }
         return try super.attributesOfItem(atPath: path)
     }
 
     override func fileExists(atPath path: String) -> Bool {
-        let forbidden = lock.withLock {
-            guard path == pendingPath else { return false }
-            reads.append(path)
-            return true
-        }
-        return forbidden ? false : super.fileExists(atPath: path)
+        state.recordIfForbidden(path) ? false : super.fileExists(atPath: path)
     }
 }
 

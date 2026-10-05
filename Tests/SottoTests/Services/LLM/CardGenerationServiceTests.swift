@@ -282,9 +282,11 @@ final class CardGenerationServiceTests: XCTestCase {
             started.fulfill()
         }
         defer { Task { await provider.release() } }
+        let service = fixture.service(provider: provider)
+        let transcriptionID = fixture.transcription.id
         let generation = Task {
-            try await fixture.service(provider: provider).generate(
-                transcriptionId: fixture.transcription.id,
+            try await service.generate(
+                transcriptionId: transcriptionID,
                 force: true
             )
         }

@@ -14,7 +14,7 @@ Sotto provides system-wide dictation, file/media transcription, meeting recordin
 - Upstream feedback UI/CLI and hosted sharing connections are removed. Debug arguments cannot enable sharing. Existing local records are preserved.
 - App auto-updates are removed. Update source manually, review upstream changes, retain the personal changes, and rebuild. There is no Sotto release feed.
 - Discover is a bundled, offline Rick-and-Morty-style banter feed, off by default.
-- Optional cloud AI, media/model downloads, explicit feedback, and gated sharing are separate network features, not telemetry. Original service URLs remain truthful upstream references, not Sotto services.
+- Configured AI providers and media/model/helper downloads have separate [network boundaries](docs/network-boundaries.md). Feedback submission and hosted sharing are unavailable.
 
 ## Build and run
 

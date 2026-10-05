@@ -4,6 +4,7 @@ import SottoViewModels
 
 @MainActor
 final class SavedMeetingNotesSaveStatusPresentationTests: XCTestCase {
+    @MainActor
     private final class ManualTimer {
         private let ticks: AsyncStream<Void>
         private let tickContinuation: AsyncStream<Void>.Continuation

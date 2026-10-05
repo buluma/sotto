@@ -214,6 +214,19 @@ Pi's four package license files are from the pinned published source tree's MIT 
 - Download source: Hugging Face
 - Bundling status: Not bundled in the app; downloaded at runtime
 
+## Cohere Transcribe Speech Model
+
+- Base model: [CohereLabs/cohere-transcribe-03-2026](https://huggingface.co/CohereLabs/cohere-transcribe-03-2026), by Cohere Labs.
+- Download source: [Fluid Inference CoreML conversion](https://huggingface.co/FluidInference/cohere-transcribe-03-2026-coreml), `q8` assets selected by FluidAudio 0.17.4.
+- License evidence: base model and conversion repository metadata declare Apache-2.0; the conversion README still says CC-BY-NC-4.0. This discrepancy is recorded rather than silently relabeling the weights. Snapshot checked 2026-10-05: conversion revision `7ca8c223e84c817a7e125c567c2582559dcd8e32`.
+- Not bundled; downloaded for optional local speech recognition. Preserve each artifact's accompanying notices. [Speech model notices](Sources/Sotto/Resources/Legal/SpeechModels.txt) include provenance, license links, and Apache-2.0 text.
+
+## Nemotron Speech Models
+
+- English: [NVIDIA Nemotron Speech Streaming English 0.6B](https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b), under the [NVIDIA Open Model License Agreement](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-license/). [Fluid Inference CoreML conversion](https://huggingface.co/FluidInference/nemotron-speech-streaming-en-0.6b-coreml) supplies the 560/1120/2240 ms variants.
+- Multilingual: [NVIDIA Nemotron 3.5 ASR Streaming 0.6B](https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b), under OpenMDW-1.1. [Fluid Inference CoreML conversion](https://huggingface.co/FluidInference/Nemotron-3.5-ASR-Streaming-Multilingual-0.6b-CoreML) supplies Latin-script and multilingual variants.
+- Not bundled; downloaded for optional local speech recognition. These speech weights are separate from Nemotron diarization assets. [Speech model notices](Sources/Sotto/Resources/Legal/SpeechModels.txt) retain attribution, source links, and audited revisions; the full OpenMDW-1.1 text is in [NemotronDiarization.txt](Sources/Sotto/Resources/Legal/NemotronDiarization.txt).
+
 ## Whisper Models
 
 - License: MIT License

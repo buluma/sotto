@@ -833,7 +833,7 @@ Settings open in the content area when "Settings" is selected in the sidebar. Th
 - **Modes** — Audio Input, Dictation, Transcription, and Meeting Recording cards. The Meeting Recording card groups start/stop automation under an "Automatic recording" subsection as two parallel on/off toggles: a calendar-driven "Start recording automatically" adaptive row (requests Calendar access in context, then becomes a plain on/off toggle that reveals an elevated sub-panel — matching the "Also save meetings to a folder" disclosure — holding the `.notify` vs `.autoStart` mode segmented control plus the reminder, event-filter, and per-calendar controls; `.off` is the toggle's unchecked state; `AppFeatures.calendarEnabled = true`) paired with an activity-driven "Stop recording automatically" toggle (`AppFeatures.meetingAutoStopEnabled = true`). Both halves use the same toggle idiom so the lifecycle pair reads as symmetric. Per-event skip (#609 / F48) is not a Settings list; it lives on Upcoming rows and the auto-start toast. Below the floating-controls toggle sits a meeting-end pair: **Open app when meeting ends** (default on; off preserves the user's focus and workspace while the meeting completes, including an in-place refresh of its already-open detail) and **Notify when transcript is ready** (default on; a quiet-completion chime plus a banner only while backgrounded, disabled while auto-open is on without changing its saved value — see F47 in `spec/02-features.md`). The meeting folder disclosure distinguishes complete managed meeting artifacts from the selected-format file saved to the chosen folder, shows the resolved managed-artifact path, and warns when the chosen folder is unavailable or not writable. TXT and Markdown additionally expose independent toggles for one timestamp per reading paragraph, speaker labels, and meeting details; those toggles affect only the folder copy.
 - **Engine** — One Speech Engine card with the primary engine tiles and an inline optional recordings/files override, followed by per-engine model/language controls and local model status/management.
 - **AI** — Optional provider setup for summaries, transcript chat, prompt actions, and live Ask.
-- **System** — Appearance; a Startup card with Launch at login, Hide menu bar icon, and Menu bar only mode; permissions; storage; updates; privacy/telemetry; onboarding reset; about; and fenced Reset & Cleanup actions.
+- **System** — Appearance; a Startup card with Launch at login, Hide menu bar icon, and Menu bar only mode; permissions; storage; local diagnostics/privacy; onboarding reset; about; and fenced Reset & Cleanup actions.
 
 `SettingsRootViewModel` owns active-tab persistence and search state. `SettingsSearchIndex` provides cross-tab search results and includes calendar entries while `AppFeatures.calendarEnabled` is `true` (currently enabled; they surface once Calendar access is granted), and hides them when the flag is off. The legacy card sketches below are retained only as historical content references; their grouping is not the current v0.6 IA.
 
@@ -953,7 +953,7 @@ Vocabulary > Fix words > Manage words opens a 640 × 560 sheet with a title, rec
 - During deletion, prevent repeated actions, word mutations, and sheet dismissal. Success returns to the normal list. Failure preserves the list and selection and shows an error beside the list, where it remains visible in selection mode.
 - Exiting the sheet clears transient selection and unconfirmed requests.
 
-See the [selected-word deletion contract](contracts/custom-word-deletion.md) for transaction and confirmation-snapshot guarantees, and the [approved interaction study](../docs/plans/2026-09-07-issue-882-bulk-delete.md) for the current/proposed HTML comparison. This is development behavior until included in an app release.
+See the [selected-word deletion contract](contracts/custom-word-deletion.md) for transaction and confirmation-snapshot guarantees, and the approved interaction study (historical reference; file absent from this checkout) for the current/proposed HTML comparison. This is development behavior until included in an app release.
 
 ### Text Snippets Management (v0.2)
 
@@ -1076,7 +1076,7 @@ Button to re-run onboarding flow: "Run Onboarding Again..."
 
 The first-run window follows [ADR-005](adr/005-onboarding-first-run.md): Welcome, Permissions, Try It, and Ready. Try It has a hotkey rehearsal phase and a real dictation phase. Loading and inactive practice boxes may use compact fixed heights; model-setup failures use their content's intrinsic height in either phase so the heading, explanation, recovery tips, and Retry / Open Settings buttons do not overlap adjacent content. The step body scrolls while navigation and Skip remain in the footer.
 
-Synthetic native hosting tests can validate these view states and geometry. They do not establish physical hotkey behavior, microphone or Accessibility permission prompts, real-model readiness, cross-app paste, or VoiceOver support. The [October audit](../docs/audits/2026-10-02-app-audit/gui-onboarding.md) records the verified states and outstanding end-to-end qualification.
+Synthetic native hosting tests can validate these view states and geometry. They do not establish physical hotkey behavior, microphone or Accessibility permission prompts, real-model readiness, cross-app paste, or VoiceOver support. The October audit (historical reference; file absent from this checkout) records the verified states and outstanding end-to-end qualification.
 
 ---
 
@@ -1105,107 +1105,10 @@ Gemini 3 inherited prompt sampling uses the provider default instead of injectin
 
 Availability and automatic generation are separate controls. **All transcriptions** is the common default; selected labels permit any matching transcription, independent of its source. Source-aware auto-run only runs an available prompt. Explain both settings together in ordinary language so the user can understand why a prompt is offered and when it runs. Existing detailed CLI policy exceptions must survive edits that do not change availability. Rules that the simple picker cannot represent are shown as **Custom availability rules**; choosing All transcriptions or a label explicitly replaces those rules on Save. The prompt, its version and edited availability commit atomically. Visibility and source auto-run remain in the manager; Transform shortcuts remain in the Transforms editor. Collection ordering remains in Manage collections. Prompt ordering and running-label metadata are preserved by edits; this layout does not add prompt duplication, prompt-reordering controls, or a running-label editor.
 
-## Discover (v0.4)
+## Personal Discover
 
-A curated content feed displayed as a sidebar item with a full-page content view. Discover surfaces tips, quotes, affirmations, and sponsored items fetched from a remote JSON feed (`macparakeet.com/api/discover.json`) with local cache fallback and a bundled default. Visibility and the launch fetch are gated by Settings → System → Appearance → **Show Discover in the sidebar** (`showDiscover`, default on). When launched with the preference off, the card is omitted and `DiscoverService` is not configured, so launch makes no request to the feed endpoint.
+Discover is a bundled offline feed, off by default. Settings → System → Appearance controls sidebar visibility. The sidebar card rotates every 30 seconds; the full-page view supports copying cards. Turning visibility off hides the card and returns an active Discover pane to Transcribe. The service ignores old caches and performs no HTTP refresh. There is no thoughts submission form or sponsored service feed. See [Personal Discover](../docs/discover.md) and `Sources/SottoCore/Services/Discover/DiscoverService.swift`.
 
-While enabled, the feed refresh starts at app launch or on re-enable, not by selecting this page, and remains independent of the telemetry setting. Turning Discover off cancels cache-load, refresh, and rotation tasks and clears the displayed feed. Late completions cannot publish content or revive cancelled work, including across rapid disable/re-enable transitions. Bounded local cache I/O already queued may finish; disabling does not erase the on-disk cache. Neither this setting nor telemetry opt-out is a global network switch.
-
-### Sidebar Card
-
-The Discover item is **not** part of the regular sidebar `List`. When `showDiscover` is on, it renders as a pinned card below the sidebar list via `.safeAreaInset(edge: .bottom)`. This keeps it visually distinct and always visible regardless of scroll position. Turning the preference off hides the card and, if Discover is the active detail pane, falls back to Transcribe.
-
-```
-┌──────────────────┐
-│  Sidebar List     │
-│  ────────────     │
-│  🎤 Transcribe   │
-│  🕒 Dictations   │
-│  📖 Vocabulary   │
-│  💬 Feedback     │
-│  ⚙ Settings      │
-│                   │
-│  ─── pinned ───   │  ← safeAreaInset(edge: .bottom)
-│  ┌──────────────┐ │
-│  │ [icon] Title  │ │  ← DiscoverSidebarCard
-│  │  (2-line max) │ │
-│  └──────────────┘ │
-└──────────────────┘
-
-Card anatomy:
-- 28×28pt accent-tinted icon square (item.icon or "sparkles" fallback)
-- Title: caption.weight(.semibold), 2-line limit
-- Background: accentLight when selected, surfaceElevated on hover, clear otherwise
-- Accent strokeBorder (0.5pt, 40%) when selected
-- Tooltip: item.body
-- Rotates through feed items every 30 seconds
-```
-
-### Content View
-
-Full-page scrollable feed rendered when the Discover sidebar item is selected. Uses the standard `DesignSystem.Animation.contentSwap` transition.
-
-```
-┌──────────────────────────────────────────────────────────┐
-│  Discover                                                │
-│  ───                                                     │  ← accent underline
-│  Intro text...                                           │
-│                                                          │
-│  ┌────────────────────────────────────────────────────┐  │
-│  │  Title                                    [copy]   │  │  ← hover-reveal copy button
-│  │  Body text...                                      │  │
-│  │  — Attribution                                     │  │
-│  │  [Verify ↗]                                        │  │  ← HTTPS links only
-│  │                               [watermark icon]     │  │
-│  └────────────────────────────────────────────────────┘  │
-│                                                          │
-│  ┌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┐  │
-│  ╎  Share your thoughts                               ╎  │  ← dashed border card
-│  ╎  [text editor]                    [Submit Thought]  ╎  │
-│  └╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┘  │
-└──────────────────────────────────────────────────────────┘
-
-Content types (DiscoverContentType):
-- tip: bodyLarge font, lightbulb.fill watermark
-- quote: serif font (italic), quote.bubble watermark
-- affirmation: rounded font, sparkles watermark
-- sponsored: bodyLarge font, custom icon, "Learn More" link text
-
-Card features:
-- Hover: accent border (20%), elevated shadow
-- Copy button: copies title + body + attribution to clipboard
-- External links: HTTPS-only, opens in default browser
-- Text selection enabled on all text
-```
-
-### Thoughts Submission
-
-Users can submit suggestions via a text form at the bottom of the feed. Submissions POST to `macparakeet.com/api/discover-thoughts` with system info (app version, build, macOS version, chip type). Success shows a confirmation banner that auto-dismisses after 4 seconds.
-
-### Components
-
-| Component | Location | Role |
-|-----------|----------|------|
-| `DiscoverView` | `Views/Discover/` | Full content view (card list + thoughts form) |
-| `DiscoverSidebarCard` | `Views/Discover/` | Pinned sidebar preview card |
-| `DiscoverViewModel` | `SottoViewModels/` | Feed state, sidebar rotation (30s timer), cache + refresh |
-| `DiscoverService` | `SottoCore/Services/` | Feed loading: cache → bundled fallback → empty. Background refresh from remote. |
-| `DiscoverThoughtsService` | `SottoCore/Services/` | POST user thoughts to private endpoint |
-| `DiscoverItem` / `DiscoverFeed` | `SottoCore/Models/DiscoverContent.swift` | Data model (Codable, versioned feed with `featuredIndex`) |
-
-### Data Flow
-
-```
-App launch
-  showDiscover == false → DiscoverViewModel.cancelDiscover(); no service, no request
-  showDiscover == true  → DiscoverViewModel.loadCached() → DiscoverService reads disk cache (or bundled fallback)
-                        → DiscoverViewModel.refreshInBackground() → DiscoverService fetches remote JSON, writes cache
-                        → Sidebar card rotates through items every 30s
-Toggle off  → cancel in-flight load/refresh/rotation and drop the feed
-Toggle on   → setupDiscoverContent() again (no relaunch)
-```
-
----
 
 ## LLM Markdown Content
 
@@ -1484,6 +1387,13 @@ Scrolling follows content growth while the reader stays at the bottom. Moving up
 
 Activity is stored locally with the answer and exposed through the CLI contract. It contains no copied transcript passages, raw provider errors, or model reasoning. See [Ask contract](contracts/ask-workspace.md) for bounds and interruption semantics.
 
+## Sotto fork workflow polish
+
+Sidebar tips display their full body directly, including multiline banter, with no fixed line limit. Meeting setup cards place actions below their descriptions when the horizontal row would crowd the text. Prominent brand buttons use the palette's `onAccent` foreground for light and dark appearances.
+
+AI Settings shows each saved task route's provider, model, and processing location. Loopback servers are identified as running on this Mac; other HTTP endpoints are remote regardless of provider name. CLI processing depends on the selected tool's configuration, and Apple Intelligence is managed by macOS. The existing connection test applies to the current default-provider draft; the route overview describes saved configurations.
+
+Single file and media-link transcription failures offer Retry Transcription using the original input and audio-track selection. Unrelated errors and dismissed errors clear that retry action; batch and existing-record retranscription retain their existing recovery flows. Model preparation explains that transcription starts automatically when ready.
 
 ## Current UI polish (personal fork)
 

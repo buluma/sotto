@@ -324,7 +324,7 @@ final class TranscriptionSpeakerCorrectionViewModelTests: XCTestCase {
         viewModel.currentTranscription = original
         // The gate belongs to a detached reader. Never block MainActor waiting for it.
         let started = await Task.detached {
-            reader.started.wait(timeout: .now() + 2) == .success
+            waitForFixtureSignal(reader.started, timeout: .now() + 2)
         }.value
         XCTAssertTrue(started)
         defer { reader.release.signal() }
@@ -359,7 +359,7 @@ final class TranscriptionSpeakerCorrectionViewModelTests: XCTestCase {
         )
         viewModel.currentTranscription = original
         let started = await Task.detached {
-            reader.started.wait(timeout: .now() + 2) == .success
+            waitForFixtureSignal(reader.started, timeout: .now() + 2)
         }.value
         XCTAssertTrue(started)
         defer { reader.release.signal() }
@@ -444,7 +444,7 @@ final class TranscriptionSpeakerCorrectionViewModelTests: XCTestCase {
             speakerAttributionReader: reader
         )
         viewModel.currentTranscription = original
-        let didStart = await Task.detached { reader.started.wait(timeout: .now() + 2) == .success }.value
+        let didStart = await Task.detached { waitForFixtureSignal(reader.started, timeout: .now() + 2) }.value
         XCTAssertTrue(didStart)
         let outputStarted = expectation(description: "Output requested")
         var outputFinished = false
@@ -479,7 +479,7 @@ final class TranscriptionSpeakerCorrectionViewModelTests: XCTestCase {
             speakerAttributionReader: reader
         )
         viewModel.currentTranscription = original
-        let didStart = await Task.detached { reader.started.wait(timeout: .now() + 2) == .success }.value
+        let didStart = await Task.detached { waitForFixtureSignal(reader.started, timeout: .now() + 2) }.value
         XCTAssertTrue(didStart)
         let outputStarted = expectation(description: "Output requested")
         let output = Task { @MainActor in
@@ -618,4 +618,9 @@ final class TranscriptionSpeakerCorrectionViewModelTests: XCTestCase {
             try await Task.sleep(for: .milliseconds(10))
         }
     }
+}
+
+/// Called only from detached test workers; never park the UI actor.
+private func waitForFixtureSignal(_ signal: DispatchSemaphore, timeout: DispatchTime) -> Bool {
+    signal.wait(timeout: timeout) == .success
 }

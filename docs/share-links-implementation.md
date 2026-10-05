@@ -1,6 +1,8 @@
 # Encrypted sharing: implementation and release handoff
 
-Sharing is implemented but **not publicly enabled**. `AppFeatures.shareLinksEnabled` remains `false`; DEBUG builds can expose the native UI with `--enable-share-links`. That switch does not redirect credentials or configure a production service.
+> Historical upstream design, superseded for the personal Sotto fork. Remote telemetry, feedback submission, and hosted sharing transports are removed; debug arguments cannot enable sharing. Local records, formats, and injectable diagnostic hooks remain. See [the current fork scope](network-boundaries.md).
+
+Hosted sharing is unavailable in this fork. `AppFeatures.shareLinksEnabled` is `false`, `isShareLinksAvailable` always returns `false`, and the default transport refuses requests. The implementation history below describes upstream work only.
 
 ## Landed implementation
 

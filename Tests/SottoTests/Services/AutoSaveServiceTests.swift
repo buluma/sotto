@@ -38,22 +38,26 @@ final class AutoSaveServiceTests: XCTestCase {
     private var defaults: UserDefaults!
     private var suiteName: String!
 
-    override func setUp() {
-        super.setUp()
-        tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        try! FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-        suiteName = makeIsolatedDefaultsSuite("com.sotto.test.autosave.")
-        defaults = UserDefaults(suiteName: suiteName)!
+    override func setUp() async throws {
+        await MainActor.run {
+            super.setUp()
+            tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+            try! FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+            suiteName = makeIsolatedDefaultsSuite("com.sotto.test.autosave.")
+            defaults = UserDefaults(suiteName: suiteName)!
+        }
     }
 
-    override func tearDown() {
-        Telemetry.configure(NoOpTelemetryService())
-        try? FileManager.default.removeItem(at: tempDir)
-        if let name = defaults.volatileDomainNames.first {
-            defaults.removeVolatileDomain(forName: name)
+    override func tearDown() async throws {
+        await MainActor.run {
+            Telemetry.configure(NoOpTelemetryService())
+            try? FileManager.default.removeItem(at: tempDir)
+            if let name = defaults.volatileDomainNames.first {
+                defaults.removeVolatileDomain(forName: name)
+            }
+            suiteName = nil
+            super.tearDown()
         }
-        suiteName = nil
-        super.tearDown()
     }
 
     // MARK: - Helpers

@@ -160,10 +160,11 @@ final class CustomVocabularyBoostingTests: XCTestCase {
             isPrepared: false,
             isPreparedDelayNanoseconds: 50_000_000
         )
-        let task = Task {
+        let tokenTimings = Self.tokenTimings
+        let task = Task { @Sendable in
             try await STTRuntime.applyCustomVocabularyBoostingForTesting(
                 transcript: "MAC Parakeet",
-                tokenTimings: Self.tokenTimings,
+                tokenTimings: tokenTimings,
                 audioSamples: [0.1, 0.2, 0.3],
                 capabilities: SpeechEngineCapabilityRegistry.capabilities(for: .parakeet(.v3)),
                 vocabulary: CustomVocabularyBoostingVocabulary(terms: ["Sotto"]),
@@ -189,10 +190,11 @@ final class CustomVocabularyBoostingTests: XCTestCase {
     func testDictationBackgroundPreparationCancelsBeforeSharedWarmupStarts() async throws {
         let rescorer = FakeCustomVocabularyRescorer(text: "Sotto", isPrepared: false)
         let registrationProbe = BackgroundPreparationRegistrationProbe()
-        let task = Task {
+        let tokenTimings = Self.tokenTimings
+        let task = Task { @Sendable in
             try await STTRuntime.applyCustomVocabularyBoostingForTesting(
                 transcript: "MAC Parakeet",
-                tokenTimings: Self.tokenTimings,
+                tokenTimings: tokenTimings,
                 audioSamples: [0.1, 0.2, 0.3],
                 capabilities: SpeechEngineCapabilityRegistry.capabilities(for: .parakeet(.v3)),
                 vocabulary: CustomVocabularyBoostingVocabulary(terms: ["Sotto"]),

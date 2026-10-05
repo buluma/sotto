@@ -34,6 +34,7 @@ extension View {
         case .primaryProminent:
             self.buttonStyle(.borderedProminent)
                 .tint(DesignSystem.Colors.accent)
+                .foregroundStyle(DesignSystem.Colors.onAccent)
         case .secondary:
             self.buttonStyle(.bordered)
                 .tint(DesignSystem.Colors.tintNeutral)

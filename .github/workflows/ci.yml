@@ -26,12 +26,19 @@ concurrency:
 
 jobs:
   behavior:
-    name: Tests and Swift 6
+    name: Tests and Swift 6 (${{ matrix.test_group }})
     runs-on: xcode-27
-    timeout-minutes: 45
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        test_group: [general, audio]
+    env:
+      AUDIO_TEST_FILTER: 'MeetingEcho(DelayEstimator|SuppressionRuntime|Suppressor)Tests'
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
@@ -97,17 +104,17 @@ jobs:
           echo "fingerprint=$fingerprint" >> "$GITHUB_OUTPUT"
 
       # Reuse build state only within one lane and matching toolchain, SDK,
-      # architecture, package graph and workflow. Always build after restore:
+      # architecture, package graph and cache policy. Always build after restore:
       # SwiftPM must reconcile changed/deleted sources before --skip-build tests.
       - name: Cache SwiftPM Build State
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             .build
             .build-swift6-no-whisper
-          key: swiftpm-v1-behavior-${{ steps.swift_cache.outputs.fingerprint }}-${{ github.sha }}
+          key: swiftpm-v1-behavior-${{ matrix.test_group }}-${{ steps.swift_cache.outputs.fingerprint }}-${{ github.sha }}
           restore-keys: |
-            swiftpm-v1-behavior-${{ steps.swift_cache.outputs.fingerprint }}-
+            swiftpm-v1-behavior-${{ matrix.test_group }}-${{ steps.swift_cache.outputs.fingerprint }}-
 
       # Compile the normal dependency graph and tests once with the same
       # concurrency diagnostics used during execution. Keep build and run
@@ -118,6 +125,10 @@ jobs:
         run: |
           set -o pipefail
           swift build --build-tests -Xswiftc -warn-concurrency 2>&1 | tee ci-logs/swift-test-build.log
+
+      - name: Concurrency Warning Baseline
+        if: ${{ steps.test_build.outcome == 'success' }}
+        run: python3 scripts/ci/check_concurrency_warnings.py --log ci-logs/swift-test-build.log
 
       - name: Ask Pi Helper
         timeout-minutes: 5
@@ -130,13 +141,18 @@ jobs:
 
       - name: Swift Test
         id: tests
-        timeout-minutes: 20
+        timeout-minutes: 32
         env:
           SOTTO_ASK_TEST_NODE: ${{ github.workspace }}/.build/ask-runtime/node
         run: |
           set -o pipefail
           export SOTTO_CLI_TEST_EXECUTABLE="$PWD/.build/debug/sotto-cli"
-          swift test --skip-build --parallel -Xswiftc -warn-concurrency --xunit-output ci-logs/swift-tests.xml 2>&1 | tee ci-logs/swift-test.log
+          selection=(--skip "$AUDIO_TEST_FILTER")
+          if [ "${{ matrix.test_group }}" = audio ]; then
+            selection=(--filter "$AUDIO_TEST_FILTER")
+          fi
+          python3 scripts/ci/run-test-process.py --timeout 1800 -- \
+            swift test --skip-build --parallel "${selection[@]}" -Xswiftc -warn-concurrency --xunit-output ci-logs/swift-tests.xml 2>&1 | tee ci-logs/swift-test.log
 
       - name: Test Summary
         if: ${{ !cancelled() && steps.tests.outcome != 'skipped' && steps.tests.outcome != '' }}
@@ -145,6 +161,7 @@ jobs:
           python3 scripts/ci/summarize-tests.py ci-logs/swift-tests.xml ci-logs/swift-test.log | tee ci-logs/test-summary.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Ask CLI Qualification
+        if: ${{ matrix.test_group == 'general' && success() }}
         timeout-minutes: 5
         env:
           CLI_BINARY: ${{ github.workspace }}/.build/debug/sotto-cli
@@ -163,24 +180,25 @@ jobs:
             --output-dir ci-logs/ask-qualification
 
       - name: CLI Persistence Smoke
-        if: ${{ !cancelled() && steps.test_build.outcome == 'success' }}
+        if: ${{ matrix.test_group == 'general' && !cancelled() && steps.test_build.outcome == 'success' }}
         timeout-minutes: 2
         run: |
           set -o pipefail
           python3 scripts/ci/cli-persistence-smoke.py "$PWD/.build/debug/sotto-cli" 2>&1 | tee ci-logs/cli-persistence-smoke.log
 
       - name: Meeting Process Recovery
-        if: ${{ !cancelled() && steps.test_build.outcome == 'success' }}
+        if: ${{ matrix.test_group == 'general' && !cancelled() && steps.test_build.outcome == 'success' }}
         timeout-minutes: 4
         env:
           SOTTO_CRASH_RECOVERY_TESTS: "1"
           SOTTO_TELEMETRY: "0"
         run: |
           set -o pipefail
-          swift test --skip-build -Xswiftc -warn-concurrency --filter 'MeetingRecordingCrashRecoveryTests/(testKillNineMidRecordingProducesPlayableFiles|testKilledRecordingRecoversInFreshProcessAndRemainsIdempotent)' 2>&1 | tee ci-logs/meeting-process-recovery.log
+          python3 scripts/ci/run-test-process.py --timeout 180 -- \
+            swift test --skip-build -Xswiftc -warn-concurrency --filter 'MeetingRecordingCrashRecoveryTests/(testKillNineMidRecordingProducesPlayableFiles|testKilledRecordingRecoversInFreshProcessAndRemainsIdempotent)' 2>&1 | tee ci-logs/meeting-process-recovery.log
 
       - name: Swift 6 Language Mode
-        if: ${{ !cancelled() && steps.test_build.outcome == 'success' }}
+        if: ${{ matrix.test_group == 'general' && !cancelled() && steps.test_build.outcome == 'success' }}
         timeout-minutes: 15
         env:
           # Argmax/WhisperKit v0.18.0 is required for real builds but is not
@@ -197,7 +215,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: swift-test-evidence
+          name: swift-test-evidence-${{ matrix.test_group }}
           path: ci-logs/
           if-no-files-found: error
           retention-days: 7
@@ -246,10 +264,10 @@ jobs:
           echo "fingerprint=$fingerprint" >> "$GITHUB_OUTPUT"
 
       # Reuse build state only within one lane and matching toolchain, SDK,
-      # architecture, package graph and workflow. Always build after restore:
+      # architecture, package graph and cache policy. Always build after restore:
       # SwiftPM must reconcile changed/deleted sources before --skip-build tests.
       - name: Cache SwiftPM Build State
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             .build
@@ -266,7 +284,7 @@ jobs:
           echo "fingerprint=$fingerprint" >> "$GITHUB_OUTPUT"
 
       - name: Cache Xcode Build State
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ${{ runner.temp }}/sotto-xcode-dist
           key: xcode-v1-${{ steps.xcode_cache.outputs.fingerprint }}-${{ github.sha }}
@@ -378,12 +396,12 @@ jobs:
           xcode=$(bash scripts/ci/xcode-cache-key.sh)
           echo "swift=$swift" >> "$GITHUB_OUTPUT"
           echo "xcode=$xcode" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache/restore@v5
+      - uses: actions/cache/restore@v6
         with:
           path: .build
           key: swiftpm-v1-distribution-${{ steps.cache.outputs.swift }}-${{ github.sha }}
           fail-on-cache-miss: true
-      - uses: actions/cache/restore@v5
+      - uses: actions/cache/restore@v6
         with:
           path: ${{ runner.temp }}/sotto-xcode-dist
           key: xcode-v1-${{ steps.cache.outputs.xcode }}-${{ github.sha }}

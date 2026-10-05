@@ -46,3 +46,5 @@ Planned contracts are listed separately below; they do not describe available pa
 ## Planned Contracts
 
 - [Audio Speaker Timeline v1](audio-speaker-timeline-v1.md) — #836, independent detected audio turns for untimed transcripts; implementation and enforcement tests pending.
+
+[Personal-fork entitlements](licensing-local-only.md) defines unlocked, no-network, non-destructive licensing compatibility.

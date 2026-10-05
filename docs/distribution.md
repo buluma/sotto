@@ -1,16 +1,12 @@
-# Distribution (Developer ID + Notarization)
+# Local Packaging and Optional Signing
 
-> Personal Sotto fork: manual updates; release DMGs are ad-hoc signed. Developer ID signing and notarization remain optional manual tooling.
+> Personal Sotto fork: local builds and manual source updates only. Do not publish releases or upload artifacts. Signing and notarization tooling is optional and does not establish a distribution channel.
 
 This repo uses Swift packages. App distribution builds those packages through Xcode and assembles a `.app` bundle for Developer ID distribution. Xcode compiles asset catalogs and generates resource lookups that work after installation on another Mac. `BUILD_SYSTEM=swiftpm` is rejected for app distribution; ordinary `swift build`, `swift test`, and SwiftPM CLI builds remain supported.
 
-## GitHub release DMGs
+## Local DMGs
 
-Publishing a GitHub release triggers `.github/workflows/release-dmg.yml`. Use a tag named `X.Y.Z` or `vX.Y.Z`, excluding `0.0.0`. The workflow checks out that exact tag, builds the Apple Silicon app with Xcode 16.1 and the normal bundled helpers and meeting echo assets, then attaches `Sotto-X.Y.Z-arm64.dmg` and its SHA-256 checksum to the release. Prereleases also trigger the workflow; draft releases do not trigger it until published. Publishing through another workflow using `GITHUB_TOKEN` does not trigger a new release workflow; use the GitHub UI or a separately authorized token for that publication.
-
-The DMG contains `Sotto.app` and an Applications shortcut. Packaging verifies the app signature, privacy surface, meeting echo assets, and disk image before uploading. No signing secrets are required: these personal builds are ad-hoc signed and are not Developer ID signed or notarized, so macOS Gatekeeper can require explicit approval when opening a downloaded build. App updates remain manual. Build logs are retained for seven days, including failed runs; rerunning the release job replaces its matching DMG and checksum assets.
-
-To package a local release bundle with the same personal signing path, run `scripts/dist/build_dmg.sh dist/Sotto.app dist/Sotto.dmg` after building it with `VERSION=X.Y.Z`.
+Package an existing local app bundle with `scripts/dist/build_dmg.sh dist/Sotto.app dist/Sotto.dmg` after building it with `VERSION=X.Y.Z`. The disk image contains `Sotto.app` and an Applications shortcut. Personal builds can use ad-hoc signing; that is not Developer ID signing or notarization. Retained release workflows are not authorization to publish this fork.
 
 ## 1) Build the app bundle
 
@@ -76,19 +72,9 @@ VERSION=X.Y.Z scripts/dist/build_app_bundle.sh
 
 The verifier also inspects every bundled LocalVQE dylib (`liblocalvqe.dylib` and any dependency copied into `Contents/Frameworks/`) and every architecture slice of each, reading the Mach-O minimum-OS-version load command (`LC_BUILD_VERSION minos`, or legacy `LC_VERSION_MIN_MACOSX`) and rejecting any slice higher than the app's `LSMinimumSystemVersion`. A missing/malformed version is always a hard failure; a missing `otool`/`lipo` is a hard failure only under `STRICT_MEETING_ECHO_ASSETS=1` (implied by `REQUIRE_MEETING_ECHO_ASSETS=1`) and otherwise a skipped-check warning. When run as part of `build_app_bundle.sh`, the expected minimum is the build's `MIN_MACOS_VERSION`; run standalone against an already-built bundle, it reads `LSMinimumSystemVersion` from the bundle's `Info.plist`. `SOTTO_MEETING_ECHO_MIN_MACOS_VERSION` can supply or tighten this: it is used on its own if the bundle has no `Info.plist` yet, but once the bundle's `Info.plist` exists, it must contain a valid minimum even when an override is supplied. The effective ceiling is the lower of the override and `LSMinimumSystemVersion` — an override can only make the check stricter, never raise it above what the bundle's `Info.plist` actually advertises.
 
-Retained purchase activation config (normally unset in current free builds):
+Legacy activation metadata is normally unset. `SOTTO_CHECKOUT_URL` and `SOTTO_LS_VARIANT_ID` may still be embedded as `SottoCheckoutURL` and `SottoLemonSqueezyVariantID` for source compatibility; they cannot enable licensing calls, change unlocked behavior, or modify stored credentials. Local builds do not need them.
 
-```bash
-export SOTTO_CHECKOUT_URL="https://..."
-export SOTTO_LS_VARIANT_ID="12345"
-scripts/dist/build_app_bundle.sh
-```
-
-Current public Sotto builds are free/GPL-3.0 and `EntitlementsService.currentState()` returns unlocked. These variables are retained for future GPL-compatible official paid distribution/support and are not required for current free production builds. When set, they are embedded into `Info.plist` as:
-- `SottoCheckoutURL`
-- `SottoLemonSqueezyVariantID`
-
-## 2) Sign + notarize (recommended)
+## 2) Optional signing and notarization
 
 Prereqs:
 - A **Developer ID Application** certificate in Keychain.
@@ -151,7 +137,7 @@ Do not ship new CLI behavior under a previously published CLI version. The CLI e
 
 ### Version bumping
 
-The current app release is **0.8.9**, continuing the 0.8.x release train. **0.9.0 is reserved for qualified, publicly enabled Jev Voice Control.** This deliberate milestone policy takes precedence over the generic guidance below. Voice Control remains release-gated; additive improvements to the existing capture and Library workflows do not by themselves change that milestone. The CLI has its own semver and must be versioned independently.
+Version identifiers are local build metadata inherited from upstream; this fork has no public release channel. Keep the CLI compatibility version independent of the app bundle version.
 
 The build script accepts `VERSION` and `BUILD_NUMBER` env vars:
 
@@ -165,13 +151,15 @@ scripts/dist/build_app_bundle.sh                   # local/dev only: VERSION def
 - **Build number**: Auto-generated UTC timestamp that always increases
 - **Release builds must set `VERSION=X.Y.Z` explicitly.** The script's default `0.0.0` is intentionally non-release metadata so local bundles cannot be mistaken for a release.
 
-### Known gotchas (hard-won lessons)
+### Historical upstream packaging lessons
+
+The dated release incidents below are retained technical context, not evidence of a Sotto release.
 
 These are bugs and edge cases discovered during actual releases. Read before your first release.
 
 #### 1. A `notarytool` crash is an incomplete upload — resubmit the same bytes
 
-**Do not use `--wait`.** Default `notarytool submit` (progress + S3 acceleration) also SIGBUS-crashes on this Mac (exit 138) *without* `--wait`. Apple then lists a new ID that can stay `In Progress` indefinitely because the file never finished uploading. That history row is a reservation, not a receipt. Polling it cannot converge. 0.8.5 burned ~55 minutes this way; 0.8.4 morning left seven ghost DMG IDs before one Accepted. Evidence: [`docs/audits/2026-09-17-0.8.5-release-postmortem.md`](audits/2026-09-17-0.8.5-release-postmortem.md).
+**Do not use `--wait`.** Default `notarytool submit` (progress + S3 acceleration) also SIGBUS-crashes on this Mac (exit 138) *without* `--wait`. Apple then lists a new ID that can stay `In Progress` indefinitely because the file never finished uploading. That history row is a reservation, not a receipt. Polling it cannot converge. 0.8.5 burned ~55 minutes this way; 0.8.4 morning left seven ghost DMG IDs before one Accepted. Evidence: `docs/audits/2026-09-17-0.8.5-release-postmortem.md` (historical reference; file absent from this checkout).
 
 **Instead:** submit with the flags that printed `Successfully uploaded file` and Accepted in under a minute:
 

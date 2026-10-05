@@ -341,14 +341,14 @@ private enum TestLifecycleError: Error {
 
 private final class FakeScreenCaptureLifecycleSession: ScreenCaptureLifecycleSession, @unchecked Sendable {
     private let lock = NSLock()
-    private var startCompletion: ((Error?) -> Void)?
-    private var stopCompletion: ((Error?) -> Void)?
+    private var startCompletion: (@Sendable (Error?) -> Void)?
+    private var stopCompletion: (@Sendable (Error?) -> Void)?
     private var startWaiters: [CheckedContinuation<Void, Never>] = []
     private var stopWaiters: [CheckedContinuation<Void, Never>] = []
     private(set) var startCallCount = 0
     private(set) var stopCallCount = 0
 
-    func startCapture(completionHandler: @escaping (Error?) -> Void) {
+    func startCapture(completionHandler: @escaping @Sendable (Error?) -> Void) {
         let waiters = lock.withLock { () -> [CheckedContinuation<Void, Never>] in
             startCallCount += 1
             startCompletion = completionHandler
@@ -359,7 +359,7 @@ private final class FakeScreenCaptureLifecycleSession: ScreenCaptureLifecycleSes
         waiters.forEach { $0.resume() }
     }
 
-    func stopCapture(completionHandler: @escaping (Error?) -> Void) {
+    func stopCapture(completionHandler: @escaping @Sendable (Error?) -> Void) {
         let waiters = lock.withLock { () -> [CheckedContinuation<Void, Never>] in
             stopCallCount += 1
             stopCompletion = completionHandler

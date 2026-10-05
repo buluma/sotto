@@ -5,6 +5,21 @@ import OSLog
 import WhisperKit
 #endif
 
+#if SOTTO_HAS_WHISPERKIT
+/// WhisperKit 0.18 has mutable, non-Sendable models. This private bridge is
+/// exclusively owned by WhisperEngine; every use, including unload, is held
+/// under its transcriptionPermit across suspension. The ANE gate separately
+/// serializes inference across engines on macOS 14. Never expose this instance
+/// or access it outside those permit-protected paths.
+private final class SerializedWhisperKit: @unchecked Sendable {
+    let instance: WhisperKit
+
+    init(_ instance: WhisperKit) { self.instance = instance }
+
+    func unloadModels() async { await instance.unloadModels() }
+}
+#endif
+
 public actor WhisperEngine: STTTranscribing {
     public static let defaultModelVariant = SpeechEnginePreference.defaultWhisperModelVariant
 
@@ -20,7 +35,7 @@ public actor WhisperEngine: STTTranscribing {
     private let transcriptionPermit = AsyncPermit()
 
     #if SOTTO_HAS_WHISPERKIT
-    private var whisperKit: WhisperKit?
+    private var whisperKit: SerializedWhisperKit?
     private var isLoaded = false
     #endif
 
@@ -268,14 +283,14 @@ public actor WhisperEngine: STTTranscribing {
                 "whisper_model_prepare_start model=\(variant) folder=\(folderName)"
             )
             onProgress?("Optimizing Whisper for this Mac...")
-            whisperKit = try await WhisperKit(WhisperKitConfig(
+            whisperKit = SerializedWhisperKit(try await WhisperKit(WhisperKitConfig(
                 model: modelVariant,
                 downloadBase: downloadBase,
                 modelFolder: modelFolder.path,
                 verbose: false,
                 load: true,
                 download: false
-            ))
+            )))
             isLoaded = true
             // Single chokepoint for "this variant compiled successfully on this
             // Mac" — fires for every caller (Settings switch, onboarding,
@@ -377,7 +392,7 @@ public actor WhisperEngine: STTTranscribing {
     }
 
     private static func transcribeWithLanguageFallback(
-        _ whisperKit: WhisperKit,
+        _ whisperKit: SerializedWhisperKit,
         audioPath: String,
         requestedLanguage: String?,
         callback: TranscriptionCallback
@@ -402,7 +417,7 @@ public actor WhisperEngine: STTTranscribing {
     }
 
     private static func transcribeWithLanguageFallback(
-        _ whisperKit: WhisperKit,
+        _ whisperKit: SerializedWhisperKit,
         audioArray: [Float],
         requestedLanguage: String?,
         callback: TranscriptionCallback
@@ -427,13 +442,13 @@ public actor WhisperEngine: STTTranscribing {
     }
 
     private static func transcribeWithWhisperKit(
-        _ whisperKit: WhisperKit,
+        _ whisperKit: SerializedWhisperKit,
         audioPaths: [String],
         decodeOptions: DecodingOptions,
         callback: TranscriptionCallback
     ) async throws -> TranscriptionResult {
         let results = try await ANEInferenceGate.shared.withExclusiveAccess {
-            await whisperKit.transcribeWithResults(
+            await whisperKit.instance.transcribeWithResults(
                 audioPaths: audioPaths,
                 decodeOptions: decodeOptions,
                 callback: callback
@@ -449,13 +464,13 @@ public actor WhisperEngine: STTTranscribing {
     }
 
     private static func transcribeWithWhisperKit(
-        _ whisperKit: WhisperKit,
+        _ whisperKit: SerializedWhisperKit,
         audioArray: [Float],
         decodeOptions: DecodingOptions,
         callback: TranscriptionCallback
     ) async throws -> TranscriptionResult {
         let partialResults = try await ANEInferenceGate.shared.withExclusiveAccess {
-            try await whisperKit.transcribe(
+            try await whisperKit.instance.transcribe(
                 audioArray: audioArray,
                 decodeOptions: decodeOptions,
                 callback: callback

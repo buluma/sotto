@@ -16,7 +16,7 @@ The repo contains two products:
 - `Sotto.app`: SwiftUI macOS app.
 - `sotto-cli`: public automation surface in `Sources/CLI/`; compatibility notes live in `Sources/CLI/CHANGELOG.md`.
 
-`main` is development. The notarized DMG is the user-facing stable channel. For current release/flag state, read [`spec/README.md`](./spec/README.md#release-channels-and-feature-flags) and the relevant ADR/spec instead of copying release facts into new docs.
+This personal fork has no public stable channel. Build locally and update source manually. For current release/flag state, read [`spec/README.md`](./spec/README.md#release-channels-and-feature-flags) and the relevant ADR/spec instead of copying release facts into new docs.
 
 ## Commands
 
@@ -67,7 +67,7 @@ When editing a load-bearing Core subsystem, read its local README before code: `
 
 ## Product Rules
 
-- Preserve the local-first posture. Audio/transcripts stay on-device for core dictation, transcription, and meeting recording. Cloud LLMs, media downloads, model/update flows, and telemetry are explicit product surfaces.
+- Preserve the local-first posture. Audio/transcripts stay on-device for core dictation, transcription, and meeting recording. Configured AI providers and media/model/helper downloads have explicit network boundaries. Remote telemetry, feedback submission, hosted sharing, and automatic app updates are removed.
 - Treat the user database and meeting artifacts as user data. Do not delete them outside explicit product recovery/discard flows.
 - Keep the product focused. Prefer reliable capture, recovery, durable local artifacts, polished daily workflows, and simple UX over feature sprawl.
 - North star ([ADR-027](./spec/adr/027-product-north-star.md)): Sotto is the private speech memory of your Mac. Features must capture speech better, make the local library more useful, or expose it safely to the user and their agents.

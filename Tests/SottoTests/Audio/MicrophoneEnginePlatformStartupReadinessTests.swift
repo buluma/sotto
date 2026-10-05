@@ -3,10 +3,13 @@ import os
 import XCTest
 @testable import SottoCore
 
+// These locks retain native engines only for identity comparisons and notification objects.
+// Engine mutation stays on the platform queue; no global Sendable conformance is added.
+
 final class MicrophoneEnginePlatformStartupReadinessTests: XCTestCase {
     func testStartFallsBackWhenPreferredRouteProducesNoBuffer() throws {
         let invocationCount = OSAllocatedUnfairLock(initialState: 0)
-        let engines = OSAllocatedUnfairLock(initialState: [AVAudioEngine]())
+        let engines = OSAllocatedUnfairLock(uncheckedState: [AVAudioEngine]())
         let buffer = UncheckedSendableAudioPCMBuffer(makeStartupReadinessBuffer())
 
         let platform = AVAudioEngineMicrophonePlatform(
@@ -27,7 +30,7 @@ final class MicrophoneEnginePlatformStartupReadinessTests: XCTestCase {
                     value += 1
                     return value
                 }
-                engines.withLock { $0.append(engine) }
+                engines.withLockUnchecked { $0.append(engine) }
                 if invocation == 2 {
                     tapHandler(buffer.buffer, AVAudioTime(hostTime: 1))
                 }
@@ -46,7 +49,7 @@ final class MicrophoneEnginePlatformStartupReadinessTests: XCTestCase {
             platform.lastSucceededAttempt,
             .implicitSystemDefault(resolvedDeviceID: 20)
         )
-        let startedEngines = engines.withLock { $0 }
+        let startedEngines = engines.withLockUnchecked { $0 }
         XCTAssertEqual(startedEngines.count, 2)
         XCTAssertFalse(startedEngines[0] === startedEngines[1])
     }
@@ -55,7 +58,7 @@ final class MicrophoneEnginePlatformStartupReadinessTests: XCTestCase {
         let routeBuildCount = OSAllocatedUnfairLock(initialState: 0)
         let invocationCount = OSAllocatedUnfairLock(initialState: 0)
         let explicitlySetDeviceIDs = OSAllocatedUnfairLock(initialState: [AudioDeviceID]())
-        let engines = OSAllocatedUnfairLock(initialState: [AVAudioEngine]())
+        let engines = OSAllocatedUnfairLock(uncheckedState: [AVAudioEngine]())
         let bluetoothState = OSAllocatedUnfairLock<Bool?>(initialState: true)
         let buffer = UncheckedSendableAudioPCMBuffer(
             makeStartupReadinessBuffer(nonZero: true)
@@ -85,7 +88,7 @@ final class MicrophoneEnginePlatformStartupReadinessTests: XCTestCase {
                     value += 1
                     return value
                 }
-                engines.withLock { $0.append(engine) }
+                engines.withLockUnchecked { $0.append(engine) }
                 if invocation == 1 {
                     bluetoothState.withLock { $0 = nil }
                 } else {
@@ -108,7 +111,7 @@ final class MicrophoneEnginePlatformStartupReadinessTests: XCTestCase {
             platform.lastSucceededAttempt,
             .implicitSystemDefault(resolvedDeviceID: 11)
         )
-        let startedEngines = engines.withLock { $0 }
+        let startedEngines = engines.withLockUnchecked { $0 }
         XCTAssertEqual(startedEngines.count, 2)
         XCTAssertFalse(startedEngines[0] === startedEngines[1])
     }
@@ -172,7 +175,7 @@ final class MicrophoneEnginePlatformStartupReadinessTests: XCTestCase {
         let routeBuildCount = OSAllocatedUnfairLock(initialState: 0)
         let invocationCount = OSAllocatedUnfairLock(initialState: 0)
         let explicitlySetDeviceIDs = OSAllocatedUnfairLock(initialState: [AudioDeviceID]())
-        let engines = OSAllocatedUnfairLock(initialState: [AVAudioEngine]())
+        let engines = OSAllocatedUnfairLock(uncheckedState: [AVAudioEngine]())
         let buffer = UncheckedSendableAudioPCMBuffer(
             makeStartupReadinessBuffer(nonZero: true)
         )
@@ -196,7 +199,7 @@ final class MicrophoneEnginePlatformStartupReadinessTests: XCTestCase {
                     value += 1
                     return value
                 }
-                engines.withLock { $0.append(engine) }
+                engines.withLockUnchecked { $0.append(engine) }
                 if invocation == 3 {
                     tapHandler(buffer.buffer, AVAudioTime(hostTime: 1))
                 }
@@ -217,7 +220,7 @@ final class MicrophoneEnginePlatformStartupReadinessTests: XCTestCase {
             platform.lastSucceededAttempt,
             MeetingInputDeviceAttempt(source: .builtIn, deviceID: 20)
         )
-        let startedEngines = engines.withLock { $0 }
+        let startedEngines = engines.withLockUnchecked { $0 }
         XCTAssertEqual(startedEngines.count, 3)
         XCTAssertFalse(startedEngines[0] === startedEngines[1])
         XCTAssertFalse(startedEngines[1] === startedEngines[2])
@@ -406,9 +409,9 @@ final class MicrophoneEnginePlatformStartupReadinessTests: XCTestCase {
     }
 
     func testPreparedStartFallsBackWhenConfigurationChangesDuringReadiness() throws {
-        let preparedEngine = OSAllocatedUnfairLock<AVAudioEngine?>(initialState: nil)
+        let preparedEngine = OSAllocatedUnfairLock<AVAudioEngine?>(uncheckedState: nil)
         let postedConfigurationChange = OSAllocatedUnfairLock(initialState: false)
-        let startedEngines = OSAllocatedUnfairLock(initialState: [AVAudioEngine]())
+        let startedEngines = OSAllocatedUnfairLock(uncheckedState: [AVAudioEngine]())
         let buffer = UncheckedSendableAudioPCMBuffer(makeStartupReadinessBuffer())
 
         let platform = AVAudioEngineMicrophonePlatform(
@@ -419,14 +422,14 @@ final class MicrophoneEnginePlatformStartupReadinessTests: XCTestCase {
             startupReadinessTimeout: 0,
             bluetoothInputState: { _ in false },
             engineStarter: { engine, _, _, tapHandler in
-                startedEngines.withLock { $0.append(engine) }
+                startedEngines.withLockUnchecked { $0.append(engine) }
                 tapHandler(buffer.buffer, AVAudioTime(hostTime: 1))
                 let shouldPost = postedConfigurationChange.withLock { posted -> Bool in
                     guard !posted else { return false }
                     posted = true
                     return true
                 }
-                if shouldPost, let engine = preparedEngine.withLock({ $0 }) {
+                if shouldPost, let engine = preparedEngine.withLockUnchecked({ $0 }) {
                     NotificationCenter.default.post(
                         name: .AVAudioEngineConfigurationChange,
                         object: engine
@@ -443,7 +446,7 @@ final class MicrophoneEnginePlatformStartupReadinessTests: XCTestCase {
         )
         let preparedState = platform.preparedEngineStateForTesting
         XCTAssertTrue(preparedState.prepared)
-        preparedEngine.withLock { $0 = preparedState.engine }
+        preparedEngine.withLockUnchecked { $0 = preparedState.engine }
 
         try platform.configureAndStart(
             vpioEnabled: false,
@@ -451,7 +454,7 @@ final class MicrophoneEnginePlatformStartupReadinessTests: XCTestCase {
             tapHandler: { _, _ in }
         )
 
-        let engines = startedEngines.withLock { $0 }
+        let engines = startedEngines.withLockUnchecked { $0 }
         XCTAssertEqual(engines.count, 2, "stale prepared start + cold fallback")
         XCTAssertTrue(engines[0] === preparedState.engine)
         XCTAssertFalse(engines[0] === engines[1])
@@ -490,10 +493,10 @@ final class MicrophoneEnginePlatformStartupReadinessTests: XCTestCase {
     }
 
     func testColdStartFallsBackWhenConfigurationChangesDuringReadiness() throws {
-        let currentEngine = OSAllocatedUnfairLock<AVAudioEngine?>(initialState: nil)
+        let currentEngine = OSAllocatedUnfairLock<AVAudioEngine?>(uncheckedState: nil)
         let currentDefaultDeviceID = OSAllocatedUnfairLock<AudioDeviceID>(initialState: 10)
         let postedConfigurationChange = OSAllocatedUnfairLock(initialState: false)
-        let startedEngines = OSAllocatedUnfairLock(initialState: [AVAudioEngine]())
+        let startedEngines = OSAllocatedUnfairLock(uncheckedState: [AVAudioEngine]())
         let buffer = UncheckedSendableAudioPCMBuffer(makeStartupReadinessBuffer())
 
         let platform = AVAudioEngineMicrophonePlatform(
@@ -509,15 +512,15 @@ final class MicrophoneEnginePlatformStartupReadinessTests: XCTestCase {
             startupReadinessTimeout: 0,
             bluetoothInputState: { _ in false },
             engineStarter: { engine, _, _, tapHandler in
-                currentEngine.withLock { $0 = engine }
-                startedEngines.withLock { $0.append(engine) }
+                currentEngine.withLockUnchecked { $0 = engine }
+                startedEngines.withLockUnchecked { $0.append(engine) }
                 tapHandler(buffer.buffer, AVAudioTime(hostTime: 1))
                 let shouldPost = postedConfigurationChange.withLock { posted -> Bool in
                     guard !posted else { return false }
                     posted = true
                     return true
                 }
-                if shouldPost, let engine = currentEngine.withLock({ $0 }) {
+                if shouldPost, let engine = currentEngine.withLockUnchecked({ $0 }) {
                     currentDefaultDeviceID.withLock { $0 = 11 }
                     NotificationCenter.default.post(
                         name: .AVAudioEngineConfigurationChange,
@@ -534,7 +537,7 @@ final class MicrophoneEnginePlatformStartupReadinessTests: XCTestCase {
             tapHandler: { _, _ in }
         )
 
-        let engines = startedEngines.withLock { $0 }
+        let engines = startedEngines.withLockUnchecked { $0 }
         XCTAssertEqual(engines.count, 2, "stale cold start + next route")
         XCTAssertFalse(engines[0] === engines[1])
         XCTAssertEqual(
