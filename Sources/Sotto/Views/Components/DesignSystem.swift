@@ -16,9 +16,9 @@ enum DesignSystem {
         static let portalCyan = Color(light: .init(red: 0.08, green: 0.48, blue: 0.48),
                                       dark: .init(red: 0.30, green: 0.88, blue: 0.82))
 
-        // Mint paper by day; inky blue-green ship interiors by night.
+        // Mint paper by day; graphite surfaces by night, like current macOS chrome.
         static let background = Color(light: .init(red: 0.95, green: 0.98, blue: 0.94),
-                                      dark: .init(red: 0.025, green: 0.055, blue: 0.065))
+                                      dark: .init(red: 0.114, green: 0.114, blue: 0.122))
         static let surface = Color(light: .init(red: 0.99, green: 1.0, blue: 0.98),
                                    dark: .init(red: 0.055, green: 0.105, blue: 0.12))
         static let surfaceElevated = Color(light: .init(red: 0.90, green: 0.96, blue: 0.90),

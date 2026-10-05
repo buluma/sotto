@@ -57,7 +57,7 @@ Design philosophy: **Simple, native, stays out of the way.** No chrome, no clutt
 
 Minimum window width: 800pt.
 
-The main window's detail column fills every destination with `DesignSystem.Colors.contentBackground`; page backgrounds must not fall through to the system window color. Cards and controls keep their own surface colors.
+The main window's detail column fills every destination with `DesignSystem.Colors.contentBackground`; page backgrounds must not fall through to the system window color. In dark appearance, the shared page background is neutral graphite (`#1D1D1F`), while cards and controls retain their own surface colors.
 
 Prefer standard SwiftUI controls for navigation and selection so each supported macOS release can provide its native appearance. The Dictations History/Stats selector uses a segmented `Picker`, which adopts the system's Liquid Glass appearance when available.
 
@@ -1261,7 +1261,7 @@ Hard rules — coral is brand, not chrome:
 | `accentLight` | coral 92% / coral 12% | Hover/selection backgrounds tied to accent |
 | `accentDark` | deeper coral | Pressed states, accent variants |
 | **Surfaces** | | |
-| `background` | warm off-white / near-black | App-level background |
+| `background` | warm off-white / graphite (`#1D1D1F`) | App-level background |
 | `surface` | white / dark gray | Cards, sheet content |
 | `surfaceElevated` | warm cream / lighter dark | Elevated surfaces, hover targets |
 | `cardBackground` | white / dark gray | Card body fill |
