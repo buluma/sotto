@@ -17,7 +17,7 @@ final class ShareDraftViewModelTests: XCTestCase {
 
     func testMeetingDefaultsPreviewActualSummaryAndNotesOnly() async throws {
         let service = ShareUIServiceStub()
-        let model = ShareDraftViewModel(source: source(), service: service, now: { self.now })
+        let model = ShareDraftViewModel(source: source(), service: service, now: { [now] in now })
         await model.preparePreview()
         let bundle = try XCTUnwrap(model.preview)
         XCTAssertEqual(bundle.sections.count, 2)
@@ -30,7 +30,7 @@ final class ShareDraftViewModelTests: XCTestCase {
 
     func testTranscriptOnlyDefaultsAndUnavailableTiming() async throws {
         let model = ShareDraftViewModel(
-            source: source(meeting: false), service: ShareUIServiceStub(), now: { self.now })
+            source: source(meeting: false), service: ShareUIServiceStub(), now: { [now] in now })
         XCTAssertTrue(model.manifest.includeTranscript)
         model.manifest.includeTimestamps = true
         model.manifest.includeSpeakerLabels = true
@@ -41,7 +41,7 @@ final class ShareDraftViewModelTests: XCTestCase {
     }
 
     func testSummaryOnlyPreviewHonorsExplicitMetadataChoice() async throws {
-        let model = ShareDraftViewModel(source: source(), service: ShareUIServiceStub(), now: { self.now })
+        let model = ShareDraftViewModel(source: source(), service: ShareUIServiceStub(), now: { [now] in now })
         model.manifest.includeMetadata = true
         await model.preparePreview()
         XCTAssertEqual(model.preview?.title, "Visible title")
@@ -57,7 +57,7 @@ final class ShareDraftViewModelTests: XCTestCase {
     func testContextualSummaryAndEmptySelection() async {
         let input = source()
         let model = ShareDraftViewModel(
-            source: input, service: ShareUIServiceStub(), selectedSummaryID: input.summaries[0].id, now: { self.now })
+            source: input, service: ShareUIServiceStub(), selectedSummaryID: input.summaries[0].id, now: { [now] in now })
         await model.preparePreview()
         XCTAssertEqual(model.preview?.sections.count, 1)
         model.manifest.summaryIDs = []
@@ -68,7 +68,7 @@ final class ShareDraftViewModelTests: XCTestCase {
 
     func testPublishedBundleExactlyMatchesFrozenPreviewAndDoubleClickDoesNotDuplicate() async throws {
         let service = ShareUIServiceStub()
-        let model = ShareDraftViewModel(source: source(), service: service, now: { self.now })
+        let model = ShareDraftViewModel(source: source(), service: service, now: { [now] in now })
         await model.preparePreview()
         let preview = try XCTUnwrap(model.preview)
         async let first: Void = model.publish()
@@ -83,7 +83,7 @@ final class ShareDraftViewModelTests: XCTestCase {
 
     func testInvalidExpiryDoesNotCallService() async {
         let service = ShareUIServiceStub()
-        let model = ShareDraftViewModel(source: source(), service: service, now: { self.now })
+        let model = ShareDraftViewModel(source: source(), service: service, now: { [now] in now })
         await model.preparePreview()
         for invalid in [now, now.addingTimeInterval(7_776_001), now.addingTimeInterval(1.5)] {
             model.expiresAt = invalid
@@ -97,7 +97,7 @@ final class ShareDraftViewModelTests: XCTestCase {
     func testPrePersistenceFailureKeepsDraftRetryable() async {
         let service = ShareUIServiceStub()
         await service.setMode(.failure)
-        let model = ShareDraftViewModel(source: source(), service: service, now: { self.now })
+        let model = ShareDraftViewModel(source: source(), service: service, now: { [now] in now })
         await model.preparePreview()
         await model.publish()
         XCTAssertNotNil(model.preview)
@@ -109,7 +109,7 @@ final class ShareDraftViewModelTests: XCTestCase {
     func testUncertainCreateHasNoLinkAndCannotCreateDuplicateOnRetry() async {
         let service = ShareUIServiceStub()
         await service.setMode(.uncertain)
-        let model = ShareDraftViewModel(source: source(), service: service, now: { self.now })
+        let model = ShareDraftViewModel(source: source(), service: service, now: { [now] in now })
         await model.preparePreview()
         await model.publish()
         await model.publish()
@@ -126,7 +126,7 @@ final class ShareDraftViewModelTests: XCTestCase {
         let old = ShareUIServiceStub.publication(sourceID: input.transcription.id)
         await service.seed(old)
         let before = try await service.confirmedLink(shareId: old.id)
-        let model = ShareDraftViewModel(source: input, service: service, updating: old, now: { self.now })
+        let model = ShareDraftViewModel(source: input, service: service, updating: old, now: { [now] in now })
         await model.preparePreview()
         let callsBefore = await service.updateCalls
         XCTAssertEqual(callsBefore, 0)

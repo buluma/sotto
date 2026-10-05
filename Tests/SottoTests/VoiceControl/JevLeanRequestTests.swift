@@ -6,10 +6,15 @@ import XCTest
 /// The open-ended decision as one small, disjoint question set:
 /// `kind` / `target` / `value` (focused field only) / `consequence` (advisory) / `direction`.
 final class JevLeanRequestTests: XCTestCase {
+    private func decodeBodies(_ data: [Data]) throws -> [[String: Any]] {
+        try data.map { try XCTUnwrap(JSONSerialization.jsonObject(with: $0) as? [String: Any]) }
+    }
+
     private actor Requests {
-        private(set) var bodies: [[String: Any]] = []
+        private(set) var bodyData: [Data] = []
+        var bodyCount: Int { bodyData.count }
         func record(_ data: Data) {
-            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] { bodies.append(json) }
+            if let _ = try? JSONSerialization.jsonObject(with: data) as? [String: Any] { bodyData.append(data) }
         }
     }
 
@@ -60,7 +65,7 @@ final class JevLeanRequestTests: XCTestCase {
         let requests = Requests()
         _ = try await client(choices: ["kind": "finished"], requests: requests).decide(
             goal: "fly to London", snapshot: form, history: [])
-        let bodies = await requests.bodies
+        let bodies = try decodeBodies(await requests.bodyData)
         let body = try XCTUnwrap(bodies.first)
         let questions = try XCTUnwrap(body["questions"] as? [String: [String: Any]])
         XCTAssertEqual(Set(questions.keys), ["kind", "target", "value", "consequence", "direction"])
@@ -85,7 +90,7 @@ final class JevLeanRequestTests: XCTestCase {
             choices: ["kind": "fill", "target": "n:1", "value": zurich], requests: requests
         )
         .decide(goal: goal, snapshot: form, history: [])
-        let requestCount = await requests.bodies.count
+        let requestCount = await requests.bodyCount
         XCTAssertEqual(requestCount, 1)
         guard case .action(let action) = decision else { return XCTFail("\(decision)") }
         XCTAssertEqual(action.operation, .setValue)
@@ -104,7 +109,7 @@ final class JevLeanRequestTests: XCTestCase {
             choices: ["kind": "fill", "target": "n:2", "value": london], requests: requests,
             onDecision: { await observed.append($0) }
         ).decide(goal: goal, snapshot: form, history: [])
-        let bodies = await requests.bodies
+        let bodies = try decodeBodies(await requests.bodyData)
         XCTAssertEqual(bodies.count, 2)
         let followUp = try XCTUnwrap(bodies[1]["questions"] as? [String: [String: Any]])
         XCTAssertEqual(Set(followUp.keys), ["value"], "the second request asks one thing")
@@ -169,7 +174,7 @@ final class JevLeanRequestTests: XCTestCase {
             choices: ["kind": "finished"], requests: requests, onDecision: { await observed.append($0) }
         )
         .decide(goal: "done", snapshot: crowded, history: [])
-        let bodies = await requests.bodies
+        let bodies = try decodeBodies(await requests.bodyData)
         let body = try XCTUnwrap(bodies.first)
         let criteria = try XCTUnwrap(
             (body["questions"] as? [String: [String: Any]])?["target"]?["criteria"] as? [String: String])
@@ -221,7 +226,7 @@ final class JevLeanRequestTests: XCTestCase {
         } catch {
             XCTFail("unexpected \(error)")
         }
-        let requestCount = await requests.bodies.count
+        let requestCount = await requests.bodyCount
         XCTAssertEqual(requestCount, 0)
     }
 
@@ -263,7 +268,7 @@ final class JevLeanRequestTests: XCTestCase {
         let decision = try await client(choices: [:], requests: requests).decide(
             goal: "anything", snapshot: empty, history: [])
         guard case .clarify = decision else { return XCTFail("\(decision)") }
-        let requestCount = await requests.bodies.count
+        let requestCount = await requests.bodyCount
         XCTAssertEqual(requestCount, 0)
     }
 
@@ -288,7 +293,7 @@ final class JevLeanRequestTests: XCTestCase {
         let requests = Requests()
         _ = try await client(choices: ["kind": "finished"], requests: requests).decide(
             goal: "delete", snapshot: twins, history: [])
-        let bodies = await requests.bodies
+        let bodies = try decodeBodies(await requests.bodyData)
         let criteria = try XCTUnwrap(
             (bodies.first?["questions"] as? [String: [String: Any]])?["target"]?["criteria"] as? [String: String])
         XCTAssertEqual(criteria["n:1"], "button 'Delete' (top-left)")

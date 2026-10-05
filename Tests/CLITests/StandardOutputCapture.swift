@@ -1,5 +1,6 @@
 import Darwin
 import Foundation
+import os
 
 /// Captures stdout payloads emitted by focused CLI unit tests.
 func captureStandardOutput(_ body: () throws -> Void) throws -> String {
@@ -10,10 +11,11 @@ func captureStandardOutput(_ body: () throws -> Void) throws -> String {
     }
     let readGroup = DispatchGroup()
     let readQueue = DispatchQueue(label: "sotto.tests.stdout-capture")
-    var capturedData = Data()
+    let capturedData = OSAllocatedUnfairLock(initialState: Data())
     readGroup.enter()
     readQueue.async {
-        capturedData = pipe.fileHandleForReading.readDataToEndOfFile()
+        let bytes = pipe.fileHandleForReading.readDataToEndOfFile()
+        capturedData.withLock { $0 = bytes }
         readGroup.leave()
     }
 
@@ -45,13 +47,16 @@ func captureStandardOutput(_ body: () throws -> Void) throws -> String {
     if let bodyError {
         throw bodyError
     }
-    return String(decoding: capturedData, as: UTF8.self)
+    return String(decoding: capturedData.withLock { $0 }, as: UTF8.self)
 }
 
 /// Async variant for `AsyncParsableCommand.run()` tests.
 /// Keep usage focused: stdout is process-global, so these tests must not run
 /// bodies that concurrently print unrelated output.
-func captureStandardOutput(_ body: () async throws -> Void) async throws -> String {
+func captureStandardOutput(
+    isolation: isolated (any Actor)? = #isolation,
+    _ body: () async throws -> Void
+) async throws -> String {
     let pipe = Pipe()
     let originalStdout = dup(STDOUT_FILENO)
     guard originalStdout >= 0 else {

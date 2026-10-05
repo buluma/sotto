@@ -7,17 +7,21 @@ import SottoViewModels
 final class TranscriptResultActionsTests: XCTestCase {
     private var tempDir: URL!
 
-    override func setUpWithError() throws {
-        tempDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("bulk-export-\(UUID().uuidString)", isDirectory: true)
-        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+    override func setUp() async throws {
+        try await MainActor.run {
+            tempDir = FileManager.default.temporaryDirectory
+                .appendingPathComponent("bulk-export-\(UUID().uuidString)", isDirectory: true)
+            try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        }
     }
 
-    override func tearDownWithError() throws {
-        if let tempDir {
-            try? FileManager.default.removeItem(at: tempDir)
+    override func tearDown() async throws {
+        try await MainActor.run {
+            if let tempDir {
+                try? FileManager.default.removeItem(at: tempDir)
+            }
+            tempDir = nil
         }
-        tempDir = nil
     }
 
     func testBulkExportWritesCollisionSafeFiles() async throws {

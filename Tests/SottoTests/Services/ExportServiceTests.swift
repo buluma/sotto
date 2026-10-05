@@ -6,8 +6,10 @@ import XCTest
 final class ExportServiceTests: XCTestCase {
     var exportService: ExportService!
 
-    override func setUp() {
-        exportService = ExportService()
+    override func setUp() async throws {
+        await MainActor.run {
+            exportService = ExportService()
+        }
     }
 
     func testPlainTextAndMarkdownExportsPreserveExplicitUnassignedCorrection() throws {

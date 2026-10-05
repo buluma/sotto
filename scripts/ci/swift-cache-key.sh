@@ -10,5 +10,5 @@ set -euo pipefail
   xcodebuild -version
   swift --version
   xcrun --show-sdk-build-version
-  shasum -a 256 Package.swift Package.resolved .github/workflows/ci.yml scripts/ci/swift-cache-key.sh
+  shasum -a 256 Package.swift Package.resolved scripts/ci/swift-cache-key.sh
 } | shasum -a 256 | awk '{print $1}'

@@ -10,18 +10,22 @@ final class TranscriptionViewModelBatchTests: XCTestCase {
     private var suiteName: String!
     private var defaults: UserDefaults!
 
-    override func setUpWithError() throws {
-        mockService = MockTranscriptionService()
-        mockRepo = MockTranscriptionRepository()
-        suiteName = makeIsolatedDefaultsSuite("TranscriptionViewModelBatchTests-")
-        defaults = UserDefaults(suiteName: suiteName)
-        tempDir = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("VMBatch-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+    override func setUp() async throws {
+        try await MainActor.run {
+            mockService = MockTranscriptionService()
+            mockRepo = MockTranscriptionRepository()
+            suiteName = makeIsolatedDefaultsSuite("TranscriptionViewModelBatchTests-")
+            defaults = UserDefaults(suiteName: suiteName)
+            tempDir = URL(fileURLWithPath: NSTemporaryDirectory())
+                .appendingPathComponent("VMBatch-\(UUID().uuidString)")
+            try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        }
     }
 
-    override func tearDownWithError() throws {
-        try? FileManager.default.removeItem(at: tempDir)
+    override func tearDown() async throws {
+        try await MainActor.run {
+            try? FileManager.default.removeItem(at: tempDir)
+        }
     }
 
     private func makeViewModel() -> TranscriptionViewModel {

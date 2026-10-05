@@ -92,16 +92,20 @@ final class DictationMediaPauseCoordinatorTests: XCTestCase {
     private var defaultsSuiteName: String!
     private var settings: SettingsViewModel!
 
-    override func setUp() {
-        defaultsSuiteName = makeIsolatedDefaultsSuite("dictation-media-pause-")
-        defaults = UserDefaults(suiteName: defaultsSuiteName)!
-        settings = SettingsViewModel(defaults: defaults)
+    override func setUp() async throws {
+        await MainActor.run {
+            defaultsSuiteName = makeIsolatedDefaultsSuite("dictation-media-pause-")
+            defaults = UserDefaults(suiteName: defaultsSuiteName)!
+            settings = SettingsViewModel(defaults: defaults)
+        }
     }
 
-    override func tearDown() {
-        settings = nil
-        defaults = nil
-        defaultsSuiteName = nil
+    override func tearDown() async throws {
+        await MainActor.run {
+            settings = nil
+            defaults = nil
+            defaultsSuiteName = nil
+        }
     }
 
     func testDisabledSettingSkipsPauseAndResume() async {

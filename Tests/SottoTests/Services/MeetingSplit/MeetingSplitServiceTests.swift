@@ -1254,11 +1254,12 @@ private final class BlockingMeetingSplitAudioTranscribing: MeetingSplitAudioTran
     }
 
     func releaseFirstCall() async {
-        lock.lock()
-        shouldRelease = true
-        let continuation = releaseContinuation
-        releaseContinuation = nil
-        lock.unlock()
+        let continuation = lock.withLock {
+            shouldRelease = true
+            let continuation = releaseContinuation
+            releaseContinuation = nil
+            return continuation
+        }
         continuation?.resume()
     }
 
@@ -1335,11 +1336,12 @@ private final class BlockingSavedAudioAutoPromptCompletionService: SavedAudioAut
     }
 
     func releaseFirstCall() async {
-        lock.lock()
-        shouldRelease = true
-        let continuation = releaseContinuation
-        releaseContinuation = nil
-        lock.unlock()
+        let continuation = lock.withLock {
+            shouldRelease = true
+            let continuation = releaseContinuation
+            releaseContinuation = nil
+            return continuation
+        }
         continuation?.resume()
     }
 
@@ -1512,9 +1514,9 @@ private final class CancellingExporterHook: @unchecked Sendable {
     private var hasCancelled = false
 
     func armCancellation<T, E>(for task: Task<T, E>) {
-        lock.lock()
-        cancel = { task.cancel() }
-        lock.unlock()
+        lock.withLock {
+            cancel = { task.cancel() }
+        }
     }
 
     func maybeCancel() {

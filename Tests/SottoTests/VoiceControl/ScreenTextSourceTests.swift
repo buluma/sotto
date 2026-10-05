@@ -111,6 +111,19 @@ final class ScreenTextSourceTests: XCTestCase {
         XCTAssertEqual(ScreenTextMerge.unexplained(blocks, controls: [], excludedFrames: []).map(\.text), ["Compose"])
     }
 
+    func testCapturePixelSizeUsesDisplayScaleAndRejectsUnsafeAllocations() {
+        let window = CGRect(x: -400, y: 20, width: 400, height: 300)
+        let size = VisionScreenTextReader.capturePixelSize(window: window, scale: 2)
+        XCTAssertEqual(size?.width, 800)
+        XCTAssertEqual(size?.height, 600)
+        for scale: CGFloat in [0, -1, .nan, .infinity, 100] {
+            XCTAssertNil(VisionScreenTextReader.capturePixelSize(window: window, scale: scale))
+        }
+        XCTAssertNil(VisionScreenTextReader.capturePixelSize(window: .infinite, scale: 2))
+        XCTAssertNil(VisionScreenTextReader.capturePixelSize(
+            window: CGRect(x: 0, y: 0, width: 4_000, height: 3_000), scale: 2))
+    }
+
     func testCapturePlanFailsClosedOnAmbiguousWindowsAndRecordsOccluders() {
         let window = CGRect(x: 10, y: 20, width: 400, height: 300)
         let owner = ScreenTextCaptureWindow(id: 7, processID: 42, frame: window, layer: 0)

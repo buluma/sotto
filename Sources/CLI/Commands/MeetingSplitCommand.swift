@@ -261,7 +261,7 @@ extension MeetingsCommand.SplitSubcommand {
         }
 
         func run() async throws {
-            try await emitJSONOrRethrow(json: json || envelope) {
+            try emitJSONOrRethrow(json: json || envelope) {
                 let dbManager = try makeReadOnlySplitDatabaseManager(database: database)
                 let splitRepo = MeetingSplitRepository(dbQueue: dbManager.dbQueue)
 

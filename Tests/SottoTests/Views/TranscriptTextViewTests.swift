@@ -4,6 +4,7 @@ import SottoCore
 import SottoViewModels
 @testable import Sotto
 
+@MainActor
 final class TranscriptTextViewTests: XCTestCase {
     func testLiveTranscriptBodyTextUsesDesignSystemPrimaryColor() throws {
         let view = TranscriptTextView(lines: [], autoScroll: true)

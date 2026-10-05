@@ -8,11 +8,13 @@ final class PromptsViewModelTests: XCTestCase {
     var viewModel: PromptsViewModel!
     var repo: MockPromptRepository!
 
-    override func setUp() {
-        viewModel = PromptsViewModel()
-        repo = MockPromptRepository()
-        repo.prompts = Prompt.builtInPrompts()
-        viewModel.configure(repo: repo)
+    override func setUp() async throws {
+        await MainActor.run {
+            viewModel = PromptsViewModel()
+            repo = MockPromptRepository()
+            repo.prompts = Prompt.builtInPrompts()
+            viewModel.configure(repo: repo)
+        }
     }
 
     func testTransformManagerMutationsInvalidateBindingsAfterPersistence() throws {

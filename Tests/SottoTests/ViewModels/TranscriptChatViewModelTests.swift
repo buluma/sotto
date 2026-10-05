@@ -10,17 +10,19 @@ final class TranscriptChatViewModelTests: XCTestCase {
     var mockRepo: MockTranscriptionRepository!
     var mockConversationRepo: MockChatConversationRepository!
 
-    override func setUp() {
-        viewModel = TranscriptChatViewModel()
-        mockService = MockLLMService()
-        mockRepo = MockTranscriptionRepository()
-        mockConversationRepo = MockChatConversationRepository()
-        viewModel.configure(
-            llmService: mockService,
-            transcriptText: "Test transcript content here.",
-            transcriptionRepo: mockRepo,
-            conversationRepo: mockConversationRepo
-        )
+    override func setUp() async throws {
+        await MainActor.run {
+            viewModel = TranscriptChatViewModel()
+            mockService = MockLLMService()
+            mockRepo = MockTranscriptionRepository()
+            mockConversationRepo = MockChatConversationRepository()
+            viewModel.configure(
+                llmService: mockService,
+                transcriptText: "Test transcript content here.",
+                transcriptionRepo: mockRepo,
+                conversationRepo: mockConversationRepo
+            )
+        }
     }
 
     // MARK: - Initial State

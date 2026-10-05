@@ -23,20 +23,22 @@ final class MeetingAutoStartCoordinatorTests: XCTestCase {
     /// back-to-back retry path (#8).
     private var simulateAutoStartBusy = false
 
-    override func setUp() {
-        super.setUp()
-        defaultsSuiteName = makeIsolatedDefaultsSuite("com.sotto.tests.coordinator.")
-        defaults = UserDefaults(suiteName: defaultsSuiteName)!
-        // Tests seed defaults before constructing SettingsViewModel via
-        // `seedSettings(...)` so VM init reads the right values without
-        // firing `didSet` (which under `.notify`/`.autoStart` would call
-        // `UNUserNotificationCenter.current()` — that API crashes in the
-        // xctest bundle since there's no host app's notification center).
-        calendarService = MockCalendarService()
-        recordingActiveStub = false
-        autoStartConfirmedCount = 0
-        autoStartConfirmedSnapshots = []
-        simulateAutoStartBusy = false
+    override func setUp() async throws {
+        await MainActor.run {
+            super.setUp()
+            defaultsSuiteName = makeIsolatedDefaultsSuite("com.sotto.tests.coordinator.")
+            defaults = UserDefaults(suiteName: defaultsSuiteName)!
+            // Tests seed defaults before constructing SettingsViewModel via
+            // `seedSettings(...)` so VM init reads the right values without
+            // firing `didSet` (which under `.notify`/`.autoStart` would call
+            // `UNUserNotificationCenter.current()` — that API crashes in the
+            // xctest bundle since there's no host app's notification center).
+            calendarService = MockCalendarService()
+            recordingActiveStub = false
+            autoStartConfirmedCount = 0
+            autoStartConfirmedSnapshots = []
+            simulateAutoStartBusy = false
+        }
     }
 
     /// Seed `UserDefaults` *before* the SettingsViewModel is constructed
@@ -54,12 +56,14 @@ final class MeetingAutoStartCoordinatorTests: XCTestCase {
         settingsViewModel = SettingsViewModel(defaults: defaults)
     }
 
-    override func tearDown() {
-        defaultsSuiteName = nil
-        defaults = nil
-        settingsViewModel = nil
-        calendarService = nil
-        super.tearDown()
+    override func tearDown() async throws {
+        await MainActor.run {
+            defaultsSuiteName = nil
+            defaults = nil
+            settingsViewModel = nil
+            calendarService = nil
+            super.tearDown()
+        }
     }
 
     private func makeCoordinator(

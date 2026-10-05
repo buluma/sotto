@@ -3,6 +3,7 @@ import XCTest
 @testable import Sotto
 @testable import SottoCore
 
+@MainActor
 final class HotkeyRecorderViewTests: XCTestCase {
     func testStandardBareModifierCaptureRecordsPhysicalModifierSide() {
         let candidate = HotkeyRecorderView.bareModifierTrigger(

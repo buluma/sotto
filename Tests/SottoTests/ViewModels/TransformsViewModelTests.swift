@@ -521,8 +521,9 @@ final class TransformsViewModelTests: XCTestCase {
 
         // Kick off concurrent load + delete. The delete should win the
         // visible state regardless of which detached fetch lands first.
-        async let load: Void = viewModel.loadHistory()
-        async let delete: Void = viewModel.deleteHistoryEntry(first)
+        let concurrentViewModel = try XCTUnwrap(viewModel)
+        async let load: Void = concurrentViewModel.loadHistory()
+        async let delete: Void = concurrentViewModel.deleteHistoryEntry(first)
         _ = await (load, delete)
 
         XCTAssertTrue(viewModel.history.isEmpty)

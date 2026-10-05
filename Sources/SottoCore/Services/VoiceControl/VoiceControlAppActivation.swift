@@ -1,9 +1,8 @@
 import AppKit
 import Foundation
 
-/// Foreground another running app. Parameterless `activate()` often returns
-/// false when a terminal or IDE currently owns focus, so this always asks
-/// macOS to ignore other apps and waits until the process is frontmost.
+/// Request foreground activation, fall back to opening the running app, and
+/// verify that macOS actually made the process frontmost before reporting success.
 public enum VoiceControlAppActivation {
     @MainActor
     public static func runningApplication(matching name: String) -> NSRunningApplication? {
@@ -28,7 +27,7 @@ public enum VoiceControlAppActivation {
     public static func bringForward(_ app: NSRunningApplication) async -> Bool {
         await MainActor.run {
             app.unhide()
-            _ = app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
+            _ = app.activate(options: [.activateAllWindows])
         }
         if await isFrontmost(app) { return true }
         if let url = await MainActor.run(body: { app.bundleURL }) {
@@ -40,7 +39,7 @@ public enum VoiceControlAppActivation {
             if await isFrontmost(app) { return true }
             try? await Task.sleep(for: .milliseconds(120))
             await MainActor.run {
-                _ = app.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
+                _ = app.activate(options: [.activateAllWindows])
             }
         }
         return await isFrontmost(app)

@@ -1,3 +1,4 @@
+import os
 import XCTest
 @testable import SottoCore
 import OSLog
@@ -138,14 +139,15 @@ final class TranscriptFormatterTests: XCTestCase {
         let formatter = makeFormatter(llmService: mockLLMService)
         let transcriptionID = UUID()
         let warningPosted = expectation(description: "AI formatter warning posted")
-        var warningMessage: String?
+        let warningMessage = OSAllocatedUnfairLock<String?>(initialState: nil)
         let observer = NotificationCenter.default.addObserver(
             forName: .sottoAIFormatterWarning,
             object: nil,
             queue: nil
         ) { notification in
             guard let source = notification.userInfo?["source"] as? String, source == "transcription" else { return }
-            warningMessage = notification.userInfo?["message"] as? String
+            let message = notification.userInfo?["message"] as? String
+            warningMessage.withLock { $0 = message }
             warningPosted.fulfill()
         }
         defer { NotificationCenter.default.removeObserver(observer) }
@@ -160,7 +162,7 @@ final class TranscriptFormatterTests: XCTestCase {
         await fulfillment(of: [warningPosted], timeout: 1.0)
         XCTAssertNil(outcome.text)
         XCTAssertNil(outcome.resolution)
-        XCTAssertEqual(warningMessage, "AI formatter output was incomplete. Used standard cleanup.")
+        XCTAssertEqual(warningMessage.withLock { $0 }, "AI formatter output was incomplete. Used standard cleanup.")
         let run = try XCTUnwrap(outcome.run)
         XCTAssertEqual(run.feature, .formatterTranscription)
         XCTAssertEqual(run.status, .failed)
@@ -234,14 +236,14 @@ final class TranscriptFormatterTests: XCTestCase {
         let formatter = makeFormatter(llmService: mockLLMService)
         let started = expectation(description: "AI formatter start posted")
         let finished = expectation(description: "AI formatter finish posted")
-        var events: [String] = []
+        let events = OSAllocatedUnfairLock(initialState: [String]())
         let startObserver = NotificationCenter.default.addObserver(
             forName: .sottoAIFormatterDidStart,
             object: nil,
             queue: nil
         ) { notification in
             guard let source = notification.userInfo?["source"] as? String, source == "dictation" else { return }
-            events.append("start")
+            events.withLock { $0.append("start") }
             started.fulfill()
         }
         let finishObserver = NotificationCenter.default.addObserver(
@@ -250,7 +252,7 @@ final class TranscriptFormatterTests: XCTestCase {
             queue: nil
         ) { notification in
             guard let source = notification.userInfo?["source"] as? String, source == "dictation" else { return }
-            events.append("finish")
+            events.withLock { $0.append("finish") }
             finished.fulfill()
         }
         defer {
@@ -265,7 +267,7 @@ final class TranscriptFormatterTests: XCTestCase {
         )
 
         await fulfillment(of: [started, finished], timeout: 1.0)
-        XCTAssertEqual(events, ["start", "finish"])
+        XCTAssertEqual(events.withLock { $0 }, ["start", "finish"])
     }
 
     func testTranscriptionLaneDoesNotPostLifecycleNotifications() async throws {

@@ -47,6 +47,20 @@ struct TelemetryErrorClassifierTests {
             == "DictationServiceError.notRecording")
     }
 
+    @Test("preserves payload-free LLM and entitlement error case names")
+    func payloadFreeKnownErrorCases() {
+        #expect(TelemetryErrorClassifier.classify(LLMError.invalidResponse) == "LLMError.invalidResponse")
+        #expect(TelemetryErrorClassifier.classify(LLMError.notConfigured) == "LLMError.notConfigured")
+        #expect(TelemetryErrorClassifier.classify(LLMError.rateLimited) == "LLMError.rateLimited")
+        #expect(TelemetryErrorClassifier.classify(LLMError.contextTooLong) == "LLMError.contextTooLong")
+        #expect(TelemetryErrorClassifier.classify(LLMError.formatterTruncated) == "LLMError.formatterTruncated")
+        #expect(TelemetryErrorClassifier.classify(LLMError.formatterEmptyResponse) == "LLMError.formatterEmptyResponse")
+        #expect(TelemetryErrorClassifier.classify(EntitlementsError.trialExpired) == "EntitlementsError.trialExpired")
+        #expect(TelemetryErrorClassifier.classify(LLMError.providerError("private response")) == "LLMError.providerError")
+        #expect(TelemetryErrorClassifier.classify(EntitlementsError.invalidLicense("private license"))
+            == "EntitlementsError.invalidLicense")
+    }
+
     @Test("classifies URLError with code name")
     func urlErrorCodes() {
         #expect(TelemetryErrorClassifier.classify(URLError(.notConnectedToInternet))
@@ -85,6 +99,12 @@ struct TelemetryErrorClassifierTests {
         }
         let urlError = NSError(domain: NSURLErrorDomain, code: URLError.notConnectedToInternet.rawValue)
         #expect(TelemetryErrorClassifier.classify(urlError) == "URLError.notConnectedToInternet")
+    }
+
+    @Test("unmapped payload-free enums use the safe type-level fallback")
+    func payloadFreeEnumFallback() {
+        enum UnknownError: Error { case failed }
+        #expect(TelemetryErrorClassifier.classify(UnknownError.failed) == "UnknownError")
     }
 
     @Test("does not classify arbitrary custom descriptions as error types")

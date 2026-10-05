@@ -38,16 +38,20 @@ final class DictationHistoryViewModelTests: XCTestCase {
     var viewModel: DictationHistoryViewModel!
     var mockRepo: MockDictationRepository!
 
-    override func setUp() {
-        mockRepo = MockDictationRepository()
-        viewModel = DictationHistoryViewModel()
+    override func setUp() async throws {
+        await MainActor.run {
+            mockRepo = MockDictationRepository()
+            viewModel = DictationHistoryViewModel()
+        }
     }
 
-    override func tearDown() {
-        Telemetry.configure(NoOpTelemetryService())
-        viewModel = nil
-        mockRepo = nil
-        super.tearDown()
+    override func tearDown() async throws {
+        await MainActor.run {
+            Telemetry.configure(NoOpTelemetryService())
+            viewModel = nil
+            mockRepo = nil
+            super.tearDown()
+        }
     }
 
     // MARK: - Fetching

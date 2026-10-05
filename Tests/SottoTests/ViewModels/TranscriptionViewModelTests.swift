@@ -141,11 +141,13 @@ final class TranscriptionViewModelTests: XCTestCase {
         }
     }
 
-    override func setUp() {
-        mockRepo = MockTranscriptionRepository()
-        mockService = MockTranscriptionService(retranscriptionRepository: mockRepo)
-        mockPromptResultRepo = MockPromptResultRepository()
-        viewModel = TranscriptionViewModel()
+    override func setUp() async throws {
+        await MainActor.run {
+            mockRepo = MockTranscriptionRepository()
+            mockService = MockTranscriptionService(retranscriptionRepository: mockRepo)
+            mockPromptResultRepo = MockPromptResultRepository()
+            viewModel = TranscriptionViewModel()
+        }
     }
 
     // MARK: - Configure

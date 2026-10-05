@@ -120,14 +120,25 @@ final class TranscriptionLibraryViewModelTests: XCTestCase {
     func testLaterOpenSupersedesAnEarlierOne() async throws {
         let first = timedTranscription(fileName: "first.m4a")
         let second = timedTranscription(fileName: "second.m4a")
-        try repo.save(first)
-        try repo.save(second)
+        let gate = StaleFetchGate()
+        let mockRepo = MockTranscriptionRepository()
+        mockRepo.fetchHandler = { id in
+            if id == first.id {
+                gate.blockFirstFetchUntilAllowed()
+            }
+            return id == first.id ? first : second
+        }
+        let viewModel = try XCTUnwrap(vm)
+        viewModel.configure(transcriptionRepo: mockRepo)
+        let earlier = Task { await viewModel.loadForOpening(first) }
+        defer { gate.allowFirstFetchToFinish() }
+        let started = await Task.detached { gate.waitForFirstFetchStarted() }.value
+        XCTAssertTrue(started, "The first open must be in flight before the second begins")
+        guard started else { return }
 
-        let earlier = Task { await vm.loadForOpening(first) }
-        let later = Task { await vm.loadForOpening(second) }
-
+        let laterResult = await viewModel.loadForOpening(second)
+        gate.allowFirstFetchToFinish()
         let earlierResult = await earlier.value
-        let laterResult = await later.value
         XCTAssertNil(earlierResult)
         XCTAssertEqual(laterResult?.id, second.id)
     }

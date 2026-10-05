@@ -3,6 +3,7 @@ import XCTest
 @testable import Sotto
 @testable import SottoCore
 
+@MainActor
 final class MeetingFinalizationReconcilerTests: XCTestCase {
     func testReconcileStaleProcessingRowsMarksOnlyProcessingMeetingsFailed() async throws {
         let repo = ReconcilerStatusRepository()
@@ -363,7 +364,7 @@ final class MeetingFinalizationReconcilerTests: XCTestCase {
         predicate: @escaping @MainActor () -> Bool
     ) async throws {
         let startedAt = ContinuousClock.now
-        while await !predicate() {
+        while !predicate() {
             if startedAt.duration(to: .now) > timeout {
                 XCTFail("Timed out waiting for condition")
                 return

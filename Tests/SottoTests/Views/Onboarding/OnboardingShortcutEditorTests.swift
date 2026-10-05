@@ -2,6 +2,7 @@ import XCTest
 @testable import Sotto
 @testable import SottoCore
 
+@MainActor
 final class OnboardingShortcutEditorTests: XCTestCase {
     private func snapshot(
         meeting: HotkeyTrigger = .disabled,

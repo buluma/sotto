@@ -7,17 +7,21 @@ final class MeetingsWorkspaceViewModelTests: XCTestCase {
     private var defaultsSuiteName: String!
     private var defaults: UserDefaults!
 
-    override func setUp() {
-        super.setUp()
-        defaultsSuiteName = makeIsolatedDefaultsSuite("MeetingsWorkspaceViewModelTests-")
-        defaults = UserDefaults(suiteName: defaultsSuiteName)
-        defaults.removePersistentDomain(forName: defaultsSuiteName)
+    override func setUp() async throws {
+        await MainActor.run {
+            super.setUp()
+            defaultsSuiteName = makeIsolatedDefaultsSuite("MeetingsWorkspaceViewModelTests-")
+            defaults = UserDefaults(suiteName: defaultsSuiteName)
+            defaults.removePersistentDomain(forName: defaultsSuiteName)
+        }
     }
 
-    override func tearDown() {
-        defaults = nil
-        defaultsSuiteName = nil
-        super.tearDown()
+    override func tearDown() async throws {
+        await MainActor.run {
+            defaults = nil
+            defaultsSuiteName = nil
+            super.tearDown()
+        }
     }
 
     func testRefreshUpcomingEventsSkipsFetchWhenCalendarModeIsOff() async {

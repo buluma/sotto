@@ -1,4 +1,5 @@
 import XCTest
+import os
 import GRDB
 @testable import SottoCore
 
@@ -491,9 +492,8 @@ final class DatabaseManagerTests: XCTestCase {
         let releaseLock = DispatchSemaphore(value: 0)
         let firstFinished = expectation(description: "first write finishes")
         let secondFinished = expectation(description: "second write finishes")
-        let resultLock = NSLock()
-        var firstError: Error?
-        var secondError: Error?
+        let firstError = OSAllocatedUnfairLock<Error?>(initialState: nil)
+        let secondError = OSAllocatedUnfairLock<Error?>(initialState: nil)
 
         DispatchQueue.global(qos: .userInitiated).async {
             do {
@@ -503,9 +503,7 @@ final class DatabaseManagerTests: XCTestCase {
                     _ = releaseLock.wait(timeout: .now() + 2)
                 }
             } catch {
-                resultLock.lock()
-                firstError = error
-                resultLock.unlock()
+                firstError.withLock { $0 = error }
             }
             firstFinished.fulfill()
         }
@@ -518,9 +516,7 @@ final class DatabaseManagerTests: XCTestCase {
                     try db.execute(sql: "SELECT 1")
                 }
             } catch {
-                resultLock.lock()
-                secondError = error
-                resultLock.unlock()
+                secondError.withLock { $0 = error }
             }
             secondFinished.fulfill()
         }
@@ -529,10 +525,8 @@ final class DatabaseManagerTests: XCTestCase {
         releaseLock.signal()
 
         wait(for: [firstFinished, secondFinished], timeout: 3)
-        resultLock.lock()
-        let capturedFirstError = firstError
-        let capturedSecondError = secondError
-        resultLock.unlock()
+        let capturedFirstError = firstError.withLock { $0 }
+        let capturedSecondError = secondError.withLock { $0 }
 
         XCTAssertNil(capturedFirstError)
         XCTAssertNil(capturedSecondError)
@@ -546,8 +540,7 @@ final class DatabaseManagerTests: XCTestCase {
 
         let start = DispatchSemaphore(value: 0)
         let finished = DispatchGroup()
-        let resultLock = NSLock()
-        var errors: [Error] = []
+        let errors = OSAllocatedUnfairLock(initialState: [Error]())
 
         for _ in 0..<4 {
             finished.enter()
@@ -561,9 +554,7 @@ final class DatabaseManagerTests: XCTestCase {
                         XCTAssertTrue(try db.tableExists("quick_prompts"))
                     }
                 } catch {
-                    resultLock.lock()
-                    errors.append(error)
-                    resultLock.unlock()
+                    errors.withLock { $0.append(error) }
                 }
                 finished.leave()
             }
@@ -574,9 +565,7 @@ final class DatabaseManagerTests: XCTestCase {
         }
 
         XCTAssertEqual(finished.wait(timeout: .now() + 5), .success)
-        resultLock.lock()
-        let capturedErrors = errors
-        resultLock.unlock()
+        let capturedErrors = errors.withLock { $0 }
         XCTAssertTrue(capturedErrors.isEmpty, "Unexpected migration errors: \(capturedErrors)")
     }
 
