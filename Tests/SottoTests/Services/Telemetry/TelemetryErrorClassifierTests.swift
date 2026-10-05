@@ -47,6 +47,20 @@ struct TelemetryErrorClassifierTests {
             == "DictationServiceError.notRecording")
     }
 
+    @Test("preserves payload-free LLM and entitlement error case names")
+    func payloadFreeKnownErrorCases() {
+        #expect(TelemetryErrorClassifier.classify(LLMError.invalidResponse) == "LLMError.invalidResponse")
+        #expect(TelemetryErrorClassifier.classify(LLMError.notConfigured) == "LLMError.notConfigured")
+        #expect(TelemetryErrorClassifier.classify(LLMError.rateLimited) == "LLMError.rateLimited")
+        #expect(TelemetryErrorClassifier.classify(LLMError.contextTooLong) == "LLMError.contextTooLong")
+        #expect(TelemetryErrorClassifier.classify(LLMError.formatterTruncated) == "LLMError.formatterTruncated")
+        #expect(TelemetryErrorClassifier.classify(LLMError.formatterEmptyResponse) == "LLMError.formatterEmptyResponse")
+        #expect(TelemetryErrorClassifier.classify(EntitlementsError.trialExpired) == "EntitlementsError.trialExpired")
+        #expect(TelemetryErrorClassifier.classify(LLMError.providerError("private response")) == "LLMError.providerError")
+        #expect(TelemetryErrorClassifier.classify(EntitlementsError.invalidLicense("private license"))
+            == "EntitlementsError.invalidLicense")
+    }
+
     @Test("classifies URLError with code name")
     func urlErrorCodes() {
         #expect(TelemetryErrorClassifier.classify(URLError(.notConnectedToInternet))

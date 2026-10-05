@@ -285,7 +285,8 @@ final class SharePublicationRepositoryTests: XCTestCase {
         var withManifest = publication
         withManifest.projectionManifest = Data("manifest".utf8)
         withManifest.contentDigest = "digest"
-        try await manager.dbQueue.write { db in try withManifest.insert(db) }
+        let preparedPublication = withManifest
+        try await manager.dbQueue.write { db in try preparedPublication.insert(db) }
 
         try await manager.dbQueue.write { db in
             _ = try SharePublicationRepository.detachAndEnqueueTerminalOperations(

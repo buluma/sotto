@@ -102,10 +102,11 @@ private final class StubVoiceprintService: SpeakerVoiceprintServicing, @unchecke
         speakerId: String,
         fingerprint: TranscriptFingerprint
     ) async throws -> SpeakerClusterObservation? {
-        lock.lock()
-        storedCandidateRequests.append((transcriptionId, speakerId, fingerprint.rawValue))
-        let held = holdCandidate
-        lock.unlock()
+        let held = lock.withLock {
+            storedCandidateRequests.append((transcriptionId, speakerId, fingerprint.rawValue))
+            let held = holdCandidate
+            return held
+        }
         if held { await waitForRelease() }
         return candidate
     }
@@ -119,9 +120,9 @@ private final class StubVoiceprintService: SpeakerVoiceprintServicing, @unchecke
         fingerprint _: TranscriptFingerprint,
         allowMergeIntoExistingName: Bool
     ) async throws -> SpeakerProfileEnrollment {
-        lock.lock()
-        storedEnrollments.append((displayName, allowMergeIntoExistingName))
-        lock.unlock()
+        lock.withLock {
+            storedEnrollments.append((displayName, allowMergeIntoExistingName))
+        }
         if let enrollError { throw enrollError }
         if allowMergeIntoExistingName, let mergeEnrollment { return mergeEnrollment }
         return enrollment
@@ -167,9 +168,9 @@ private final class StubVoiceprintService: SpeakerVoiceprintServicing, @unchecke
         transcriptionId _: UUID,
         fingerprint _: TranscriptFingerprint
     ) async throws {
-        lock.lock()
-        storedConfirmed.append(suggestion.speakerId)
-        lock.unlock()
+        lock.withLock {
+            storedConfirmed.append(suggestion.speakerId)
+        }
     }
 
     /// Records the call before parking on `holdsAssign`, so a test can see the
@@ -180,11 +181,12 @@ private final class StubVoiceprintService: SpeakerVoiceprintServicing, @unchecke
         transcriptionId _: UUID,
         fingerprint _: TranscriptFingerprint
     ) async throws -> SpeakerManualAssignment {
-        lock.lock()
-        storedAssignments.append((profileId, speakerId))
-        let outcome = assignment
-        let parks = holdsAssign || holdsAssignFor == profileId
-        lock.unlock()
+        let (outcome, parks) = lock.withLock {
+            storedAssignments.append((profileId, speakerId))
+            let outcome = assignment
+            let parks = holdsAssign || holdsAssignFor == profileId
+            return (outcome, parks)
+        }
         if parks { await waitForRelease() }
         if let assignError { throw assignError }
         return outcome
@@ -197,9 +199,10 @@ private final class StubVoiceprintService: SpeakerVoiceprintServicing, @unchecke
         transcriptionId: UUID,
         fingerprint _: TranscriptFingerprint
     ) async throws -> [SpeakerVoiceprintSuggestion] {
-        lock.lock()
-        let held = heldForTranscription == transcriptionId
-        lock.unlock()
+        let held = lock.withLock {
+            let held = heldForTranscription == transcriptionId
+            return held
+        }
         if held {
             await waitForRelease()
             return suggestions
@@ -209,21 +212,17 @@ private final class StubVoiceprintService: SpeakerVoiceprintServicing, @unchecke
 
     /// Records the release when it arrives first, so either ordering is safe.
     func releaseHeldSuggestions() {
-        lock.lock()
-        let waiting = releaseContinuation
-        releaseContinuation = nil
-        released = true
-        lock.unlock()
+        let waiting = lock.withLock {
+            let waiting = releaseContinuation
+            releaseContinuation = nil
+            released = true
+            return waiting
+        }
         waiting?.resume()
     }
 
     private func waitForRelease() async {
-        lock.lock()
-        if released {
-            lock.unlock()
-            return
-        }
-        lock.unlock()
+        if lock.withLock({ released }) { return }
         await withCheckedContinuation { continuation in
             lock.lock()
             if released {
@@ -245,8 +244,7 @@ private final class StubVoiceprintService: SpeakerVoiceprintServicing, @unchecke
     func confirmedVoiceHolders(
         transcriptionId _: UUID, fingerprint _: TranscriptFingerprint
     ) async throws -> [UUID: String] {
-        lock.lock(); defer { lock.unlock() }
-        return holders
+        return lock.withLock { holders }
     }
 
     // Administration is exercised in its own suite; these are unused here.
@@ -263,9 +261,9 @@ private final class StubVoiceprintService: SpeakerVoiceprintServicing, @unchecke
         fingerprint _: TranscriptFingerprint
     ) async throws {
         if dismissFails { throw DismissFailed() }
-        lock.lock()
-        storedDismissed.append(suggestion.speakerId)
-        lock.unlock()
+        lock.withLock {
+            storedDismissed.append(suggestion.speakerId)
+        }
     }
 }
 

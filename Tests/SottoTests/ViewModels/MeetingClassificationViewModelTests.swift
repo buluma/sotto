@@ -272,7 +272,7 @@ final class MeetingClassificationViewModelTests: XCTestCase {
         staleReadGate.allowFirstReadToFinish()
         await assignment.value
         let deferredRefreshStarted = await Task.detached {
-            refreshedRead.wait(timeout: .now() + 1) == .success
+            waitForFixtureSignal(refreshedRead, timeout: .now() + 1)
         }.value
         guard deferredRefreshStarted else {
             XCTFail("The completed assignment did not refresh the edited label.")
@@ -745,4 +745,9 @@ private actor ClassificationUpdateGate {
         releaseWaiter?.resume()
         releaseWaiter = nil
     }
+}
+
+/// Called only from detached test workers; never park the UI actor.
+private func waitForFixtureSignal(_ signal: DispatchSemaphore, timeout: DispatchTime) -> Bool {
+    signal.wait(timeout: timeout) == .success
 }

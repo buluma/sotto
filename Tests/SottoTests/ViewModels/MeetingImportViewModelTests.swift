@@ -7,14 +7,18 @@ import XCTest
 final class MeetingImportViewModelTests: XCTestCase {
     private var sourceURL: URL!
 
-    override func setUpWithError() throws {
-        sourceURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("meeting-import-\(UUID().uuidString).m4a")
-        try Data().write(to: sourceURL)
+    override func setUp() async throws {
+        try await MainActor.run {
+            sourceURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent("meeting-import-\(UUID().uuidString).m4a")
+            try Data().write(to: sourceURL)
+        }
     }
 
-    override func tearDownWithError() throws {
-        try? FileManager.default.removeItem(at: sourceURL)
+    override func tearDown() async throws {
+        try await MainActor.run {
+            try? FileManager.default.removeItem(at: sourceURL)
+        }
     }
 
     func testSelectUsesFilenameDefaultsAndRejectsBlankTitle() throws {

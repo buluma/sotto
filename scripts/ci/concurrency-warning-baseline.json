@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "sourceRun": "https://github.com/buluma/sotto/actions/runs/37243890271/job/111557937395",
+  "policy": "Test fixture migration debt only. No production allowances; reduce counts after verified fixes. Never regenerate this file automatically in CI.",
+  "warnings": [
+    {
+      "path": "Tests/SottoTests/Ask/AskModelBridgeTests.swift",
+      "message": "add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'SottoCore'",
+      "count": 1
+    },
+    {
+      "path": "Tests/SottoTests/Ask/AskModelBridgeTests.swift",
+      "message": "passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode [#SendingClosureRisksDataRace]",
+      "count": 1
+    },
+    {
+      "path": "Tests/SottoTests/Ask/AskModelBridgeTests.swift",
+      "message": "type 'AskModelBridge.Action' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode",
+      "count": 3
+    },
+    {
+      "path": "Tests/SottoTests/Audio/MeetingAudioCaptureServiceTests.swift",
+      "message": "non-Sendable 'AVAudioPCMBuffer?'-typed result can not be returned from actor-isolated instance method 'value()' to nonisolated context; this is an error in the Swift 6 language mode",
+      "count": 1
+    },
+    {
+      "path": "Tests/SottoTests/Audio/MeetingAudioCaptureServiceTests.swift",
+      "message": "sending 'buffer' risks causing data races; this is an error in the Swift 6 language mode [#SendingRisksDataRace]",
+      "count": 1
+    },
+    {
+      "path": "Tests/SottoTests/Audio/MicrophoneEnginePlatformConfigChangeRecoveryTests.swift",
+      "message": "add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'AVFAudio'",
+      "count": 1
+    },
+    {
+      "path": "Tests/SottoTests/Audio/MicrophoneEnginePlatformConfigChangeRecoveryTests.swift",
+      "message": "capture of 'buffer' with non-Sendable type 'AVAudioPCMBuffer' in a '@Sendable' closure; this is an error in the Swift 6 language mode [#SendableClosureCaptures]",
+      "count": 2
+    },
+    {
+      "path": "Tests/SottoTests/Audio/MicrophoneEnginePlatformConfigChangeRecoveryTests.swift",
+      "message": "capture of 'engine' with non-Sendable type 'AVAudioEngine' in a '@Sendable' closure; this is an error in the Swift 6 language mode [#SendableClosureCaptures]",
+      "count": 12
+    },
+    {
+      "path": "Tests/SottoTests/Audio/MicrophoneEnginePlatformConfigChangeRecoveryTests.swift",
+      "message": "type 'AVAudioEngine' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode",
+      "count": 29
+    },
+    {
+      "path": "Tests/SottoTests/Audio/MicrophoneEnginePlatformStartupReadinessTests.swift",
+      "message": "add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'AVFAudio'",
+      "count": 1
+    },
+    {
+      "path": "Tests/SottoTests/Audio/MicrophoneEnginePlatformStartupReadinessTests.swift",
+      "message": "capture of 'engine' with non-Sendable type 'AVAudioEngine' in a '@Sendable' closure; this is an error in the Swift 6 language mode [#SendableClosureCaptures]",
+      "count": 6
+    },
+    {
+      "path": "Tests/SottoTests/Audio/MicrophoneEnginePlatformStartupReadinessTests.swift",
+      "message": "capture of 'preparedState' with non-Sendable type '(engine: AVAudioEngine, prepared: Bool)' in a '@Sendable' closure; this is an error in the Swift 6 language mode [#SendableClosureCaptures]",
+      "count": 1
+    },
+    {
+      "path": "Tests/SottoTests/Audio/MicrophoneEnginePlatformStartupReadinessTests.swift",
+      "message": "type 'AVAudioEngine' does not conform to the 'Sendable' protocol; this is an error in the Swift 6 language mode",
+      "count": 14
+    },
+    {
+      "path": "Tests/SottoTests/Audio/SharedMicrophoneStreamTests.swift",
+      "message": "sending 'self' risks causing data races; this is an error in the Swift 6 language mode [#SendingRisksDataRace]",
+      "count": 4
+    },
+    {
+      "path": "Tests/SottoTests/Integration/CancelFlowTests.swift",
+      "message": "passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode [#SendingClosureRisksDataRace]",
+      "count": 2
+    },
+    {
+      "path": "Tests/SottoTests/STT/CustomVocabularyBoostingTests.swift",
+      "message": "pattern that the region-based isolation checker does not understand how to check. Please file a bug; this is an error in the Swift 6 language mode",
+      "count": 2
+    },
+    {
+      "path": "Tests/SottoTests/Services/Diarization/NemotronDiarizationServiceTests.swift",
+      "message": "passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode [#SendingClosureRisksDataRace]",
+      "count": 4
+    },
+    {
+      "path": "Tests/SottoTests/Services/LLM/CardGenerationServiceTests.swift",
+      "message": "sending value of non-Sendable type '() async throws -> CardGenerationOutcome' risks causing data races; this is an error in the Swift 6 language mode [#SendingRisksDataRace]",
+      "count": 1
+    },
+    {
+      "path": "Tests/SottoTests/Services/MeetingImport/MeetingImportServiceTests.swift",
+      "message": "sending 'fileManager' risks causing data races; this is an error in the Swift 6 language mode [#SendingRisksDataRace]",
+      "count": 1
+    },
+    {
+      "path": "Tests/SottoTests/Services/MeetingRecording/MeetingRecordingServiceTests.swift",
+      "message": "passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode [#SendingClosureRisksDataRace]",
+      "count": 4
+    },
+    {
+      "path": "Tests/SottoTests/Services/MeetingRecording/MeetingRecordingServiceTests.swift",
+      "message": "sending value of non-Sendable type 'PendingSourceReadGuard' risks causing data races; this is an error in the Swift 6 language mode [#SendingRisksDataRace]",
+      "count": 1
+    },
+    {
+      "path": "Tests/SottoTests/Services/SavedAudioAutoPromptCompletionServiceTests.swift",
+      "message": "passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode [#SendingClosureRisksDataRace]",
+      "count": 1
+    },
+    {
+      "path": "Tests/SottoTests/Services/TranscriptionServiceTests.swift",
+      "message": "passing closure as a 'sending' parameter risks causing data races between code in the current task and concurrent execution of the closure; this is an error in the Swift 6 language mode [#SendingClosureRisksDataRace]",
+      "count": 1
+    },
+    {
+      "path": "Tests/SottoTests/VoiceControl/VoiceControlObservabilityTests.swift",
+      "message": "sending value of non-Sendable type '() async -> ()' risks causing data races; this is an error in the Swift 6 language mode [#SendingRisksDataRace]",
+      "count": 2
+    }
+  ]
+}

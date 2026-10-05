@@ -19,31 +19,35 @@ final class MeetingAutoStopCoordinatorTests: XCTestCase {
     private var stoppedReasons: [StopReason] = []
     private var countdownCallbacks: [StopReason: (MeetingCountdownToastOutcome) -> Void] = [:]
 
-    override func setUp() {
-        super.setUp()
-        let suite = makeIsolatedDefaultsSuite("com.sotto.tests.auto-stop.")
-        suiteName = suite
-        defaults = UserDefaults(suiteName: suite)!
-        defaults.removePersistentDomain(forName: suite)
-        Telemetry.configure(NoOpTelemetryService())
-        settings = SettingsViewModel(defaults: defaults)
-        settings.meetingAutoStopEnabled = true
-        recordingActive = true
-        paused = false
-        runningApps = ["us.zoom.xos"]
-        levels = MeetingAudioLevels(microphone: 0.5, system: 0.5)
-        shownReasons = []
-        closeCount = 0
-        stoppedReasons = []
-        countdownCallbacks = [:]
+    override func setUp() async throws {
+        await MainActor.run {
+            super.setUp()
+            let suite = makeIsolatedDefaultsSuite("com.sotto.tests.auto-stop.")
+            suiteName = suite
+            defaults = UserDefaults(suiteName: suite)!
+            defaults.removePersistentDomain(forName: suite)
+            Telemetry.configure(NoOpTelemetryService())
+            settings = SettingsViewModel(defaults: defaults)
+            settings.meetingAutoStopEnabled = true
+            recordingActive = true
+            paused = false
+            runningApps = ["us.zoom.xos"]
+            levels = MeetingAudioLevels(microphone: 0.5, system: 0.5)
+            shownReasons = []
+            closeCount = 0
+            stoppedReasons = []
+            countdownCallbacks = [:]
+        }
     }
 
-    override func tearDown() {
-        Telemetry.configure(NoOpTelemetryService())
-        defaults = nil
-        suiteName = nil
-        settings = nil
-        super.tearDown()
+    override func tearDown() async throws {
+        await MainActor.run {
+            Telemetry.configure(NoOpTelemetryService())
+            defaults = nil
+            suiteName = nil
+            settings = nil
+            super.tearDown()
+        }
     }
 
     private func makeCoordinator(

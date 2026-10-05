@@ -1,4 +1,5 @@
 import XCTest
+import os
 @testable import SottoCore
 
 private actor DictationSuccessDisplayGate {
@@ -53,6 +54,7 @@ private final class DictationTelemetrySpy: TelemetryServiceProtocol, @unchecked 
     }
 }
 
+@MainActor
 final class DictationServiceTests: XCTestCase {
     var service: DictationService!
     var mockAudio: MockAudioProcessor!
@@ -74,7 +76,7 @@ final class DictationServiceTests: XCTestCase {
         )
     }
 
-    override func tearDown() {
+    override func tearDown() async throws {
         Telemetry.configure(NoOpTelemetryService())
         service = nil
         mockAudio = nil
@@ -2925,14 +2927,14 @@ final class DictationServiceTests: XCTestCase {
         mockLLMService.errorToThrow = LLMError.formatterTruncated
 
         let warningPosted = expectation(description: "AI formatter warning posted")
-        var warningMessage: String?
+        let warningMessage = OSAllocatedUnfairLock<String?>(initialState: nil)
         let observer = NotificationCenter.default.addObserver(
             forName: .sottoAIFormatterWarning,
             object: nil,
             queue: nil
         ) { notification in
             guard let source = notification.userInfo?["source"] as? String, source == "dictation" else { return }
-            warningMessage = notification.userInfo?["message"] as? String
+            warningMessage.withLock { $0 = notification.userInfo?["message"] as? String }
             warningPosted.fulfill()
         }
         defer { NotificationCenter.default.removeObserver(observer) }
@@ -2955,7 +2957,7 @@ final class DictationServiceTests: XCTestCase {
         XCTAssertEqual(result.dictation.wordCount, 2)
         XCTAssertEqual(mockLLMService.formatTranscriptCallCount, 1)
         await fulfillment(of: [warningPosted], timeout: 1.0)
-        XCTAssertEqual(warningMessage, "AI formatter output was incomplete. Used standard cleanup.")
+        XCTAssertEqual(warningMessage.withLock { $0 }, "AI formatter output was incomplete. Used standard cleanup.")
 
         let runs = try llmRunRepo.fetchForDictation(id: result.dictation.id)
         XCTAssertEqual(runs.count, 1)
@@ -2998,14 +3000,14 @@ final class DictationServiceTests: XCTestCase {
         mockLLMService.errorToThrow = LLMError.authenticationFailed(nil)
 
         let warningPosted = expectation(description: "AI formatter auth warning posted")
-        var warningMessage: String?
+        let warningMessage = OSAllocatedUnfairLock<String?>(initialState: nil)
         let observer = NotificationCenter.default.addObserver(
             forName: .sottoAIFormatterWarning,
             object: nil,
             queue: nil
         ) { notification in
             guard let source = notification.userInfo?["source"] as? String, source == "dictation" else { return }
-            warningMessage = notification.userInfo?["message"] as? String
+            warningMessage.withLock { $0 = notification.userInfo?["message"] as? String }
             warningPosted.fulfill()
         }
         defer { NotificationCenter.default.removeObserver(observer) }
@@ -3023,7 +3025,7 @@ final class DictationServiceTests: XCTestCase {
         _ = try await service.stopRecording()
 
         await fulfillment(of: [warningPosted], timeout: 1.0)
-        XCTAssertEqual(warningMessage, "Authentication failed. Check your API key. Used standard cleanup.")
+        XCTAssertEqual(warningMessage.withLock { $0 }, "Authentication failed. Check your API key. Used standard cleanup.")
     }
 
     // Note: Cancel flow tests, stop-when-not-recording, and STT error propagation
@@ -3311,7 +3313,7 @@ final class DictationServiceTests: XCTestCase {
 
     private func waitForCondition(
         timeout: Duration = .seconds(2),
-        _ condition: @escaping @Sendable () async -> Bool
+        _ condition: @escaping @MainActor @Sendable () async -> Bool
     ) async -> Bool {
         let clock = ContinuousClock()
         let deadline = clock.now + timeout

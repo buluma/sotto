@@ -74,8 +74,9 @@ final class LibraryThumbnailStoreTests: XCTestCase {
         let source = try XCTUnwrap(store.source(for: transcription))
         guard case .remote = source else { return XCTFail("Expected a remote source, got \(source)") }
 
-        async let first = store.image(for: transcription.id, from: source)
-        async let second = store.image(for: transcription.id, from: source)
+        let requestStore = try XCTUnwrap(store)
+        async let first = requestStore.image(for: transcription.id, from: source)
+        async let second = requestStore.image(for: transcription.id, from: source)
         let images = await [first, second]
 
         XCTAssertTrue(images.allSatisfy { $0 != nil })

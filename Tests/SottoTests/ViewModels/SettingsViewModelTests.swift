@@ -1,3 +1,4 @@
+import os
 import XCTest
 import CoreAudio
 @testable import SottoCore
@@ -65,50 +66,54 @@ final class SettingsViewModelTests: XCTestCase {
         }
     }
 
-    override func setUp() {
-        mockRepo = MockDictationRepository()
-        mockTranscriptionRepo = MockTranscriptionRepository()
-        mockPermissions = MockPermissionService()
-        mockLaunchAtLogin = MockLaunchAtLoginService()
-        youtubeDownloadsTestDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("mp-youtube-\(UUID().uuidString)", isDirectory: true)
-        try? FileManager.default.createDirectory(at: youtubeDownloadsTestDir, withIntermediateDirectories: true)
-        meetingRecordingsTestDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("mp-meetings-\(UUID().uuidString)", isDirectory: true)
-        try? FileManager.default.createDirectory(at: meetingRecordingsTestDir, withIntermediateDirectories: true)
+    override func setUp() async throws {
+        await MainActor.run {
+            mockRepo = MockDictationRepository()
+            mockTranscriptionRepo = MockTranscriptionRepository()
+            mockPermissions = MockPermissionService()
+            mockLaunchAtLogin = MockLaunchAtLoginService()
+            youtubeDownloadsTestDir = FileManager.default.temporaryDirectory
+                .appendingPathComponent("mp-youtube-\(UUID().uuidString)", isDirectory: true)
+            try? FileManager.default.createDirectory(at: youtubeDownloadsTestDir, withIntermediateDirectories: true)
+            meetingRecordingsTestDir = FileManager.default.temporaryDirectory
+                .appendingPathComponent("mp-meetings-\(UUID().uuidString)", isDirectory: true)
+            try? FileManager.default.createDirectory(at: meetingRecordingsTestDir, withIntermediateDirectories: true)
 
-        // Use a unique suite name for isolated UserDefaults per test
-        testDefaultsSuiteName = makeIsolatedDefaultsSuite("com.sotto.tests.")
-        testDefaults = UserDefaults(suiteName: testDefaultsSuiteName)!
+            // Use a unique suite name for isolated UserDefaults per test
+            testDefaultsSuiteName = makeIsolatedDefaultsSuite("com.sotto.tests.")
+            testDefaults = UserDefaults(suiteName: testDefaultsSuiteName)!
 
-        viewModel = SettingsViewModel(
-            defaults: testDefaults,
-            youtubeDownloadsDirPath: { [youtubeDownloadsTestDir] in
-                youtubeDownloadsTestDir?.path ?? AppPaths.youtubeDownloadsDir
-            },
-            meetingRecordingsDirPath: { [meetingRecordingsTestDir] in
-                meetingRecordingsTestDir?.path ?? AppPaths.meetingRecordingsDir
-            }
-        )
+            viewModel = SettingsViewModel(
+                defaults: testDefaults,
+                youtubeDownloadsDirPath: { [youtubeDownloadsTestDir] in
+                    youtubeDownloadsTestDir?.path ?? AppPaths.youtubeDownloadsDir
+                },
+                meetingRecordingsDirPath: { [meetingRecordingsTestDir] in
+                    meetingRecordingsTestDir?.path ?? AppPaths.meetingRecordingsDir
+                }
+            )
 
-        entitlements = EntitlementsService(
-            config: LicensingConfig(checkoutURL: nil, expectedVariantID: nil),
-            store: InMemoryKeyValueStore(),
-            api: StubLicenseAPI()
-        )
+            entitlements = EntitlementsService(
+                config: LicensingConfig(checkoutURL: nil, expectedVariantID: nil),
+                store: InMemoryKeyValueStore(),
+                api: StubLicenseAPI()
+            )
+        }
     }
 
-    override func tearDown() {
-        Telemetry.configure(NoOpTelemetryService())
+    override func tearDown() async throws {
+        await MainActor.run {
+            Telemetry.configure(NoOpTelemetryService())
 
-        if let youtubeDownloadsTestDir {
-            try? FileManager.default.removeItem(at: youtubeDownloadsTestDir)
+            if let youtubeDownloadsTestDir {
+                try? FileManager.default.removeItem(at: youtubeDownloadsTestDir)
+            }
+            if let meetingRecordingsTestDir {
+                try? FileManager.default.removeItem(at: meetingRecordingsTestDir)
+            }
+            testDefaults = nil
+            testDefaultsSuiteName = nil
         }
-        if let meetingRecordingsTestDir {
-            try? FileManager.default.removeItem(at: meetingRecordingsTestDir)
-        }
-        testDefaults = nil
-        testDefaultsSuiteName = nil
     }
 
     // MARK: - Voice Return
@@ -386,13 +391,13 @@ final class SettingsViewModelTests: XCTestCase {
     func testMeetingAutoStopPersistsEmitsTelemetryAndPostsNotification() {
         let telemetry = SettingsTelemetrySpy()
         Telemetry.configure(telemetry)
-        var notificationCount = 0
+        let notificationCount = OSAllocatedUnfairLock(initialState: 0)
         let observer = NotificationCenter.default.addObserver(
             forName: .sottoMeetingAutoStopDidChange,
             object: nil,
             queue: nil
         ) { _ in
-            notificationCount += 1
+            notificationCount.withLock { $0 += 1 }
         }
         defer { NotificationCenter.default.removeObserver(observer) }
 
@@ -403,7 +408,7 @@ final class SettingsViewModelTests: XCTestCase {
         viewModel.meetingAutoStopEnabled = false
 
         XCTAssertFalse(testDefaults.bool(forKey: UserDefaultsAppRuntimePreferences.meetingAutoStopEnabledKey))
-        XCTAssertEqual(notificationCount, 2)
+        XCTAssertEqual(notificationCount.withLock { $0 }, 2)
         let settings = telemetry.snapshot().compactMap { event -> TelemetrySettingName? in
             guard case .settingChanged(let setting, _) = event else { return nil }
             return setting
@@ -414,13 +419,13 @@ final class SettingsViewModelTests: XCTestCase {
     func testShowMeetingRecordingPillPersistsEmitsTelemetryAndPostsNotification() {
         let telemetry = SettingsTelemetrySpy()
         Telemetry.configure(telemetry)
-        var notificationCount = 0
+        let notificationCount = OSAllocatedUnfairLock(initialState: 0)
         let observer = NotificationCenter.default.addObserver(
             forName: .sottoShowMeetingRecordingPillDidChange,
             object: nil,
             queue: nil
         ) { _ in
-            notificationCount += 1
+            notificationCount.withLock { $0 += 1 }
         }
         defer { NotificationCenter.default.removeObserver(observer) }
 
@@ -431,7 +436,7 @@ final class SettingsViewModelTests: XCTestCase {
         viewModel.showMeetingRecordingPill = true
 
         XCTAssertTrue(testDefaults.bool(forKey: UserDefaultsAppRuntimePreferences.showMeetingRecordingPillKey))
-        XCTAssertEqual(notificationCount, 2)
+        XCTAssertEqual(notificationCount.withLock { $0 }, 2)
         let settings = telemetry.snapshot().compactMap { event -> TelemetrySettingName? in
             guard case .settingChanged(let setting, _) = event else { return nil }
             return setting
@@ -517,21 +522,21 @@ final class SettingsViewModelTests: XCTestCase {
     func testInstantDictationPersistsEmitsTelemetryAndPostsNotification() {
         let telemetry = SettingsTelemetrySpy()
         Telemetry.configure(telemetry)
-        var instantDictationNotificationCount = 0
-        var microphoneNotificationCount = 0
+        let instantDictationNotificationCount = OSAllocatedUnfairLock(initialState: 0)
+        let microphoneNotificationCount = OSAllocatedUnfairLock(initialState: 0)
         let observer = NotificationCenter.default.addObserver(
             forName: .sottoInstantDictationDidChange,
             object: nil,
             queue: nil
         ) { _ in
-            instantDictationNotificationCount += 1
+            instantDictationNotificationCount.withLock { $0 += 1 }
         }
         let microphoneObserver = NotificationCenter.default.addObserver(
             forName: .sottoMicrophoneSelectionDidChange,
             object: nil,
             queue: nil
         ) { _ in
-            microphoneNotificationCount += 1
+            microphoneNotificationCount.withLock { $0 += 1 }
         }
         defer {
             NotificationCenter.default.removeObserver(observer)
@@ -541,8 +546,8 @@ final class SettingsViewModelTests: XCTestCase {
         viewModel.instantDictationEnabled = true
 
         XCTAssertTrue(testDefaults.bool(forKey: UserDefaultsAppRuntimePreferences.instantDictationEnabledKey))
-        XCTAssertEqual(instantDictationNotificationCount, 1)
-        XCTAssertEqual(microphoneNotificationCount, 0)
+        XCTAssertEqual(instantDictationNotificationCount.withLock { $0 }, 1)
+        XCTAssertEqual(microphoneNotificationCount.withLock { $0 }, 0)
 
         let settings = telemetry.snapshot().compactMap { event -> TelemetrySettingName? in
             guard case .settingChanged(let setting, _) = event else { return nil }
@@ -679,21 +684,21 @@ final class SettingsViewModelTests: XCTestCase {
     }
 
     func testSelectedMicrophonePersistsUIDAndClearsForSystemDefault() {
-        var microphoneNotificationCount = 0
-        var instantDictationNotificationCount = 0
+        let microphoneNotificationCount = OSAllocatedUnfairLock(initialState: 0)
+        let instantDictationNotificationCount = OSAllocatedUnfairLock(initialState: 0)
         let observer = NotificationCenter.default.addObserver(
             forName: .sottoMicrophoneSelectionDidChange,
             object: nil,
             queue: nil
         ) { _ in
-            microphoneNotificationCount += 1
+            microphoneNotificationCount.withLock { $0 += 1 }
         }
         let instantDictationObserver = NotificationCenter.default.addObserver(
             forName: .sottoInstantDictationDidChange,
             object: nil,
             queue: nil
         ) { _ in
-            instantDictationNotificationCount += 1
+            instantDictationNotificationCount.withLock { $0 += 1 }
         }
         defer {
             NotificationCenter.default.removeObserver(observer)
@@ -710,20 +715,20 @@ final class SettingsViewModelTests: XCTestCase {
         viewModel.selectedMicrophoneDeviceUID = SettingsViewModel.systemDefaultMicrophoneSelection
 
         XCTAssertNil(testDefaults.string(forKey: UserDefaultsAppRuntimePreferences.selectedMicrophoneDeviceUIDKey))
-        XCTAssertEqual(microphoneNotificationCount, 2)
-        XCTAssertEqual(instantDictationNotificationCount, 0)
+        XCTAssertEqual(microphoneNotificationCount.withLock { $0 }, 2)
+        XCTAssertEqual(instantDictationNotificationCount.withLock { $0 }, 0)
     }
 
     func testSelectedMicrophoneNormalizesBlankSelectionToSystemDefault() {
         let telemetry = SettingsTelemetrySpy()
         Telemetry.configure(telemetry)
-        var microphoneNotificationCount = 0
+        let microphoneNotificationCount = OSAllocatedUnfairLock(initialState: 0)
         let observer = NotificationCenter.default.addObserver(
             forName: .sottoMicrophoneSelectionDidChange,
             object: nil,
             queue: nil
         ) { _ in
-            microphoneNotificationCount += 1
+            microphoneNotificationCount.withLock { $0 += 1 }
         }
         defer { NotificationCenter.default.removeObserver(observer) }
 
@@ -737,7 +742,7 @@ final class SettingsViewModelTests: XCTestCase {
 
         XCTAssertEqual(viewModel.selectedMicrophoneDeviceUID, SettingsViewModel.systemDefaultMicrophoneSelection)
         XCTAssertNil(testDefaults.string(forKey: UserDefaultsAppRuntimePreferences.selectedMicrophoneDeviceUIDKey))
-        XCTAssertEqual(microphoneNotificationCount, 2)
+        XCTAssertEqual(microphoneNotificationCount.withLock { $0 }, 2)
 
         let settings = telemetry.snapshot().compactMap { event -> TelemetrySettingName? in
             guard case .settingChanged(let setting, _) = event else { return nil }
@@ -1202,12 +1207,12 @@ final class SettingsViewModelTests: XCTestCase {
     func testSettingMeetingAudioRetentionPersistsEmitsTelemetryAndPostsNotification() {
         let telemetry = SettingsTelemetrySpy()
         Telemetry.configure(telemetry)
-        var notificationCount = 0
+        let notificationCount = OSAllocatedUnfairLock(initialState: 0)
         let observer = NotificationCenter.default.addObserver(
             forName: .sottoMeetingAudioRetentionDidChange,
             object: nil,
             queue: nil
-        ) { _ in notificationCount += 1 }
+        ) { _ in notificationCount.withLock { $0 += 1 } }
         defer { NotificationCenter.default.removeObserver(observer) }
 
         viewModel.setMeetingAudioRetention(.deleteAfterDays(14))
@@ -1221,7 +1226,7 @@ final class SettingsViewModelTests: XCTestCase {
             14
         )
         XCTAssertTrue(testDefaults.bool(forKey: UserDefaultsAppRuntimePreferences.saveMeetingAudioKey))
-        XCTAssertEqual(notificationCount, 1)
+        XCTAssertEqual(notificationCount.withLock { $0 }, 1)
         let settings = telemetry.snapshot().compactMap { event -> TelemetrySettingName? in
             guard case .settingChanged(let setting, _) = event else { return nil }
             return setting

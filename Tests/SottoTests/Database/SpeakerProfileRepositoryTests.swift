@@ -1,3 +1,4 @@
+import os
 import XCTest
 import GRDB
 @testable import SottoCore
@@ -594,9 +595,7 @@ final class SpeakerProfileRepositoryTests: XCTestCase {
             exemplar(profileId: profile.id, embedding: makeEmbedding(index: $0))
         }
 
-        let lock = NSLock()
-        var outcomes: [Result<SpeakerExemplarInsertion, Error>] = []
-        outcomes.reserveCapacity(samples.count)
+        let outcomes = OSAllocatedUnfairLock(initialState: [Result<SpeakerExemplarInsertion, Error>]())
 
         DispatchQueue.concurrentPerform(iterations: samples.count) { index in
             let outcome = Result {
@@ -606,12 +605,10 @@ final class SpeakerProfileRepositoryTests: XCTestCase {
                     evicting: .confirmedSuggestion
                 )
             }
-            lock.lock()
-            outcomes.append(outcome)
-            lock.unlock()
+            outcomes.withLock { $0.append(outcome) }
         }
 
-        let insertions = try outcomes.map { try $0.get() }
+        let insertions = try outcomes.withLock { $0 }.map { try $0.get() }
         let accepted = insertions.filter {
             switch $0 {
             case .inserted, .insertedEvicting: return true
@@ -800,9 +797,7 @@ final class SpeakerProfileRepositoryTests: XCTestCase {
             )
         }
 
-        let lock = NSLock()
-        var outcomes: [Result<SpeakerExemplarInsertion, Error>] = []
-        outcomes.reserveCapacity(attempts.count)
+        let outcomes = OSAllocatedUnfairLock(initialState: [Result<SpeakerExemplarInsertion, Error>]())
 
         DispatchQueue.concurrentPerform(iterations: attempts.count) { index in
             let (profile, sample) = attempts[index]
@@ -814,12 +809,10 @@ final class SpeakerProfileRepositoryTests: XCTestCase {
                     evicting: .confirmedSuggestion
                 )
             }
-            lock.lock()
-            outcomes.append(outcome)
-            lock.unlock()
+            outcomes.withLock { $0.append(outcome) }
         }
 
-        let accepted = try outcomes.compactMap { result -> SpeakerExemplarInsertion? in
+        let accepted = try outcomes.withLock { $0 }.compactMap { result -> SpeakerExemplarInsertion? in
             switch result {
             case .success(let insertion):
                 return insertion

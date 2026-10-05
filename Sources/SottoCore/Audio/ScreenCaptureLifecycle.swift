@@ -18,8 +18,8 @@ enum ScreenCaptureStopOutcome: Equatable, Sendable {
 }
 
 protocol ScreenCaptureLifecycleSession: AnyObject, Sendable {
-    func startCapture(completionHandler: @escaping (Error?) -> Void)
-    func stopCapture(completionHandler: @escaping (Error?) -> Void)
+    func startCapture(completionHandler: @escaping @Sendable (Error?) -> Void)
+    func stopCapture(completionHandler: @escaping @Sendable (Error?) -> Void)
     func makeLateStartStopAction() -> @Sendable () -> Void
 }
 

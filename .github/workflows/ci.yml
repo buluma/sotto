@@ -125,6 +125,10 @@ jobs:
           set -o pipefail
           swift build --build-tests -Xswiftc -warn-concurrency 2>&1 | tee ci-logs/swift-test-build.log
 
+      - name: Concurrency Warning Baseline
+        if: ${{ steps.test_build.outcome == 'success' }}
+        run: python3 scripts/ci/check_concurrency_warnings.py --log ci-logs/swift-test-build.log
+
       - name: Ask Pi Helper
         timeout-minutes: 5
         env:

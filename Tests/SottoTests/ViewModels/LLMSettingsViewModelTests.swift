@@ -20,24 +20,28 @@ final class LLMSettingsViewModelTests: XCTestCase {
         XCTAssertEqual(LLMSettingsViewModel.routeLocationDescription(cli), "Processing depends on the CLI tool's configuration")
     }
 
-    override func setUp() {
-        defaultsSuiteName = makeIsolatedDefaultsSuite("test.llmsettings.")
-        routeLockURL = FileManager.default.temporaryDirectory.appendingPathComponent(defaultsSuiteName)
-            .appendingPathComponent("routes.lock")
-        defaults = UserDefaults(suiteName: defaultsSuiteName)!
-        defaults.removePersistentDomain(forName: defaultsSuiteName)
-        viewModel = LLMSettingsViewModel(defaults: defaults)
-        mockConfigStore = MockLLMConfigStore()
-        mockClient = MockLLMClient()
+    override func setUp() async throws {
+        await MainActor.run {
+            defaultsSuiteName = makeIsolatedDefaultsSuite("test.llmsettings.")
+            routeLockURL = FileManager.default.temporaryDirectory.appendingPathComponent(defaultsSuiteName)
+                .appendingPathComponent("routes.lock")
+            defaults = UserDefaults(suiteName: defaultsSuiteName)!
+            defaults.removePersistentDomain(forName: defaultsSuiteName)
+            viewModel = LLMSettingsViewModel(defaults: defaults)
+            mockConfigStore = MockLLMConfigStore()
+            mockClient = MockLLMClient()
+        }
     }
 
-    override func tearDown() {
-        try? FileManager.default.removeItem(at: routeLockURL.deletingLastPathComponent())
-        defaults = nil
-        defaultsSuiteName = nil
-        viewModel = nil
-        mockConfigStore = nil
-        mockClient = nil
+    override func tearDown() async throws {
+        await MainActor.run {
+            try? FileManager.default.removeItem(at: routeLockURL.deletingLastPathComponent())
+            defaults = nil
+            defaultsSuiteName = nil
+            viewModel = nil
+            mockConfigStore = nil
+            mockClient = nil
+        }
     }
 
     // MARK: - Defaults

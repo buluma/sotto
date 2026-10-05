@@ -1308,14 +1308,14 @@ final class TranscriptionServiceTests: XCTestCase {
         mockLLMService.errorToThrow = LLMError.formatterTruncated
 
         let warningPosted = expectation(description: "AI formatter warning posted")
-        var warningMessage: String?
+        let warningMessage = OSAllocatedUnfairLock<String?>(initialState: nil)
         let observer = NotificationCenter.default.addObserver(
             forName: .sottoAIFormatterWarning,
             object: nil,
             queue: nil
         ) { notification in
             guard let source = notification.userInfo?["source"] as? String, source == "transcription" else { return }
-            warningMessage = notification.userInfo?["message"] as? String
+            warningMessage.withLock { $0 = notification.userInfo?["message"] as? String }
             warningPosted.fulfill()
         }
         defer { NotificationCenter.default.removeObserver(observer) }
@@ -1336,7 +1336,7 @@ final class TranscriptionServiceTests: XCTestCase {
         XCTAssertNil(result.cleanTranscript)
         XCTAssertEqual(mockLLMService.formatTranscriptCallCount, 1)
         await fulfillment(of: [warningPosted], timeout: 1.0)
-        XCTAssertEqual(warningMessage, "AI formatter output was incomplete. Used standard cleanup.")
+        XCTAssertEqual(warningMessage.withLock { $0 }, "AI formatter output was incomplete. Used standard cleanup.")
 
         let runs = try llmRunRepo.fetchForTranscription(id: result.id)
         XCTAssertEqual(runs.count, 1)
@@ -1353,14 +1353,14 @@ final class TranscriptionServiceTests: XCTestCase {
         mockLLMService.errorToThrow = LLMError.authenticationFailed(nil)
 
         let warningPosted = expectation(description: "AI formatter auth warning posted")
-        var warningMessage: String?
+        let warningMessage = OSAllocatedUnfairLock<String?>(initialState: nil)
         let observer = NotificationCenter.default.addObserver(
             forName: .sottoAIFormatterWarning,
             object: nil,
             queue: nil
         ) { notification in
             guard let source = notification.userInfo?["source"] as? String, source == "transcription" else { return }
-            warningMessage = notification.userInfo?["message"] as? String
+            warningMessage.withLock { $0 = notification.userInfo?["message"] as? String }
             warningPosted.fulfill()
         }
         defer { NotificationCenter.default.removeObserver(observer) }
@@ -1377,7 +1377,7 @@ final class TranscriptionServiceTests: XCTestCase {
         _ = try await service.transcribe(fileURL: URL(fileURLWithPath: "/tmp/test.mp3"))
 
         await fulfillment(of: [warningPosted], timeout: 1.0)
-        XCTAssertEqual(warningMessage, "Authentication failed. Check your API key. Used standard cleanup.")
+        XCTAssertEqual(warningMessage.withLock { $0 }, "Authentication failed. Check your API key. Used standard cleanup.")
     }
 
     func testTranscribeURLKeepsDownloadedAudioByDefault() async throws {

@@ -247,7 +247,8 @@ enum MarkdownTableExporter {
     }
 }
 
-private final class MarkdownContentInteractionListener: MarkdownListener {
+// Stateless listener: every AppKit effect explicitly hops to MainActor.
+private final class MarkdownContentInteractionListener: MarkdownListener, Sendable {
     static let shared = MarkdownContentInteractionListener()
 
     func onRender(markdown _: RenderableDocument) async {}

@@ -6,19 +6,23 @@ final class SettingsRootViewModelTests: XCTestCase {
     private var defaults: UserDefaults!
     private var suiteName: String!
 
-    override func setUp() {
-        super.setUp()
-        // Each test gets an isolated UserDefaults suite so tab persistence
-        // assertions don't leak across cases or interfere with the user's
-        // real preferences during local runs.
-        suiteName = makeIsolatedDefaultsSuite("SettingsRootViewModelTests.")
-        defaults = UserDefaults(suiteName: suiteName)
+    override func setUp() async throws {
+        await MainActor.run {
+            super.setUp()
+            // Each test gets an isolated UserDefaults suite so tab persistence
+            // assertions don't leak across cases or interfere with the user's
+            // real preferences during local runs.
+            suiteName = makeIsolatedDefaultsSuite("SettingsRootViewModelTests.")
+            defaults = UserDefaults(suiteName: suiteName)
+        }
     }
 
-    override func tearDown() {
-        defaults = nil
-        suiteName = nil
-        super.tearDown()
+    override func tearDown() async throws {
+        await MainActor.run {
+            defaults = nil
+            suiteName = nil
+            super.tearDown()
+        }
     }
 
     func testDefaultsToCaptureTabOnFirstLaunch() {

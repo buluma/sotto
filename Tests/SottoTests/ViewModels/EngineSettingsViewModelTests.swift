@@ -7,16 +7,20 @@ final class EngineSettingsViewModelTests: XCTestCase {
     private var defaults: UserDefaults!
     private var defaultsSuiteName: String!
 
-    override func setUp() {
-        defaultsSuiteName = makeIsolatedDefaultsSuite("test.enginesettings.")
-        defaults = UserDefaults(suiteName: defaultsSuiteName)!
-        defaults.removePersistentDomain(forName: defaultsSuiteName)
+    override func setUp() async throws {
+        await MainActor.run {
+            defaultsSuiteName = makeIsolatedDefaultsSuite("test.enginesettings.")
+            defaults = UserDefaults(suiteName: defaultsSuiteName)!
+            defaults.removePersistentDomain(forName: defaultsSuiteName)
+        }
     }
 
-    override func tearDown() {
-        Telemetry.configure(NoOpTelemetryService())
-        defaults = nil
-        defaultsSuiteName = nil
+    override func tearDown() async throws {
+        await MainActor.run {
+            Telemetry.configure(NoOpTelemetryService())
+            defaults = nil
+            defaultsSuiteName = nil
+        }
     }
 
     private func makeViewModel(

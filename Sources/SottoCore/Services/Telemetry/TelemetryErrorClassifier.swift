@@ -64,6 +64,23 @@ public enum TelemetryErrorClassifier {
             }
         }
 
+        if let llmError = error as? LLMError {
+            switch llmError {
+            case .notConfigured: return "LLMError.notConfigured"
+            case .rateLimited: return "LLMError.rateLimited"
+            case .contextTooLong: return "LLMError.contextTooLong"
+            case .formatterTruncated: return "LLMError.formatterTruncated"
+            case .formatterEmptyResponse: return "LLMError.formatterEmptyResponse"
+            case .invalidResponse: return "LLMError.invalidResponse"
+            default: break
+            }
+        }
+        if let entitlementError = error as? EntitlementsError,
+            case .trialExpired = entitlementError
+        {
+            return "EntitlementsError.trialExpired"
+        }
+
         // SharedMicrophoneStream currently crosses its queue boundary with the
         // localized NSError description. Preserve known CoreAudio domain/code
         // pairs without transmitting any of that message's free-form content.

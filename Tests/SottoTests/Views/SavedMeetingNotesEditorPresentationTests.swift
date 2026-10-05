@@ -137,6 +137,7 @@ final class SavedMeetingNotesEditorPresentationTests: XCTestCase {
 
 @MainActor
 final class SavedMeetingNotesCopyFeedbackTests: XCTestCase {
+    @MainActor
     private final class ManualTimer {
         private let ticks: AsyncStream<Void>
         private let tickContinuation: AsyncStream<Void>.Continuation
