@@ -1489,6 +1489,6 @@ Activity is stored locally with the answer and exposed through the CLI contract.
 
 The existing Transcribe route is displayed as **Capture**; its identifier and navigation behavior remain unchanged. Dictations stays separate from Library, and Settings retains Capture, Engine, AI, and System tabs.
 
-The main window owns one behind-window canvas. Reduce Transparency replaces this with the solid background token. Content surfaces use neutral graphite in dark appearance, with semantic primary/secondary labels; primary actions use the brand accent while native selection and focus styling remain intact.
+The main window owns one behind-window canvas extending beneath its native titlebar and toolbar. Reduce Transparency replaces this with the solid background token. Content cards share a diagonal gradient from the neutral card token to a translucent elevated surface, with semantic primary/secondary labels; primary actions use the brand accent while native selection and focus styling remain intact. Dictation statistic cards retain three equal-width columns at supported window sizes, scaling their text when space is tight.
 
 Capture import cards stack when horizontal space is insufficient and scroll vertically. Its meeting tile is compact. Library header actions wrap below the heading in compact windows, filters scroll horizontally, and the unfiltered empty state offers the existing creation action. Meeting recovery alerts precede upcoming and saved content; configuration remains secondary without changing its links or behavior.

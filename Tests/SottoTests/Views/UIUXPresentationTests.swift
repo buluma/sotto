@@ -22,6 +22,10 @@ final class UIUXPresentationTests: XCTestCase {
                 XCTAssertEqual(materials.count, 1, "The canvas must install only one backdrop")
                 XCTAssertEqual(materials.first?.blendingMode, NSVisualEffectView.BlendingMode.behindWindow)
                 XCTAssertEqual(materials.first?.state, NSVisualEffectView.State.followsWindowActiveState)
+                if let material = materials.first {
+                    XCTAssertEqual(material.bounds.width, host.bounds.width, accuracy: 1)
+                    XCTAssertEqual(material.bounds.height, host.bounds.height, accuracy: 1)
+                }
             }
         }
     }

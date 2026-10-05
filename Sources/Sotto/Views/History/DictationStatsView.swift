@@ -55,9 +55,10 @@ struct DictationStatsView: View {
     private var heroTiles: some View {
         let stats = viewModel.stats
         return LazyVGrid(
-            columns: [
-                GridItem(.adaptive(minimum: 240), spacing: DesignSystem.Spacing.md)
-            ],
+            columns: Array(
+                repeating: GridItem(.flexible(minimum: 0), spacing: DesignSystem.Spacing.md),
+                count: 3
+            ),
             spacing: DesignSystem.Spacing.md
         ) {
             HeroStatTile(
@@ -264,6 +265,8 @@ private struct HeroStatTile: View {
             Text(label)
                 .font(.system(size: 13, weight: .medium, design: .rounded))
                 .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
             Text(value)
                 .font(.system(size: 34, weight: .bold, design: .rounded))
                 .foregroundStyle(accent ? DesignSystem.Colors.accent : Color.primary)
@@ -275,6 +278,7 @@ private struct HeroStatTile: View {
                 .font(.system(size: 12, weight: .regular, design: .rounded))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, DesignSystem.Spacing.md)

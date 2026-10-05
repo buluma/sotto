@@ -184,7 +184,7 @@ struct TranscribeView: View {
         ZStack {
             // Card background — matches PortalDropZone styling
             RoundedRectangle(cornerRadius: DesignSystem.Layout.dropZoneCornerRadius)
-                .fill(DesignSystem.Colors.surfaceElevated)
+                .fill(DesignSystem.Colors.cardGradient)
                 .cardShadow(DesignSystem.Shadows.cardRest)
 
             VStack(spacing: DesignSystem.Spacing.md) {
@@ -234,7 +234,7 @@ struct TranscribeView: View {
                                 .padding(.vertical, 4)
                                 .background(
                                     Capsule()
-                                        .fill(DesignSystem.Colors.cardBackground)
+                                        .fill(DesignSystem.Colors.cardGradient)
                                 )
                         }
                         .sottoAction(.subtle)
@@ -246,7 +246,7 @@ struct TranscribeView: View {
                     .padding(.vertical, 10)
                     .background(
                         RoundedRectangle(cornerRadius: DesignSystem.Layout.rowCornerRadius)
-                            .fill(DesignSystem.Colors.cardBackground)
+                            .fill(DesignSystem.Colors.cardGradient)
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: DesignSystem.Layout.rowCornerRadius)
@@ -513,7 +513,7 @@ struct TranscribeView: View {
             .frame(maxWidth: 620)
             .background(
                 RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius)
-                    .fill(DesignSystem.Colors.cardBackground)
+                    .fill(DesignSystem.Colors.cardGradient)
                     .cardShadow(DesignSystem.Shadows.cardRest)
             )
             .overlay(

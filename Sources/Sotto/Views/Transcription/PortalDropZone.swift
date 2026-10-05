@@ -13,7 +13,7 @@ struct PortalDropZone: View {
         ZStack {
             // Card background
             RoundedRectangle(cornerRadius: DesignSystem.Layout.dropZoneCornerRadius)
-                .fill(isDragging ? DesignSystem.Colors.accentLight : DesignSystem.Colors.surfaceElevated)
+                .fill(isDragging ? AnyShapeStyle(DesignSystem.Colors.accentLight) : AnyShapeStyle(DesignSystem.Colors.cardGradient))
                 .overlay(
                     RoundedRectangle(cornerRadius: DesignSystem.Layout.dropZoneCornerRadius)
                         .strokeBorder(

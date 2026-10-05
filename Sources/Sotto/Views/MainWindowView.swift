@@ -342,7 +342,6 @@ struct MainWindowView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background { WindowCanvasBackground() }
                 .transaction { transaction in
                     if reduceMotion {
                         transaction.animation = nil
@@ -359,6 +358,8 @@ struct MainWindowView: View {
             minWidth: 860,
             minHeight: DesignSystem.Layout.windowMinHeight
         )
+        .background { WindowCanvasBackground() }
+        .toolbarBackground(.hidden, for: .windowToolbar)
         .environment(\.shareManagement, shareManagementViewModel)
         // Presented from the window root, not the Library list: a finishing
         // transcription or menu navigation replaces the list while the sheet

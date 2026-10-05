@@ -146,7 +146,7 @@ struct TransformsView: View {
             .padding(.vertical, DesignSystem.Spacing.lg)
             .padding(.horizontal, DesignSystem.Spacing.lg)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(DesignSystem.Colors.surfaceElevated)
+            .background(DesignSystem.Colors.cardGradient)
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius))
             .overlay {
                 RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius)
@@ -379,7 +379,7 @@ private struct TransformHistoryEmptyState: View {
             Spacer()
         }
         .padding(DesignSystem.Spacing.lg)
-        .background(DesignSystem.Colors.cardBackground)
+        .background(DesignSystem.Colors.cardGradient)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius))
         .overlay {
             RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius)
@@ -416,7 +416,7 @@ private struct TransformHistoryNoResultsState: View {
                 .controlSize(.small)
         }
         .padding(DesignSystem.Spacing.lg)
-        .background(DesignSystem.Colors.cardBackground)
+        .background(DesignSystem.Colors.cardGradient)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius))
         .overlay {
             RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius)
@@ -484,7 +484,7 @@ private struct TransformHistoryRow: View {
         .padding(DesignSystem.Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius)
-                .fill(isHovered ? DesignSystem.Colors.surfaceElevated.opacity(0.7) : DesignSystem.Colors.cardBackground)
+                .fill(DesignSystem.Colors.cardGradient)
                 .cardShadow(isHovered ? DesignSystem.Shadows.cardHover : DesignSystem.Shadows.cardRest)
         )
         .overlay {
@@ -940,7 +940,7 @@ private struct TransformCard: View {
         }
         .padding(DesignSystem.Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DesignSystem.Colors.cardBackground)
+        .background(DesignSystem.Colors.cardGradient)
         .clipShape(RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius))
         .overlay {
             RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius)

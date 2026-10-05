@@ -58,6 +58,15 @@ enum DesignSystem {
         static let cardBackground = Color(light: .init(red: 0.99, green: 1.0, blue: 0.98),
                                           dark: .init(red: 0.16, green: 0.16, blue: 0.17))
 
+        /// Shared card depth: an opaque leading edge fades into the window canvas.
+        static var cardGradient: LinearGradient {
+            LinearGradient(
+                colors: [cardBackground, surfaceElevated.opacity(0.45)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+
         // Playback
         static let playbackTrack = Color.primary.opacity(0.08)
         static let playbackFill = accent

@@ -1413,7 +1413,7 @@ private struct MeetingsSection<Content: View>: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(DesignSystem.Colors.surface)
+                    .fill(DesignSystem.Colors.cardGradient)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
                             .strokeBorder(DesignSystem.Colors.border.opacity(0.65), lineWidth: 0.6)

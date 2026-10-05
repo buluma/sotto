@@ -475,7 +475,7 @@ struct VocabularyView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius)
-                .fill(DesignSystem.Colors.cardBackground)
+                .fill(DesignSystem.Colors.cardGradient)
                 .cardShadow(DesignSystem.Shadows.cardRest)
         )
         .overlay(
