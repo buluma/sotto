@@ -10,6 +10,7 @@ Start with the [spec index](../spec/README.md) for product behavior, release cha
 | Development and review | [AGENTS.md](../AGENTS.md), [review workflow](pr-review-workflow.md), [testing](../spec/09-testing.md) |
 | Build, package or release | [Distribution](distribution.md), [human QA](human-qa-guide.md), [release smoke](release-demo-smoke.md) |
 | Network and privacy boundaries | [Current network inventory](network-boundaries.md) |
+| Feature defaults and qualification | [Flag inventory](feature-flags.md), [normalization status](fork-normalization-status.md) |
 | Telemetry or local diagnostics | [Telemetry](telemetry.md), [privacy contract](../spec/contracts/telemetry-v1.md), [offline audio-log queries](local-audio-diagnostics-query.md) |
 | Brand and UI | [UI patterns](../spec/04-ui-patterns.md), [brand identity](brand-identity.md), [brand assets](../brand-assets/README.md) |
 | Planned or unfinished work | [spec roadmap](../spec/README.md#inherited-upstream-version-roadmap) |

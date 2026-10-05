@@ -20,13 +20,13 @@
 
 ## What to know before editing
 
-**This is retained future-option code, not dead code.** Current public DMG builds are free and GPL-3.0; entitlements are always unlocked. The plumbing here exists so a future GPL-compatible paid distribution channel can be activated without re-implementing licensing from scratch.
+**This is retained future-option code, not dead code.** This personal GPLv3 fork has no public DMG channel; entitlements are always unlocked. The inherited plumbing is retained under the code-preservation rule below, not as a commercial roadmap.
 
 **Do not delete `EntitlementsService`, `LemonSqueezyLicenseAPI`, entitlement state types, or trial/license telemetry as dead code.** This applies to refactors, "cleanup" passes, lint sweeps, and any agent that thinks the unused code looks suspicious. The only acceptable removal path is: explicit owner direction + an ADR or spec update reflecting the decision.
 
-**Do not introduce active gating from these types into user-facing flows.** `EntitlementsChecking.currentState(now:)` always returns `.unlocked`, and `assertCanTranscribe(now:)` does not throw in current free/GPL builds. There is no `isLicensed` API. Preserve those semantics unless an explicit product decision and governing ADR/spec change authorize a different model.
+**Do not introduce active gating from these types into user-facing flows.** `EntitlementsChecking.currentState(now:)` always returns `.unlocked`, and `assertCanTranscribe(now:)` does not throw in this personal fork. There is no `isLicensed` API. Preserve those semantics unless an explicit product decision and governing ADR/spec change authorize a different model.
 
-**Dormant gating does not mean no licensing I/O.** App setup calls `refreshValidationIfNeeded()`, and CLI transcription does so when `--enforce-entitlements` is requested. A retained license key and instance ID can trigger a LemonSqueezy validation request when its cached validation is at least a day old. No stored activation means no validation request; the result never locks the current free build.
+**Dormant gating does not mean no licensing I/O.** App setup calls `refreshValidationIfNeeded()`, and CLI transcription does so when `--enforce-entitlements` is requested. A retained license key and instance ID can trigger a LemonSqueezy validation request when its cached validation is at least a day old. No stored activation means no validation request; the result never locks the personal fork.
 
 **Keychain access is not free on first call.** The first read after launch can take tens of milliseconds. Cache results in callers if hot-pathing.
 

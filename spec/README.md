@@ -66,7 +66,7 @@ These decisions are final. Do not second-guess them.
 
 This checkout is a personal Sotto fork. It has no public release, distribution channel, auto-update feed, or remote telemetry transport. Updates are manual. Version identifiers and historical release documents come from upstream and do not establish a Sotto release. Original model download sources and explicit optional network integrations remain separate from the app identity.
 
-Feature gates in the current source (`Sources/SottoCore/AppFeatures.swift`); an implemented gated surface is not a shipped feature:
+Feature gates in the current source (`Sources/SottoCore/AppFeatures.swift`); an implemented gated surface is not a shipped feature. The [complete flag inventory](../docs/feature-flags.md) records purpose, ownership, keep/remove decisions, personal-fork relevance, and developer overrides:
 
 | Flag | Value | Release note |
 |------|-------|--------------|
