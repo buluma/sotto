@@ -139,7 +139,7 @@ public final class HotkeyManager {
         stopTailTimer?.cancel()
     }
 
-    /// Start listening for key events. Requires Accessibility permission.
+    /// Start listening for global key events. macOS Input Monitoring is required; Accessibility trust is also logged when tap creation fails.
     public func start() -> Bool {
         // Guard against double-start: stop existing tap to prevent leaking it
         if backgroundTap != nil { stop() }

@@ -10,7 +10,7 @@ Use the protocol for the surface you need and inject the concrete service from t
 
 ## What Is Here
 
-- `PermissionService.swift` -- microphone, screen recording, and Accessibility checks/prompts/settings links.
+- `PermissionService.swift` -- microphone, screen recording, and Accessibility checks/prompts/settings links. Global event taps also depend on the separate macOS Input Monitoring grant.
 - `ClipboardService.swift` -- pasteboard writes and restore behavior.
 - `StreamingCursorScheduler.swift` / `StreamingCursorInserter.swift` -- optional default-off dictation caret stream (#449); paste remains the default path.
 - `EventTapTeardown.swift` -- shared CGEvent tap teardown; always invalidates the Mach port (#1132).
@@ -26,7 +26,7 @@ Use the protocol for the surface you need and inject the concrete service from t
 
 **Services are instance-owned and protocol-backed.** `PermissionService` is not a singleton and has no `.shared`. Depend on `PermissionServiceProtocol` and construct/inject a concrete `PermissionService` from the app layer or a mock from tests.
 
-**Permission prompts are user-visible product surfaces.** Screen recording, microphone, and Accessibility flows affect onboarding, Settings, dictation, and meeting capture. Update the governing UI/spec docs and tests when prompt timing, copy, or recovery behavior changes.
+**Permission prompts are user-visible product surfaces.** Screen recording, microphone, Accessibility, and Input Monitoring affect dictation, paste, and meeting capture. Input Monitoring is distinct from Accessibility and may need to be enabled manually in System Settings. Update the governing UI/spec docs and tests when prompt timing, copy, or recovery behavior changes.
 
 **Do not hide ordered work in detached tasks.** If a caller needs the result, error, or ordering of a system operation, make the path async and await it. Fire-and-forget tasks are only appropriate for deliberately detached cleanup, best-effort telemetry, or UI effects whose cancellation is harmless.
 
