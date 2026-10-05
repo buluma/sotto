@@ -57,6 +57,8 @@ Design philosophy: **Simple, native, stays out of the way.** No chrome, no clutt
 
 Minimum window width: 800pt.
 
+The main window's detail column fills every destination with `DesignSystem.Colors.contentBackground`; page backgrounds must not fall through to the system window color. Cards and controls keep their own surface colors.
+
 ### Sidebar
 
 The sidebar uses NavigationSplitView with flat items (icon + label):

@@ -338,10 +338,12 @@ struct MainWindowView: View {
                         )
                     }
                 }
-            }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(DesignSystem.Colors.contentBackground)
 
-            if showGlobalProgressBar {
-                globalTranscriptionBottomBar
+                if showGlobalProgressBar {
+                    globalTranscriptionBottomBar
+                }
             }
         }
         .frame(

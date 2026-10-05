@@ -78,7 +78,7 @@ struct AskEvidenceView: View {
                     .padding(20)
             }
         }
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(DesignSystem.Colors.contentBackground)
     }
 
     private func statusMessage(_ status: AskEvidenceStatus) -> String {
