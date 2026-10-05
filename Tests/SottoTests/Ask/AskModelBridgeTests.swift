@@ -308,7 +308,11 @@ final class AskModelBridgeTests: XCTestCase {
 
     func testCancellationBeforeRetryIsPropagated() async throws {
         let client = ScriptedAskLLMClient(decision: "not JSON", cancelOnCall: 1)
-        let deciding = Task { try await AskModelBridge.decide(messages: messages, client: client, context: context) }
+        let messages = messages
+        let context = context
+        let deciding = Task {
+            _ = try await AskModelBridge.decide(messages: messages, client: client, context: context)
+        }
         do {
             _ = try await deciding.value
             XCTFail("Accepted cancelled model request")

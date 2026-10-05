@@ -344,8 +344,9 @@ final class SavedAudioAutoPromptCompletionServiceTests: XCTestCase {
         promptRepo.prompts = [Prompt(name: "Summary", content: "Summarize", isAutoRun: false)]
         let cardGenerator = BlockingCardGenerator()
         let service = makeService(cardGenerator: cardGenerator)
+        let child = makeChild()
         let completion = Task {
-            try await service.completeAutoPrompts(for: makeChild())
+            try await service.completeAutoPrompts(for: child)
         }
         await cardGenerator.waitUntilStarted()
 

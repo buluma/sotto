@@ -1,4 +1,5 @@
 import AVFAudio
+import os
 import XCTest
 @testable import SottoCore
 
@@ -571,9 +572,7 @@ final class MeetingAudioCaptureServiceTests: XCTestCase {
         let capturedBuffer = CapturedPCMBuffer()
         _ = try await service.startForTesting { event in
             guard case let .microphoneBuffer(buffer, _) = event else { return }
-            Task {
-                await capturedBuffer.store(buffer)
-            }
+            capturedBuffer.store(buffer)
         }
         defer { Task { await service.stop() } }
 
@@ -586,9 +585,9 @@ final class MeetingAudioCaptureServiceTests: XCTestCase {
             ]))
         microphone.emit(buffer: interleaved, time: AVAudioTime(hostTime: AVAudioTime.hostTime(forSeconds: 1.0)))
 
-        var copiedBuffer: AVAudioPCMBuffer?
+        var copiedBuffer: CapturedPCMBuffer.Snapshot?
         for _ in 0..<20 {
-            copiedBuffer = await capturedBuffer.value()
+            copiedBuffer = capturedBuffer.value()
             if copiedBuffer != nil {
                 break
             }
@@ -596,9 +595,9 @@ final class MeetingAudioCaptureServiceTests: XCTestCase {
         }
 
         let buffer = try XCTUnwrap(copiedBuffer)
-        let samples = try XCTUnwrap(AudioChunker.extractSamples(from: buffer))
+        let samples = try XCTUnwrap(buffer.samples)
 
-        XCTAssertFalse(buffer.format.isInterleaved)
+        XCTAssertFalse(buffer.isInterleaved)
         XCTAssertEqual(samples.count, 4)
         XCTAssertEqual(samples[0], 0.5, accuracy: 0.0001)
         XCTAssertEqual(samples[1], 0.5, accuracy: 0.0001)
@@ -2358,15 +2357,27 @@ private final class FailureDuringStartSystemAudioCapture: MeetingSystemAudioCapt
     }
 }
 
-private actor CapturedPCMBuffer {
-    private var buffer: AVAudioPCMBuffer?
-
-    func store(_ buffer: AVAudioPCMBuffer) {
-        self.buffer = buffer
+/// Copy observable values in the tap callback; native buffers never cross actors.
+private final class CapturedPCMBuffer: Sendable {
+    struct Snapshot: Sendable {
+        let samples: [Float]?
+        let isInterleaved: Bool
+        let rmsLevel: Float
     }
 
-    func value() -> AVAudioPCMBuffer? {
-        buffer
+    private let snapshot = OSAllocatedUnfairLock<Snapshot?>(initialState: nil)
+
+    func store(_ buffer: AVAudioPCMBuffer) {
+        let value = Snapshot(
+            samples: AudioChunker.extractSamples(from: buffer),
+            isInterleaved: buffer.format.isInterleaved,
+            rmsLevel: buffer.rmsLevel
+        )
+        snapshot.withLock { $0 = value }
+    }
+
+    func value() -> Snapshot? {
+        snapshot.withLock { $0 }
     }
 }
 
