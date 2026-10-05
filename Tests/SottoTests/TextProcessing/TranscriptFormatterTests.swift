@@ -146,7 +146,8 @@ final class TranscriptFormatterTests: XCTestCase {
             queue: nil
         ) { notification in
             guard let source = notification.userInfo?["source"] as? String, source == "transcription" else { return }
-            warningMessage.withLock { $0 = notification.userInfo?["message"] as? String }
+            let message = notification.userInfo?["message"] as? String
+            warningMessage.withLock { $0 = message }
             warningPosted.fulfill()
         }
         defer { NotificationCenter.default.removeObserver(observer) }

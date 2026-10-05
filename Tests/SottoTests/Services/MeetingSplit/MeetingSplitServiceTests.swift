@@ -1336,11 +1336,12 @@ private final class BlockingSavedAudioAutoPromptCompletionService: SavedAudioAut
     }
 
     func releaseFirstCall() async {
-        lock.lock()
-        shouldRelease = true
-        let continuation = releaseContinuation
-        releaseContinuation = nil
-        lock.unlock()
+        let continuation = lock.withLock {
+            shouldRelease = true
+            let continuation = releaseContinuation
+            releaseContinuation = nil
+            return continuation
+        }
         continuation?.resume()
     }
 
