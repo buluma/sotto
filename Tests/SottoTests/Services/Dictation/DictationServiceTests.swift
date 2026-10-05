@@ -83,10 +83,10 @@ final class DictationServiceTests: XCTestCase {
         mockSTT = nil
         dictationRepo = nil
         llmRunRepo = nil
-        super.tearDown()
+        try await super.tearDown()
     }
 
-    private static func previewSpeechEngine(
+    nonisolated private static func previewSpeechEngine(
         _ key: SpeechEngineVariantKey,
         language: String? = nil
     ) -> SpeechEngineCapabilitySelection {
