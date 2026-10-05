@@ -174,7 +174,7 @@ SQLite is the canonical structured record store, not a complete backup of all ap
 
 Core STT has no network dependency after model setup. Sotto removes remote analytics/crash transport and app auto-updates. Discover is bundled local Rick-and-Morty-style banter, off by default, with no cache, remote refresh or thought submission. See [Discover](../docs/discover.md).
 
-Other network surfaces include configured AI, model/helper/media downloads, retained activation plumbing. Calendar reads local EventKit data. See the [local-only ADR](adr/002-local-only.md) for inherited boundaries; optional network integrations are independent of local Discover.
+Other network surfaces include configured AI, model/helper/media downloads. Licensing has no network transport and preserves stored credentials. Calendar reads local EventKit data. See the [local-only ADR](adr/002-local-only.md) for inherited boundaries; optional network integrations are independent of local Discover.
 
 Sotto is rebuilt locally. The inherited distribution guide documents upstream packaging rather than an enabled personal update channel. Microphone, Accessibility, system-audio and Calendar permissions are requested in the appropriate product flows; see [ADR-005](adr/005-onboarding-first-run.md).
 

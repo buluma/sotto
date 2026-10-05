@@ -11,7 +11,7 @@ This inventory describes the personal fork’s source behavior, not a packet-cap
 | Apple Intelligence | Optional, on-device | The Foundation Models adapter uses the system on-device model with no cloud fallback. Availability depends on the device/system setup. |
 | In-process local AI | Development-only | Default-off feature and opt-in MLX build; model installation downloads assets. Local inference and download consent are separate boundaries. |
 | Ask and Voice Control | Development-only, default-off | Debug opt-ins expose experimental workflows. Ask uses configured providers; Voice Control has its own consent-gated external decision client. These flags do not establish production qualification. |
-| Retained licensing | Conditional legacy I/O | App setup calls `refreshValidationIfNeeded()`; CLI transcription does so with `--enforce-entitlements`. Stored key/instance state with stale validation can contact LemonSqueezy. No stored activation means no refresh request. Validation does not lock this fork. |
+| Licensing | Removed network surface | Entitlements stay unlocked. Bootstrap/refresh are no-ops; activation is unavailable; deactivation preserves credentials. App/CLI setup and legacy flags cannot enable licensing calls. |
 | Calendar | Optional, local API | Sotto reads EventKit data. Account/calendar synchronization is managed by macOS outside Sotto’s local repository boundary. |
 | External links | User-triggered | Opening a link delegates to the system browser; the destination has its own network behavior. |
 | Telemetry and crash uploads | Removed | GUI/CLI configure `NoOpTelemetryService`. No uploader, endpoint, timer, or retry queue remains. Preferences and `SOTTO_TELEMETRY=1` cannot enable uploads. Local diagnostic logs/artifacts remain. |

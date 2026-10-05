@@ -1,15 +1,13 @@
 # ADR-006: Trial + License Key Activation
 
-> Status: **DORMANT** — Not enforced in current free/GPL-3.0 public builds.
-> Sotto is currently free with unlimited features. Trial and license gates are disabled, but the activation/entitlement plumbing remains in the codebase as future-option support for GPL-compatible official paid distribution, support, or hosted services.
-> LemonSqueezy is currently kept as a $0 product for download tracking. Do not remove this ADR or entitlement code as dead code without explicit owner direction and an ADR/spec update.
-> Date: 2026-02-12
+## Personal-fork amendment — 2026-10-05
 
-## Current implementation
+The owner explicitly requested removal of licensing network calls while preserving stored credentials and unlocked behavior. This supersedes the inherited trial/activation design below. There is no LemonSqueezy HTTP transport. `EntitlementsService` retains its compatibility methods and initializer but performs no provider or Keychain I/O: bootstrap/refresh are no-ops, activation reports unavailable, deactivation preserves stored state, and capture remains unlocked. Legacy app/CLI calls cannot enable licensing networking. See the [local entitlement contract](../contracts/licensing-local-only.md).
 
-`EntitlementsService.currentState(now:)` always returns `.unlocked`; `assertCanTranscribe(now:)` does not throw. The retained trial and expiry types below describe the dormant design, not limits on the current public build.
+## Historical upstream decision
 
-App setup still calls `refreshValidationIfNeeded()`. If Keychain contains a legacy license key and instance ID and the last successful validation is at least a day old, it can contact LemonSqueezy. CLI transcription invokes the same refresh with `--enforce-entitlements`. A missing activation makes refresh a no-op; failed or invalid validation never locks the free build.
+> Status: **Superseded in this personal fork**
+> Original date: 2026-02-12
 
 ## Context
 

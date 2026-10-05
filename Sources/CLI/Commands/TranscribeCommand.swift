@@ -137,7 +137,7 @@ struct TranscribeCommand: AsyncParsableCommand, CLITelemetryMetadataProviding {
     @Flag(help: "Compatibility alias for --speaker-detection off.")
     var noDiarize: Bool = false
 
-    @Flag(help: "Run retained entitlement checks before transcribing. Current free builds remain unlocked.")
+    @Flag(help: "Legacy compatibility flag; Sotto stays unlocked without license validation or network calls.")
     var enforceEntitlements: Bool = false
 
     @Flag(name: .long, help: "Do not save the completed transcription to Sotto history. Downloaded media is temporary.")
@@ -1103,7 +1103,7 @@ struct TranscribeCommand: AsyncParsableCommand, CLITelemetryMetadataProviding {
         let config = LicensingConfig(checkoutURL: checkoutURL, expectedVariantID: expectedVariantID)
         let serviceName = Bundle.main.bundleIdentifier ?? "com.sotto"
         let store = KeychainKeyValueStore(service: serviceName)
-        return EntitlementsService(config: config, store: store, api: LemonSqueezyLicenseAPI())
+        return EntitlementsService(config: config, store: store, api: DisabledLicenseAPI())
     }
 
     /// After a single transcription has been printed to stdout, point the user

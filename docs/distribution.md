@@ -72,19 +72,9 @@ VERSION=X.Y.Z scripts/dist/build_app_bundle.sh
 
 The verifier also inspects every bundled LocalVQE dylib (`liblocalvqe.dylib` and any dependency copied into `Contents/Frameworks/`) and every architecture slice of each, reading the Mach-O minimum-OS-version load command (`LC_BUILD_VERSION minos`, or legacy `LC_VERSION_MIN_MACOSX`) and rejecting any slice higher than the app's `LSMinimumSystemVersion`. A missing/malformed version is always a hard failure; a missing `otool`/`lipo` is a hard failure only under `STRICT_MEETING_ECHO_ASSETS=1` (implied by `REQUIRE_MEETING_ECHO_ASSETS=1`) and otherwise a skipped-check warning. When run as part of `build_app_bundle.sh`, the expected minimum is the build's `MIN_MACOS_VERSION`; run standalone against an already-built bundle, it reads `LSMinimumSystemVersion` from the bundle's `Info.plist`. `SOTTO_MEETING_ECHO_MIN_MACOS_VERSION` can supply or tighten this: it is used on its own if the bundle has no `Info.plist` yet, but once the bundle's `Info.plist` exists, it must contain a valid minimum even when an override is supplied. The effective ceiling is the lower of the override and `LSMinimumSystemVersion` — an override can only make the check stricter, never raise it above what the bundle's `Info.plist` actually advertises.
 
-Retained purchase activation config (normally unset in current free builds):
+Legacy activation metadata is normally unset. `SOTTO_CHECKOUT_URL` and `SOTTO_LS_VARIANT_ID` may still be embedded as `SottoCheckoutURL` and `SottoLemonSqueezyVariantID` for source compatibility; they cannot enable licensing calls, change unlocked behavior, or modify stored credentials. Local builds do not need them.
 
-```bash
-export SOTTO_CHECKOUT_URL="https://..."
-export SOTTO_LS_VARIANT_ID="12345"
-scripts/dist/build_app_bundle.sh
-```
-
-This personal fork is unlocked. Retained activation variables are optional legacy build metadata, not a commercial plan or a requirement for local use. When set, they are embedded into `Info.plist` as:
-- `SottoCheckoutURL`
-- `SottoLemonSqueezyVariantID`
-
-## 2) Sign + notarize (recommended)
+## 2) Optional signing and notarization
 
 Prereqs:
 - A **Developer ID Application** certificate in Keychain.

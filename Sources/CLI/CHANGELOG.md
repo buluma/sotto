@@ -6,6 +6,10 @@ This file tracks the CLI specifically -- the commands, flags, output schemas, an
 
 The format is based on [Keep a Changelog](https://keepachangelog.com), and the CLI adheres to [Semantic Versioning](https://semver.org).
 
+## [Unreleased]
+
+- `transcribe --enforce-entitlements` remains accepted but performs no licensing validation, activation-state writes, or licensing network requests in this personal fork. Stored credentials are preserved and capture remains unlocked.
+
 ## [6.0.0] — 2026-10-04 (personal Sotto fork)
 
 - Removed the `feedback` command and its support-service uploader. Existing scripts invoking it now receive the standard unknown-command error; `spec --json` no longer advertises it. This immediate removal is intentional for the personal fork.

@@ -2,7 +2,7 @@
 
 > Status: **ACTIVE** - Authoritative, current
 > Fast, private, local-first voice app for Mac. Fully local speech with separately documented network surfaces, free and open-source (GPL-3.0).
-> Fork scope: personal local use, GPLv3, no public distribution or automatic app updates. Upstream pricing/release history does not establish a Sotto release. Retained licensing code and its conditional network validation are documented in [network boundaries](../docs/network-boundaries.md).
+> Fork scope: personal local use, GPLv3, no public distribution or automatic app updates. Upstream pricing/release history does not establish a Sotto release. Inert licensing compatibility and preserved credentials are documented in [network boundaries](../docs/network-boundaries.md).
 
 ---
 
@@ -83,10 +83,10 @@ Fully local speech is a core product property. Core workflows can run offline af
 - Local STT. No cloud speech processing, no accounts, no required backend for core speech.
 - Audio never leaves your Mac for dictation or transcription.
 - No required product account. Remote telemetry and crash-event transport are removed; diagnostics remain local.
-- Core capture and local-file speech workflows work in airplane-mode or air-gapped environments after the required models are installed. Media/model/helper downloads, configured AI providers, and retained-license validation have separate network boundaries.
+- Core capture and local-file speech workflows work in airplane-mode or air-gapped environments after the required models are installed. Media/model/helper downloads and configured AI providers have separate network boundaries.
 - Discover is off by default and reads bundled offline cards only. No feed refresh, thoughts submission, feedback uploader, or hosted sharing transport remains.
 
-This is privacy by architecture at the speech boundary: recognition has no server path. [ADR-002](adr/002-local-only.md) documents the current provider, media/model/helper, and retained-license I/O boundaries; disabling one is not a global network opt-out.
+This is privacy by architecture at the speech boundary: recognition has no server path. [ADR-002](adr/002-local-only.md) documents the current provider and media/model/helper I/O boundaries; disabling one is not a global network opt-out.
 
 ### 3. Simplicity Over Features
 
@@ -111,7 +111,7 @@ Simple does not mean basic. Sotto includes modern capabilities that cloud compet
 
 Sotto is a personal local fork derived from MacParakeet. It has no paid feature limits, required subscription, public release channel, or hosted Sotto service. Development gates still hide unfinished capabilities; see the [flag inventory](README.md#release-channels-and-feature-flags). Original copyright and third-party notices remain intact.
 
-Retained activation code is not a commercial roadmap. It can still validate stored activation state with LemonSqueezy; see [network boundaries](../docs/network-boundaries.md). Do not remove that implementation during documentation cleanup.
+Retained activation code is not a commercial roadmap. It performs no licensing network or stored-state I/O; see [network boundaries](../docs/network-boundaries.md). Preserve the local compatibility surface and stored credentials.
 
 ---
 
@@ -302,7 +302,7 @@ Sotto optimizes the default pipeline for Parakeet while routing optional Nemotro
 
 This is not "cloud by default with a local mode." Core speech recognition runs entirely on-device. There is no cloud STT path, no account system, and no requirement to send audio anywhere.
 
-Network surfaces remain separate from speech inference: configured AI providers may receive text; model/media/helper paths download assets; retained activation state may trigger licensing validation. Remote telemetry, feedback, sharing, Discover feed requests, and automatic app updates are removed. See [network boundaries](../docs/network-boundaries.md).
+Network surfaces remain separate from speech inference: configured AI providers may receive text; model/media/helper paths download assets. Remote telemetry, feedback, sharing, Discover feed requests, and automatic app updates are removed. See [network boundaries](../docs/network-boundaries.md).
 
 ### 3. Free and Open-Source
 

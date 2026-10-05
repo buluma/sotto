@@ -60,7 +60,7 @@ These decisions are final. Do not second-guess them.
 | Local STT | Parakeet TDT 0.6B via FluidAudio CoreML/ANE (`v3` standard-path default, `v2` English-only opt-in, `unified` English-only opt-in); locale-aware Korean/Japanese/Chinese/Cantonese onboarding selects WhisperKit when no preferred English language is present; Nemotron 3.5 Beta, WhisperKit, and Cohere Transcribe remain selectable | Parakeet gives the best speed/memory profile for supported languages in the current M4 Pro harness (~81-93x steady RTFx, 115-131 MB peak RSS by build); v2 avoids language auto-detect for English-only use; Unified adds punctuation/capitalization and token-derived timestamps; Nemotron is a fast opt-in Beta path with multilingual and English-only builds; Whisper adds mature broad multilingual coverage locally; Cohere is a larger batch-only accuracy path |
 | Database | SQLite via GRDB | Single file, embedded, zero config |
 | Platform | macOS 14.2+ (Apple Silicon only) | FluidAudio requires Apple Silicon; Swift 6 language mode (tools-version 5.9) |
-| Fork scope | Personal local use; GPLv3; no public distribution | Upstream pricing and release decisions are historical; retained licensing I/O is documented separately |
+| Fork scope | Personal local use; GPLv3; no public distribution | Upstream pricing and release decisions are historical; inert licensing compatibility preserves credentials without network I/O |
 
 ## Release Channels And Feature Flags
 

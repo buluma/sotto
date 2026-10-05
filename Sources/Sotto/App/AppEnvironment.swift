@@ -280,7 +280,7 @@ final class AppEnvironment {
         entitlementsService = EntitlementsService(
             config: licensingConfig,
             store: keychain,
-            api: LemonSqueezyLicenseAPI()
+            api: DisabledLicenseAPI()
         )
 
         let processingModeClosure: @Sendable () -> Dictation.ProcessingMode = { [runtimePreferences] in

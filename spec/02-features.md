@@ -2042,7 +2042,7 @@ Sotto's brand is privacy. These are non-negotiable.
 | No accounts | No email, no login, no registration |
 | No cloud STT | All speech recognition runs locally on Apple Silicon; Parakeet is default and Nemotron/Cohere/WhisperKit are optional |
 | User-controlled storage | Saved audio follows the relevant dictation/file/media/meeting storage setting; meeting audio is retained by default, with explicit deletion/retention choices |
-| Network surfaces | Model/helper setup, media/podcast imports, configured LLM features, retained-license validation. Discover is local-only and app updates are manual. |
+| Network surfaces | Model/helper setup, media/podcast imports, configured LLM features. Licensing has no network transport. Discover is local-only and app updates are manual. |
 
 **What local-first means:**
 - Parakeet, Nemotron, and Cohere STT run locally via FluidAudio CoreML; WhisperKit also runs locally when selected
@@ -2175,9 +2175,9 @@ FluidAudio model download → Audio capture (AVAudioEngine)
 
 ## Licensing
 
-> Status: **DORMANT** — Current public builds are free/GPL-3.0 and fully unlocked.
+> Status: **Inert personal-fork compatibility; no licensing network transport**
 
-The trial/Pro tier system (ADR-006) is no longer enforced in current public builds. LemonSqueezy is currently kept as a $0 product for download tracking. License activation code remains in the codebase while all current features are unlocked. This code is intentionally retained as future-option plumbing for GPL-compatible official paid distribution/support; agents must not remove it as dead code unless the project owner explicitly requests that removal and the decision is reflected in an ADR/spec update.
+Sotto remains unlocked. The owner approved removing licensing calls while preserving stored credentials. Bootstrap/refresh are no-ops, activation is unavailable, and deactivation does not clear stored state. CLI `--enforce-entitlements` remains accepted without licensing I/O. See [ADR-006](adr/006-trial-and-license-activation.md) and the [local entitlement contract](contracts/licensing-local-only.md).
 
 ---
 
