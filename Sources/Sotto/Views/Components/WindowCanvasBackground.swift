@@ -4,12 +4,29 @@ import SwiftUI
 /// One backdrop for all main-window destinations. Keep this inside the
 /// hosting view so SwiftUI can continue installing the window's toolbar.
 struct WindowCanvasBackground: View {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
     var body: some View {
-        WindowBackdropMaterial()
-            .overlay(DesignSystem.Colors.canvasBackground)
-            .ignoresSafeArea()
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
+        WindowCanvasSurface(reduceTransparency: reduceTransparency)
+    }
+}
+
+/// Resolved accessibility state also makes the native material policy testable.
+struct WindowCanvasSurface: View {
+    let reduceTransparency: Bool
+
+    var body: some View {
+        Group {
+            if reduceTransparency {
+                DesignSystem.Colors.background
+            } else {
+                WindowBackdropMaterial()
+                    .overlay(DesignSystem.Colors.canvasBackground)
+            }
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }
 

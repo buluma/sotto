@@ -1483,3 +1483,12 @@ Expanding activity shows bounded search queries, selected-source titles, returne
 Scrolling follows content growth while the reader stays at the bottom. Moving up suspends following; Jump to latest resumes it. Submitting a new question returns to the latest turn. Disclosure motion and explicit jumps respect Reduce Motion; streaming growth does not queue scrolling animations. Activity text and controls use native type, dynamic system colors, and the shared button styles.
 
 Activity is stored locally with the answer and exposed through the CLI contract. It contains no copied transcript passages, raw provider errors, or model reasoning. See [Ask contract](contracts/ask-workspace.md) for bounds and interruption semantics.
+
+
+## Current UI polish (personal fork)
+
+The existing Transcribe route is displayed as **Capture**; its identifier and navigation behavior remain unchanged. Dictations stays separate from Library, and Settings retains Capture, Engine, AI, and System tabs.
+
+The main window owns one behind-window canvas. Reduce Transparency replaces this with the solid background token. Content surfaces use neutral graphite in dark appearance, with semantic primary/secondary labels; primary actions use the brand accent while native selection and focus styling remain intact.
+
+Capture import cards stack when horizontal space is insufficient and scroll vertically. Its meeting tile is compact. Library header actions wrap below the heading in compact windows, filters scroll horizontally, and the unfiltered empty state offers the existing creation action. Meeting recovery alerts precede upcoming and saved content; configuration remains secondary without changing its links or behavior.

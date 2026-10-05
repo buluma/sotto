@@ -21,7 +21,7 @@ struct TranscriptionLibraryView: View {
     var onAskSelected: (([UUID]) -> Void)? = nil
     var onReviewAskConversations: (() -> Void)? = nil
     var emptyTitle: String = "No transcriptions yet"
-    var emptyMessage: String = "Just a vast, empty void where your words should be. Drop in a file or video link and let’s turn that audiovisual chaos into actual words, Morty."
+    var emptyMessage: String = "Import a recording or media link to create your first transcript."
     var onSelect: (Transcription) -> Void
 
     @State private var pendingDelete: Transcription?
@@ -63,45 +63,18 @@ struct TranscriptionLibraryView: View {
 
     private var libraryContent: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Text(title)
-                    .font(DesignSystem.Typography.pageTitle)
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-
-                Spacer()
-
-                Picker(
-                    "Library layout",
-                    selection: Binding(
-                        get: { libraryLayoutMode },
-                        set: { storedLibraryLayoutMode = $0.rawValue }
-                    )
-                ) {
-                    Image(systemName: "square.grid.2x2")
-                        .accessibilityLabel("Grid")
-                        .tag(LibraryLayoutMode.grid)
-                    Image(systemName: "list.bullet")
-                        .accessibilityLabel("List")
-                        .tag(LibraryLayoutMode.list)
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    libraryHeading
+                    Spacer(minLength: DesignSystem.Spacing.md)
+                    libraryHeaderActions
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .accessibilityLabel("Library layout")
-                .frame(width: 76)
-                .help(libraryLayoutMode == .grid ? "Switch to list view" : "Switch to grid view")
-
-                if let onManagePrompts {
-                    LibraryManagePromptsButton(action: onManagePrompts)
-                }
-
-                if showsSelectManyButton {
-                    LibrarySelectManyButton {
-                        viewModel.beginBulkSelection()
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+                    libraryHeading
+                    HStack {
+                        libraryHeaderActions
+                        Spacer(minLength: 0)
                     }
-                }
-
-                if let primaryActionTitle, let onPrimaryAction {
-                    LibraryPrimaryActionButton(title: primaryActionTitle, action: onPrimaryAction)
                 }
             }
             .padding(.horizontal, DesignSystem.Spacing.lg)
@@ -109,18 +82,20 @@ struct TranscriptionLibraryView: View {
             .padding(.bottom, DesignSystem.Spacing.sm)
 
             if showsFilterBar {
-                HStack(spacing: 0) {
-                    ForEach(visibleLibraryFilters, id: \.self) { filter in
-                        LibraryFilterChip(
-                            filter: filter,
-                            isSelected: viewModel.filter == filter,
-                            onTap: { viewModel.filter = filter }
-                        )
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 0) {
+                        ForEach(visibleLibraryFilters, id: \.self) { filter in
+                            LibraryFilterChip(
+                                filter: filter,
+                                isSelected: viewModel.filter == filter,
+                                onTap: { viewModel.filter = filter }
+                            )
+                        }
+                        Spacer()
                     }
-                    Spacer()
+                    .padding(.horizontal, DesignSystem.Spacing.lg)
+                    .padding(.bottom, DesignSystem.Spacing.sm)
                 }
-                .padding(.horizontal, DesignSystem.Spacing.lg)
-                .padding(.bottom, DesignSystem.Spacing.sm)
             }
 
             MeetingClassificationFilterBar(libraryViewModel: viewModel)
@@ -149,6 +124,50 @@ struct TranscriptionLibraryView: View {
             } else {
                 thumbnailGrid
             }
+        }
+    }
+
+    private var libraryHeading: some View {
+        Text(title)
+            .font(DesignSystem.Typography.pageTitle)
+            .foregroundStyle(DesignSystem.Colors.textPrimary)
+            .fixedSize()
+    }
+
+    @ViewBuilder
+    private var libraryHeaderActions: some View {
+        Picker(
+            "Library layout",
+            selection: Binding(
+                get: { libraryLayoutMode },
+                set: { storedLibraryLayoutMode = $0.rawValue }
+            )
+        ) {
+            Image(systemName: "square.grid.2x2")
+                .accessibilityLabel("Grid")
+                .tag(LibraryLayoutMode.grid)
+            Image(systemName: "list.bullet")
+                .accessibilityLabel("List")
+                .tag(LibraryLayoutMode.list)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .accessibilityLabel("Library layout")
+        .frame(width: 76)
+        .help(libraryLayoutMode == .grid ? "Switch to list view" : "Switch to grid view")
+
+        if let onManagePrompts {
+            LibraryManagePromptsButton(action: onManagePrompts)
+        }
+
+        if showsSelectManyButton {
+            LibrarySelectManyButton {
+                viewModel.beginBulkSelection()
+            }
+        }
+
+        if let primaryActionTitle, let onPrimaryAction {
+            LibraryPrimaryActionButton(title: primaryActionTitle, action: onPrimaryAction)
         }
     }
 
@@ -717,7 +736,7 @@ struct TranscriptionLibraryView: View {
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Close export options")
@@ -840,7 +859,7 @@ struct TranscriptionLibraryView: View {
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Close export confirmation")
@@ -1001,8 +1020,15 @@ struct TranscriptionLibraryView: View {
             .font(DesignSystem.Typography.bodySmall)
             .foregroundStyle(DesignSystem.Colors.textTertiary)
             .multilineTextAlignment(.center)
+            if viewModel.searchText.isEmpty, !hasLabelFilter, viewModel.filter == .all,
+                let primaryActionTitle, let onPrimaryAction
+            {
+                Button(primaryActionTitle, action: onPrimaryAction)
+                    .sottoAction(.primary)
+            }
             Spacer()
         }
+        .padding(DesignSystem.Spacing.lg)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
@@ -1165,7 +1191,7 @@ struct TranscriptionLibraryView: View {
             return isMeetingContext ? "No meetings match these labels" : "No transcriptions match these labels"
         }
         if !viewModel.searchText.isEmpty { return "No matching transcriptions" }
-        return isMeetingContext ? "No meetings recorded yet. Lucky you." : emptyTitle
+        return isMeetingContext ? "No meetings recorded yet" : emptyTitle
     }
 
     private var emptyStateMessage: String {
@@ -1176,7 +1202,7 @@ struct TranscriptionLibraryView: View {
         }
         if !viewModel.searchText.isEmpty { return "Try different words or clear your search." }
         return isMeetingContext
-            ? "Press Record Meeting on the Transcribe tab to capture system audio and transcribe locally."
+            ? "Record a meeting from Capture to transcribe locally."
             : emptyMessage
     }
 
@@ -1233,44 +1259,18 @@ private struct LibraryFilterChip: View {
     }
 }
 
-/// The Library header's primary "New Transcription" CTA — a filled coral capsule
-/// with a create glyph and a soft coral shadow that lifts on hover. Filled (not
-/// outline) because it's the single highest-priority action on the surface, and
-/// it carries the same hover idiom (scale + pointing-hand cursor) as the other
-/// polished buttons so the header reads as one system.
+/// The primary Library action uses the shared native action style.
 private struct LibraryPrimaryActionButton: View {
     let title: String
     let action: () -> Void
 
-    @State private var isHovered = false
-
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: "plus")
-                    .font(.system(size: 12, weight: .bold))
-                Text(title)
-                    .font(DesignSystem.Typography.bodySmall.weight(.semibold))
-            }
-            .foregroundStyle(DesignSystem.Colors.onAccent)
-            .padding(.horizontal, DesignSystem.Spacing.md)
-            .padding(.vertical, 9)
-            .background(Capsule().fill(DesignSystem.Colors.accent))
-            .shadow(
-                color: DesignSystem.Colors.accent.opacity(isHovered ? 0.45 : 0.26),
-                radius: isHovered ? 12 : 6,
-                x: 0,
-                y: isHovered ? 5 : 3
-            )
-            .scaleEffect(isHovered ? 1.035 : 1.0)
-            .animation(DesignSystem.Animation.hoverTransition, value: isHovered)
+            Label(title, systemImage: "plus")
+                .font(DesignSystem.Typography.bodySmall.weight(.semibold))
+                .fixedSize()
         }
-        .buttonStyle(.plain)
-        .onHover { hovering in
-            isHovered = hovering
-        }
-        .pointingHandCursor(isActive: isHovered)
-        .accessibilityLabel(title)
+        .sottoAction(.primaryProminent)
         .accessibilityHint("Starts a new transcription")
     }
 }

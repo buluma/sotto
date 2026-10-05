@@ -33,15 +33,17 @@ struct DictationStatsView: View {
             MeditativeMerkabaView(size: 72, revolutionDuration: 8.0, tintColor: DesignSystem.Colors.accent)
                 .opacity(0.4)
             VStack(spacing: DesignSystem.Spacing.sm) {
-                Text("Nothing here yet. Go dictate something, Morty.")
+                Text("No dictation statistics yet")
                     .font(DesignSystem.Typography.pageTitle)
                     .foregroundStyle(.primary)
-                Text(HotkeyTrigger.current.isDisabled
-                     ? "Click the dictation pill or set a hotkey in Settings to start dictating."
-                     : "Tap \(HotkeyTrigger.current.displayName) to start dictating from any app.")
-                    .font(DesignSystem.Typography.bodySmall)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+                Text(
+                    HotkeyTrigger.current.isDisabled
+                        ? "Click the dictation pill or set a hotkey in Settings to start dictating."
+                        : "Tap \(HotkeyTrigger.current.displayName) to start dictating from any app."
+                )
+                .font(DesignSystem.Typography.bodySmall)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
             }
             Spacer()
         }
@@ -54,9 +56,7 @@ struct DictationStatsView: View {
         let stats = viewModel.stats
         return LazyVGrid(
             columns: [
-                GridItem(.flexible(), spacing: DesignSystem.Spacing.md),
-                GridItem(.flexible(), spacing: DesignSystem.Spacing.md),
-                GridItem(.flexible(), spacing: DesignSystem.Spacing.md)
+                GridItem(.adaptive(minimum: 240), spacing: DesignSystem.Spacing.md)
             ],
             spacing: DesignSystem.Spacing.md
         ) {
@@ -86,7 +86,8 @@ struct DictationStatsView: View {
             let books = stats.booksEquivalent
             return String(format: "%.1f novel%@ written", books, books >= 1.5 ? "s" : "")
         } else if stats.totalWords >= 200 {
-            return "\(Int(stats.emailsEquivalent)) emails worth"
+            let emails = Int(stats.emailsEquivalent)
+            return "\(emails) email\(emails == 1 ? "" : "s") worth"
         }
         return "Keep going!"
     }
@@ -133,17 +134,19 @@ struct DictationStatsView: View {
 
                 Text("Longest streak · \(viewModel.longestStreak) day\(viewModel.longestStreak == 1 ? "" : "s")")
                     .font(.system(size: 12, weight: .medium, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
                     .monospacedDigit()
             }
 
-            StreakHeatmap(days: viewModel.dailyStats)
-                .frame(maxWidth: .infinity, alignment: .center)
+            ScrollView(.horizontal) {
+                StreakHeatmap(days: viewModel.dailyStats)
+                    .padding(.bottom, DesignSystem.Spacing.xs)
+            }
 
             HStack(spacing: 8) {
                 Text("Less")
                     .font(.system(size: 10, weight: .medium, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
                 ForEach(0..<5, id: \.self) { level in
                     RoundedRectangle(cornerRadius: 2.5)
                         .fill(StreakHeatmap.color(for: level))
@@ -151,7 +154,7 @@ struct DictationStatsView: View {
                 }
                 Text("More")
                     .font(.system(size: 10, weight: .medium, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
                 Spacer()
             }
         }
@@ -165,7 +168,7 @@ struct DictationStatsView: View {
                     LinearGradient(
                         colors: [
                             DesignSystem.Colors.cardBackground,
-                            DesignSystem.Colors.surfaceElevated.opacity(0.45)
+                            DesignSystem.Colors.surfaceElevated.opacity(0.45),
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -181,7 +184,7 @@ struct DictationStatsView: View {
                     LinearGradient(
                         colors: [
                             DesignSystem.Colors.accent.opacity(0.18),
-                            Color.primary.opacity(0.04)
+                            Color.primary.opacity(0.04),
                         ],
                         startPoint: .top,
                         endPoint: .bottom
@@ -204,12 +207,12 @@ struct DictationStatsView: View {
         let maxCount = viewModel.topApps.map(\.count).max() ?? 1
         return VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Where you ramble into the void")
+                Text("Dictation by app")
                     .font(.system(size: 18, weight: .semibold, design: .rounded))
                 Spacer()
                 Text("Top \(viewModel.topApps.count) app\(viewModel.topApps.count == 1 ? "" : "s")")
                     .font(.system(size: 12, weight: .medium, design: .rounded))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
                     .monospacedDigit()
             }
 
@@ -231,7 +234,7 @@ struct DictationStatsView: View {
                     LinearGradient(
                         colors: [
                             DesignSystem.Colors.cardBackground,
-                            DesignSystem.Colors.surfaceElevated.opacity(0.45)
+                            DesignSystem.Colors.surfaceElevated.opacity(0.45),
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -255,8 +258,6 @@ private struct HeroStatTile: View {
     /// Reserved for the lead tile only — three accented values would
     /// flatten the visual hierarchy.
     let accent: Bool
-
-    @State private var isHovered = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -286,7 +287,7 @@ private struct HeroStatTile: View {
                     LinearGradient(
                         colors: [
                             DesignSystem.Colors.cardBackground,
-                            DesignSystem.Colors.surfaceElevated.opacity(0.45)
+                            DesignSystem.Colors.surfaceElevated.opacity(0.45),
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -295,28 +296,15 @@ private struct HeroStatTile: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: DesignSystem.Layout.cardCornerRadius)
-                .strokeBorder(
-                    isHovered
-                        ? DesignSystem.Colors.accent.opacity(0.30)
-                        : Color.primary.opacity(0.05),
-                    lineWidth: 0.5
-                )
+                .strokeBorder(DesignSystem.Colors.border.opacity(0.6), lineWidth: 0.5)
         )
-        .scaleEffect(isHovered ? 1.012 : 1.0)
-        .shadow(
-            color: .black.opacity(isHovered ? 0.10 : 0.0),
-            radius: isHovered ? 10 : 0,
-            x: 0,
-            y: isHovered ? 4 : 0
-        )
-        .animation(.easeOut(duration: 0.18), value: isHovered)
-        .onHover { isHovered = $0 }
     }
 }
 
 // MARK: - Streak Heatmap
 
 struct StreakHeatmap: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let days: [DailyDictationStat]
 
     @State private var hoveredCell: HoveredCell?
@@ -342,13 +330,14 @@ struct StreakHeatmap: View {
             // Month-label row: free-floating Text positioned at each month-change column.
             ZStack(alignment: .topLeading) {
                 Color.clear.frame(
-                    width: CGFloat(columns.count) * Self.cellSize + CGFloat(max(0, columns.count - 1)) * Self.cellSpacing,
+                    width: CGFloat(columns.count) * Self.cellSize + CGFloat(max(0, columns.count - 1))
+                        * Self.cellSpacing,
                     height: monthLabelHeight
                 )
                 ForEach(boundaries, id: \.col) { boundary in
                     Text(boundary.label)
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
                         .fixedSize()
                         .offset(x: CGFloat(boundary.col) * cellStride, y: 0)
                 }
@@ -373,10 +362,11 @@ struct StreakHeatmap: View {
                             floatingTooltip(for: h, columnCount: columns.count)
                         }
                     }
-                    .animation(.easeOut(duration: 0.12), value: hoveredCell)
+                    .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: hoveredCell)
             }
         }
         .onAppear {
+            guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
                 todayPulse = true
             }
@@ -392,7 +382,7 @@ struct StreakHeatmap: View {
                     if let label = weekdayLabel(forRow: row) {
                         Text(label)
                             .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(DesignSystem.Colors.textSecondary)
                     } else {
                         Color.clear
                     }
@@ -433,7 +423,7 @@ struct StreakHeatmap: View {
                         isToday ? DesignSystem.Colors.accent : Color.clear,
                         lineWidth: isToday ? 1.75 : 0
                     )
-                    .opacity(isToday && todayPulse ? 1.0 : (isToday ? 0.55 : 0))
+                    .opacity(isToday && (reduceMotion || todayPulse) ? 1.0 : (isToday ? 0.55 : 0))
             )
             .overlay(
                 // Hover: white-ish stroke for affordance.
@@ -443,7 +433,7 @@ struct StreakHeatmap: View {
                         lineWidth: 1.0
                     )
             )
-            .scaleEffect(isHovered ? 1.18 : 1.0)
+            .scaleEffect(isHovered && !reduceMotion ? 1.18 : 1.0)
             .zIndex(isHovered ? 1 : 0)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Self.accessibilityLabel(for: stat, isToday: isToday))
@@ -498,7 +488,8 @@ struct StreakHeatmap: View {
         let gridWidth = CGFloat(columnCount) * cellStride - Self.cellSpacing
         let clampedLeftX = max(0, min(gridWidth - tooltipApproxWidth, rawLeftX))
 
-        let topY = showAbove
+        let topY =
+            showAbove
             ? cellTop - tooltipApproxHeight - gap
             : cellBottom + gap
 

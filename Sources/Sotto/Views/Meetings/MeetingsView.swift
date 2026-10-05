@@ -24,6 +24,7 @@ struct MeetingsView: View {
     @State private var showingAskPromptsSheet = false
     @State private var showingPromptLibrary = false
     @State private var showingMeetingImport = false
+    @State private var showingCalendarSetup = false
     @FocusState private var recentMeetingsSelectionFocused: Bool
 
     private static let rightRailWidth: CGFloat = 300
@@ -43,7 +44,7 @@ struct MeetingsView: View {
                         usesTwoColumnLayout: proxy.size.width >= Self.twoColumnMinimumWidth
                     )
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, DesignSystem.Spacing.lg)
                 .padding(.top, DesignSystem.Spacing.md)
                 .padding(.bottom, DesignSystem.Spacing.xl)
                 .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -300,13 +301,13 @@ struct MeetingsView: View {
     private var twoColumnContent: some View {
         HStack(alignment: .top, spacing: DesignSystem.Spacing.md) {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+                attentionSection
                 upcomingSection
                 recentMeetingsSection
             }
             .frame(minWidth: 480, maxWidth: .infinity, alignment: .topLeading)
 
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
-                attentionSection
                 intelligenceSection
                 autoNotesSection
                 meetingPromptsSection
@@ -317,8 +318,8 @@ struct MeetingsView: View {
 
     private var oneColumnContent: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
-            upcomingSection
             attentionSection
+            upcomingSection
             recentMeetingsSection
             intelligenceSection
             autoNotesSection
@@ -330,10 +331,22 @@ struct MeetingsView: View {
     private var upcomingSection: some View {
         if AppFeatures.calendarEnabled {
             MeetingsSection(title: "Upcoming", icon: "calendar.badge.clock") {
-                CalendarInlineControlsRow(
-                    settingsViewModel: viewModel.settingsViewModel,
-                    onOpenCalendarSettings: onOpenCalendarSettings
-                )
+                if viewModel.calendarStatus == .off {
+                    DisclosureGroup(
+                        "Calendar is off — connect to show upcoming meetings", isExpanded: $showingCalendarSetup
+                    ) {
+                        CalendarInlineControlsRow(
+                            settingsViewModel: viewModel.settingsViewModel,
+                            onOpenCalendarSettings: onOpenCalendarSettings
+                        )
+                    }
+                    .padding(DesignSystem.Spacing.md)
+                } else {
+                    CalendarInlineControlsRow(
+                        settingsViewModel: viewModel.settingsViewModel,
+                        onOpenCalendarSettings: onOpenCalendarSettings
+                    )
+                }
                 if viewModel.calendarStatus != .off {
                     MeetingsHairline()
                 }
@@ -888,12 +901,12 @@ struct MeetingsView: View {
     }
 
     private var recentMeetingsEmptyTitle: String {
-        recentMeetingsSearchText.isEmpty ? "No meetings recorded yet. Lucky you." : "No matching meetings"
+        recentMeetingsSearchText.isEmpty ? "No meetings recorded yet" : "No matching meetings"
     }
 
     private var recentMeetingsEmptyDetail: String {
         recentMeetingsSearchText.isEmpty
-            ? "Use Record Meeting above to capture system audio and transcribe locally."
+            ? "Record a meeting to capture audio and transcribe locally. Enable recording above if access is needed."
             : "Try different words or clear your search."
     }
 
@@ -1488,32 +1501,44 @@ private struct MeetingsInlineState: View {
     let actionIcon: String?
     let action: (() -> Void)?
 
-    var body: some View {
-        HStack(alignment: .center, spacing: DesignSystem.Spacing.md) {
+    private var message: some View {
+        HStack(alignment: .top, spacing: DesignSystem.Spacing.md) {
             Image(systemName: icon)
                 .font(.system(size: 18, weight: .medium))
                 .foregroundStyle(DesignSystem.Colors.textTertiary)
                 .frame(width: 24)
-
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(DesignSystem.Typography.body.weight(.semibold))
                     .foregroundStyle(DesignSystem.Colors.textPrimary)
-                    .lineLimit(2)
                 Text(detail)
                     .font(DesignSystem.Typography.bodySmall)
                     .foregroundStyle(DesignSystem.Colors.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
+            .fixedSize(horizontal: false, vertical: true)
+        }
+    }
 
-            Spacer(minLength: DesignSystem.Spacing.md)
+    @ViewBuilder
+    private var actionButton: some View {
+        if let actionTitle, let actionIcon, let action {
+            Button(action: action) {
+                Label(actionTitle, systemImage: actionIcon)
+            }
+            .sottoAction(.secondary)
+            .fixedSize()
+        }
+    }
 
-            if let actionTitle, let actionIcon, let action {
-                Button(action: action) {
-                    Label(actionTitle, systemImage: actionIcon)
-                }
-                .sottoAction(.secondary)
-                .fixedSize()
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: DesignSystem.Spacing.md) {
+                message.frame(minWidth: 220, maxWidth: .infinity, alignment: .leading)
+                actionButton
+            }
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.md) {
+                message
+                actionButton
             }
         }
         .padding(DesignSystem.Spacing.md)

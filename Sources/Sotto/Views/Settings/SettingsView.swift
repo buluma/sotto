@@ -219,26 +219,12 @@ struct SettingsView: View {
     /// `.ok` / `.info` are intentionally silent on the badges — a
     /// permanent green dot would just be visual debt.
     private var settingsHeaderShell: some View {
-        HStack(spacing: DesignSystem.Spacing.md) {
-            SettingsTabBar(
-                activeTab: tabBindingExitingSearch,
-                tabBadges: tabBadges
-            )
-
-            // The search field reserves a clickable width first; the tab bar —
-            // whose per-button `.fixedSize` already keeps its labels from
-            // wrapping — fills whatever remains. The previous arrangement gave
-            // the *tab bar* layout priority, so its `maxWidth: .infinity`
-            // segments ate the entire row even in wide windows, collapsing the
-            // search field to an icon-only stub with no hittable text area.
-            // Reserving the field's width keeps it usable at every size.
-            SettingsSearchField(
-                query: $rootViewModel.searchQuery,
-                isFocused: $searchFieldFocused
-            )
-            .frame(minWidth: 200, maxWidth: 280)
-            .layoutPriority(1)
-        }
+        SettingsHeaderView(
+            activeTab: tabBindingExitingSearch,
+            tabBadges: tabBadges,
+            query: $rootViewModel.searchQuery,
+            isFocused: $searchFieldFocused
+        )
     }
 
     /// Per-tab attention badges. Only `.required` and `.recommended`
@@ -780,10 +766,6 @@ struct SettingsView: View {
                 Spacer(minLength: DesignSystem.Spacing.md)
 
                 HStack(spacing: DesignSystem.Spacing.sm) {
-                    if !viewModel.microphoneGranted {
-                        microphonePermissionActionButton
-                    }
-
                     Picker("Microphone", selection: $viewModel.selectedMicrophoneDeviceUID) {
                         Text("System Default").tag(SettingsViewModel.systemDefaultMicrophoneSelection)
                         ForEach(viewModel.microphoneDeviceOptions) { device in
@@ -803,6 +785,12 @@ struct SettingsView: View {
                     .help("Refresh microphones")
                     .accessibilityLabel("Refresh microphones")
                 }
+            }
+
+            if !viewModel.microphoneGranted {
+                microphonePermissionActionButton
+                    .fixedSize()
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             Divider()
@@ -2293,7 +2281,7 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
                 Text(caption)
                     .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
             }
 
             VStack(spacing: DesignSystem.Spacing.sm) {
@@ -3700,9 +3688,14 @@ struct SettingsView: View {
                     && !viewModel.screenRecordingGranted
                 if !viewModel.microphoneGranted || !viewModel.accessibilityGranted || needsScreenRecordingAction {
                     Divider()
-                    HStack(spacing: DesignSystem.Spacing.sm) {
+                    LazyVGrid(
+                        columns: [GridItem(.adaptive(minimum: 260), alignment: .leading)],
+                        alignment: .leading,
+                        spacing: DesignSystem.Spacing.sm
+                    ) {
                         if !viewModel.microphoneGranted {
                             microphonePermissionActionButton
+                                .fixedSize()
                         }
 
                         if !viewModel.accessibilityGranted {
@@ -3710,6 +3703,7 @@ struct SettingsView: View {
                                 openAccessibilitySettings()
                             }
                             .sottoAction(.primaryProminent)
+                            .fixedSize()
                         }
 
                         if needsScreenRecordingAction {
@@ -3717,11 +3711,13 @@ struct SettingsView: View {
                                 viewModel.requestScreenRecordingAccess()
                             }
                             .sottoAction(.primaryProminent)
+                            .fixedSize()
 
                             Button("Open Screen Recording Settings") {
                                 viewModel.openScreenRecordingSystemSettings()
                             }
                             .sottoAction(.secondary)
+                            .fixedSize()
                         }
                     }
                 }

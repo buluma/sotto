@@ -1,12 +1,12 @@
 import SwiftUI
 
 /// Centralized design tokens for consistent styling across the app.
-/// Sotto design system — violet accent, generous spacing, rounded headlines.
+/// Sotto design system — native neutral surfaces with focused lime accents.
 enum DesignSystem {
     // MARK: - Colors
 
     enum Colors {
-        // Acid green and portal cyan set a playful sci-fi tone while keeping controls readable.
+        // Brand accents are reserved for deliberate emphasis and primary actions.
         static let accent = Color(light: .init(red: 0.10, green: 0.46, blue: 0.32),
                                   dark: .init(red: 0.70, green: 0.98, blue: 0.28))
         static let accentLight = Color(light: .init(red: 0.88, green: 0.98, blue: 0.82),
@@ -23,17 +23,14 @@ enum DesignSystem {
         /// through while keeping content cards and controls at full opacity.
         static let canvasBackground = background.opacity(0.18)
         static let surface = Color(light: .init(red: 0.99, green: 1.0, blue: 0.98),
-                                   dark: .init(red: 0.055, green: 0.105, blue: 0.12))
+                                   dark: .init(red: 0.15, green: 0.15, blue: 0.16))
         static let surfaceElevated = Color(light: .init(red: 0.90, green: 0.96, blue: 0.90),
-                                           dark: .init(red: 0.085, green: 0.155, blue: 0.17))
+                                           dark: .init(red: 0.19, green: 0.19, blue: 0.20))
 
-        // Text — high contrast primaries
-        static let textPrimary = Color(light: .init(red: 0.07, green: 0.14, blue: 0.12),
-                                       dark: .init(red: 0.91, green: 0.98, blue: 0.91))
-        static let textSecondary = Color(light: .init(red: 0.31, green: 0.42, blue: 0.37),
-                                         dark: .init(red: 0.70, green: 0.81, blue: 0.77))
-        static let textTertiary = Color(light: .init(red: 0.48, green: 0.58, blue: 0.52),
-                                        dark: .init(red: 0.53, green: 0.67, blue: 0.63))
+        // Semantic labels follow macOS appearance and accessibility contrast.
+        static let textPrimary = Color.primary
+        static let textSecondary = Color.secondary
+        static let textTertiary = Color.secondary
 
         /// Neutral label tint — for `.bordered` buttons that should NOT carry
         /// brand color. Resolves to the system label color (white in dark mode,
@@ -43,7 +40,7 @@ enum DesignSystem {
         // Semantic
         static let successGreen = Color(light: .init(red: 0.20, green: 0.66, blue: 0.33),
                                         dark: .init(red: 0.29, green: 0.87, blue: 0.50))
-        static let warningAmber = Color(light: .init(red: 0.96, green: 0.65, blue: 0.14),
+        static let warningAmber = Color(light: .init(red: 0.56, green: 0.34, blue: 0.04),
                                         dark: .init(red: 0.98, green: 0.75, blue: 0.14))
         static let errorRed = Color(light: .init(red: 0.90, green: 0.30, blue: 0.26),
                                     dark: .init(red: 0.97, green: 0.44, blue: 0.44))
@@ -51,15 +48,15 @@ enum DesignSystem {
 
         // Borders & dividers
         static let border = Color(light: .init(red: 0.82, green: 0.90, blue: 0.82),
-                                  dark: .init(red: 0.16, green: 0.28, blue: 0.28))
+                                  dark: .init(red: 0.31, green: 0.31, blue: 0.33))
         static let divider = Color(light: .init(red: 0.88, green: 0.93, blue: 0.87),
-                                   dark: .init(red: 0.12, green: 0.22, blue: 0.23))
+                                   dark: .init(red: 0.26, green: 0.26, blue: 0.28))
 
         // Interactive
         static let rowHoverBackground = Color(light: .init(red: 0.89, green: 0.96, blue: 0.87),
                                               dark: .primary.opacity(0.06))
         static let cardBackground = Color(light: .init(red: 0.99, green: 1.0, blue: 0.98),
-                                          dark: .init(red: 0.065, green: 0.12, blue: 0.14))
+                                          dark: .init(red: 0.16, green: 0.16, blue: 0.17))
 
         // Playback
         static let playbackTrack = Color.primary.opacity(0.08)

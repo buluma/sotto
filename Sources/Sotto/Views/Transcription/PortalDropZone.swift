@@ -7,7 +7,7 @@ struct PortalDropZone: View {
     let onDrop: ([NSItemProvider]) -> Bool
     let onBrowse: () -> Void
 
-    @State private var browseHovered = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
@@ -27,7 +27,7 @@ struct PortalDropZone: View {
             VStack(spacing: DesignSystem.Spacing.md) {
                 // Merkaba — state-reactive
                 ZStack {
-                    if isDragging {
+                    if isDragging && !reduceMotion {
                         ParticleField(
                             particleCount: 6,
                             tintColor: DesignSystem.Colors.accent,
@@ -43,47 +43,26 @@ struct PortalDropZone: View {
                         tintColor: DesignSystem.Colors.accent
                     )
                     .opacity(isDragging ? 0.9 : 0.7)
-                    .animation(.easeInOut(duration: 0.3), value: isDragging)
+                    .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: isDragging)
                 }
 
                 // Call to action
                 Text("Drop a file to transcribe")
-                    .font(DesignSystem.Typography.pageTitle)
+                    .font(DesignSystem.Typography.sectionTitle)
                     .foregroundStyle(isDragging ? DesignSystem.Colors.accent : .primary)
 
                 // Browse button
                 Button(action: onBrowse) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "folder")
-                            .font(.system(size: 12, weight: .medium))
-                        Text("Browse Files")
-                            .font(.system(size: 13, weight: .semibold))
-                    }
-                    .foregroundStyle(browseHovered ? DesignSystem.Colors.onAccent : DesignSystem.Colors.accent)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: DesignSystem.Layout.buttonCornerRadius)
-                            .fill(browseHovered ? DesignSystem.Colors.accent : Color.clear)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: DesignSystem.Layout.buttonCornerRadius)
-                            .strokeBorder(DesignSystem.Colors.accent.opacity(browseHovered ? 0 : 0.5), lineWidth: 1.5)
-                    )
-                    .animation(DesignSystem.Animation.hoverTransition, value: browseHovered)
+                    Label("Browse Files", systemImage: "folder")
                 }
-                .buttonStyle(.plain)
+                .sottoAction(.secondary)
                 .accessibilityLabel("Browse files")
                 .accessibilityHint("Opens a file picker to choose audio or video files")
-                .onHover { hovering in
-                    browseHovered = hovering
-                    if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
-                }
 
                 // Supported formats
-                Text("MP3, WAV, M4A, MP4, MOV, FLAC, and more")
+                Text("Audio and video files · MP3, WAV, M4A, MP4, and more")
                     .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
             }
             .padding(.vertical, DesignSystem.Spacing.xl)
         }
@@ -91,7 +70,8 @@ struct PortalDropZone: View {
         .onDrop(of: [.fileURL], isTargeted: $isDragging) { providers in
             onDrop(providers)
         }
-        .animation(DesignSystem.Animation.portalLift, value: isDragging)
+        .animation(reduceMotion ? nil : DesignSystem.Animation.portalLift, value: isDragging)
+        .accessibilityElement(children: .contain)
         .accessibilityLabel("File drop zone")
         .accessibilityHint("Drop an audio or video file to start transcription")
     }

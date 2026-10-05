@@ -15,16 +15,9 @@ struct TranscribeView: View {
     var onRecordMeeting: () -> Void
     var onPauseToggleMeeting: (() -> Void)? = nil
     var onRefreshPermissions: () -> Void = {}
+    @FocusState private var urlFieldFocused: Bool
     @State private var showCancelConfirmation = false
     @State private var aiFormatterWarningMessage: String?
-
-    /// Fixed footer attribution. Previously rotated through 19 randomly-picked
-    /// quotes per view init; pinned to a single quote until the rotation
-    /// system has a clear product role.
-    ///
-    /// Typed as `LocalizedStringKey` so `Text(_:)` uses the localization-aware
-    /// initializer rather than the raw `String` overload.
-    private static let inspirationQuote: LocalizedStringKey = "Wubba Lubba Dub-Dub!"
 
     private enum PipelineStep: CaseIterable {
         case download
@@ -127,49 +120,38 @@ struct TranscribeView: View {
 
     private var dropZoneView: some View {
         VStack(spacing: 0) {
-            // Centered two-card layout
-            VStack(spacing: 0) {
-                Spacer()
+            ScrollView {
+                VStack(spacing: 0) {
 
-                VStack(spacing: DesignSystem.Spacing.xl) {
-                    HStack(alignment: .top, spacing: DesignSystem.Spacing.lg) {
-                        youTubeCard
-                        PortalDropZone(
-                            isDragging: $viewModel.isDragging,
-                            onDrop: { providers in
-                                viewModel.handleFileDrop(providers: providers) {
-                                    SoundManager.shared.play(.fileDropped)
-                                }
-                            },
-                            onBrowse: { openFilePicker() }
-                        )
+                    VStack(spacing: DesignSystem.Spacing.xl) {
+                        if let error = viewModel.errorMessage {
+                            errorBanner(error)
+                                .padding(.horizontal, DesignSystem.Spacing.lg)
+                        }
+                        ViewThatFits(in: .horizontal) {
+                            HStack(alignment: .top, spacing: DesignSystem.Spacing.lg) {
+                                importCards
+                            }
+                            VStack(spacing: DesignSystem.Spacing.lg) {
+                                importCards
+                            }
+                        }
+                        .padding(.horizontal, DesignSystem.Spacing.lg)
+
+                        if AppFeatures.meetingRecordingEnabled {
+                            MeetingRecordingTile(
+                                viewModel: meetingPillViewModel,
+                                permissionState: meetingPermissionState,
+                                isCompact: true,
+                                onTap: onRecordMeeting,
+                                onPauseToggle: onPauseToggleMeeting
+                            )
+                            .padding(.horizontal, DesignSystem.Spacing.lg)
+                        }
+
                     }
-                    .padding(.horizontal, DesignSystem.Spacing.xl)
-
-                    if AppFeatures.meetingRecordingEnabled {
-                        MeetingRecordingTile(
-                            viewModel: meetingPillViewModel,
-                            permissionState: meetingPermissionState,
-                            onTap: onRecordMeeting,
-                            onPauseToggle: onPauseToggleMeeting
-                        )
-                        .padding(.horizontal, DesignSystem.Spacing.xl)
-
-                    }
-
-                    // Error banner
-                    if let error = viewModel.errorMessage {
-                        errorBanner(error)
-                            .padding(.horizontal, DesignSystem.Spacing.xl)
-                    }
-
-                    Text(Self.inspirationQuote)
-                        .font(DesignSystem.Typography.caption)
-                        .foregroundStyle(.tertiary)
-                        .multilineTextAlignment(.center)
+                    .padding(.vertical, DesignSystem.Spacing.lg)
                 }
-
-                Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onDrop(of: [.fileURL], isTargeted: $viewModel.isDragging) { providers in
@@ -178,6 +160,22 @@ struct TranscribeView: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private var importCards: some View {
+        youTubeCard
+            .frame(minWidth: 360)
+        PortalDropZone(
+            isDragging: $viewModel.isDragging,
+            onDrop: { providers in
+                viewModel.handleFileDrop(providers: providers) {
+                    SoundManager.shared.play(.fileDropped)
+                }
+            },
+            onBrowse: { openFilePicker() }
+        )
+        .frame(minWidth: 320)
     }
 
     // MARK: - YouTube Card
@@ -197,7 +195,7 @@ struct TranscribeView: View {
                     .accessibilityHidden(true)
 
                 Text(urlCardTitle)
-                    .font(DesignSystem.Typography.pageTitle)
+                    .font(DesignSystem.Typography.sectionTitle)
                     .contentTransition(.opacity)
                     // Key on the platform enum, not the LocalizedStringKey title:
                     // it changes in lockstep with the title but is a reliable
@@ -212,7 +210,8 @@ struct TranscribeView: View {
                             .foregroundStyle(viewModel.isValidURL ? DesignSystem.Colors.successGreen : .secondary)
                             .contentTransition(.symbolEffect(.replace))
 
-                        TextField("Paste any video or podcast link", text: $viewModel.urlInput)
+                        TextField("Video or podcast link", text: $viewModel.urlInput)
+                            .focused($urlFieldFocused)
                             .textFieldStyle(.plain)
                             .font(DesignSystem.Typography.body)
                             .onSubmit {
@@ -238,7 +237,7 @@ struct TranscribeView: View {
                                         .fill(DesignSystem.Colors.cardBackground)
                                 )
                         }
-                        .buttonStyle(.plain)
+                        .sottoAction(.subtle)
                         .help("Paste from clipboard")
                         .accessibilityLabel("Paste URL from clipboard")
                         .accessibilityHint("Pastes clipboard text into the link field")
@@ -252,8 +251,9 @@ struct TranscribeView: View {
                     .overlay(
                         RoundedRectangle(cornerRadius: DesignSystem.Layout.rowCornerRadius)
                             .strokeBorder(
-                                viewModel.isValidURL ? DesignSystem.Colors.successGreen.opacity(0.35) : DesignSystem.Colors.border,
-                                lineWidth: 0.8
+                                urlFieldFocused ? Color.accentColor : (viewModel.isValidURL
+                                    ? DesignSystem.Colors.successGreen.opacity(0.35) : DesignSystem.Colors.border),
+                                lineWidth: urlFieldFocused ? 1.5 : 0.8
                             )
                     )
 
@@ -261,18 +261,9 @@ struct TranscribeView: View {
                         viewModel.transcribeURL()
                     } label: {
                         Label("Transcribe", systemImage: "arrow.right")
-                            .font(DesignSystem.Typography.caption.weight(.semibold))
-                            .foregroundStyle(DesignSystem.Colors.onAccent)
-                            .lineLimit(1)
-                            .layoutPriority(1)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 9)
-                            .background(
-                                RoundedRectangle(cornerRadius: DesignSystem.Layout.buttonCornerRadius)
-                                    .fill(viewModel.isValidURL ? DesignSystem.Colors.accent : DesignSystem.Colors.accent.opacity(0.35))
-                            )
+                            .fixedSize()
                     }
-                    .buttonStyle(.plain)
+                    .sottoAction(.primaryProminent)
                     .disabled(!viewModel.isValidURL)
                     .accessibilityLabel("Start transcription")
                     .accessibilityHint("Starts transcribing the media link")
@@ -281,7 +272,7 @@ struct TranscribeView: View {
 
                 Text(urlCardCaption)
                     .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(DesignSystem.Colors.textSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, DesignSystem.Spacing.md)
                     .animation(.easeInOut(duration: 0.2), value: urlCardCaption)
@@ -304,7 +295,7 @@ struct TranscribeView: View {
         if let platform = recognizedURLPlatform {
             return "Transcribe \(platform.displayName)"
         }
-        return "Transcribe YouTube & more"
+        return "Import a media link"
     }
 
     /// Reactive helper copy beneath the link field: confirms a recognized link,
@@ -317,7 +308,7 @@ struct TranscribeView: View {
         if viewModel.isValidURL {
             return "Ready to transcribe this link, entirely on your Mac."
         }
-        return "YouTube, X, Vimeo, TikTok, Instagram, Facebook, podcasts, and more — transcribed on your Mac."
+        return "Video and podcast links, transcribed on your Mac."
     }
 
     // MARK: - Error Banner
@@ -343,6 +334,7 @@ struct TranscribeView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Copy full error details")
+                .accessibilityLabel("Copy full error details")
                 Button {
                     viewModel.clearError()
                 } label: {
@@ -350,12 +342,13 @@ struct TranscribeView: View {
                         .font(.system(size: 10, weight: .semibold))
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Dismiss error")
             }
             .foregroundStyle(DesignSystem.Colors.errorRed)
 
-            Text("Click copy icon for full error details. Report persistent issues via **Feedback** in the sidebar.")
+            Text("Copy the full error details if you need to troubleshoot.")
                 .font(DesignSystem.Typography.micro)
-                .foregroundStyle(DesignSystem.Colors.textTertiary)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
         }
         .padding(DesignSystem.Spacing.md)
         .background(
@@ -408,12 +401,19 @@ struct TranscribeView: View {
                             .foregroundStyle(DesignSystem.Colors.accent.opacity(0.25))
                             .contentTransition(.symbolEffect(.replace))
 
-                        SpinnerRingView(size: 46, revolutionDuration: isDownloadPhase ? 3.2 : 2.0, tintColor: DesignSystem.Colors.accent)
+                        SpinnerRingView(
+                            size: 46, revolutionDuration: isDownloadPhase ? 3.2 : 2.0,
+                            tintColor: DesignSystem.Colors.accent)
                     }
 
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(viewModel.isDiscoveringFiles ? "Finding recordings" : (viewModel.isBatchActive ? "Batch Transcription In Progress" : "Transcription In Progress"))
-                            .font(DesignSystem.Typography.sectionTitle)
+                        Text(
+                            viewModel.isDiscoveringFiles
+                                ? "Finding recordings"
+                                : (viewModel.isBatchActive
+                                    ? "Batch Transcription In Progress" : "Transcription In Progress")
+                        )
+                        .font(DesignSystem.Typography.sectionTitle)
                         if !viewModel.transcribingFileName.isEmpty {
                             Text(viewModel.transcribingFileName)
                                 .font(DesignSystem.Typography.bodySmall)
@@ -469,13 +469,19 @@ struct TranscribeView: View {
                     }
                 }
 
-                Text(viewModel.isBatchActive
-                    ? "Processing one file at a time on this Mac. Completed transcripts appear in your Library as they finish."
-                    : "Processing remains local to this Mac. You can keep working while this runs.")
-                    .font(DesignSystem.Typography.caption)
-                    .foregroundStyle(.tertiary)
+                Text(
+                    viewModel.isBatchActive
+                        ? "Processing one file at a time on this Mac. Completed transcripts appear in your Library as they finish."
+                        : "Processing remains local to this Mac. You can keep working while this runs."
+                )
+                .font(DesignSystem.Typography.caption)
+                .foregroundStyle(.tertiary)
 
-                Button(viewModel.isDiscoveringFiles ? "Cancel" : (viewModel.isBatchActive ? "Cancel All" : "Cancel Transcription"), role: .destructive) {
+                Button(
+                    viewModel.isDiscoveringFiles
+                        ? "Cancel" : (viewModel.isBatchActive ? "Cancel All" : "Cancel Transcription"),
+                    role: .destructive
+                ) {
                     if viewModel.isDiscoveringFiles {
                         viewModel.cancelTranscription()
                     } else {
@@ -497,9 +503,10 @@ struct TranscribeView: View {
                     }
                     Button("Continue", role: .cancel) {}
                 } message: {
-                    Text(viewModel.isBatchActive
-                        ? "This stops the remaining files in the batch. Files already transcribed are kept in your Library."
-                        : "This will stop the current transcription. Any progress will be lost.")
+                    Text(
+                        viewModel.isBatchActive
+                            ? "This stops the remaining files in the batch. Files already transcribed are kept in your Library."
+                            : "This will stop the current transcription. Any progress will be lost.")
                 }
             }
             .padding(DesignSystem.Spacing.lg)
@@ -605,7 +612,8 @@ struct TranscribeView: View {
             return .pending
         }
         guard let stepIndex = pipelineSteps.firstIndex(of: step),
-              let activeIndex = pipelineSteps.firstIndex(of: activePipelineStep) else {
+            let activeIndex = pipelineSteps.firstIndex(of: activePipelineStep)
+        else {
             return .pending
         }
         if stepIndex < activeIndex { return .complete }
