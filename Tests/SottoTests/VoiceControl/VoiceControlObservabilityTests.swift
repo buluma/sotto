@@ -204,12 +204,13 @@ final class VoiceControlObservabilityTests: XCTestCase {
         let adapter = CountingAdapter()
         let engine = FixedEngine(.action(VoiceControlAction(operation: .press, targetID: "save")))
         let runner = VoiceControlTurnRunner(adapter: adapter, engine: engine)
-        var received: [VoiceControlEvent] = []
         let collector = Task {
+            var received: [VoiceControlEvent] = []
             for await event in runner.events { received.append(event); if case .completed = event { break } }
+            return received
         }
         await runner.submit("click Save", dryRun: true)
-        await collector.value
+        let received = await collector.value
         let executions = await adapter.executions
         XCTAssertEqual(executions, 0)
         guard case .completed(let message)? = received.last else {
@@ -226,12 +227,13 @@ final class VoiceControlObservabilityTests: XCTestCase {
         let adapter = CountingAdapter(label: "Pay now")
         let engine = FixedEngine(.action(VoiceControlAction(operation: .press, targetID: "save")))
         let runner = VoiceControlTurnRunner(adapter: adapter, engine: engine)
-        var received: [VoiceControlEvent] = []
         let collector = Task {
+            var received: [VoiceControlEvent] = []
             for await event in runner.events { received.append(event); if case .completed = event { break } }
+            return received
         }
         await runner.submit("pay", dryRun: true)
-        await collector.value
+        let received = await collector.value
         let executions = await adapter.executions
         XCTAssertEqual(executions, 0)
         guard case .completed(let message)? = received.last else { return XCTFail("expected completed") }

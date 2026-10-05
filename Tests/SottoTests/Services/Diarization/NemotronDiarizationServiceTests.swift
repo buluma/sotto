@@ -125,6 +125,7 @@ final class NemotronDiarizationServiceTests: XCTestCase {
             loadRunner: { runner }, fallback: MockDiarizationService(),
             inferenceGate: ANEInferenceGate(serializationRequired: false)
         )
+        let audioURL = audioURL
         let task = Task { try await service.diarize(audioURL: audioURL) }
         await fulfillment(of: [runner.entered], timeout: 2)
         task.cancel()
@@ -144,6 +145,7 @@ final class NemotronDiarizationServiceTests: XCTestCase {
             loadRunner: { runner }, fallback: MockDiarizationService(),
             inferenceGate: ANEInferenceGate(serializationRequired: false)
         )
+        let audioURL = audioURL
         let task = Task { try await service.diarize(audioURL: audioURL) }
         await fulfillment(of: [runner.entered], timeout: 2)
         runner.release.signal()
@@ -272,6 +274,7 @@ final class NemotronDiarizationServiceTests: XCTestCase {
     func testReadinessStaysResponsiveAndCancellationReachesRunningInference() async throws {
         let runner = BlockingRunner()
         let service = NemotronDiarizationService(loadRunner: { runner }, fallback: MockDiarizationService())
+        let audioURL = audioURL
         let task = Task { try await service.diarize(audioURL: audioURL) }
         let deadline = Date().addingTimeInterval(5)
         while !runner.started, Date() < deadline {
@@ -348,6 +351,7 @@ final class NemotronDiarizationServiceTests: XCTestCase {
             }, fallback: fallback,
             inferenceGate: ANEInferenceGate(serializationRequired: false)
         )
+        let audioURL = audioURL
         let task = Task {
             try await service.diarize(audioURL: audioURL, speakerConstraint: .range(min: 1, max: 1))
         }

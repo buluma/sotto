@@ -1591,7 +1591,7 @@ final class MeetingRecordingServiceTests: XCTestCase {
 
         try await service.startRecording()
         let stream = await service.captureFailureSignalForCurrentSession()
-        let signalTask = Task { await collectCaptureFailureSignals(from: stream) }
+        let signalTask = Task { await Self.collectCaptureFailureSignals(from: stream) }
 
         await captureService.yield(.error(.captureRuntimeFailure("simulated runtime failure")))
 
@@ -1617,7 +1617,7 @@ final class MeetingRecordingServiceTests: XCTestCase {
         try await waitForCaptureMode(service) { $0 == .stopped }
 
         let stream = await service.captureFailureSignalForCurrentSession()
-        let signalTask = Task { await collectCaptureFailureSignals(from: stream) }
+        let signalTask = Task { await Self.collectCaptureFailureSignals(from: stream) }
         let signals = try await value(
             of: signalTask,
             timeoutMessage: "Timed out waiting for late capture-failure signal"
@@ -1637,7 +1637,7 @@ final class MeetingRecordingServiceTests: XCTestCase {
 
         try await service.startRecording()
         let stream = await service.captureFailureSignalForCurrentSession()
-        let signalTask = Task { await collectCaptureFailureSignals(from: stream) }
+        let signalTask = Task { await Self.collectCaptureFailureSignals(from: stream) }
 
         await captureService.yield(.error(.captureRuntimeFailure("first runtime failure")))
         await captureService.yield(.error(.captureRuntimeFailure("duplicate runtime failure")))
@@ -1792,7 +1792,7 @@ final class MeetingRecordingServiceTests: XCTestCase {
 
         try await service.startRecording(sourceMode: .microphoneAndSystem)
         let failureStream = await service.captureFailureSignalForCurrentSession()
-        let failureTask = Task { await collectCaptureFailureSignals(from: failureStream) }
+        let failureTask = Task { await Self.collectCaptureFailureSignals(from: failureStream) }
         let microphoneBuffer = try XCTUnwrap(
             makeMonoFloatBuffer(frameCount: 16_000, sampleValue: 0.25)
         )
@@ -3347,7 +3347,7 @@ final class MeetingRecordingServiceTests: XCTestCase {
         }
     }
 
-    private func collectCaptureFailureSignals(
+    private static func collectCaptureFailureSignals(
         from stream: AsyncStream<MeetingCaptureFailureSignal>
     ) async -> [MeetingCaptureFailureSignal] {
         var signals: [MeetingCaptureFailureSignal] = []
@@ -5123,7 +5123,7 @@ private final class SourceInspectionFileManager: FileManager {
 
 /// Treat even an existence probe as a read of a writer-owned source. Returning
 /// false keeps a regressed consumer from opening that path after the deadline.
-private final class PendingSourceReadGuard: FileManager {
+private final class PendingSourceReadGuard: FileManager, @unchecked Sendable {
     private let lock = NSLock()
     private var pendingPath: String?
     private var reads: [String] = []
