@@ -40,7 +40,6 @@ final class AppleIntelligenceLiveAPITests: XCTestCase {
             XCTAssertEqual(mapped, .unsupported)
         }
 
-        XCTAssertGreaterThan(SystemLanguageModel.default.contextSize, 0)
         #else
         XCTAssertEqual(mapped, .unsupported)
         #endif

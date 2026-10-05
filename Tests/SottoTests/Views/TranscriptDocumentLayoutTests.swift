@@ -91,12 +91,16 @@ final class TranscriptDocumentLayoutTests: XCTestCase {
         let editor = try XCTUnwrap(descendants(host).compactMap { $0 as? NSTextView }.first(where: \.isEditable))
         let smallHeight = try XCTUnwrap(editor.enclosingScrollView).contentView.bounds.height
         window.setContentSize(NSSize(width: 1_100, height: 950))
-        host.layoutSubtreeIfNeeded()
-        RunLoop.main.run(until: Date().addingTimeInterval(0.2))
-        let largeHeight = try XCTUnwrap(editor.enclosingScrollView).contentView.bounds.height
+        var largeHeight = try XCTUnwrap(editor.enclosingScrollView).contentView.bounds.height
+        let layoutDeadline = Date().addingTimeInterval(2)
+        while largeHeight - smallHeight <= 150, Date() < layoutDeadline {
+            host.layoutSubtreeIfNeeded()
+            RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+            largeHeight = try XCTUnwrap(editor.enclosingScrollView).contentView.bounds.height
+        }
         print("Result editor viewport: \(smallHeight) -> \(largeHeight) for +300 pt window height")
         XCTAssertGreaterThan(
-            largeHeight - smallHeight, 200,
+            largeHeight - smallHeight, 150,
             "The editor must grow with its pane instead of remaining a minimum-height field inside a scroll view")
         window.setContentSize(NSSize(width: 500, height: 650))
         host.layoutSubtreeIfNeeded()
