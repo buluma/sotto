@@ -1,16 +1,12 @@
-# Distribution (Developer ID + Notarization)
+# Local Packaging and Optional Signing
 
-> Personal Sotto fork: manual updates; release DMGs are ad-hoc signed. Developer ID signing and notarization remain optional manual tooling.
+> Personal Sotto fork: local builds and manual source updates only. Do not publish releases or upload artifacts. Signing and notarization tooling is optional and does not establish a distribution channel.
 
 This repo uses Swift packages. App distribution builds those packages through Xcode and assembles a `.app` bundle for Developer ID distribution. Xcode compiles asset catalogs and generates resource lookups that work after installation on another Mac. `BUILD_SYSTEM=swiftpm` is rejected for app distribution; ordinary `swift build`, `swift test`, and SwiftPM CLI builds remain supported.
 
-## GitHub release DMGs
+## Local DMGs
 
-Publishing a GitHub release triggers `.github/workflows/release-dmg.yml`. Use a tag named `X.Y.Z` or `vX.Y.Z`, excluding `0.0.0`. The workflow checks out that exact tag, builds the Apple Silicon app with Xcode 16.1 and the normal bundled helpers and meeting echo assets, then attaches `Sotto-X.Y.Z-arm64.dmg` and its SHA-256 checksum to the release. Prereleases also trigger the workflow; draft releases do not trigger it until published. Publishing through another workflow using `GITHUB_TOKEN` does not trigger a new release workflow; use the GitHub UI or a separately authorized token for that publication.
-
-The DMG contains `Sotto.app` and an Applications shortcut. Packaging verifies the app signature, privacy surface, meeting echo assets, and disk image before uploading. No signing secrets are required: these personal builds are ad-hoc signed and are not Developer ID signed or notarized, so macOS Gatekeeper can require explicit approval when opening a downloaded build. App updates remain manual. Build logs are retained for seven days, including failed runs; rerunning the release job replaces its matching DMG and checksum assets.
-
-To package a local release bundle with the same personal signing path, run `scripts/dist/build_dmg.sh dist/Sotto.app dist/Sotto.dmg` after building it with `VERSION=X.Y.Z`.
+Package an existing local app bundle with `scripts/dist/build_dmg.sh dist/Sotto.app dist/Sotto.dmg` after building it with `VERSION=X.Y.Z`. The disk image contains `Sotto.app` and an Applications shortcut. Personal builds can use ad-hoc signing; that is not Developer ID signing or notarization. Retained release workflows are not authorization to publish this fork.
 
 ## 1) Build the app bundle
 
@@ -84,7 +80,7 @@ export SOTTO_LS_VARIANT_ID="12345"
 scripts/dist/build_app_bundle.sh
 ```
 
-Current public Sotto builds are free/GPL-3.0 and `EntitlementsService.currentState()` returns unlocked. These variables are retained for future GPL-compatible official paid distribution/support and are not required for current free production builds. When set, they are embedded into `Info.plist` as:
+This personal fork is unlocked. Retained activation variables are optional legacy build metadata, not a commercial plan or a requirement for local use. When set, they are embedded into `Info.plist` as:
 - `SottoCheckoutURL`
 - `SottoLemonSqueezyVariantID`
 
@@ -151,7 +147,7 @@ Do not ship new CLI behavior under a previously published CLI version. The CLI e
 
 ### Version bumping
 
-The current app release is **0.8.9**, continuing the 0.8.x release train. **0.9.0 is reserved for qualified, publicly enabled Jev Voice Control.** This deliberate milestone policy takes precedence over the generic guidance below. Voice Control remains release-gated; additive improvements to the existing capture and Library workflows do not by themselves change that milestone. The CLI has its own semver and must be versioned independently.
+Version identifiers are local build metadata inherited from upstream; this fork has no public release channel. Keep the CLI compatibility version independent of the app bundle version.
 
 The build script accepts `VERSION` and `BUILD_NUMBER` env vars:
 
@@ -165,13 +161,15 @@ scripts/dist/build_app_bundle.sh                   # local/dev only: VERSION def
 - **Build number**: Auto-generated UTC timestamp that always increases
 - **Release builds must set `VERSION=X.Y.Z` explicitly.** The script's default `0.0.0` is intentionally non-release metadata so local bundles cannot be mistaken for a release.
 
-### Known gotchas (hard-won lessons)
+### Historical upstream packaging lessons
+
+The dated release incidents below are retained technical context, not evidence of a Sotto release.
 
 These are bugs and edge cases discovered during actual releases. Read before your first release.
 
 #### 1. A `notarytool` crash is an incomplete upload — resubmit the same bytes
 
-**Do not use `--wait`.** Default `notarytool submit` (progress + S3 acceleration) also SIGBUS-crashes on this Mac (exit 138) *without* `--wait`. Apple then lists a new ID that can stay `In Progress` indefinitely because the file never finished uploading. That history row is a reservation, not a receipt. Polling it cannot converge. 0.8.5 burned ~55 minutes this way; 0.8.4 morning left seven ghost DMG IDs before one Accepted. Evidence: [`docs/audits/2026-09-17-0.8.5-release-postmortem.md`](audits/2026-09-17-0.8.5-release-postmortem.md).
+**Do not use `--wait`.** Default `notarytool submit` (progress + S3 acceleration) also SIGBUS-crashes on this Mac (exit 138) *without* `--wait`. Apple then lists a new ID that can stay `In Progress` indefinitely because the file never finished uploading. That history row is a reservation, not a receipt. Polling it cannot converge. 0.8.5 burned ~55 minutes this way; 0.8.4 morning left seven ghost DMG IDs before one Accepted. Evidence: `docs/audits/2026-09-17-0.8.5-release-postmortem.md` (historical reference; file absent from this checkout).
 
 **Instead:** submit with the flags that printed `Successfully uploaded file` and Accepted in under a minute:
 
@@ -255,9 +253,3 @@ UNIVERSAL=1 scripts/dist/build_app_bundle.sh
 - `Sotto` requests microphone permission. The app bundle `Info.plist` includes `NSMicrophoneUsageDescription`.
 - **Users must install to /Applications before launching.** Running directly from a mounted DMG (`/Volumes/Sotto/`) will not register with macOS TCC — the app won't appear in System Settings > Privacy & Security > Microphone, and permission requests will silently fail. The DMG includes an Applications symlink for drag-to-install.
 - If a user's microphone permission gets stuck as "Denied", reset it with: `tccutil reset Microphone com.sotto.Sotto`
-
-## Fork CI release gate
-
-Before publishing a release, require the latest CI workflow and aggregate `swift-test` check for the exact source commit with `GH_REPO=buluma/sotto bash scripts/dist/require_ci.sh <commit>`. The DMG workflow repeats this check before building and uploading artifacts; it waits up to 80 minutes for a queued or running check and fails on unsuccessful completion. A published release whose source fails CI will have no new DMG attached by this workflow.
-
-CI splits the full XCTest selection into complementary general and meeting-echo groups with independent logs. Both groups are required by the aggregate check. Test commands run in their own process groups with an internal deadline shorter than the Actions deadline so XCTest and helper descendants are terminated before later qualification commands acquire SwiftPM build locks.

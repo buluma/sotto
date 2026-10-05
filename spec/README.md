@@ -1,7 +1,7 @@
 # Sotto Spec Index
 
 > Status: **ACTIVE** - Authoritative, current
-> Runtime Note: FluidAudio CoreML is the active architecture. Core STT is local; LLM provider use is opt-in and telemetry/crash reporting is opt-out. Discover's default-on launch feed has a separate opt-out in Settings → System → Appearance. Neither setting is a global network switch; see [ADR-002](adr/002-local-only.md) for the external I/O boundaries.
+> Runtime Note: FluidAudio CoreML is the active architecture. Core STT is local; configured AI providers and media/model/helper downloads retain separate network boundaries. Remote telemetry, feedback submission, hosted sharing, and app auto-updates are removed. Discover is bundled-only and off by default. See [network boundaries](../docs/network-boundaries.md).
 
 **Sotto** is a voice toolkit for macOS with on-device STT and a durable local library. Core capture and transcription work offline after model setup; that is not a promise that the app makes no network requests.
 
@@ -24,7 +24,7 @@
 | 12 | [Processing Layer](12-processing-layer.md) | Versioned prompts, label routing, and multi-summary contract | Active |
 | 13 | [Agent Workflows](13-agent-workflows.md) | Future actions, workflows, agents, voice control, App Intents | Draft |
 | 14 | [Per-Prompt Inference Settings](14-per-prompt-inference-settings.md) | Version-owned generation settings and effective-setting snapshots | Implemented; shipped in 0.8.0 via PR #968 and PR #961 |
-| 15 | [Shareable Transcript Snapshots](15-shareable-transcripts.md) | Explicit encrypted text sharing, recipient experience, lifecycle, and privacy boundary | Implemented behind a default-off flag; public release pending |
+| 15 | [Shareable Transcript Snapshots](15-shareable-transcripts.md) | Explicit encrypted text sharing, recipient experience, lifecycle, and privacy boundary | Unavailable in this fork; retained formats and local records only |
 
 Ask is a default-off development workspace governed by ADR-034. Debug app and CLI builds require `--enable-ask-workspace`; release builds ignore this opt-in. Model and native qualification are required before enabling it.
 
@@ -42,7 +42,7 @@ Ask is a default-off development workspace governed by ADR-034. Debug app and CL
 
 ### Planned speaker timeline
 
-[Audio Speaker Timeline v1](contracts/audio-speaker-timeline-v1.md) and its [implementation plan](../docs/plans/2026-09-14-2147-feat-audio-speaker-timeline-plan.md) define the accepted direction for #836: detected audio turns and playback navigation independent of word timings. This is planned work, including for Cohere; it does not change current text-alignment capabilities or release status.
+[Audio Speaker Timeline v1](contracts/audio-speaker-timeline-v1.md) and its implementation plan (historical reference; file absent from this checkout) define the accepted direction for #836: detected audio turns and playback navigation independent of word timings. This is planned work, including for Cohere; it does not change current text-alignment capabilities or release status.
 
 ### Current design references
 
@@ -60,7 +60,7 @@ These decisions are final. Do not second-guess them.
 | Local STT | Parakeet TDT 0.6B via FluidAudio CoreML/ANE (`v3` standard-path default, `v2` English-only opt-in, `unified` English-only opt-in); locale-aware Korean/Japanese/Chinese/Cantonese onboarding selects WhisperKit when no preferred English language is present; Nemotron 3.5 Beta, WhisperKit, and Cohere Transcribe remain selectable | Parakeet gives the best speed/memory profile for supported languages in the current M4 Pro harness (~81-93x steady RTFx, 115-131 MB peak RSS by build); v2 avoids language auto-detect for English-only use; Unified adds punctuation/capitalization and token-derived timestamps; Nemotron is a fast opt-in Beta path with multilingual and English-only builds; Whisper adds mature broad multilingual coverage locally; Cohere is a larger batch-only accuracy path |
 | Database | SQLite via GRDB | Single file, embedded, zero config |
 | Platform | macOS 14.2+ (Apple Silicon only) | FluidAudio requires Apple Silicon; Swift 6 language mode (tools-version 5.9) |
-| Business model | Current public build free/GPL/unlocked; official paid distribution/support remains possible | Originally $49 one-time (ADR-003), went free with open-source release in v0.5; retained purchase activation plumbing is future-option code |
+| Fork scope | Personal local use; GPLv3; no public distribution | Upstream pricing and release decisions are historical; retained licensing I/O is documented separately |
 
 ## Release Channels And Feature Flags
 
@@ -72,14 +72,14 @@ Feature gates in the current source (`Sources/SottoCore/AppFeatures.swift`); an 
 |------|-------|--------------|
 | `askWorkspaceEnabled` | `false` | The new cross-recording Ask workspace is experimental. DEBUG builds may opt in with `--enable-ask-workspace`; release builds ignore that argument. Existing transcript and live-meeting chat are separate surfaces. See [contract](contracts/ask-workspace.md). |
 | `voiceControlEnabled` | `false` | Explicit Voice Control is implemented on this branch; DEBUG builds may opt in with `--enable-voice-control`. Release builds ignore the argument. Native/browser and speech qualification remain separate gates; see [contract](contracts/voice-control.md). |
-| `shareLinksEnabled` | `false` | Encrypted text sharing is implemented but not publicly enabled. DEBUG builds may expose it with `--enable-share-links`; release builds ignore that argument. See the [implementation and release handoff](../docs/share-links-implementation.md). |
+| `shareLinksEnabled` | `false` | Unavailable in all builds. Debug arguments cannot enable sharing; the default transport refuses requests. Local records and formats are preserved. |
 | `meetingRecordingEnabled` | `true` | Shipping meeting-recording surface |
 | `calendarEnabled` | `true` | Shipping calendar reminders/auto-start; per-user auto-start defaults off |
 | `meetingAutoStopEnabled` | `true` | Shipping ADR-023 surface; per-user setting defaults off, so recordings stop manually until the user opts in |
-| `meetingCaptureReliabilityEnabled` | `true` | Default-on kill switch for ADR-025 signal-based mic-health monitoring and telemetry; direct source lifecycle recovery is independent |
+| `meetingCaptureReliabilityEnabled` | `true` | Default-on kill switch for ADR-025 signal-based mic-health monitoring and local event hooks; direct source lifecycle recovery is independent |
 | `meetingSourceHealthUIEnabled` | `false` | Routine source-health chips/pill glyph/tile mirror stay hidden; actionable recovering, stalled, interrupted, or unavailable warnings bypass this presentation flag |
 | `meetingActivityDetectionEnabled` | `false` | ADR-024 collectors/detector are compiled but runtime coordinator/UI remain gated |
-| `voiceProfilesEnabled` | `false` | Experimental meeting voice profiles; DEBUG builds may opt in with `--enable-voice-profiles`, but the preference remains off and requires consent plus meeting speaker detection. Release builds ignore that argument. Consent, enrollment, suggestion, manual assignment and administration UI are implemented. Held-out real-meeting evaluation and native workflow qualification remain release gates; see the [contract](contracts/speaker-voiceprints.md) and [release gates](../plans/active/2026-07-03-speaker-voiceprints.md#integration-and-release-gates-2026-09-10). |
+| `voiceProfilesEnabled` | `false` | Experimental meeting voice profiles; DEBUG builds may opt in with `--enable-voice-profiles`, but the preference remains off and requires consent plus meeting speaker detection. Release builds ignore that argument. Consent, enrollment, suggestion, manual assignment and administration UI are implemented. Held-out real-meeting evaluation and native workflow qualification remain release gates; see the [contract](contracts/speaker-voiceprints.md) and release gates (historical reference; file absent from this checkout). |
 | `transformsEnabled` | `true` | Productized Transforms shipping surface |
 | `cohereEngineEnabled` | `true` | Settings exposes Cohere Transcribe as an opt-in, downloaded, batch-only local engine; no live preview/timestamps |
 | `meetingVadLiveChunkingEnabled` | `true` | VAD-guided meeting live-preview chunking; final post-stop transcript path unchanged |
@@ -98,7 +98,7 @@ All ADRs live in `spec/adr/`. Accepted decisions govern implementation; explicit
 | ADR | Decision |
 |-----|----------|
 | [ADR-001](adr/001-parakeet-stt.md) | Parakeet TDT 0.6B-v3 as primary/default STT engine; optional local engines by amendment |
-| [ADR-002](adr/002-local-only.md) | Local processing with optional external AI/telemetry surfaces |
+| [ADR-002](adr/002-local-only.md) | Local processing with explicit provider/media/model boundaries; personal-fork amendment |
 | [ADR-003](adr/003-one-time-purchase.md) | Historical one-time purchase pricing; paid official distribution reference |
 | [ADR-004](adr/004-deterministic-pipeline.md) | Deterministic text processing pipeline |
 | [ADR-005](adr/005-onboarding-first-run.md) | First-run onboarding flow |
@@ -108,7 +108,7 @@ All ADRs live in `spec/adr/`. Accepted decisions govern implementation; explicit
 | [ADR-009](adr/009-custom-hotkey.md) | Custom hotkey support (any single key + chord combos) |
 | [ADR-010](adr/010-speaker-diarization.md) | Speaker diarization via FluidAudio offline pipeline |
 | [ADR-011](adr/011-llm-cloud-and-local-providers.md) | LLM via cloud API keys + optional local providers |
-| [ADR-012](adr/012-telemetry-system.md) | Self-hosted telemetry via Cloudflare (Worker + D1) |
+| [ADR-012](adr/012-telemetry-system.md) | Historical upstream telemetry design; remote transport removed in this fork |
 | [ADR-013](adr/013-prompt-library-multi-summary.md) | Prompt Library + multi-summary architecture |
 | [ADR-014](adr/014-meeting-recording.md) | Meeting recording via ScreenCaptureKit system audio |
 | [ADR-015](adr/015-concurrent-dictation-meeting.md) | Concurrent dictation and meeting recording |
@@ -134,7 +134,9 @@ All ADRs live in `spec/adr/`. Accepted decisions govern implementation; explicit
 
 The [meeting import v1 contract](contracts/meeting-import-v1.md) defines the shared app/CLI input, ownership, and durable-result boundary.
 
-## Version Roadmap
+## Inherited Upstream Version Roadmap
+
+Version and release claims in this section describe upstream history, not a distributed Sotto build.
 
 | Version | Name | Focus | Status |
 |---------|------|-------|--------|
@@ -147,7 +149,9 @@ The [meeting import v1 contract](contracts/meeting-import-v1.md) defines the sha
 | v0.7 | Post-v0.6 polish | Activity-based auto-stop (ADR-023, per-user default off), meeting reliability (ADR-025 Phase A behind a default-on kill switch), activity-based detection groundwork (ADR-024 Phases A+B behind a default-off flag), optional Cohere Transcribe, display-only live dictation transcript preview, meeting echo-cancellation/cleaned-mic artifacts, meeting audio N-day retention, System Default microphone-routing repair, split live/final speech-engine routes, bounded meeting-capture lifecycle, CLI 3.0, developer-gated local MLX groundwork, and follow-up polish | **Implemented** |
 | v0.8 | Library, meetings, and transcript workflow | Meeting import and split, timed transcript corrections, live transcription toggle, independent capture-source startup, per-event calendar skip, start-meetings-muted, Microsoft 365/Exchange calendar setup, labels and Library layouts, Seed of Life covers, Clean English “um” stripping, optional preserved discarded dictations, skip-microphone onboarding, AI Formatter default-off with split prompts, optional streaming-cursor insert, China-lab LLM providers, Sonoma encoder off ANE, hold-to-talk restore, Caps Lock+Fn, overlay inset split, DAPT export, CLI 5.0.0, and capture/recovery hardening | **Implemented; stable 0.8.9** |
 
-## Version Progress
+## Inherited Upstream Version Progress
+
+This checklist records inherited development history. Removed feedback, telemetry, and update services are not available in the personal fork.
 
 ### v0.1 Core MVP (Implemented)
 
@@ -293,7 +297,7 @@ Calendar-related code is implemented and **enabled** (`AppFeatures.calendarEnabl
 - [x] Activity-based auto-stop replacement (ADR-023 Phases A+B): enabled in the v0.7 release train, with a separate per-user setting defaulting off; scheduled end times remain removed, and app-quit or sustained dual-channel silence must persist through grace and a veto countdown
 - [x] Calendar event title applied to auto-started recordings instead of date-based default
 - [x] Rich pre-meeting countdown toast for calendar starts (ADR-020): attendees + service icon row + steering hint pointing the user at the Notes tab. Manual-trigger toasts unchanged
-- [x] Per-event skip (ADR-017 Phase 2b / #609 / F48): persist occurrence (`dedupeKey`) or meeting/series (`eventKey`) mute; series skip only when `isRecurring`; Upcoming + coordinator share `candidates`; CLI annotates without changing membership; owning countdown re-evaluated under the full new policy; skip/unskip rearms without a fetch; no optional-invite auto-exclude. Plan: [`plans/active/2026-09-14-issue-609-calendar-event-skip.md`](../plans/active/2026-09-14-issue-609-calendar-event-skip.md)
+- [x] Per-event skip (ADR-017 Phase 2b / #609 / F48): persist occurrence (`dedupeKey`) or meeting/series (`eventKey`) mute; series skip only when `isRecurring`; Upcoming + coordinator share `candidates`; CLI annotates without changing membership; owning countdown re-evaluated under the full new policy; skip/unskip rearms without a fetch; no optional-invite auto-exclude. Plan: `plans/active/2026-09-14-issue-609-calendar-event-skip.md` (historical reference; file absent from this checkout)
 
 ### Optional Local STT Engines
 
@@ -341,7 +345,7 @@ Voice profiles, encrypted share links, activity-based meeting detection, app-awa
 
 ## Documentation audit
 
-The [2026-09-07 alignment audit](../docs/audits/2026-09-07-documentation-alignment.md) records source coverage, corrected drift and verification limits. Its separate [improvement notes](../docs/research/2026-09-07-documentation-audit-followups.md) are proposals, not accepted architecture or release requirements.
+The 2026-09-07 alignment audit (historical reference; file absent from this checkout) records source coverage, corrected drift and verification limits. Its separate [improvement notes](../docs/research/2026-09-07-documentation-audit-followups.md) are proposals, not accepted architecture or release requirements.
 
 ## For Coding Agents
 

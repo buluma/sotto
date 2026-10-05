@@ -1,6 +1,8 @@
 # Shareable Transcript Snapshots
 
-> Status: **Implemented behind a default-off release flag; public release pending**
+> Historical upstream design, superseded for the personal Sotto fork. Remote telemetry, feedback submission, and hosted sharing transports are removed; debug arguments cannot enable sharing. Local records, formats, and injectable diagnostic hooks remain. See [the current fork scope](../docs/network-boundaries.md).
+
+> Status: **Historical upstream decision; service removed in this personal fork**
 > Governing decision: [ADR-029](adr/029-encrypted-shareable-transcript-snapshots.md)
 > Boundary contracts: [Share Link and Bundle v1](contracts/share-link-bundle-v1.md) and [Share Service v1](contracts/share-service-v1.md)
 

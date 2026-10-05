@@ -1,5 +1,7 @@
 # Sotto: Features Specification
 
+> Personal-fork scope: remote telemetry, feedback submission, hosted sharing, and automatic app updates are removed. Event names below denote retained local hooks, not uploads. Version headings describe inherited development history; see [current network boundaries](../docs/network-boundaries.md).
+
 > Status: **ACTIVE** - Authoritative, current
 > Current behavior and historical feature groupings. Version headings below
 > record the original plan structure, not a complete release manifest; use
@@ -61,7 +63,7 @@ This branch's feature remains development-only, enabled with `--enable-voice-con
 ├─────────────────────────────────────────────────────────────────┤
 │  • Speaker diarization (auto-detect, label, name)               │
 │  • Non-blocking transcription progress (bottom bar UX)          │
-│  • Direct distribution (notarized DMG, Sparkle auto-updates)    │
+│  • Local packaging; manual source updates    │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -1331,7 +1333,7 @@ new scheduling architecture.
 
 **Scope:** File/media URL transcription and optional refinement of the isolated system track during meeting finalization. The selected ASR engine must provide word timings for alignment; Cohere does not. Dictation is single-speaker by design.
 
-**Planned extension (#836):** [Audio Speaker Timeline v1](contracts/audio-speaker-timeline-v1.md) adds independent detected audio turns and playback navigation, including for Cohere's untimed text. Archived-source meetings expose system-audio coverage only; canonical-only meeting analysis is labeled separately. The first milestone is read-only and does not assign words/sentences, expose timeline speaker editing, or change existing text exports. See the [implementation plan](../docs/plans/2026-09-14-2147-feat-audio-speaker-timeline-plan.md). This extension is not implemented; the checked criteria below describe the existing timed-transcript feature.
+**Planned extension (#836):** [Audio Speaker Timeline v1](contracts/audio-speaker-timeline-v1.md) adds independent detected audio turns and playback navigation, including for Cohere's untimed text. Archived-source meetings expose system-audio coverage only; canonical-only meeting analysis is labeled separately. The first milestone is read-only and does not assign words/sentences, expose timeline speaker editing, or change existing text exports. See the implementation plan (historical reference; file absent from this checkout). This extension is not implemented; the checked criteria below describe the existing timed-transcript feature.
 
 **Features:**
 - Automatic speaker segmentation (detect speaker changes)
@@ -1428,7 +1430,7 @@ The governing behavior is [ADR-031](adr/031-timed-transcript-corrections.md).
 
 **What:** Remember a named speaker's voice so later meetings suggest the name, instead of asking again for every recording. Diarization answers "which parts of this recording came from the same speaker?" — its `S1`/`S2` ids belong to that recording alone, so today a person named once is anonymous in the next meeting.
 
-**Status:** experimental implementation behind `AppFeatures.voiceProfilesEnabled`, which ships `false`. DEBUG builds may opt in with `--enable-voice-profiles`; release builds ignore it. Availability grants no consent — see below. Release requires the held-out meeting evaluation described in [the plan](../plans/active/2026-07-03-speaker-voiceprints.md).
+**Status:** experimental implementation behind `AppFeatures.voiceProfilesEnabled`, which ships `false`. DEBUG builds may opt in with `--enable-voice-profiles`; release builds ignore it. Availability grants no consent — see below. Release requires the held-out meeting evaluation described in the plan (historical reference; file absent from this checkout).
 
 **Scope:** meetings only, on the isolated system track. File/URL is Phase 2.
 
@@ -1513,20 +1515,11 @@ Candidates exist because naming happens after the meeting, when the vector the p
 
 ---
 
-### F16: Direct Distribution
+### F16: Local Packaging
 
-> Status: **IMPLEMENTED**
+> Status: **Personal fork; public distribution and automatic app updates unavailable**
 
-**What:** Distribute Sotto as a notarized DMG via macparakeet.com. Auto-updates via Sparkle.
-
-**Why not App Store:** Sotto bundles FFmpeg and yt-dlp as standalone binaries and uses Accessibility APIs for global hotkeys. App Store sandboxing would block or complicate the core architecture.
-
-**Distribution pipeline (implemented):**
-- Notarized DMG signed with Developer ID
-- Direct download from downloads.macparakeet.com (Cloudflare R2)
-- GPL-3.0 open-source distribution (historically planned as LemonSqueezy paid distribution)
-- Sparkle 2 auto-updates via EdDSA-signed appcast
-- Privacy policy live at macparakeet.com/privacy
+Build and package locally with the scripts described in [local packaging](../docs/distribution.md). This fork has no stable download channel or Sparkle updater. Optional signing/notarization tooling does not establish a public release. Preserve bundled legal notices.
 
 ---
 
@@ -1930,7 +1923,7 @@ The existing completion handler reads the auto-open preference before presenting
 
 ### F48: Per-Event Calendar Skip
 
-> Status: **IMPLEMENTED** — ADR-017 Phase 2b / issue #609. Design accepted 2026-09-14, then corrected from independent review and implemented. Plan: [`plans/active/2026-09-14-issue-609-calendar-event-skip.md`](../plans/active/2026-09-14-issue-609-calendar-event-skip.md).
+> Status: **IMPLEMENTED** — ADR-017 Phase 2b / issue #609. Design accepted 2026-09-14, then corrected from independent review and implemented. Plan: `plans/active/2026-09-14-issue-609-calendar-event-skip.md` (historical reference; file absent from this checkout).
 
 **What:** Mute one calendar meeting so Sotto will not remind or auto-start for it, without turning calendar automation off or ignoring a whole calendar. Optional-invitee is the reason users want this, not an automatic filter. Skip persists across launches. Upcoming default is the whole meeting for one-off events (`eventKey` = `externalId ?? id`) and this occurrence for recurring events (`dedupeKey`). Toast ✕ is always this occurrence. Series skip is offered only when `isRecurring` (not merely when `externalId` is set). Skipped rows stay on Upcoming so undo is visible. Manual Record still works.
 
