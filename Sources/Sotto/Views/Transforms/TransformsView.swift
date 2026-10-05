@@ -63,7 +63,6 @@ struct TransformsView: View {
             .padding(.vertical, DesignSystem.Spacing.lg)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(DesignSystem.Colors.background)
         .onAppear {
             Task { await viewModel.loadHistory() }
         }

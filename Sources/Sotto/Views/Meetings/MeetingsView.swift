@@ -51,7 +51,6 @@ struct MeetingsView: View {
             // Use the available workspace width; the utility rail stays fixed
             // while the meeting list receives the extra space.
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .background(DesignSystem.Colors.contentBackground)
         }
     }
 

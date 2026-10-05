@@ -339,7 +339,7 @@ struct MainWindowView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(DesignSystem.Colors.contentBackground)
+                .background { WindowCanvasBackground() }
 
                 if showGlobalProgressBar {
                     globalTranscriptionBottomBar

@@ -40,7 +40,6 @@ struct VocabularyView: View {
             }
             .padding(DesignSystem.Spacing.lg)
         }
-        .background(DesignSystem.Colors.background)
         .sheet(isPresented: $showCustomWords) {
             settingsViewModel.refreshStats()
         } content: {

@@ -21,7 +21,6 @@ struct DiscoverView: View {
             }
             .padding(DesignSystem.Spacing.lg)
         }
-        .background(DesignSystem.Colors.background)
     }
 
     // MARK: - Header

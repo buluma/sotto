@@ -57,7 +57,7 @@ Design philosophy: **Simple, native, stays out of the way.** No chrome, no clutt
 
 Minimum window width: 800pt.
 
-The main window's detail column fills every destination with `DesignSystem.Colors.contentBackground`; page backgrounds must not fall through to the system window color. In dark appearance, the shared page background is neutral graphite (`#1D1D1F`), while cards and controls retain their own surface colors.
+The main window keeps its SwiftUI hosting view as the window content view so native toolbars and search remain available. Its detail column draws one behind-window material with a light graphite or mint tint through `WindowCanvasBackground`. Page roots leave that shared canvas visible; cards and controls retain opaque surfaces for readability.
 
 Prefer standard SwiftUI controls for navigation and selection so each supported macOS release can provide its native appearance. The Dictations History/Stats selector uses a segmented `Picker`, which adopts the system's Liquid Glass appearance when available.
 

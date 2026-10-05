@@ -173,7 +173,6 @@ struct SettingsView: View {
             }
             .animation(DesignSystem.Animation.contentSwap, value: rootViewModel.isSearching)
         }
-        .background(DesignSystem.Colors.background)
         .background(focusSearchHotkey)
         .onAppear {
             viewModel.refreshLaunchAtLoginStatus()

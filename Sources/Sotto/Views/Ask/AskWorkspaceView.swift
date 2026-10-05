@@ -34,7 +34,6 @@ struct AskWorkspaceView: View {
                     .frame(minWidth: 430, minHeight: 400)
             }
         }
-        .background(DesignSystem.Colors.contentBackground)
         .task { await model.load() }
         .sheet(isPresented: $model.showingSourcePicker) {
             AskSourcePickerView(model: model)
