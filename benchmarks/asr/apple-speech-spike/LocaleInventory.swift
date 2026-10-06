@@ -82,7 +82,8 @@ private enum LocaleInventory {
         }
         let transcriber = SpeechTranscriber(locale: locale, preset: .transcription)
         let status = await AssetInventory.status(forModules: [transcriber])
-        guard case .installed = status else {
+        let installationRequest = try await AssetInventory.assetInstallationRequest(supporting: [transcriber])
+        guard installationRequest == nil else {
             throw ProbeError.assetsNotInstalled(localeIdentifier, String(describing: status))
         }
 
@@ -109,9 +110,10 @@ private enum LocaleInventory {
                 pcmFormat: audioFile.processingFormat,
                 frameCapacity: 8_192
             )!
-            while true {
-                try audioFile.read(into: buffer, frameCount: 8_192)
-                if buffer.frameLength == 0 { break }
+            while audioFile.framePosition < audioFile.length {
+                let framesRemaining = audioFile.length - audioFile.framePosition
+                let nextFrameCount = AVAudioFrameCount(min(8_192, framesRemaining))
+                try audioFile.read(into: buffer, frameCount: nextFrameCount)
                 for input in try converter.convert(buffer, at: nil) {
                     inputBuilder.yield(input)
                 }
