@@ -274,7 +274,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.windowCoordinator.openMainWindowToSettings()
         },
         onNavigate: { [weak self] item in
-            self?.mainWindowState.navigate(to: item)
+            guard let self else { return }
+            if item == .dictations {
+                self.libraryViewModel.filter = .dictations
+                self.mainWindowState.navigate(to: .library)
+            } else {
+                self.mainWindowState.navigate(to: item)
+            }
         },
         onNewTranscription: { [weak self] in
             self?.transcriptionViewModel.showInputPortal()

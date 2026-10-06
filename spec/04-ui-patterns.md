@@ -42,15 +42,15 @@ Design philosophy: **Simple, native, stays out of the way.** No chrome, no clutt
 │  Sidebar         │  Content                                  │
 │  ────────────    │  ───────────────────────────────────────  │
 │                  │                                           │
-│  🎤 Transcribe   │  [Depends on sidebar selection]           │
+│  🎤 Capture      │  [Depends on sidebar selection]           │
 │  🗂 Library      │                                           │
-│  🕒 Dictations   │  - Transcribe: 3-mode capture hub        │
-│  📖 Vocabulary   │  - Library: Grid or list                 │
-│  ✦ Transforms    │  - Dictations: History list               │
-│  💬 Feedback     │  - Vocabulary: Processing mode + manage   │
-│  ⚙ Settings      │  - Transforms: Rewrite selected text      │
-│                  │  - Feedback: Form + community link        │
-│                  │  - Settings: Grouped form                 │
+│  📅 Meetings     │  - Capture: 3-mode capture hub           │
+│  💬 Ask          │  - Library: transcripts + dictation history│
+│  ────────────    │  - Meetings: upcoming, live, and saved    │
+│  ✦ Transforms    │  - Ask: saved conversations               │
+│  📖 Vocabulary   │  - Transforms: rewrite selected text       │
+│  ⚙ Settings      │  - Vocabulary: words and snippets          │
+│                  │  - Settings: preferences                   │
 │                  │                                           │
 └──────────────────┴───────────────────────────────────────────┘
 ```
@@ -65,10 +65,9 @@ Prefer standard SwiftUI controls for navigation and selection so each supported 
 
 The sidebar uses NavigationSplitView with flat items (icon + label):
 
-- **Transcribe** (`waveform`) -- Capture hub: YouTube card + file drop card + Meeting Recording tile
-- **Library** (`square.grid.2x2`) -- All transcriptions; every filter offers the same persistent Grid/List switch, and the header **Prompts** button opens transcript prompt management
+- **Capture** (`waveform`) -- Capture hub: YouTube card + file drop card + Meeting Recording tile
+- **Library** (`square.grid.2x2`) -- Transcriptions and dictation history; source filters include Dictations, and transcript filters offer the persistent Grid/List switch
 - **Ask** (`bubble.left.and.bubble.right`) -- Saved conversations over explicitly selected Library transcripts; a separate destination from transcript chat and live meeting Ask
-- **Dictations** (`clock.arrow.circlepath`) -- Flat history list with bottom bar player
 - **Meetings** (`person.2.wave.2`) -- Workflow space for upcoming, live, and saved meeting work; visible when `AppFeatures.meetingRecordingEnabled` is true
 - **Transforms** (`sparkles`) -- Saved selected-text rewrites backed by `.transform` prompt rows; visible when `AppFeatures.transformsEnabled` is true
 - **Vocabulary** (`book.fill`) -- Processing mode, pipeline guide, custom words & snippets management

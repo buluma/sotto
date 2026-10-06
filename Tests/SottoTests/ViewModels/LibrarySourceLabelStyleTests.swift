@@ -36,12 +36,14 @@ final class LibrarySourceLabelStyleTests: XCTestCase {
             (.all, .podcast, [podcast.id, favoritePodcast.id], .hidden),
             (.all, .local, [local.id, favoriteLocal.id], .hidden),
             (.all, .meeting, [meeting.id, favoriteMeeting.id], .hidden),
+            (.all, .dictations, [], .hidden),
             (.meetings, .all, [meeting.id, favoriteMeeting.id], .hidden),
             (.meetings, .favorites, [favoriteMeeting.id], .hidden),
             (.meetings, .youtube, [], .hidden),
             (.meetings, .podcast, [], .hidden),
             (.meetings, .local, [], .hidden),
             (.meetings, .meeting, [meeting.id, favoriteMeeting.id], .hidden),
+            (.meetings, .dictations, [], .hidden),
         ]
 
         for (scope, filter, expectedIDs, style) in cases {
