@@ -366,7 +366,6 @@ struct MainWindowView: View {
             minHeight: DesignSystem.Layout.windowMinHeight
         )
         .background { WindowCanvasBackground() }
-        .toolbarBackground(.hidden, for: .windowToolbar)
         .environment(\.shareManagement, shareManagementViewModel)
         // Presented from the window root, not the Library list: a finishing
         // transcription or menu navigation replaces the list while the sheet
