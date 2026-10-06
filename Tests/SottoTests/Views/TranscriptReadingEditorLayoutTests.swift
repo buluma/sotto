@@ -16,6 +16,10 @@ final class TranscriptReadingEditorLayoutTests: XCTestCase {
         }
     }
 
+    private final class ProxyBox {
+        var proxy: ScrollViewProxy?
+    }
+
     func testLongMeetingOnlyCreatesVisibleFieldsAndRetainsEditsAfterScrolling() throws {
         let drafts = (0..<1_600).map { index in
             TranscriptReadingDraft(
@@ -29,13 +33,17 @@ final class TranscriptReadingEditorLayoutTests: XCTestCase {
         }
         let start = Date()
         let session = TranscriptReadingEditSession(drafts: drafts)
+        let proxyBox = ProxyBox()
         let host = CountingHost(
-            rootView: ScrollView {
-                VStack {
-                    Text("Transcript")
-                    TranscriptReadingEditor(session: session, font: .body)
+            rootView: ScrollViewReader { proxy in
+                ScrollView {
+                    VStack {
+                        Text("Transcript")
+                        TranscriptReadingEditor(session: session, font: .body)
+                    }
+                    .padding(24)
                 }
-                .padding(24)
+                .onAppear { proxyBox.proxy = proxy }
             })
         // A layout loop blocks XCTest's main actor; the watchdog must run elsewhere.
         let watchdog = DispatchWorkItem { fatalError("Reading editor layout did not finish within 120 seconds") }
@@ -72,24 +80,23 @@ final class TranscriptReadingEditorLayoutTests: XCTestCase {
         session.passages[1].removed = true
         pump(0.1)
 
-        let scroll = try XCTUnwrap(descendants(host).compactMap { $0 as? NSScrollView }.first)
-        let document = try XCTUnwrap(scroll.documentView)
+        let proxy = try XCTUnwrap(proxyBox.proxy)
         let lastPassage = try XCTUnwrap(session.passages.last)
         lastPassage.text = "The final passage is visible."
         for _ in 0..<3 {
-            // Lazy height estimates change as distant rows materialize. Drive
-            // the native scrollbar to its current end until the last row appears.
+            // Target the passage identity: a LazyVStack's estimated document
+            // height does not reliably locate its last row on every macOS version.
             let bottomDeadline = Date().addingTimeInterval(2)
             repeat {
-                scroll.contentView.scroll(
-                    to: NSPoint(x: 0, y: max(0, document.bounds.height - scroll.contentView.bounds.height)))
-                scroll.reflectScrolledClipView(scroll.contentView)
+                proxy.scrollTo(lastPassage.id, anchor: .bottom)
                 pump(0.05)
             } while !editableFields(host).contains(where: { $0.stringValue == "The final passage is visible." })
                 && Date() < bottomDeadline
-            XCTAssertTrue(editableFields(host).contains { $0.stringValue == "The final passage is visible." })
-            scroll.contentView.scroll(to: .zero)
-            scroll.reflectScrolledClipView(scroll.contentView)
+            XCTAssertTrue(
+                editableFields(host).contains { $0.stringValue == "The final passage is visible." },
+                "The last passage must materialize after scrolling to its identity"
+            )
+            proxy.scrollTo(session.passages[0].id, anchor: .top)
             pump(0.2)
         }
         XCTAssertEqual(session.passages[0].text, "A corrected first passage.\nA second line after a multiline paste.")
