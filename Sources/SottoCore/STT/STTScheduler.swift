@@ -54,6 +54,13 @@ public actor STTScheduler: STTManaging, STTDictationPreviewTranscribing, SpeechE
         let task: Task<STTResult, Error>
     }
 
+#if DEBUG
+    private struct AppleSpeechSpikeExecution: Sendable {
+        let id: UUID
+        let task: Task<AppleSpeechSpikeResult, Error>
+    }
+#endif
+
     private enum LiveDictationSessionState: Equatable {
         case active(UUID)
         case finishing(UUID)
@@ -84,6 +91,9 @@ public actor STTScheduler: STTManaging, STTDictationPreviewTranscribing, SpeechE
     private var activeSpeechEngineSessionIDs: Set<UUID> = []
     private var speechEngineSwitchTask: Task<Void, Error>?
     private var dictationPreviewExecution: DictationPreviewExecution?
+#if DEBUG
+    private var appleSpeechSpikeExecution: AppleSpeechSpikeExecution?
+#endif
     private var liveDictationSession: LiveDictationSessionState? {
         didSet {
             guard oldValue != nil, liveDictationSession == nil else { return }
@@ -178,6 +188,46 @@ public actor STTScheduler: STTManaging, STTDictationPreviewTranscribing, SpeechE
     public func currentSpeechEngineSelection() async -> SpeechEngineSelection {
         await runtime.currentSpeechEngineSelection()
     }
+
+#if DEBUG
+    /// Runs the isolated Apple SpeechTranscriber spike through the background
+    /// scheduler lane. It is deliberately absent from shipping builds and
+    /// cannot overlap an active meeting or queued background transcription.
+    @available(macOS 26.0, *)
+    public func transcribeAppleSpeechSpike(audioPath: String, localeIdentifier: String) async throws -> AppleSpeechSpikeResult {
+        guard acceptsNewJobs,
+            speechEngineSwitchTask == nil,
+            activeSpeechEngineSessionIDs.isEmpty,
+            liveDictationSession == nil,
+            dictationPreviewExecution == nil,
+            appleSpeechSpikeExecution == nil,
+            pendingJobAdmissionCount == 0
+        else {
+            throw STTSchedulerError.unavailable
+        }
+        let background = slotState(for: .background)
+        guard background.currentJob == nil, background.pendingJobs.isEmpty else {
+            throw STTSchedulerError.unavailable
+        }
+
+        let id = UUID()
+        let task = Task { try await runtime.transcribeAppleSpeechSpike(audioPath: audioPath, localeIdentifier: localeIdentifier) }
+        appleSpeechSpikeExecution = AppleSpeechSpikeExecution(id: id, task: task)
+        return try await withTaskCancellationHandler {
+            defer {
+                if appleSpeechSpikeExecution?.id == id {
+                    appleSpeechSpikeExecution = nil
+                    if acceptsNewJobs {
+                        startNextJobsIfNeeded()
+                    }
+                }
+            }
+            return try await task.value
+        } onCancel: {
+            task.cancel()
+        }
+    }
+#endif
 
     public func currentSpeechEngineTelemetryAttribution() async -> SpeechEngineTelemetryAttribution? {
         await runtime.currentSpeechEngineTelemetryAttribution()
@@ -598,10 +648,14 @@ public actor STTScheduler: STTManaging, STTDictationPreviewTranscribing, SpeechE
     }
 
     private var hasQueuedOrRunningJobs: Bool {
-        pendingJobAdmissionCount > 0 || liveDictationSession != nil
-            || slotStates.values.contains { state in
-                state.currentJob != nil || !state.pendingJobs.isEmpty
-            }
+        let slotHasJobs = slotStates.values.contains { state in
+            state.currentJob != nil || !state.pendingJobs.isEmpty
+        }
+#if DEBUG
+        return pendingJobAdmissionCount > 0 || liveDictationSession != nil || appleSpeechSpikeExecution != nil || slotHasJobs
+#else
+        return pendingJobAdmissionCount > 0 || liveDictationSession != nil || slotHasJobs
+#endif
     }
 
     private func pendingMeetingLiveJobCount(in slotState: SlotState) -> Int {
@@ -627,6 +681,11 @@ public actor STTScheduler: STTManaging, STTDictationPreviewTranscribing, SpeechE
     private func startNextJobIfNeeded(in slot: SchedulerSlot) {
         var currentSlotState = slotState(for: slot)
         guard currentSlotState.currentJob == nil else { return }
+#if DEBUG
+        // Apple Speech uses the same background lane but has a different result
+        // contract from normal jobs. Queue normal background work until it ends.
+        guard !(slot == .background && appleSpeechSpikeExecution != nil) else { return }
+#endif
         // The native engine's interactive lane belongs to the live session
         // until it finishes or cancels; the didSet above restarts this slot.
         guard !(slot == .interactive && liveDictationSession != nil) else { return }
@@ -753,6 +812,9 @@ public actor STTScheduler: STTManaging, STTDictationPreviewTranscribing, SpeechE
     private func quiesce(restoreAcceptsNewJobs: Bool) async {
         acceptsNewJobs = false
         await cancelAndDrainDictationPreviewIfNeeded()
+#if DEBUG
+        await cancelAndDrainAppleSpeechSpikeIfNeeded()
+#endif
         cancelAllPendingJobs()
         await cancelLiveDictationSessionIfNeeded()
         await cancelAndDrainRunningJobs()
@@ -840,6 +902,22 @@ public actor STTScheduler: STTManaging, STTDictationPreviewTranscribing, SpeechE
             }
         }
     }
+
+#if DEBUG
+    private func cancelAndDrainAppleSpeechSpikeIfNeeded() async {
+        guard let execution = appleSpeechSpikeExecution else { return }
+        execution.task.cancel()
+        await observingRuntimeTimeout(reason: "apple_speech_spike_cancel_drain") {
+            _ = await execution.task.result
+        }
+        if appleSpeechSpikeExecution?.id == execution.id {
+            appleSpeechSpikeExecution = nil
+        }
+        if acceptsNewJobs {
+            startNextJobsIfNeeded()
+        }
+    }
+#endif
 
     /// Watchdog probe for an STT runtime call that may hang if the underlying
     /// runtime (FluidAudio / WhisperKit) ignores cancellation. If `operation`

@@ -4,6 +4,10 @@ import Foundation
 import os
 
 protocol STTRuntimeProtocol: Sendable {
+#if DEBUG
+    @available(macOS 26.0, *)
+    func transcribeAppleSpeechSpike(audioPath: String, localeIdentifier: String) async throws -> AppleSpeechSpikeResult
+#endif
     func transcribe(
         audioPath: String,
         job: STTJobKind,
@@ -60,6 +64,12 @@ protocol STTRuntimeProtocol: Sendable {
 }
 
 extension STTRuntimeProtocol {
+#if DEBUG
+    @available(macOS 26.0, *)
+    func transcribeAppleSpeechSpike(audioPath: String, localeIdentifier: String) async throws -> AppleSpeechSpikeResult {
+        throw AppleSpeechSpikeError.unavailable
+    }
+#endif
     func warmUp(
         speechEngine: SpeechEngineSelection,
         onProgress: (@Sendable (String) -> Void)?
@@ -226,6 +236,9 @@ public actor STTRuntime: STTRuntimeProtocol {
     private let customVocabularyProvider: (any CustomVocabularyBoostingTermProviding)?
     private let customVocabularyRescorer: any CustomVocabularyRescoring
     private let customVocabularyRecognitionBoostingEnabled: @Sendable () -> Bool
+#if DEBUG
+    private let appleSpeechSpikeEngine = AppleSpeechSpikeEngine()
+#endif
 
     private var interactiveManager: AsrManager?
     private var backgroundManager: AsrManager?
@@ -349,6 +362,13 @@ public actor STTRuntime: STTRuntimeProtocol {
             onProgress: onProgress
         )
     }
+
+#if DEBUG
+    @available(macOS 26.0, *)
+    func transcribeAppleSpeechSpike(audioPath: String, localeIdentifier: String) async throws -> AppleSpeechSpikeResult {
+        try await appleSpeechSpikeEngine.transcribeFile(audioPath: audioPath, localeIdentifier: localeIdentifier)
+    }
+#endif
 
     func transcribe(
         audioPath: String,
