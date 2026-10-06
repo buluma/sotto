@@ -1,115 +1,58 @@
-name: Release DMG
+name: Stable release
 
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Stable version (X.Y.Z)
+        required: true
+        type: string
+      source_sha:
+        description: Full commit SHA accepted during native UI testing
+        required: true
+        type: string
+      ui_verified:
+        description: I checked sidebar startup, resize, Settings, and capture on this commit
+        required: true
+        default: false
+        type: boolean
 
 permissions:
-  contents: read
-
-concurrency:
-  group: release-dmg-${{ github.event.release.tag_name }}
-  cancel-in-progress: false
+  contents: write
+  actions: read
+  checks: read
 
 jobs:
-  dmg:
-    name: Build Apple Silicon DMG
-    runs-on: xcode-27
-    timeout-minutes: 120
-    permissions:
-      contents: write
-      checks: read
-      actions: read
-    env:
-      RELEASE_TAG: ${{ github.event.release.tag_name }}
-      BUILD_SYSTEM: xcodebuild
-      XCODE_BUILD_LOG: ci-logs/xcode-release-build.log
-      REQUIRE_MEETING_ECHO_ASSETS: "1"
+  candidate:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.candidate.outputs.sha }}
+      version: ${{ steps.candidate.outputs.version }}
     steps:
-      - name: Checkout release tag
+      - name: Checkout workflow source
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.release.tag_name }}
-          persist-credentials: false
-
-      - name: Require source commit CI
-        timeout-minutes: 81
+          fetch-depth: 0
+      - name: Require explicit candidate acceptance
+        id: candidate
         env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: bash scripts/dist/require_ci.sh "$(git rev-parse HEAD)" --wait
-
-      - name: Select Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: "27.0"
-
-      # Use the distribution cache identity and path so eligible CI caches
-      # can seed releases. Always rebuild before packaging the release.
-      - name: Xcode Cache Identity
-        id: xcode_cache
-        env:
-          XCODE_DERIVED_DATA: ${{ runner.temp }}/sotto-xcode-dist
-        shell: bash
-        run: |
-          fingerprint=$(bash scripts/ci/xcode-cache-key.sh)
-          echo "fingerprint=$fingerprint" >> "$GITHUB_OUTPUT"
-          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-
-      - name: Cache Xcode Build State
-        uses: actions/cache@v6
-        with:
-          path: ${{ runner.temp }}/sotto-xcode-dist
-          key: xcode-v1-${{ steps.xcode_cache.outputs.fingerprint }}-${{ steps.xcode_cache.outputs.commit }}
-          restore-keys: |
-            xcode-v1-${{ steps.xcode_cache.outputs.fingerprint }}-
-
-
-      - name: Validate release version and architecture
-        shell: bash
+          VERSION: ${{ inputs.version }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          UI_VERIFIED: ${{ inputs.ui_verified }}
         run: |
           set -euo pipefail
-          version="${RELEASE_TAG#v}"
-          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ || "$version" == "0.0.0" ]]; then
-            echo "Release tag must be X.Y.Z or vX.Y.Z (excluding 0.0.0)." >&2
-            exit 1
-          fi
-          [[ "$(uname -m)" == "arm64" ]]
-          echo "VERSION=$version" >> "$GITHUB_ENV"
-          echo "BUILD_NUMBER=$(date -u +%Y%m%d%H%M%S)" >> "$GITHUB_ENV"
-          mkdir -p ci-logs
-
-      - name: Build complete app bundle
-        env:
-          XCODE_DERIVED_DATA: ${{ runner.temp }}/sotto-xcode-dist
-          SOTTO_MEETING_ECHO_ASSETS_DIR: ${{ runner.temp }}/sotto-meeting-echo-assets
-          LOCALVQE_SOURCE_DIR: ${{ runner.temp }}/sotto-localvqe-src
-        shell: bash
-        run: |
-          set -euo pipefail
-          scripts/dist/build_app_bundle.sh 2>&1 | tee ci-logs/build-app.log
-          scripts/dist/verify_release_version.sh dist/Sotto.app
-
-      - name: Package and verify DMG
-        shell: bash
-        run: scripts/dist/build_dmg.sh dist/Sotto.app "dist/Sotto-${VERSION}-arm64.dmg"
-
-      - name: Attach DMG and checksum to release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          gh release upload "$RELEASE_TAG" \
-            "dist/Sotto-${VERSION}-arm64.dmg" \
-            "dist/Sotto-${VERSION}-arm64.dmg.sha256" --clobber
-
-      - name: Upload build logs
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: release-dmg-logs-${{ github.run_id }}
-          path: ci-logs/
-          if-no-files-found: ignore
-          retention-days: 7
+          [[ "$UI_VERIFIED" == true ]]
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && "$VERSION" != 0.0.0 ]]
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$(git rev-parse "$SOURCE_SHA^{commit}")" == "$SOURCE_SHA" ]]
+          git merge-base --is-ancestor "$SOURCE_SHA" origin/master
+          echo "sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+  package:
+    needs: candidate
+    uses: ./.github/workflows/package-release.yml
+    with:
+      source_sha: ${{ needs.candidate.outputs.sha }}
+      version: ${{ needs.candidate.outputs.version }}
+      release_tag: v${{ needs.candidate.outputs.version }}
+      channel: stable

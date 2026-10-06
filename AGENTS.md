@@ -1,6 +1,6 @@
 # AGENTS.md -- Sotto
 
-This is a personal local fork. Do not publish, push, create public PRs, or configure upstream telemetry/auto-updates. Preserve original legal notices. Use manual source updates and local validation. Historical release statements refer to upstream, not a distributed Sotto build.
+This is a personal fork. Publish, push, and create PRs only when the owner explicitly requests them; the configured nightly schedule is authorized once enabled. Stable releases require recorded manual UI acceptance. Do not configure upstream telemetry or auto-updates. Preserve original legal notices. See docs/distribution.md for the owner-authorized stable and nightly channels.
 
 > Canonical startup guide for coding agents working in this repo. Claude Code
 > also reads [`CLAUDE.md`](./CLAUDE.md), which is a small Claude-specific
@@ -16,7 +16,7 @@ The repo contains two products:
 - `Sotto.app`: SwiftUI macOS app.
 - `sotto-cli`: public automation surface in `Sources/CLI/`; compatibility notes live in `Sources/CLI/CHANGELOG.md`.
 
-This personal fork has no public stable channel. Build locally and update source manually. For current release/flag state, read [`spec/README.md`](./spec/README.md#release-channels-and-feature-flags) and the relevant ADR/spec instead of copying release facts into new docs.
+This personal fork supports owner-authorized stable and nightly builds with manual installation. For current release/flag state, read [`spec/README.md`](./spec/README.md#release-channels-and-feature-flags) and the relevant ADR/spec instead of copying release facts into new docs.
 
 ## Commands
 

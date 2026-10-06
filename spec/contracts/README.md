@@ -25,6 +25,8 @@ Each contract document should include:
 
 ## Current Contracts
 
+- [Release channel identity and storage](release-channels.md) — stable/nightly metadata, isolation, and publication gates
+
 Planned contracts are listed separately below; they do not describe available payloads.
 
 - [Voice Control](voice-control.md) — gated shared speech, consent, foreground ownership and revocable execution
