@@ -19,7 +19,7 @@ The CLI is a first-class automation surface, **not a GUI mirror.** It intentiona
 - **Model and binary health** -- `health --json` reports model readiness, database accessibility, FFmpeg, and yt-dlp without mutating state. Repair flags explicitly warm/download local caches; missing application directories are reported rather than created by the probe.
 - **Persisted history and knowledge retrieval** -- list/search prior dictations and transcriptions, retrieve cited transcript segments, and inspect current knowledge cards from the shared SQLite database. Card generation is a separate, provider-backed write.
 - **Prompt management and meeting inspection** -- manage versioned transcript prompts, their model/inference settings and label availability; manage Live Ask quick prompts and selected-text Transforms; run prompts against saved transcriptions and inspect, annotate, and export meeting recordings.
-- **Headless verification hooks** -- agents can drive deterministic runs (pin all flags) or smoke-test GUI-default behavior with the explicit `app-default` flag group.
+- **Headless verification hooks** -- agents can drive deterministic runs (pin all flags) or smoke-test saved preferences, including Live Speech, with explicit `app-default` flags.
 
 ### Out of scope (by design)
 
@@ -167,7 +167,7 @@ sotto-cli transcribe /path/to/japanese.m4a --engine cohere --language ja --forma
 sotto-cli transcribe /path/to/korean.mp3 --engine whisper --language ko --format json
 ```
 
-To test the same defaults a user selected in the GUI, make every app-default read explicit. Bare `transcribe` already follows the saved file/URL speaker-detection preference, while `retranscribe --kind meeting` follows the saved meeting speaker-detection preference when left at app-default. The full flag group below also opts into saved speech-engine, processing, audio-retention, and YouTube-quality defaults. This does not exercise GUI-only UI, playback, hotkey, export, or optional AI formatter output.
+To test saved preferences, make every app-default read explicit. Bare `transcribe` and `retranscribe` use Parakeet. Their explicit `--engine app-default` follows saved **Live Speech**, including its engine-specific language; the GUI’s **Final Transcription** override applies to GUI file/media and post-meeting work. For example, Live Speech = Parakeet and Final Transcription = Whisper means CLI `--engine app-default` uses Parakeet while GUI file imports use Whisper; pass `--engine whisper` to choose Whisper explicitly in the CLI. This distinction preserves the existing CLI contract. Bare `transcribe` already follows the saved file/URL speaker-detection preference, while `retranscribe --kind meeting` follows the saved meeting speaker-detection preference when left at app-default. The flag group below also opts into saved processing, audio-retention, and YouTube-quality defaults. This does not exercise GUI-only UI, playback, hotkey, export, or optional AI formatter output.
 
 ```bash
 sotto-cli transcribe /path/to/audio.mp3 \

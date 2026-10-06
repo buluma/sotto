@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com), and the C
 
 ## [Unreleased]
 
+- Clarified `transcribe`/`retranscribe` engine help: bare commands use Parakeet and explicit `--engine app-default` follows saved Live Speech. The GUI Final Transcription override does not change CLI defaults; routing behavior is unchanged.
+
 - `transcribe --enforce-entitlements` remains accepted but performs no licensing validation, activation-state writes, or licensing network requests in this personal fork. Stored credentials are preserved and capture remains unlocked.
 
 ## [6.0.0] — 2026-10-04 (personal Sotto fork)

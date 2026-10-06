@@ -30,6 +30,10 @@
 - Smoke and support workflows.
 - `integrations/README.md` users calling `sotto-cli` from outside this repo.
 
+## Speech Routing Defaults
+
+Bare `transcribe` and `retranscribe` use Parakeet. Explicit `--engine app-default` follows saved Live Speech (`speechRecognitionEngine`) and its saved engine-specific language. The GUI Final Transcription override (`transcriptionSpeechRecognitionEngine`) does not alter those CLI defaults; select a different CLI engine explicitly. Existing Cohere memory validation and its low-memory app-default fallback are unchanged. These routing choices preserve the current command behavior and do not change JSON fields or exit codes.
+
 ## Stable Conventions
 
 - JSON payloads are written to stdout for the command's documented JSON stdout mode.

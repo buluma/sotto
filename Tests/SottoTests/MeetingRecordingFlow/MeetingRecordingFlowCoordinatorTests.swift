@@ -1337,6 +1337,9 @@ final class MeetingRecordingFlowCoordinatorTests: XCTestCase {
         )
 
         XCTAssertNotNil(coordinator.startRecording(presentLivePanelWhenReady: true))
+        // Native panel presentation can yield to AppKit work before the async
+        // start task runs. Await the owned start operation before timing UI state.
+        try await waitForStartCall(on: recordingService, coordinator: coordinator)
         try await waitForPillState(pillViewModel, .recording)
 
         XCTAssertEqual(coordinator.testHook_state, .recording)
