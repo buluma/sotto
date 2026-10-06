@@ -274,14 +274,16 @@ public final class AutoSaveService {
 
     /// The default destination for auto-saved files when the user hasn't
     /// chosen one. Lives under `~/Documents/Sotto/{Transcriptions|Meetings}`
-    /// so the user can find their output via Finder / Spotlight without
+    /// (or `Sotto-Nightly` for the nightly bundle), so the user can find
+    /// their output via Finder / Spotlight without
     /// digging into `~/Library`.
     public static func defaultFolder(for scope: AutoSaveScope) -> URL {
         let docs = FileManager.default
             .urls(for: .documentDirectory, in: .userDomainMask)
             .first
             ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Documents")
-        let parent = docs.appendingPathComponent("Sotto", isDirectory: true)
+        let folderName = Bundle.main.bundleIdentifier == AppPaths.nightlyBundleIdentifier ? "Sotto-Nightly" : "Sotto"
+        let parent = docs.appendingPathComponent(folderName, isDirectory: true)
         switch scope {
         case .transcription: return parent.appendingPathComponent("Transcriptions", isDirectory: true)
         case .meeting: return parent.appendingPathComponent("Meetings", isDirectory: true)

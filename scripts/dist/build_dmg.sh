@@ -18,9 +18,9 @@ mkdir -p "$(dirname "$DMG_PATH")"
 STAGING_DIR="$(mktemp -d "${TMPDIR:-/tmp}/sotto-dmg.XXXXXX")"
 trap 'rm -rf "$STAGING_DIR"' EXIT
 # Preserve bundle metadata, symlinks, and signatures.
-ditto "$APP_PATH" "$STAGING_DIR/Sotto.app"
+ditto "$APP_PATH" "$STAGING_DIR/$(basename "$APP_PATH")"
 ln -s /Applications "$STAGING_DIR/Applications"
-hdiutil create -volname Sotto -srcfolder "$STAGING_DIR" -ov -format UDZO "$DMG_PATH"
+hdiutil create -volname "${DMG_VOLUME_NAME:-Sotto}" -srcfolder "$STAGING_DIR" -ov -format UDZO "$DMG_PATH"
 hdiutil verify "$DMG_PATH"
 (
   cd "$(dirname "$DMG_PATH")"

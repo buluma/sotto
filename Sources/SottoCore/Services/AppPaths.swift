@@ -3,7 +3,10 @@ import Foundation
 
 /// Centralized path management for Sotto runtime files.
 public enum AppPaths {
-    public static let preferencesSuiteName = "com.sotto.Sotto"
+    public static let nightlyBundleIdentifier = "com.sotto.nightly"
+    public static var preferencesSuiteName: String {
+        Bundle.main.bundleIdentifier == nightlyBundleIdentifier ? nightlyBundleIdentifier : "com.sotto.Sotto"
+    }
     public static let meetingArtifactsFolderKey = "meetingArtifactsFolder"
     public static let debugAppStateDirEnvironmentKey = "SOTTO_DEBUG_APP_STATE_DIR"
     /// Bundle ID of the `scripts/dev/run_app.sh` build (`Sotto-Dev.app`).
@@ -300,9 +303,11 @@ public enum AppPaths {
                 .trimmingCharacters(in: .whitespacesAndNewlines),
             !raw.isEmpty
         else {
-            // A Dev bundle launched without run_app.sh (Finder, `open`, a
-            // relaunch) must use the same Dev root run_app.sh passes, never
-            // the stable app's database and media.
+            // Finder launches must keep nightly and Dev data isolated even
+            // without a launch-script environment override.
+            if bundleIdentifier == nightlyBundleIdentifier {
+                return (defaultDevelopmentAppStateDir as NSString).deletingLastPathComponent + "/Sotto-Nightly"
+            }
             guard bundleIdentifier == developmentBundleIdentifier else { return nil }
             return defaultDevelopmentAppStateDir
         }

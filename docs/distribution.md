@@ -1,12 +1,28 @@
 # Local Packaging and Optional Signing
 
-> Personal Sotto fork: local builds and manual source updates only. Do not publish releases or upload artifacts. Signing and notarization tooling is optional and does not establish a distribution channel.
+> Personal Sotto fork: manual installation through stable and nightly GitHub releases is supported when explicitly requested by the owner. Builds use ad-hoc signing; automatic app updates and telemetry remain removed.
 
 This repo uses Swift packages. App distribution builds those packages through Xcode and assembles a `.app` bundle for Developer ID distribution. Xcode compiles asset catalogs and generates resource lookups that work after installation on another Mac. `BUILD_SYSTEM=swiftpm` is rejected for app distribution; ordinary `swift build`, `swift test`, and SwiftPM CLI builds remain supported.
 
+## Stable and nightly releases
+
+Both channels call `.github/workflows/package-release.yml` to require CI for the exact source SHA, build and verify an Apple Silicon DMG, create a draft, upload the DMG and checksum, check upload completion, then publish. A failed build creates no release; a failed upload leaves a resumable draft. Published releases and existing tags are never overwritten or moved. Releases created by the workflow token do not need to trigger a second workflow.
+
+### Stable
+
+Run **Stable release** from GitHub Actions on `master`, supplying a numeric `version` (for example `0.1.10`), the full `source_sha`, and `ui_verified=true`. The SHA must be reachable from `master`. Check the candidate's sidebar on startup and resize, Settings navigation, and capture before accepting it. This checkbox records the owner's manual acceptance; it does not automate UI verification. To promote a nightly, use the full commit from its release notes, not the current branch head. The candidate must contain the release tooling. The workflow creates `vX.Y.Z` at that exact commit and marks the completed release Latest. Pushing a version tag alone no longer publishes a release. Update `.github/release-version` to the next target version after a stable release.
+
+### Nightly
+
+**Nightly release** runs at 23:17 UTC (02:17 Nairobi the following day), or through manual dispatch. GitHub schedules run from the default branch; keep the workflow there. It selects the latest commit on `master` that changes files outside CI-excluded `docs/` and `plans/`, reads the next numeric version from `.github/release-version`, and skips a version/commit pair that already has a published nightly. Tags use `vX.Y.Z-nightly.YYYYMMDD.<12-character-sha>`. Failed builds can be retried. Nightlies are prereleases, never Latest, and only the newest 14 published nightly releases/assets are retained; their tags remain for traceability. Stable releases are not affected by cleanup.
+
+### App identity and storage
+
+Stable installs as `Sotto.app` (`com.sotto.Sotto`); nightly installs as `Sotto-Nightly.app` (`com.sotto.nightly`). Numeric `CFBundleShortVersionString` stays `X.Y.Z` for both. `CFBundleVersion` is a UTC build timestamp, with channel, full source commit, and build date stored separately and shown in Settings > About and Copy Build Info. Nightly has its own preferences suite and `~/Library/Application Support/Sotto-Nightly` for its database, media, logs, helpers, and models. Its default auto-save exports go to `~/Documents/Sotto-Nightly/{Transcriptions,Meetings}`. It ignores the stable meeting folder preference. There is no automatic data migration or copying between channels. Keychain-backed provider credentials remain shared; macOS permission grants are separate for each bundle identity. A standalone CLI continues using stable storage; the CLI embedded in a nightly app uses that app's identity. Shared global hotkeys can conflict if both apps are running: quit one before using dictation shortcuts.
+
 ## Local DMGs
 
-Package an existing local app bundle with `scripts/dist/build_dmg.sh dist/Sotto.app dist/Sotto.dmg` after building it with `VERSION=X.Y.Z`. The disk image contains `Sotto.app` and an Applications shortcut. Personal builds can use ad-hoc signing; that is not Developer ID signing or notarization. Retained release workflows are not authorization to publish this fork.
+Package an existing local app bundle with `scripts/dist/build_dmg.sh dist/Sotto.app dist/Sotto.dmg` after building it with `VERSION=X.Y.Z`. The disk image contains `Sotto.app` and an Applications shortcut. Personal builds can use ad-hoc signing; that is not Developer ID signing or notarization. Publishing remains an explicit owner action for stable builds; enabling the nightly workflow on the default branch authorizes its scheduled prereleases.
 
 ## 1) Build the app bundle
 

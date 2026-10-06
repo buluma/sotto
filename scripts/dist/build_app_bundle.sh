@@ -66,6 +66,8 @@ if [[ "$BUILD_SYSTEM" != "xcodebuild" ]]; then
   exit 1
 fi
 BUILD_SOURCE="${BUILD_SOURCE:-dist-${BUILD_SYSTEM}-release}"
+RELEASE_CHANNEL="${RELEASE_CHANNEL:-local}"
+case "$RELEASE_CHANNEL" in stable|nightly|local) ;; *) echo "Invalid release channel" >&2; exit 1 ;; esac
 XCODE_DERIVED_DATA="${XCODE_DERIVED_DATA:-$ROOT_DIR/.build/xcode-dist}"
 XCODE_BUILD_LOG="${XCODE_BUILD_LOG:-/dev/null}"
 
@@ -626,6 +628,8 @@ cat >"$INFO_PLIST" <<EOF
   <string>${BUILD_NUMBER}</string>
   <key>SottoBuildDateUTC</key>
   <string>${BUILD_DATE_UTC}</string>
+  <key>SottoReleaseChannel</key>
+  <string>${RELEASE_CHANNEL}</string>
   <key>SottoBuildSource</key>
   <string>${BUILD_SOURCE}</string>
   <key>SottoGitCommit</key>

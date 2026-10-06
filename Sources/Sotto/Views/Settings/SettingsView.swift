@@ -3778,7 +3778,7 @@ struct SettingsView: View {
                         .opacity(0.6)
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Sotto \(identity.version) (\(identity.buildNumber))")
+                        Text("Sotto\(identity.releaseChannel == "nightly" ? " Nightly" : "") \(identity.version) (\(identity.buildNumber))")
                             .font(DesignSystem.Typography.body)
                         Text("Fast, private, local-first voice for Mac")
                             .font(DesignSystem.Typography.caption)
@@ -3801,6 +3801,7 @@ struct SettingsView: View {
 
                 Divider()
 
+                aboutRow(label: "Channel", value: identity.releaseChannel)
                 aboutRow(label: "Source", value: identity.buildSource)
                 aboutRow(label: "Commit", value: identity.gitCommit)
                 aboutRow(label: "Built", value: identity.buildDateUTC)
@@ -4108,6 +4109,7 @@ struct SettingsView: View {
             "Sotto Build Identity",
             "Version: \(identity.version)",
             "Build: \(identity.buildNumber)",
+            "Channel: \(identity.releaseChannel)",
             "Source: \(identity.buildSource)",
             "Commit: \(identity.gitCommit)",
             "Built: \(identity.buildDateUTC)",

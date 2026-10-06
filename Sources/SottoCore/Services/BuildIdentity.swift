@@ -1,6 +1,7 @@
 import Foundation
 
 public struct BuildIdentity: Sendable {
+    public let releaseChannel: String
     public let version: String
     public let buildNumber: String
     public let gitCommit: String
@@ -40,6 +41,7 @@ public struct BuildIdentity: Sendable {
         )
 
         return BuildIdentity(
+            releaseChannel: read(bundle: bundle, key: "SottoReleaseChannel", fallback: "local"),
             version: version,
             buildNumber: buildNumber,
             gitCommit: gitCommit,

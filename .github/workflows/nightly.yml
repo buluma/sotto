@@ -1,0 +1,45 @@
+name: Nightly release
+
+on:
+  schedule:
+    - cron: '17 23 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+  checks: read
+
+concurrency:
+  group: nightly-release
+  cancel-in-progress: false
+
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.candidate.outputs.sha }}
+      version: ${{ steps.candidate.outputs.version }}
+      tag: ${{ steps.candidate.outputs.tag }}
+      changed: ${{ steps.candidate.outputs.changed }}
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v7
+        with:
+          ref: master
+          fetch-depth: 0
+      - name: Select changed candidate
+        id: candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: python3 scripts/dist/nightly_candidate.py
+  package:
+    needs: candidate
+    if: needs.candidate.outputs.changed == 'true'
+    uses: ./.github/workflows/package-release.yml
+    with:
+      source_sha: ${{ needs.candidate.outputs.sha }}
+      version: ${{ needs.candidate.outputs.version }}
+      release_tag: ${{ needs.candidate.outputs.tag }}
+      channel: nightly

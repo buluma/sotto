@@ -30,6 +30,8 @@ Ask is a default-off development workspace governed by ADR-034. Debug app and CL
 
 ## Boundary Contracts
 
+[Release channel identity and storage](contracts/release-channels.md) defines stable/nightly version metadata, local data isolation, and publication gates.
+
 [`spec/contracts/`](contracts/) is the canonical home for tested public and semi-public boundaries such as meeting artifact folders, recovery/retention safety, and CLI JSON output. Update the matching contract doc and focused tests when changing one of those surfaces.
 
 [Speaker Voiceprints](contracts/speaker-voiceprints.md) defines the experimental voice-profile gate, local storage lifecycle and export exclusion. Implementation behind that gate is separate from accuracy evaluation and official release.
@@ -60,11 +62,11 @@ These decisions are final. Do not second-guess them.
 | Local STT | Parakeet TDT 0.6B via FluidAudio CoreML/ANE (`v3` standard-path default, `v2` English-only opt-in, `unified` English-only opt-in); locale-aware Korean/Japanese/Chinese/Cantonese onboarding selects WhisperKit when no preferred English language is present; Nemotron 3.5 Beta, WhisperKit, and Cohere Transcribe remain selectable | Parakeet gives the best speed/memory profile for supported languages in the current M4 Pro harness (~81-93x steady RTFx, 115-131 MB peak RSS by build); v2 avoids language auto-detect for English-only use; Unified adds punctuation/capitalization and token-derived timestamps; Nemotron is a fast opt-in Beta path with multilingual and English-only builds; Whisper adds mature broad multilingual coverage locally; Cohere is a larger batch-only accuracy path |
 | Database | SQLite via GRDB | Single file, embedded, zero config |
 | Platform | macOS 14.2+ (Apple Silicon only) | FluidAudio requires Apple Silicon; Swift 6 language mode (tools-version 5.9) |
-| Fork scope | Personal local use; GPLv3; no public distribution | Upstream pricing and release decisions are historical; inert licensing compatibility preserves credentials without network I/O |
+| Fork scope | Personal use; GPLv3; owner-authorized stable and nightly builds | Manual installation; inert licensing compatibility preserves credentials without network I/O |
 
 ## Release Channels And Feature Flags
 
-This checkout is a personal Sotto fork. It has no public release, distribution channel, auto-update feed, or remote telemetry transport. Updates are manual. Version identifiers and historical release documents come from upstream and do not establish a Sotto release. Original model download sources and explicit optional network integrations remain separate from the app identity.
+This checkout is a personal Sotto fork with owner-authorized stable and nightly GitHub releases for manual installation. Stable builds require exact-commit CI and recorded manual native UI acceptance; nightly builds are scheduled prereleases with separate app identity and local storage. Both publish only after packaging and asset upload succeed. There is no auto-update feed or remote telemetry transport. See [release channels](../docs/distribution.md#stable-and-nightly-releases) for triggers, versioning, retention, and isolation limits. Original model download sources and explicit optional network integrations remain separate from the app identity.
 
 Feature gates in the current source (`Sources/SottoCore/AppFeatures.swift`); an implemented gated surface is not a shipped feature. The [complete flag inventory](../docs/feature-flags.md) records purpose, ownership, keep/remove decisions, personal-fork relevance, and developer overrides:
 
