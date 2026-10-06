@@ -57,7 +57,7 @@ Whisper remains the broad-language fallback and is fully supported, but receives
 
 ### 6. Apple SpeechTranscriber: spike, do not ship yet
 
-Run a small spike behind a flag when convenient. Its strategic slot is **not** a fifth engine card; it is (a) an onboarding bridge — instant dictation on macOS 26 while the ~465 MB Parakeet download completes — and (b) a possible long-tail language fallback. Adoption is gated on: locales actually enumerating on a clean machine, a `benchmarks/asr` run showing acceptable quality, and it being macOS 26+ only (so it can never be the default engine while we support earlier macOS).
+A debug-build-only file-transcription spike exists (`benchmarks/asr/apple-speech-spike/README.md`). It needs an explicit locale and already-installed assets, never starts asset downloads, and is absent from engine selection, `sotto-cli`, and defaults. Offline recognition is still an open qualification gate. Its strategic slot is **not** a fifth engine card; it is (a) an onboarding bridge — instant dictation on macOS 26 while the ~465 MB Parakeet download completes — and (b) a possible long-tail language fallback. Adoption is gated on: locales actually enumerating on a clean machine, a `benchmarks/asr` run showing acceptable quality, and it being macOS 26+ only (so it can never be the default engine while we support earlier macOS).
 
 ### 7. Explicit non-goals
 
