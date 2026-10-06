@@ -11,10 +11,19 @@ swiftc -parse-as-library -swift-version 6 -framework Speech \
 /tmp/sotto-apple-speech-locale-inventory --developer-opt-in --inventory
 ```
 
-The probe rejects invocations that omit either explicit flag. Keep this tool outside normal app engine selection and do not use its inventory alone to claim clean-machine, offline-recognition, or quality qualification.
+The inventory includes `AssetInventory.status` for both `SpeechTranscriber` and `DictationTranscriber` for each locale returned by `installedLocales`. These are separate module-specific readiness checks; locale enumeration alone is not an asset-readiness result.
+
+To run a file recognition attempt, only after the requested module reports `.installed`, use:
+
+```sh
+/tmp/sotto-apple-speech-locale-inventory --developer-opt-in \
+  --transcribe-file en_US /path/to/audio-file
+```
+
+The probe rejects invocations that omit the explicit opt-in flag. It never calls the asset installation API. Keep this tool outside normal engine selection and do not use a successful connected run alone to claim offline recognition or quality qualification.
 
 ## Development Mac observation — 2026-10-06
 
-On the development Mac running macOS 27.2, `SpeechTranscriber.isAvailable` returned `true`; 45 supported locales and 16 installed locales were reported. Installed locales were `de_AT`, `de_CH`, `de_DE`, `en_AU`, `en_CA`, `en_GB`, `en_IE`, `en_IN`, `en_NZ`, `en_SG`, `en_US`, `en_ZA`, `fr_BE`, `fr_CA`, `fr_CH`, and `fr_FR`. Locale counts can change with OS asset state; rerun the probe when qualifying another machine.
+On the development Mac running macOS 27.2, `SpeechTranscriber.isAvailable` returned `true`; 45 supported locales and 16 `installedLocales` entries were reported. For all 16 entries, both `SpeechTranscriber` and `DictationTranscriber` returned `AssetInventory.Status.supported`, which Apple defines as compatible but requiring an asset download. A local `say`-generated English fixture was rejected before recognition because the `en_US` `SpeechTranscriber` assets were not installed. No asset installation or download was requested.
 
-This is a single-machine inventory. A clean-machine inventory, asset readiness semantics, offline recognition, and matched-corpus quality/performance remain unqualified.
+This is a single-machine inventory. The existing `installedLocales` list does not establish that either module's assets are ready on this device; use the module-specific status. Offline recognition could not be evaluated without installed module assets, and matched-corpus quality/performance remain unqualified. To test offline behavior later, first authorize/install a module asset, then repeat recognition with network access disabled or otherwise isolated for the recognition process and its service.
