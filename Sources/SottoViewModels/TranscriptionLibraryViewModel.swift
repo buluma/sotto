@@ -8,6 +8,7 @@ public enum LibraryFilter: String, CaseIterable, Sendable {
     case podcast = "Podcasts"
     case local = "Local"
     case meeting = "Meetings"
+    case dictations = "Dictations"
     case favorites = "Favorites"
 }
 
@@ -55,7 +56,7 @@ extension TranscriptionLibraryScope {
                 return .visible
             case .youtube:
                 return .brandMarkOnly
-            case .podcast, .local, .meeting:
+            case .podcast, .local, .meeting, .dictations:
                 return .hidden
             }
         }
@@ -164,7 +165,12 @@ public struct BulkOperationResult: Sendable, Equatable {
 public final class TranscriptionLibraryViewModel {
     private let logger = Logger(subsystem: "com.sotto.viewmodels", category: "TranscriptionLibrary")
     public private(set) var transcriptions: [Transcription] = []
-    public var filter: LibraryFilter = .all { didSet { reloadAfterStateChange() } }
+    public var filter: LibraryFilter = .all {
+        didSet {
+            guard filter != .dictations else { return }
+            reloadAfterStateChange()
+        }
+    }
     /// The filter that produced the cards currently on screen.
     ///
     /// `filter` changes before its asynchronous query replaces the existing
@@ -886,6 +892,8 @@ public final class TranscriptionLibraryViewModel {
         let favoritesOnly: Bool
 
         switch (scope, filter) {
+        case (_, .dictations):
+            return nil
         case (.all, .all):
             sourceType = nil
             favoritesOnly = false

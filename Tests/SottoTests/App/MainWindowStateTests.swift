@@ -94,7 +94,6 @@ final class MainWindowStateTests: XCTestCase {
     func testPrimarySidebarOrderRespectsFeatureFlags() {
         var expected: [SidebarItem] = [.transcribe, .library]
         if AppFeatures.isAskWorkspaceAvailable() { expected.append(.ask) }
-        expected.append(.dictations)
         if AppFeatures.meetingRecordingEnabled {
             expected.append(.meetings)
         }

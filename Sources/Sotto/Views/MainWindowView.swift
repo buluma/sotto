@@ -40,7 +40,6 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     static var primaryItems: [SidebarItem] {
         var items: [SidebarItem] = [.transcribe, .library]
         if AppFeatures.isAskWorkspaceAvailable() { items.append(.ask) }
-        items.append(.dictations)
         if AppFeatures.meetingRecordingEnabled {
             items.append(.meetings)
         }
@@ -174,7 +173,12 @@ struct MainWindowView: View {
                             }
                         )
                     case .library:
-                        if let transcription = transcriptionViewModel.currentTranscription {
+                        if libraryViewModel.filter == .dictations {
+                            DictationHistoryView(
+                                viewModel: historyViewModel,
+                                onBackToLibrary: { libraryViewModel.filter = .all }
+                            )
+                        } else if let transcription = transcriptionViewModel.currentTranscription {
                             TranscriptResultView(
                                 transcription: transcription,
                                 viewModel: transcriptionViewModel,
@@ -246,7 +250,10 @@ struct MainWindowView: View {
                             )
                         }
                     case .dictations:
-                        DictationHistoryView(viewModel: historyViewModel)
+                        DictationHistoryView(
+                            viewModel: historyViewModel,
+                            onBackToLibrary: { state.selectedItem = .library }
+                        )
                     case .sharedPages:
                         if let sharing = shareManagementViewModel {
                             SharedSharesView(model: sharing) { state.selectedItem = .library }
@@ -411,12 +418,17 @@ struct MainWindowView: View {
         }
         .onChange(of: state.selectedItem) { _, newItem in
             // Bulk-selection mode is a History-only affordance living on a
-            // process-lifetime singleton, so tear it down at the navigation
-            // boundary when the user leaves the Dictations section. Handled here
+            // process-lifetime singleton, so tear it down when the user leaves
+            // Library's Dictations filter. Handled here
             // rather than via `DictationHistoryView.onDisappear`, which can fire
             // on transient macOS view-lifecycle events and reset an active
             // selection mid-browse.
-            if newItem != .dictations {
+            if !(newItem == .library && libraryViewModel.filter == .dictations) {
+                historyViewModel.exitBulkSelection()
+            }
+        }
+        .onChange(of: libraryViewModel.filter) { _, newFilter in
+            if newFilter != .dictations {
                 historyViewModel.exitBulkSelection()
             }
         }

@@ -5,6 +5,7 @@ import SottoViewModels
 
 struct DictationHistoryView: View {
     @Bindable var viewModel: DictationHistoryViewModel
+    var onBackToLibrary: (() -> Void)? = nil
     @State private var deleteAlertCount = 0
     @State private var expandedDictationIDs: Set<UUID> = []
 
@@ -65,8 +66,16 @@ struct DictationHistoryView: View {
 
     private var subTabPicker: some View {
         HStack {
+            Text("Dictations")
+                .font(DesignSystem.Typography.pageTitle)
+                .foregroundStyle(DesignSystem.Colors.textPrimary)
             DictationSubTabPicker(selection: $viewModel.selectedSubTab)
             Spacer()
+            if let onBackToLibrary {
+                Button("All Library") { onBackToLibrary() }
+                    .sottoAction(.secondary)
+                    .accessibilityIdentifier("dictations-back-to-library")
+            }
         }
         .padding(.horizontal, DesignSystem.Spacing.lg)
         .padding(.top, DesignSystem.Spacing.md)
