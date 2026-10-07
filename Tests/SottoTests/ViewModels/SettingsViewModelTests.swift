@@ -1546,10 +1546,10 @@ final class SettingsViewModelTests: XCTestCase {
         wait(for: [expectation], timeout: 1.0)
     }
 
-    func testShowDiscoverDefaultsToFalse() {
-        // Fresh personal defaults do not request the upstream Discover feed.
+    func testShowDiscoverDefaultsToTrue() {
+        // Personal Discover content is bundled and shown by default.
         let vm = SettingsViewModel(defaults: testDefaults)
-        XCTAssertFalse(vm.showDiscover)
+        XCTAssertTrue(vm.showDiscover)
     }
 
     func testShowDiscoverPreferenceSurvivesReload() {

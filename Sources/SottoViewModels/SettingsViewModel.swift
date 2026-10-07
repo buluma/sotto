@@ -140,7 +140,7 @@ public final class SettingsViewModel {
             )
         }
     }
-    /// Show local banter cards. Off by default in this personal fork.
+    /// Show local banter cards. On by default in this personal fork.
     ///
     /// `MainWindowView` reads this directly (`SettingsViewModel` is
     /// `@Observable`, so the sidebar re-renders on change). The notification
@@ -1049,7 +1049,7 @@ public final class SettingsViewModel {
         appAppearanceMode = AppPreferences.appearanceMode(defaults: defaults)
         showIdlePill = defaults.object(forKey: UserDefaultsAppRuntimePreferences.showIdlePillKey) as? Bool ?? true
         dictationOverlayPlacement = DictationOverlayPlacement.current(defaults: defaults)
-        showDiscover = defaults.object(forKey: UserDefaultsAppRuntimePreferences.showDiscoverKey) as? Bool ?? false
+        showDiscover = defaults.object(forKey: UserDefaultsAppRuntimePreferences.showDiscoverKey) as? Bool ?? true
         telemetryEnabled = AppPreferences.isTelemetryEnabled(defaults: defaults)
         notifyOnTranscriptionComplete = defaults.object(
             forKey: UserDefaultsAppRuntimePreferences.notifyOnTranscriptionCompleteKey

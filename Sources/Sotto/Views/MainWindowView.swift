@@ -120,14 +120,36 @@ struct MainWindowView: View {
                     }
                 }
                 .listStyle(.sidebar)
+                .task {
+                    guard AppFeatures.meetingRecordingEnabled else { return }
+                    await meetingsWorkspaceViewModel.refreshRecentMeetings().value
+                }
                 .safeAreaInset(edge: .bottom, spacing: 0) {
-                    if settingsViewModel.showDiscover {
-                        DiscoverSidebarCard(
-                            viewModel: discoverViewModel,
-                            isSelected: state.selectedItem == .discover,
-                            onTap: { state.selectedItem = .discover }
-                        )
+                    VStack(spacing: DesignSystem.Spacing.sm) {
+                        if AppFeatures.meetingRecordingEnabled {
+                            QuickAccessSidebarCard(
+                                meetings: meetingsWorkspaceViewModel.recentMeetingsViewModel.transcriptions,
+                                isLoading: meetingsWorkspaceViewModel.recentMeetingsViewModel.isLoading,
+                                microphoneGranted: settingsViewModel.microphoneGranted,
+                                speechEngine: settingsViewModel.engine.speechEnginePreference,
+                                engineStatus: activeSpeechEngineStatus,
+                                onOpenMeeting: openMeetingFromSidebar,
+                                onRecordMeeting: onRecordMeetingFromWorkspace,
+                                onOpenSettings: {
+                                    state.navigateToSettings(tab: .capture, anchor: "meeting")
+                                }
+                            )
+                        }
+
+                        if settingsViewModel.showDiscover {
+                            DiscoverSidebarCard(
+                                viewModel: discoverViewModel,
+                                isSelected: state.selectedItem == .discover,
+                                onTap: { state.selectedItem = .discover }
+                            )
+                        }
                     }
+                    .padding(.top, DesignSystem.Spacing.sm)
                 }
                 .navigationSplitViewColumnWidth(min: 170, ideal: DesignSystem.Layout.sidebarMinWidth, max: 240)
             } detail: {
@@ -478,6 +500,23 @@ struct MainWindowView: View {
             screenRecordingGranted: settingsViewModel.screenRecordingGranted,
             sourceMode: settingsViewModel.meetingAudioSourceMode
         )
+    }
+
+    private var activeSpeechEngineStatus: EngineSettingsViewModel.LocalModelStatus {
+        let engine = settingsViewModel.engine
+        switch engine.speechEnginePreference {
+        case .parakeet: return engine.parakeetStatus
+        case .nemotron: return engine.nemotronModelStatus
+        case .whisper: return engine.whisperModelStatus
+        case .cohere: return engine.cohereModelStatus
+        }
+    }
+
+    private func openMeetingFromSidebar(_ transcription: Transcription) {
+        state.selectedItem = .meetings
+        state.openTranscription(from: .meetings, in: transcriptionViewModel) {
+            await meetingsWorkspaceViewModel.recentMeetingsViewModel.loadForOpening(transcription)
+        }
     }
 
     private var globalTranscriptionBottomBar: some View {
