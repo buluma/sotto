@@ -73,28 +73,17 @@ public enum Observability {
         initialState: []
     )
 
-    #if compiler(>=6.2)
-    public typealias ContextOperation<T> = nonisolated(nonsending) () async throws -> T
-    #else
-    public typealias ContextOperation<T> = () async throws -> T
-    #endif
-
     public static func withOperationContext<T: Sendable>(
         _ context: ObservabilityOperationContext,
         isolation: isolated (any Actor)? = #isolation,
-        operation: ContextOperation<T>
+        operation: () async throws -> T
     ) async rethrows -> T {
         if #available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *) {
-            #if compiler(>=6.2)
-            // The nonsending overload executes on the caller's actor context.
-            return try await $currentOperationContext.withValue(context, operation: operation)
-            #else
             return try await $currentOperationContext.withValue(
                 context,
                 operation: operation,
                 isolation: isolation
             )
-            #endif
         } else {
             // macOS 14.x: skip the TaskLocal binding to avoid the Swift 6
             // back-deployment shim for `TaskLocal.withValue(_:operation:isolation:)`,
