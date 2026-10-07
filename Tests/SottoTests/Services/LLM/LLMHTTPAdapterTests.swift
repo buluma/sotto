@@ -88,22 +88,26 @@ final class LLMHTTPAdapterTests: XCTestCase {
         ] {
             var proposed = original
             proposed.url = URL(string: destination)!
-            let result = await delegate.urlSession?(
+            let completed = expectation(description: "redirect decision")
+            delegate.urlSession?(
                 session, task: task,
                 willPerformHTTPRedirection: HTTPURLResponse(
                     url: original.url!, statusCode: 307, httpVersion: nil, headerFields: nil
                 )!,
                 newRequest: proposed
-            )
-            if destination == "https://opencode.ai/zen/go/v1/messages" {
-                XCTAssertEqual(result?.url?.absoluteString, destination)
-                XCTAssertEqual(result?.value(forHTTPHeaderField: "x-opencode-session"), conversationID.uuidString)
-                XCTAssertEqual(result?.value(forHTTPHeaderField: "Authorization"), "Bearer synthetic-key")
-                XCTAssertEqual(result?.value(forHTTPHeaderField: "x-api-key"), "synthetic-api-key")
-                XCTAssertEqual(result?.httpBody, Data("Private synthetic prompt".utf8))
-            } else {
-                XCTAssertNil(result, "Neither credentials nor prompt content may follow an unapproved redirect")
+            ) { result in
+                if destination == "https://opencode.ai/zen/go/v1/messages" {
+                    XCTAssertEqual(result?.url?.absoluteString, destination)
+                    XCTAssertEqual(result?.value(forHTTPHeaderField: "x-opencode-session"), conversationID.uuidString)
+                    XCTAssertEqual(result?.value(forHTTPHeaderField: "Authorization"), "Bearer synthetic-key")
+                    XCTAssertEqual(result?.value(forHTTPHeaderField: "x-api-key"), "synthetic-api-key")
+                    XCTAssertEqual(result?.httpBody, Data("Private synthetic prompt".utf8))
+                } else {
+                    XCTAssertNil(result, "Neither credentials nor prompt content may follow an unapproved redirect")
+                }
+                completed.fulfill()
             }
+            await fulfillment(of: [completed], timeout: 2)
         }
     }
 
