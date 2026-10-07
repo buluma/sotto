@@ -256,22 +256,25 @@ final class AppWindowCoordinator: NSObject, NSWindowDelegate {
             contentRect: NSRect(
                 x: 0,
                 y: 0,
-                width: DesignSystem.Layout.sidebarMinWidth + DesignSystem.Layout.contentMinWidth,
+                width: DesignSystem.Layout.windowMinWidth,
                 height: DesignSystem.Layout.windowMinHeight
             ),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
         window.title = "Sotto"
         window.center()
         window.setFrameAutosaveName("MainWindow")
-        window.minSize = NSSize(
-            width: DesignSystem.Layout.sidebarMinWidth + DesignSystem.Layout.contentMinWidth,
-            height: DesignSystem.Layout.windowMinHeight
-        )
         window.titlebarAppearsTransparent = true
-        window.contentView = NSHostingView(rootView: contentView)
+        let hostingView = NSHostingView(rootView: contentView)
+        // The window owns the viewport. Propagate the SwiftUI minimum, but
+        // do not let a destination's ideal size constrain the hosting view
+        // beyond that viewport (which can clip the sidebar and page header).
+        hostingView.sizingOptions = [.minSize]
+        window.contentView = hostingView
+        // Let the host propagate the content minimum, including safe-area
+        // insets; a frame-sized NSWindow.minSize would omit toolbar space.
         window.delegate = self
         window.isReleasedWhenClosed = false
 
