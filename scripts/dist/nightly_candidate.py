@@ -60,13 +60,23 @@ if __name__ == "__main__":
     if not re.fullmatch(r"[0-9a-f]{40}", sha):
         raise SystemExit("No CI-eligible source commit found")
     prefix = f"v{version}-nightly."
+    tag_pattern = re.compile(re.escape(prefix) + r"\d{8}\." + re.escape(sha[:12]))
+    candidate_releases = [
+        release for release in releases()
+        if tag_pattern.fullmatch(release["tag_name"])
+    ]
     published = any(
         release["prerelease"] and not release["draft"]
-        and release["tag_name"].startswith(prefix)
-        and release["tag_name"].endswith(f".{sha[:12]}")
-        for release in releases()
+        for release in candidate_releases
     )
-    date = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d")
-    tag = f"{prefix}{date}.{sha[:12]}"
+    drafts = [
+        release for release in candidate_releases if release["draft"]
+    ]
+    if drafts:
+        # A retry after midnight must resume the existing draft and tag.
+        tag = max(drafts, key=lambda release: release.get("created_at", ""))["tag_name"]
+    else:
+        date = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d")
+        tag = f"{prefix}{date}.{sha[:12]}"
     with open(os.environ["GITHUB_OUTPUT"], "a") as output:
         output.write(f"sha={sha}\nversion={version}\ntag={tag}\nchanged={str(not published).lower()}\n")
