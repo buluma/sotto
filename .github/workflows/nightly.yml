@@ -4,18 +4,33 @@ on:
   schedule:
     - cron: '17 23 * * *'
   workflow_dispatch:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [master]
 
 permissions:
   contents: write
   actions: read
   checks: read
+  pull-requests: read
 
 concurrency:
-  group: nightly-release
+  # Give each merge its own group so a burst of PRs cannot replace a pending
+  # nightly. Scheduled/manual runs share the current master SHA.
+  group: nightly-release-${{ github.event.workflow_run.head_sha || github.sha }}
   cancel-in-progress: false
 
 jobs:
   candidate:
+    if: >-
+      ${{
+        github.event_name != 'workflow_run' ||
+        (
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push'
+        )
+      }}
     runs-on: ubuntu-latest
     outputs:
       sha: ${{ steps.candidate.outputs.sha }}
@@ -33,6 +48,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha || '' }}
         run: python3 scripts/dist/nightly_candidate.py
   package:
     needs: candidate
