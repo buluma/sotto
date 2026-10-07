@@ -57,7 +57,7 @@ Design philosophy: **Simple, native, stays out of the way.** No chrome, no clutt
 
 Minimum window width: 860pt.
 
-The main window keeps its SwiftUI hosting view as the window content view so native toolbars and search remain available. The AppKit content rectangle and SwiftUI minimum both use the shared 860pt width. The hosting view propagates only minimum-size constraints (`sizingOptions = [.minSize]`); the window viewport controls its size rather than the current destination’s ideal size. Full-size content and a hidden toolbar background preserve the accepted native sidebar toggle and search arrangement, while SwiftUI content respects the titlebar safe area. The root canvas draws one behind-window material with a light graphite or mint tint through `WindowCanvasBackground`. Page roots leave that shared canvas visible; cards and controls retain opaque surfaces for readability.
+The main window keeps its SwiftUI hosting view as the window content view so native toolbars and search remain available. Its detail column draws one behind-window material with a light graphite or mint tint through `WindowCanvasBackground`. Page roots leave that shared canvas visible; cards and controls retain opaque surfaces for readability.
 
 Prefer standard SwiftUI controls for navigation and selection so each supported macOS release can provide its native appearance. The Dictations History/Stats selector uses a segmented `Picker`, which adopts the system's Liquid Glass appearance when available.
 
@@ -80,7 +80,7 @@ The Meetings overview uses the available content width with 20pt side insets and
 
 Upcoming calendar rows stay list-like: no persistent Skip button. A context menu offers **Don't auto-record this meeting**, and **Don't auto-record this repeating meeting** only when `event.isRecurring` is true (`externalId` alone is not enough). Skipped rows remain visible at reduced opacity: **Won't auto-record this time** for an occurrence skip on a collapsed series row, **Won't auto-record this series** for a recurring event-level skip, **Won't auto-record** for a one-off (occurrence or event-level). Undo is **Auto-record again**, or **Auto-record this repeating meeting again** for series. In notify-only mode the row caption states that Sotto won't remind you or start recording. The auto-start toast ✕ is always this occurrence, not a session-only dismiss. Skip never lives as a Settings list of events; per-calendar include stays the coarse filter. Collapse plus the Upcoming cap means not every fetched occurrence is reachable from this list.
 
-Column width: `min: 160, ideal: 180, max: 220`. Window minimum width: 800pt.
+Column width: `min: 160, ideal: 180, max: 220`. Window minimum width: 860pt.
 
 ### Ask Workspace (development)
 

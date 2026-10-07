@@ -22,24 +22,10 @@ struct DiscoverSidebarCard: View {
                                 .fill(DesignSystem.Colors.accent.opacity(0.12))
                         )
 
-                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.xs) {
-                        Text("Discover")
-                            .font(DesignSystem.Typography.micro.weight(.semibold))
-                            .foregroundStyle(DesignSystem.Colors.accent)
-
-                        Text(verbatim: item.title)
-                            .font(DesignSystem.Typography.bodySmall.weight(.semibold))
-                            .foregroundStyle(DesignSystem.Colors.textPrimary)
-                            .fixedSize(horizontal: false, vertical: true)
-
-                        Text(verbatim: item.body.isEmpty ? item.title : item.body)
-                            .font(DesignSystem.Typography.caption)
-                            .foregroundStyle(DesignSystem.Colors.textSecondary)
-                            .lineSpacing(2)
-                            .textSelection(.enabled)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .accessibilityIdentifier("discover-sidebar-dialogue")
-                    }
+                    Text(item.body.isEmpty ? item.title : item.body)
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(DesignSystem.Spacing.sm)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -56,8 +42,7 @@ struct DiscoverSidebarCard: View {
                 )
             }
             .buttonStyle(.plain)
-            .help("\(item.title). \(item.body)")
-            .accessibilityLabel("Discover: \(item.title). \(item.body)")
+            .help(item.body)
             .onHover { hovering in
                 withAnimation(DesignSystem.Animation.hoverTransition) {
                     isHovered = hovering

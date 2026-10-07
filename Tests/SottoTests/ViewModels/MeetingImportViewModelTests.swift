@@ -16,7 +16,7 @@ final class MeetingImportViewModelTests: XCTestCase {
     }
 
     override func tearDown() async throws {
-        await MainActor.run {
+        try await MainActor.run {
             try? FileManager.default.removeItem(at: sourceURL)
         }
     }
