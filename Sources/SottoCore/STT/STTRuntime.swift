@@ -1444,7 +1444,7 @@ public actor STTRuntime: STTRuntimeProtocol {
         let stream = AsyncStream<STTWarmUpState> { continuation in
             continuation.yield(backgroundWarmUpState)
             warmUpObservers[id] = continuation
-            continuation.onTermination = { @Sendable _ in
+            continuation.onTermination = { @Sendable [weak self] _ in
                 Task { [weak self] in
                     await self?.removeWarmUpObserver(id: id)
                 }
