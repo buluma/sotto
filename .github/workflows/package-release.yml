@@ -24,7 +24,40 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  source-ci:
+    name: Validate candidate and wait for source CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 85
+    permissions:
+      contents: read
+      checks: read
+      actions: read
+    env:
+      RELEASE_TAG: ${{ inputs.release_tag }}
+      RELEASE_CHANNEL: ${{ inputs.channel }}
+      VERSION: ${{ inputs.version }}
+      BUILD_GIT_COMMIT: ${{ inputs.source_sha }}
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate channel and tag
+        run: |
+          python3 scripts/dist/publish_release.py --validate
+
+      - name: Require source commit CI
+        timeout-minutes: 81
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: bash scripts/dist/require_ci.sh "$(git rev-parse HEAD)" --wait
+
   dmg:
+    needs: source-ci
     name: Build and publish Apple Silicon DMG
     runs-on: xcode-27
     timeout-minutes: 120
@@ -49,17 +82,6 @@ jobs:
           ref: ${{ inputs.source_sha }}
           fetch-depth: 0
           persist-credentials: false
-
-      - name: Validate channel and tag
-        run: |
-          python3 scripts/dist/publish_release.py --validate
-
-      - name: Require source commit CI
-        timeout-minutes: 81
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: bash scripts/dist/require_ci.sh "$(git rev-parse HEAD)" --wait
 
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1

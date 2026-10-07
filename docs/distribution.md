@@ -6,7 +6,7 @@ This repo uses Swift packages. App distribution builds those packages through Xc
 
 ## Stable and nightly releases
 
-Both channels call `.github/workflows/package-release.yml` to require CI for the exact source SHA, build and verify an Apple Silicon DMG, create a draft, upload the DMG and checksum, check upload completion, then publish. A failed build creates no release; a failed upload leaves a resumable draft. Published releases and existing tags are never overwritten or moved. Releases created by the workflow token do not need to trigger a second workflow.
+Both channels call `.github/workflows/package-release.yml` to validate the candidate and wait for exact-source CI on an Ubuntu runner before allocating a Mac runner. Once CI passes, they build and verify an Apple Silicon DMG, create a draft, upload the DMG and checksum, check upload completion, then publish. A failed build creates no release; a failed upload leaves a resumable draft. Published releases and existing tags are never overwritten or moved. Releases created by the workflow token do not need to trigger a second workflow.
 
 ### Stable
 
