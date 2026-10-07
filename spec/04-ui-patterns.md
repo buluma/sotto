@@ -55,9 +55,9 @@ Design philosophy: **Simple, native, stays out of the way.** No chrome, no clutt
 └──────────────────┴───────────────────────────────────────────┘
 ```
 
-Minimum window width: 800pt.
+Minimum window width: 860pt.
 
-The main window keeps its SwiftUI hosting view as the window content view so native toolbars and search remain available. Its detail column draws one behind-window material with a light graphite or mint tint through `WindowCanvasBackground`. Page roots leave that shared canvas visible; cards and controls retain opaque surfaces for readability.
+The main window keeps its SwiftUI hosting view as the window content view so native toolbars and search remain available. The AppKit content rectangle and SwiftUI minimum both use the shared 860pt width. The hosting view propagates only minimum-size constraints (`sizingOptions = [.minSize]`); the window viewport controls its size rather than the current destination’s ideal size. Full-size content and a hidden toolbar background preserve the accepted native sidebar toggle and search arrangement, while SwiftUI content respects the titlebar safe area. The root canvas draws one behind-window material with a light graphite or mint tint through `WindowCanvasBackground`. Page roots leave that shared canvas visible; cards and controls retain opaque surfaces for readability.
 
 Prefer standard SwiftUI controls for navigation and selection so each supported macOS release can provide its native appearance. The Dictations History/Stats selector uses a segmented `Picker`, which adopts the system's Liquid Glass appearance when available.
 

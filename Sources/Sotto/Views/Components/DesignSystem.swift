@@ -198,6 +198,7 @@ enum DesignSystem {
     enum Layout {
         static let sidebarMinWidth: CGFloat = 200
         static let contentMinWidth: CGFloat = 500
+        static let windowMinWidth: CGFloat = 860
         static let windowMinHeight: CGFloat = 560
         static let cornerRadius: CGFloat = 16
         static let cardCornerRadius: CGFloat = 14
