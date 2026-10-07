@@ -156,7 +156,9 @@ final class MeetingClassificationViewModelTests: XCTestCase {
         )
         await viewModel.loadClassification(for: transcriptionID).value
 
-        await viewModel.createMeetingLabel(named: "  Follow-up  ", assigningTo: transcriptionID).value
+        let createdSuccessfully = await viewModel.createMeetingLabel(
+            named: "  Follow-up  ", assigningTo: transcriptionID).value
+        XCTAssertTrue(createdSuccessfully)
 
         let created = try? XCTUnwrap(labelRepo.items.first)
         XCTAssertEqual(created?.name, "Follow-up")
