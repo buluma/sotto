@@ -18,6 +18,7 @@ mkdir -p "$(dirname "$DMG_PATH")"
 STAGING_DIR="$(mktemp -d "${TMPDIR:-/tmp}/sotto-dmg.XXXXXX")"
 TEMP_OUTPUT_DIR="$(mktemp -d "$(dirname "$DMG_PATH")/.sotto-dmg.XXXXXX")"
 DMG_BASENAME="$(basename "$DMG_PATH")"
+DMG_STEM="${DMG_BASENAME%.dmg}"
 trap 'rm -rf "$STAGING_DIR" "$TEMP_OUTPUT_DIR"' EXIT
 # Preserve bundle metadata, symlinks, and signatures.
 ditto "$APP_PATH" "$STAGING_DIR/$(basename "$APP_PATH")"
@@ -30,7 +31,8 @@ MAX_CREATE_ATTEMPTS=3
 attempt=1
 CREATE_LOG="$TEMP_OUTPUT_DIR/hdiutil-create.log"
 while (( attempt <= MAX_CREATE_ATTEMPTS )); do
-  TEMP_DMG_PATH="$TEMP_OUTPUT_DIR/$DMG_BASENAME.attempt-$attempt"
+  # Keep .dmg as the final suffix; hdiutil appends it when the suffix is missing.
+  TEMP_DMG_PATH="$TEMP_OUTPUT_DIR/$DMG_STEM.attempt-$attempt.dmg"
   if hdiutil create -volname "${DMG_VOLUME_NAME:-Sotto}" -srcfolder "$STAGING_DIR" -format UDZO "$TEMP_DMG_PATH" >"$CREATE_LOG" 2>&1; then
     cat "$CREATE_LOG"
     break
