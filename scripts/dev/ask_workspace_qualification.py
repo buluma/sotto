@@ -314,7 +314,11 @@ class Qualification:
             require(any(event.get("type") == "text" for event in events), "no answer text streamed")
             require(final["messages"][-1]["status"] == "complete", "answer was not complete")
         persisted = self.invoke(label + "-reload", "show", final["id"])
-        require(persisted == final, "answer changed when reloaded in a fresh CLI process")
+        # The streamed result and the fresh-process read can straddle a second boundary.
+        # Compare all persisted content and metadata except this volatile timestamp.
+        persisted_snapshot = {key: value for key, value in persisted.items() if key != "updatedAt"}
+        final_snapshot = {key: value for key, value in final.items() if key != "updatedAt"}
+        require(persisted_snapshot == final_snapshot, "answer changed when reloaded in a fresh CLI process")
         return final
 
     def evidence(self, reference):
