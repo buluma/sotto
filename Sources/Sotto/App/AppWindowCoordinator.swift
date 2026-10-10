@@ -259,7 +259,7 @@ final class AppWindowCoordinator: NSObject, NSWindowDelegate {
                 width: DesignSystem.Layout.sidebarMinWidth + DesignSystem.Layout.contentMinWidth,
                 height: DesignSystem.Layout.windowMinHeight
             ),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
@@ -271,7 +271,11 @@ final class AppWindowCoordinator: NSObject, NSWindowDelegate {
             height: DesignSystem.Layout.windowMinHeight
         )
         window.titlebarAppearsTransparent = true
-        window.contentView = NSHostingView(rootView: contentView)
+        window.titleVisibility = .hidden
+        window.toolbarStyle = .unified
+        let hostingView = NSHostingView(rootView: contentView)
+        hostingView.sizingOptions = [.minSize]
+        window.contentView = hostingView
         window.delegate = self
         window.isReleasedWhenClosed = false
 
