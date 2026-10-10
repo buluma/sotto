@@ -35,6 +35,8 @@ Design philosophy: **Simple, native, stays out of the way.** No chrome, no clutt
 
 ### Layout
 
+The main window uses a unified translucent toolbar. The sidebar toggle sits at the right edge of the sidebar header and remains available in the toolbar when collapsed. A darker frosted header separates the toolbar from page content; its measured AppKit height determines the content inset on every destination. The current destination title stays in the content header, and Library search appears at the trailing edge of the toolbar only while browsing transcripts. Search retains the Library view model's query, and ⌘F focuses the native search field; transcript detail and dictation history do not show the Library search field.
+
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │  Sotto                                          ─ □ ✕  │

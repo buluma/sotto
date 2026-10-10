@@ -173,7 +173,6 @@ struct TranscriptionLibraryView: View {
 
     private var interactionContent: some View {
         libraryContent
-            .searchable(text: $viewModel.searchText, prompt: "Search transcriptions")
             .focusable(viewModel.isBulkSelectionModeEnabled)
             .focused($selectionKeyboardFocused)
             // Retain keyboard focus without drawing the full-width system
