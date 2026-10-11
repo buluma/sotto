@@ -285,6 +285,12 @@ public final class SettingsViewModel {
             microphoneTestState = .idle
             microphoneTestLevel = 0
             NotificationCenter.default.post(name: .sottoMicrophoneSelectionDidChange, object: nil)
+            // Only an explicit selection rebuilds the idle preparation. Route
+            // notifications from Core Audio do not. The warm hold owns its own
+            // refresh while Instant Dictation is on.
+            if !instantDictationEnabled {
+                sharedMicStream?.refreshIdlePrewarm()
+            }
             Telemetry.send(.settingChanged(setting: .microphoneSelection))
         }
     }
