@@ -382,20 +382,21 @@ struct MainWindowView: View {
                     globalTranscriptionBottomBar
                 }
             }
-            .modifier(MainWindowLibrarySearch(
-                text: Binding(
-                    get: { showsDictationSearch ? historyViewModel.searchText : libraryViewModel.searchText },
-                    set: {
-                        if showsDictationSearch {
-                            historyViewModel.searchText = $0
-                        } else {
-                            libraryViewModel.searchText = $0
+            .modifier(
+                MainWindowLibrarySearch(
+                    text: Binding(
+                        get: { showsDictationSearch ? historyViewModel.searchText : libraryViewModel.searchText },
+                        set: {
+                            if showsDictationSearch {
+                                historyViewModel.searchText = $0
+                            } else {
+                                libraryViewModel.searchText = $0
+                            }
                         }
-                    }
-                ),
-                prompt: showsDictationSearch ? "Search dictations..." : "Search transcriptions",
-                enabled: showsToolbarSearch
-            ))
+                    ),
+                    prompt: showsDictationSearch ? "Search dictations..." : "Search transcriptions",
+                    enabled: showsToolbarSearch
+                ))
         }
         .frame(
             minWidth: 860,
