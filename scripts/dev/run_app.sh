@@ -90,6 +90,12 @@ echo "[1/5] Requesting ordinary quit for this worktree's dev build…"
 source "$ROOT_DIR/scripts/dev/stop_app_processes.sh"
 stop_app_processes 10 "$ROOT_DIR" "$APP_BIN" "$APP_MACOS_BIN"
 
+# xcodebuild links with `--sysroot`, and ld then stamps LC_BUILD_VERSION with the
+# deployment target as the SDK version. macOS 26+ keys the Liquid Glass look off
+# that stamp, so pass the real SDK version explicitly.
+SDK_VERSION="$(xcrun --sdk macosx --show-sdk-version)"
+MIN_MACOS_LINK_VERSION="14.0"
+
 echo "[2/5] Building $CONFIG app bundle (xcodebuild, target signing disabled)…"
 if ! xcodebuild build \
   -scheme Sotto \
@@ -98,7 +104,9 @@ if ! xcodebuild build \
   -derivedDataPath "$DERIVED_DATA_DIR" \
   -skipMacroValidation \
   CODE_SIGNING_ALLOWED=NO \
-  CODE_SIGNING_REQUIRED=NO >"$BUILD_LOG_FILE" 2>&1; then
+  CODE_SIGNING_REQUIRED=NO \
+  OTHER_LDFLAGS="\$(inherited) -Xlinker -platform_version -Xlinker macos -Xlinker $MIN_MACOS_LINK_VERSION -Xlinker $SDK_VERSION" \
+  >"$BUILD_LOG_FILE" 2>&1; then
   echo "xcodebuild failed. Last 120 log lines from $BUILD_LOG_FILE:" >&2
   tail -n 120 "$BUILD_LOG_FILE" >&2 || true
   exit 1

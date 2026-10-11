@@ -35,7 +35,7 @@ Design philosophy: **Simple, native, stays out of the way.** No chrome, no clutt
 
 ### Layout
 
-The main window uses a unified translucent toolbar. The sidebar toggle sits at the right edge of the sidebar header and remains available in the toolbar when collapsed. A darker frosted header separates the toolbar from page content; its measured AppKit height determines the content inset on every destination. The current destination title stays in the content header, and Library search appears at the trailing edge of the toolbar only while browsing transcripts. Search retains the Library view model's query, and ⌘F focuses the native search field; transcript detail and dictation history do not show the Library search field.
+The main window uses the system's macOS 26 toolbar and sidebar. The toolbar is not custom-drawn: the sidebar toggle, and Library's search field when browsing transcripts, are system toolbar items that render as Liquid Glass. Each destination's title is the window title and appears at the leading edge of the toolbar; pages do not repeat it as a content heading. One-line page descriptions (Meetings, Vocabulary, Transforms) stay in the page content. ⌘F focuses the Library search field; transcript detail and dictation history do not show it. Liquid Glass depends on the app binary being linked against the macOS 26+ SDK, so app builds pass the real SDK version to the linker (`scripts/dev/run_app.sh`, `scripts/dist/build_app_bundle.sh`); xcodebuild would otherwise stamp the deployment target as the SDK version and macOS would render the legacy look.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐

@@ -227,14 +227,9 @@ struct MeetingsView: View {
 
     private var header: some View {
         HStack(alignment: .center, spacing: DesignSystem.Spacing.md) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Meetings")
-                    .font(DesignSystem.Typography.pageTitle)
-                    .foregroundStyle(DesignSystem.Colors.textPrimary)
-                Text("Upcoming, live, and saved.")
-                    .font(DesignSystem.Typography.bodySmall)
-                    .foregroundStyle(DesignSystem.Colors.textSecondary)
-            }
+            Text("Upcoming, live, and saved.")
+                .font(DesignSystem.Typography.bodySmall)
+                .foregroundStyle(DesignSystem.Colors.textSecondary)
 
             Spacer(minLength: DesignSystem.Spacing.lg)
 
