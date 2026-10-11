@@ -270,8 +270,8 @@ final class AppWindowCoordinator: NSObject, NSWindowDelegate {
             width: DesignSystem.Layout.sidebarMinWidth + DesignSystem.Layout.contentMinWidth,
             height: DesignSystem.Layout.windowMinHeight
         )
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = false
+        window.titleVisibility = .visible
         window.toolbarStyle = .unified
         let hostingView = NSHostingView(rootView: contentView)
         hostingView.sizingOptions = [.minSize]

@@ -23,7 +23,7 @@ struct VocabularyView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.lg) {
-                pageHeader
+                pageSubtitle
                 modeSelectionCard
                 voiceReturnCard
                 if selectedMode == .raw {
@@ -61,16 +61,12 @@ struct VocabularyView: View {
 
     // MARK: - Header
 
-    private var pageHeader: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Vocabulary")
-                .font(DesignSystem.Typography.pageTitle)
-            Text("How your voice becomes text — entirely on your Mac.")
-                .font(DesignSystem.Typography.bodySmall)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.bottom, DesignSystem.Spacing.xs)
+    private var pageSubtitle: some View {
+        Text("How your voice becomes text — entirely on your Mac.")
+            .font(DesignSystem.Typography.bodySmall)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.bottom, DesignSystem.Spacing.xs)
     }
 
     // MARK: - Mode Selection

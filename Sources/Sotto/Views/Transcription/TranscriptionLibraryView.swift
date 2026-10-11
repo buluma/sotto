@@ -11,7 +11,6 @@ private enum LibraryLayoutMode: String {
 struct TranscriptionLibraryView: View {
     @Bindable var viewModel: TranscriptionLibraryViewModel
     var meetingSplitViewModel: MeetingSplitViewModel? = nil
-    var title: String = "Library"
     var showsFilterBar: Bool = true
     var primaryActionTitle: String? = nil
     var onPrimaryAction: (() -> Void)? = nil
@@ -63,40 +62,30 @@ struct TranscriptionLibraryView: View {
 
     private var libraryContent: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ViewThatFits(in: .horizontal) {
-                HStack {
-                    libraryHeading
-                    Spacer(minLength: DesignSystem.Spacing.md)
-                    libraryHeaderActions
-                }
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
-                    libraryHeading
-                    HStack {
-                        libraryHeaderActions
-                        Spacer(minLength: 0)
+            // The page title lives in the window toolbar, so the filter chips and the
+            // layout/prompt/primary actions share one row instead of stacking.
+            HStack(alignment: .center, spacing: DesignSystem.Spacing.md) {
+                if showsFilterBar {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 0) {
+                            ForEach(visibleLibraryFilters, id: \.self) { filter in
+                                LibraryFilterChip(
+                                    filter: filter,
+                                    isSelected: viewModel.filter == filter,
+                                    onTap: { viewModel.filter = filter }
+                                )
+                            }
+                        }
                     }
+                } else {
+                    Spacer(minLength: 0)
                 }
+                libraryHeaderActions
+                    .layoutPriority(1)
             }
             .padding(.horizontal, DesignSystem.Spacing.lg)
             .padding(.top, DesignSystem.Spacing.lg)
             .padding(.bottom, DesignSystem.Spacing.sm)
-
-            if showsFilterBar {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 0) {
-                        ForEach(visibleLibraryFilters, id: \.self) { filter in
-                            LibraryFilterChip(
-                                filter: filter,
-                                isSelected: viewModel.filter == filter,
-                                onTap: { viewModel.filter = filter }
-                            )
-                        }
-                        Spacer()
-                    }
-                    .padding(.horizontal, DesignSystem.Spacing.lg)
-                    .padding(.bottom, DesignSystem.Spacing.sm)
-                }
-            }
 
             MeetingClassificationFilterBar(libraryViewModel: viewModel)
                 .padding(.horizontal, DesignSystem.Spacing.lg)
@@ -125,13 +114,6 @@ struct TranscriptionLibraryView: View {
                 thumbnailGrid
             }
         }
-    }
-
-    private var libraryHeading: some View {
-        Text(title)
-            .font(DesignSystem.Typography.pageTitle)
-            .foregroundStyle(DesignSystem.Colors.textPrimary)
-            .fixedSize()
     }
 
     @ViewBuilder

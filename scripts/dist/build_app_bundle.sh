@@ -136,7 +136,14 @@ run_xcodebuild() {
   # behavior when it defaults to /dev/null) while duplicating stderr to both
   # the log and the console, so the configured log is complete and build
   # failures stay visible in job output either way.
-  xcodebuild "$@" >>"$XCODE_BUILD_LOG" 2> >(tee -a "$XCODE_BUILD_LOG" >&2)
+  # xcodebuild links with `--sysroot`, and ld then stamps LC_BUILD_VERSION with the
+  # deployment target as the SDK version. macOS 26+ keys the Liquid Glass look off
+  # that stamp, so pass the real SDK version explicitly. 14.0 matches Package.swift.
+  local sdk_version
+  sdk_version="$(xcrun --sdk macosx --show-sdk-version)"
+  xcodebuild "$@" \
+    OTHER_LDFLAGS="\$(inherited) -Xlinker -platform_version -Xlinker macos -Xlinker 14.0 -Xlinker $sdk_version" \
+    >>"$XCODE_BUILD_LOG" 2> >(tee -a "$XCODE_BUILD_LOG" >&2)
 }
 
 build_xcodebuild() {

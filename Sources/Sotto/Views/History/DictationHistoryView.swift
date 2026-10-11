@@ -66,9 +66,6 @@ struct DictationHistoryView: View {
 
     private var subTabPicker: some View {
         HStack {
-            Text("Dictations")
-                .font(DesignSystem.Typography.pageTitle)
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
             DictationSubTabPicker(selection: $viewModel.selectedSubTab)
             Spacer()
             if let onBackToLibrary {

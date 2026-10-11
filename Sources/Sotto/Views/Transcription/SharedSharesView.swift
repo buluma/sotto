@@ -14,11 +14,8 @@ struct SharedSharesView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Shared pages").font(DesignSystem.Typography.pageTitle)
-                    Text("Separate, expiring text snapshots. Local edits never publish automatically.")
-                        .foregroundStyle(.secondary)
-                }
+                Text("Separate, expiring text snapshots. Local edits never publish automatically.")
+                    .foregroundStyle(.secondary)
                 Spacer()
                 if model.isBusy { ProgressView().controlSize(.small) }
                 Button("Recovery…") { showingRecovery = true }.sottoAction(.secondary)

@@ -67,14 +67,18 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 struct MainWindowView: View {
     @Bindable var state: MainWindowState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-    @Environment(\.colorScheme) private var colorScheme
     @State private var showGlobalCancelConfirmation = false
     @State private var showingPromptLibrary = false
     @State private var askHandoffError: String?
-    @State private var columnVisibility: NavigationSplitViewVisibility = .all
-    @State private var sidebarWidth: CGFloat = DesignSystem.Layout.sidebarMinWidth
-    @State private var toolbarHeight: CGFloat = 52
+
+    /// Library's Dictations filter swaps in the dictation history, so the toolbar
+    /// title follows it instead of saying "Library" over a page about dictations.
+    private var windowTitle: String {
+        if state.selectedItem == .library && libraryViewModel.filter == .dictations {
+            return SidebarItem.dictations.displayName
+        }
+        return state.selectedItem.displayName
+    }
 
     private var showsLibrarySearch: Bool {
         state.selectedItem == .library && libraryViewModel.filter != .dictations
@@ -111,7 +115,7 @@ struct MainWindowView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            NavigationSplitView(columnVisibility: $columnVisibility) {
+            NavigationSplitView {
                 List(selection: $state.selectedItem) {
                     Section {
                         ForEach(SidebarItem.primaryItems) { item in
@@ -131,13 +135,6 @@ struct MainWindowView: View {
                 }
                 .listStyle(.sidebar)
                 .scrollContentBackground(.hidden)
-                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { sidebarWidth = $0 }
-                .toolbar(removing: .sidebarToggle)
-                .toolbar {
-                    if columnVisibility == .detailOnly {
-                        ToolbarItem(placement: .navigation) { sidebarToggle }
-                    }
-                }
                 .safeAreaInset(edge: .bottom, spacing: 0) {
                     if settingsViewModel.showDiscover {
                         DiscoverSidebarCard(
@@ -367,7 +364,8 @@ struct MainWindowView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .navigationTitle(state.selectedItem.displayName)
+                .navigationTitle(windowTitle)
+                .modifier(FrostedToolbarEdge())
                 .transaction { transaction in
                     if reduceMotion {
                         transaction.animation = nil
@@ -387,8 +385,6 @@ struct MainWindowView: View {
                 enabled: showsLibrarySearch
             ))
         }
-        .padding(.top, toolbarHeight + 12)
-        .ignoresSafeArea(.container, edges: .top)
         .frame(
             minWidth: 860,
             maxWidth: .infinity,
@@ -396,35 +392,6 @@ struct MainWindowView: View {
             maxHeight: .infinity
         )
         .background { WindowCanvasBackground() }
-        .background {
-            WindowToolbarGeometry { height in toolbarHeight = height }
-        }
-        .overlay {
-            GeometryReader { _ in
-                ZStack(alignment: .topLeading) {
-                    Rectangle()
-                        .fill(reduceTransparency ? AnyShapeStyle(.background) : AnyShapeStyle(Material.ultraThin))
-                        .overlay(colorScheme == .dark ? Color.black.opacity(0.24) : Color.white.opacity(0.16))
-                        .frame(height: toolbarHeight)
-                        .allowsHitTesting(false)
-                    if columnVisibility != .detailOnly {
-                        HStack {
-                            Spacer(minLength: 0)
-                            sidebarToggle
-                                .padding(.trailing, 16)
-                        }
-                        .frame(width: sidebarWidth, height: toolbarHeight)
-                    }
-                }
-            }
-            .ignoresSafeArea(.container, edges: .top)
-        }
-        .toolbarBackground(.hidden, for: .windowToolbar)
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                Text(state.selectedItem.displayName).font(.headline)
-            }
-        }
         .environment(\.shareManagement, shareManagementViewModel)
         // Presented from the window root, not the Library list: a finishing
         // transcription or menu navigation replaces the list while the sheet
@@ -490,19 +457,6 @@ struct MainWindowView: View {
                 historyViewModel.exitBulkSelection()
             }
         }
-    }
-
-    private var sidebarToggle: some View {
-        Button {
-            columnVisibility = columnVisibility == .detailOnly ? .all : .detailOnly
-        } label: {
-            Image(systemName: "sidebar.left")
-                .frame(width: 36, height: 36)
-                .contentShape(Rectangle())
-        }
-        .sottoAction(.subtle)
-        .help(columnVisibility == .detailOnly ? "Show Sidebar" : "Hide Sidebar")
-        .accessibilityLabel(columnVisibility == .detailOnly ? "Show Sidebar" : "Hide Sidebar")
     }
 
     /// Show the global bottom bar when transcribing on any tab except Transcribe (which has its own detailed view)
@@ -710,6 +664,19 @@ private struct SidebarItemLabel: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// Frost the top edge under the toolbar so scrolled content does not run through the
+/// title and toolbar items. The scroll edge effect only exists on macOS 26 and later.
+private struct FrostedToolbarEdge: ViewModifier {
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if #available(macOS 26.0, *) {
+            content.scrollEdgeEffectStyle(.hard, for: .top)
+        } else {
+            content
+        }
     }
 }
 

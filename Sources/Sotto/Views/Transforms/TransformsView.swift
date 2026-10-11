@@ -36,7 +36,7 @@ struct TransformsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.xl) {
-                heroHeader
+                heroSubtitle
 
                 if viewModel.hasLLMProvider {
                     heroExplainer
@@ -115,18 +115,11 @@ struct TransformsView: View {
 
     // MARK: - Sections
 
-    @ViewBuilder
-    private var heroHeader: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
-            Text("Transforms")
-                .font(DesignSystem.Typography.pageTitle)
-                .foregroundStyle(DesignSystem.Colors.textPrimary)
-
-            Text("Rewrite selected text in any app using a transform shortcut.")
-                .font(DesignSystem.Typography.body)
-                .foregroundStyle(DesignSystem.Colors.textSecondary)
-                .frame(maxWidth: 640, alignment: .leading)
-        }
+    private var heroSubtitle: some View {
+        Text("Rewrite selected text in any app using a transform shortcut.")
+            .font(DesignSystem.Typography.body)
+            .foregroundStyle(DesignSystem.Colors.textSecondary)
+            .frame(maxWidth: 640, alignment: .leading)
     }
 
     @ViewBuilder
