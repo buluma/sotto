@@ -80,9 +80,14 @@ struct MainWindowView: View {
         return state.selectedItem.displayName
     }
 
-    private var showsLibrarySearch: Bool {
-        state.selectedItem == .library && libraryViewModel.filter != .dictations
-            && transcriptionViewModel.currentTranscription == nil
+    private var showsDictationSearch: Bool {
+        state.selectedItem == .dictations
+            || (state.selectedItem == .library && libraryViewModel.filter == .dictations)
+    }
+
+    private var showsToolbarSearch: Bool {
+        showsDictationSearch
+            || (state.selectedItem == .library && transcriptionViewModel.currentTranscription == nil)
     }
 
     let transcriptionViewModel: TranscriptionViewModel
@@ -377,13 +382,21 @@ struct MainWindowView: View {
                     globalTranscriptionBottomBar
                 }
             }
-            .modifier(MainWindowLibrarySearch(
-                text: Binding(
-                    get: { libraryViewModel.searchText },
-                    set: { libraryViewModel.searchText = $0 }
-                ),
-                enabled: showsLibrarySearch
-            ))
+            .modifier(
+                MainWindowLibrarySearch(
+                    text: Binding(
+                        get: { showsDictationSearch ? historyViewModel.searchText : libraryViewModel.searchText },
+                        set: {
+                            if showsDictationSearch {
+                                historyViewModel.searchText = $0
+                            } else {
+                                libraryViewModel.searchText = $0
+                            }
+                        }
+                    ),
+                    prompt: showsDictationSearch ? "Search dictations..." : "Search transcriptions",
+                    enabled: showsToolbarSearch
+                ))
         }
         .frame(
             minWidth: 860,
@@ -683,6 +696,7 @@ private struct FrostedToolbarEdge: ViewModifier {
 /// Keep search in the window toolbar, scoped to the Library's list surface.
 private struct MainWindowLibrarySearch: ViewModifier {
     @Binding var text: String
+    var prompt: String
     var enabled: Bool
     @State private var searchPresented = false
 
@@ -692,7 +706,7 @@ private struct MainWindowLibrarySearch: ViewModifier {
             content
                 .searchable(
                     text: $text, isPresented: $searchPresented,
-                    placement: .toolbar, prompt: "Search transcriptions"
+                    placement: .toolbar, prompt: prompt
                 )
                 .background {
                     Button("Search Library") { searchPresented = true }
