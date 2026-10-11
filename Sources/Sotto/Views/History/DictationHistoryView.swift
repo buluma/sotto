@@ -35,7 +35,6 @@ struct DictationHistoryView: View {
                 }
             }
         }
-        .searchable(text: $viewModel.searchText, prompt: "Search dictations...")
         .animation(DesignSystem.Animation.contentSwap, value: viewModel.playingDictationId)
         .animation(DesignSystem.Animation.contentSwap, value: viewModel.playbackError != nil)
         .animation(DesignSystem.Animation.contentSwap, value: viewModel.selectedSubTab)
