@@ -17,6 +17,21 @@ def run(command, timeout):
             os.killpg(process.pid, sig)
         except ProcessLookupError:
             pass
+        except PermissionError:
+            # macOS refuses a group signal when only the unreaped leader is left.
+            if process.poll() is None:
+                raise
+
+    def report_group():
+        # Test output is block-buffered through the pipe and lost on kill, so
+        # this listing is the only record of which child was stuck.
+        listing = subprocess.run(["ps", "-A", "-o", "pid=,pgid=,ppid=,etime=,command="],
+                                 capture_output=True, text=True).stdout
+        print("Processes still running:", file=sys.stderr)
+        for line in listing.splitlines():
+            fields = line.split(None, 2)
+            if len(fields) == 3 and fields[1] == str(process.pid):
+                print(f"  {line.strip()}", file=sys.stderr)
 
     def interrupted(signum, _frame):
         raise SystemExit(128 + signum)
@@ -27,6 +42,7 @@ def run(command, timeout):
             return process.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
             print(f"Test command exceeded {timeout}s; terminating its process group.", file=sys.stderr)
+            report_group()
             return 124
     finally:
         # SwiftPM can leave XCTest or helper children alive after a timeout.

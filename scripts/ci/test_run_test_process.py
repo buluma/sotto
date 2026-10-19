@@ -27,6 +27,21 @@ class TestProcessTests(unittest.TestCase):
             time.sleep(1)
             self.assertFalse(marker.exists(), "A descendant survived the timeout")
 
+    def test_timeout_reports_124_when_command_exits_on_term(self):
+        # Only the unreaped leader is left in the group, so macOS refuses the
+        # follow-up SIGKILL with EPERM.
+        result = subprocess.run([sys.executable, str(RUNNER), "--timeout", ".3", "--",
+                                 sys.executable, "-c", "import time; time.sleep(10)"],
+                                capture_output=True, timeout=5)
+        self.assertEqual(result.returncode, 124, result.stderr.decode())
+        self.assertNotIn(b"Traceback", result.stderr)
+
+    def test_timeout_lists_the_processes_still_running(self):
+        result = subprocess.run([sys.executable, str(RUNNER), "--timeout", ".3", "--",
+                                 sys.executable, "-c", "import time; time.sleep(10)"],
+                                capture_output=True, timeout=5)
+        self.assertIn(b"time.sleep(10)", result.stderr)
+
     def test_release_gate_requires_success_at_requested_commit(self):
         gate = RUNNER.parent.parent / "dist" / "require_ci.sh"
         with tempfile.TemporaryDirectory() as directory:
