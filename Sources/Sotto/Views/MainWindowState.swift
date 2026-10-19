@@ -42,6 +42,16 @@ final class MainWindowState {
         selectedItem = item
     }
 
+    /// Sidebar clicks route here because `List(selection:)` does not report
+    /// re-selecting the current row. Clicking Library while a transcript is
+    /// open returns to the list, matching the detail view's back button.
+    func selectSidebarItem(_ item: SidebarItem, in viewModel: TranscriptionViewModel) {
+        if item == .library, selectedItem == .library, viewModel.currentTranscription != nil {
+            viewModel.showInputPortal()
+        }
+        selectedItem = item
+    }
+
     func navigateToAsk() {
         selectedItem = .ask
     }

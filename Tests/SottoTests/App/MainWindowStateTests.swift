@@ -57,6 +57,32 @@ final class MainWindowStateTests: XCTestCase {
         XCTAssertEqual(state.selectedItem, .settings)
     }
 
+    func testReselectingLibraryReturnsOpenTranscriptToList() {
+        let state = MainWindowState()
+        let viewModel = TranscriptionViewModel()
+        state.selectedItem = .library
+        viewModel.currentTranscription = Transcription(fileName: "Open", status: .completed)
+
+        state.selectSidebarItem(.library, in: viewModel)
+
+        XCTAssertEqual(state.selectedItem, .library)
+        XCTAssertNil(viewModel.currentTranscription)
+    }
+
+    func testSwitchingSidebarItemsKeepsOpenTranscript() {
+        let state = MainWindowState()
+        let viewModel = TranscriptionViewModel()
+        let open = Transcription(fileName: "Open", status: .completed)
+        viewModel.currentTranscription = open
+
+        state.selectSidebarItem(.library, in: viewModel)
+        XCTAssertEqual(viewModel.currentTranscription?.id, open.id)
+
+        state.selectSidebarItem(.meetings, in: viewModel)
+        XCTAssertEqual(state.selectedItem, .meetings)
+        XCTAssertEqual(viewModel.currentTranscription?.id, open.id)
+    }
+
     func testNavigateSelectsRequestedSidebarItem() {
         let state = MainWindowState()
 
