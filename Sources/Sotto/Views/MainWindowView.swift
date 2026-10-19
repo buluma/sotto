@@ -128,6 +128,10 @@ struct MainWindowView: View {
                                 .tag(item)
                                 .accessibilityIdentifier("sidebar-\(item.rawValue)")
                                 .accessibilityAction { state.selectedItem = item }
+                                .highPriorityGesture(
+                                    TapGesture().onEnded {
+                                        state.selectSidebarItem(item, in: transcriptionViewModel)
+                                    })
                         }
                     }
 
