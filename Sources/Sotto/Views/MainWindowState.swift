@@ -43,11 +43,30 @@ final class MainWindowState {
     }
 
     /// Sidebar clicks route here because `List(selection:)` does not report
-    /// re-selecting the current row. Clicking Library while a transcript is
-    /// open returns to the list, matching the detail view's back button.
-    func selectSidebarItem(_ item: SidebarItem, in viewModel: TranscriptionViewModel) {
-        if item == .library, selectedItem == .library, viewModel.currentTranscription != nil {
-            viewModel.showInputPortal()
+    /// re-selecting the current row. Clicking the current section again
+    /// returns it to its top level, matching the detail view's back button.
+    func selectSidebarItem(
+        _ item: SidebarItem,
+        in viewModel: TranscriptionViewModel,
+        library: TranscriptionLibraryViewModel? = nil
+    ) {
+        if item == selectedItem {
+            switch item {
+            case .library:
+                // Same precedence as the Library detail: Dictations renders first.
+                if let library, library.filter == .dictations {
+                    library.filter = .all
+                } else if viewModel.currentTranscription != nil {
+                    viewModel.showInputPortal()
+                }
+            case .meetings:
+                if showsMeetingDetail(viewModel.currentTranscription) {
+                    viewModel.showInputPortal()
+                }
+                meetingsDetailID = nil
+            default:
+                break
+            }
         }
         selectedItem = item
     }
@@ -80,7 +99,7 @@ final class MainWindowState {
             guard isCurrent(), let stored = await load(), isCurrent()
             else { return false }
             viewModel.currentTranscription = stored
-            navigateToTranscription(from: tab)
+            navigateToTranscription(from: tab, id: stored.id)
             return true
         }
     }
@@ -107,13 +126,30 @@ final class MainWindowState {
     /// True when the Create-your-own sheet should be presented.
     var isCreatingTransform: Bool = false
 
-    /// Switch the sidebar to Library so the transcription detail surfaces in
-    /// its natural home. The Transcribe tab is the capture surface (YouTube,
-    /// file, meeting); once a transcription exists, it lives in Library.
-    /// The `from:` parameter is retained for call-site readability.
-    func navigateToTranscription(from current: SidebarItem? = nil) {
-        _ = current
-        selectedItem = .library
+    /// The transcript open in the Meetings workspace, if any. Meetings opened
+    /// there stay there so the sidebar keeps showing where the user came from.
+    private(set) var meetingsDetailID: UUID?
+
+    func showsMeetingDetail(_ transcription: Transcription?) -> Bool {
+        guard let transcription else { return false }
+        return transcription.id == meetingsDetailID
+    }
+
+    func closeMeetingDetail() {
+        meetingsDetailID = nil
+    }
+
+    /// Reveal the open transcription. A meeting opened from the Meetings
+    /// workspace stays there; everything else surfaces in Library, the
+    /// universal archive. The Transcribe tab is only the capture surface.
+    func navigateToTranscription(from current: SidebarItem? = nil, id: UUID? = nil) {
+        if current == .meetings, let id {
+            meetingsDetailID = id
+            selectedItem = .meetings
+        } else {
+            meetingsDetailID = nil
+            selectedItem = .library
+        }
     }
 }
 

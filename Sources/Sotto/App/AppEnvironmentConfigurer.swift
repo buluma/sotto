@@ -614,7 +614,7 @@ final class AppEnvironmentConfigurer {
 
         guard canPresent else { return }
         if shouldOpen {
-            mainWindowState.navigateToTranscription(from: .library)
+            mainWindowState.navigateToTranscription(from: .meetings, id: transcription.id)
             openMainWindow()
             return
         }
