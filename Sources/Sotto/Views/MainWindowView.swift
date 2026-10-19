@@ -130,7 +130,8 @@ struct MainWindowView: View {
                                 .accessibilityAction { state.selectedItem = item }
                                 .highPriorityGesture(
                                     TapGesture().onEnded {
-                                        state.selectSidebarItem(item, in: transcriptionViewModel)
+                                        state.selectSidebarItem(
+                                            item, in: transcriptionViewModel, library: libraryViewModel)
                                     })
                         }
                     }
@@ -172,30 +173,39 @@ struct MainWindowView: View {
                             onRefreshPermissions: settingsViewModel.refreshPermissions
                         )
                     case .meetings:
-                        MeetingsView(
-                            viewModel: meetingsWorkspaceViewModel,
-                            meetingSplitViewModel: meetingSplitViewModel,
-                            meetingImportViewModel: meetingImportViewModel,
-                            onRecordMeeting: {
-                                onRecordMeetingFromWorkspace()
-                            },
-                            onPauseToggleMeeting: onPauseToggleMeeting,
-                            onOpenCalendarSettings: {
-                                state.navigateToSettings(tab: .capture, anchor: "meeting")
-                            },
-                            onOpenAISettings: {
-                                state.navigateToSettings(tab: .ai)
-                            },
-                            onRecoverMeetings: {
-                                settingsViewModel.requestPendingMeetingRecovery()
-                            },
-                            onSelectMeeting: { transcription in
-                                state.openTranscription(from: .meetings, in: transcriptionViewModel) {
-                                    await meetingsWorkspaceViewModel.recentMeetingsViewModel.loadForOpening(
-                                        transcription)
-                                }
+                        if state.showsMeetingDetail(transcriptionViewModel.currentTranscription),
+                            let transcription = transcriptionViewModel.currentTranscription
+                        {
+                            transcriptDetail(transcription) {
+                                state.closeMeetingDetail()
+                                transcriptionViewModel.showInputPortal()
                             }
-                        )
+                        } else {
+                            MeetingsView(
+                                viewModel: meetingsWorkspaceViewModel,
+                                meetingSplitViewModel: meetingSplitViewModel,
+                                meetingImportViewModel: meetingImportViewModel,
+                                onRecordMeeting: {
+                                    onRecordMeetingFromWorkspace()
+                                },
+                                onPauseToggleMeeting: onPauseToggleMeeting,
+                                onOpenCalendarSettings: {
+                                    state.navigateToSettings(tab: .capture, anchor: "meeting")
+                                },
+                                onOpenAISettings: {
+                                    state.navigateToSettings(tab: .ai)
+                                },
+                                onRecoverMeetings: {
+                                    settingsViewModel.requestPendingMeetingRecovery()
+                                },
+                                onSelectMeeting: { transcription in
+                                    state.openTranscription(from: .meetings, in: transcriptionViewModel) {
+                                        await meetingsWorkspaceViewModel.recentMeetingsViewModel.loadForOpening(
+                                            transcription)
+                                    }
+                                }
+                            )
+                        }
                     case .library:
                         if libraryViewModel.filter == .dictations {
                             DictationHistoryView(
@@ -203,32 +213,9 @@ struct MainWindowView: View {
                                 onBackToLibrary: { libraryViewModel.filter = .all }
                             )
                         } else if let transcription = transcriptionViewModel.currentTranscription {
-                            TranscriptResultView(
-                                transcription: transcription,
-                                viewModel: transcriptionViewModel,
-                                chatViewModel: chatViewModel,
-                                promptResultsViewModel: promptResultsViewModel,
-                                promptsViewModel: promptsViewModel,
-                                meetingClassificationViewModel: libraryViewModel.meetingClassificationViewModel,
-                                meetingSplitViewModel: meetingSplitViewModel,
-                                onBack: {
-                                    transcriptionViewModel.showInputPortal()
-                                },
-                                onStartNew: {
-                                    transcriptionViewModel.showInputPortal()
-                                    state.selectedItem = .transcribe
-                                },
-                                onRetranscribe: { original, speechEngineOverride, speakerSelection in
-                                    transcriptionViewModel.retranscribe(
-                                        original,
-                                        speechEngineOverride: speechEngineOverride,
-                                        speakerSelection: speakerSelection
-                                    )
-                                },
-                                onSetUpAI: {
-                                    state.navigateToSettings(tab: .ai)
-                                }
-                            )
+                            transcriptDetail(transcription) {
+                                transcriptionViewModel.showInputPortal()
+                            }
                         } else {
                             TranscriptionLibraryView(
                                 viewModel: libraryViewModel,
@@ -454,7 +441,8 @@ struct MainWindowView: View {
             }
         }
         .onChange(of: transcriptionViewModel.currentTranscription?.id) { _, newID in
-            if newID != nil {
+            // A meeting opened in the Meetings workspace stays there.
+            if let newID, !(state.selectedItem == .meetings && state.meetingsDetailID == newID) {
                 state.selectedItem = .library
             }
         }
@@ -474,6 +462,35 @@ struct MainWindowView: View {
                 historyViewModel.exitBulkSelection()
             }
         }
+    }
+
+    /// Transcript detail shared by Library and the Meetings workspace; only
+    /// the back action differs.
+    private func transcriptDetail(_ transcription: Transcription, onBack: @escaping () -> Void) -> some View {
+        TranscriptResultView(
+            transcription: transcription,
+            viewModel: transcriptionViewModel,
+            chatViewModel: chatViewModel,
+            promptResultsViewModel: promptResultsViewModel,
+            promptsViewModel: promptsViewModel,
+            meetingClassificationViewModel: libraryViewModel.meetingClassificationViewModel,
+            meetingSplitViewModel: meetingSplitViewModel,
+            onBack: onBack,
+            onStartNew: {
+                transcriptionViewModel.showInputPortal()
+                state.selectedItem = .transcribe
+            },
+            onRetranscribe: { original, speechEngineOverride, speakerSelection in
+                transcriptionViewModel.retranscribe(
+                    original,
+                    speechEngineOverride: speechEngineOverride,
+                    speakerSelection: speakerSelection
+                )
+            },
+            onSetUpAI: {
+                state.navigateToSettings(tab: .ai)
+            }
+        )
     }
 
     /// Show the global bottom bar when transcribing on any tab except Transcribe (which has its own detailed view)

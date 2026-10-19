@@ -178,8 +178,48 @@ final class MainWindowStateTests: XCTestCase {
             XCTAssertTrue(opened)
             XCTAssertEqual(viewModel.currentTranscription?.id, stored.id)
             XCTAssertEqual(viewModel.currentTranscription?.rawTranscript, "Full transcript")
-            XCTAssertEqual(state.selectedItem, .library)
+            XCTAssertEqual(state.selectedItem, tab)
+            XCTAssertEqual(state.showsMeetingDetail(viewModel.currentTranscription), tab == .meetings)
         }
+    }
+
+    func testMeetingDetailStaysInMeetingsAndReselectReturnsToWorkspace() {
+        let state = MainWindowState()
+        let viewModel = TranscriptionViewModel()
+        let meeting = Transcription(fileName: "Meeting", status: .completed)
+        viewModel.currentTranscription = meeting
+
+        state.navigateToTranscription(from: .meetings, id: meeting.id)
+        XCTAssertEqual(state.selectedItem, .meetings)
+        XCTAssertTrue(state.showsMeetingDetail(viewModel.currentTranscription))
+
+        state.selectSidebarItem(.meetings, in: viewModel)
+        XCTAssertEqual(state.selectedItem, .meetings)
+        XCTAssertFalse(state.showsMeetingDetail(viewModel.currentTranscription))
+        XCTAssertNil(viewModel.currentTranscription)
+    }
+
+    func testOpeningFromLibraryClearsMeetingsDetail() {
+        let state = MainWindowState()
+        let meeting = Transcription(fileName: "Meeting", status: .completed)
+        state.navigateToTranscription(from: .meetings, id: meeting.id)
+
+        state.navigateToTranscription(from: .library, id: meeting.id)
+
+        XCTAssertEqual(state.selectedItem, .library)
+        XCTAssertFalse(state.showsMeetingDetail(meeting))
+    }
+
+    func testReselectingLibraryLeavesDictationsFilter() {
+        let state = MainWindowState()
+        let viewModel = TranscriptionViewModel()
+        let library = TranscriptionLibraryViewModel()
+        state.selectedItem = .library
+        library.filter = .dictations
+
+        state.selectSidebarItem(.library, in: viewModel, library: library)
+
+        XCTAssertEqual(library.filter, .all)
     }
 
     func testOpenTranscriptionPreservesMeetingCompletedDuringLoad() async {
@@ -299,7 +339,7 @@ final class MainWindowStateTests: XCTestCase {
         meetingLoad.complete(with: meeting)
         let meetingOpened = await meetingOpen.value
         XCTAssertTrue(meetingOpened)
-        XCTAssertEqual(state.selectedItem, .library)
+        XCTAssertEqual(state.selectedItem, .meetings)
 
         libraryLoad.complete(with: Transcription(fileName: "Older Library click"))
         let libraryOpened = await libraryOpen.value
