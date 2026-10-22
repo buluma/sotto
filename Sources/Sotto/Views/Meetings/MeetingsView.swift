@@ -451,7 +451,8 @@ struct MeetingsView: View {
                     detail: "Summaries and meeting chat stay off until you choose a provider.",
                     actionTitle: "Set Up AI",
                     actionIcon: "gearshape",
-                    action: onOpenAISettings
+                    action: onOpenAISettings,
+                    actionRole: .primaryProminent
                 )
             case .ready(let displayName, let isLocal):
                 IntelligenceReadyRow(
@@ -490,7 +491,8 @@ struct MeetingsView: View {
                         "Choose an AI provider and Sotto will write notes for you automatically when a meeting ends.",
                     actionTitle: "Set Up AI",
                     actionIcon: "gearshape",
-                    action: onOpenAISettings
+                    action: onOpenAISettings,
+                    actionRole: .primaryProminent
                 )
             }
         }
@@ -1219,13 +1221,11 @@ private struct CalendarInlineControlsRow: View {
             Button(action: connectCalendar) {
                 if isRequestingPermission {
                     SottoSpinner(.inline)
-                        .frame(maxWidth: .infinity)
                 } else {
                     Label("Connect Calendar", systemImage: "calendar.badge.plus")
-                        .frame(maxWidth: .infinity)
                 }
             }
-            .sottoAction(.secondary)
+            .sottoAction(.primaryProminent)
             .disabled(isRequestingPermission)
             .accessibilityLabel("Connect Calendar")
         case .denied:
@@ -1233,7 +1233,6 @@ private struct CalendarInlineControlsRow: View {
                 settingsViewModel.openCalendarSystemSettings()
             } label: {
                 Label("Open System Settings", systemImage: "gearshape")
-                    .frame(maxWidth: .infinity)
             }
             .sottoAction(.secondary)
             .help("Calendar access is blocked — re-enable it in System Settings")
@@ -1495,6 +1494,7 @@ private struct MeetingsInlineState: View {
     let actionTitle: String?
     let actionIcon: String?
     let action: (() -> Void)?
+    var actionRole: SottoActionRole = .secondary
 
     private var message: some View {
         HStack(alignment: .top, spacing: DesignSystem.Spacing.md) {
@@ -1523,7 +1523,7 @@ private struct MeetingsInlineState: View {
             Button(action: action) {
                 Label(actionTitle, systemImage: actionIcon)
             }
-            .sottoAction(.secondary)
+            .sottoAction(actionRole)
             .fixedSize()
         }
     }
