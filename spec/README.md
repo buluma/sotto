@@ -79,7 +79,7 @@ Feature gates in the current source (`Sources/SottoCore/AppFeatures.swift`); an 
 | `calendarEnabled` | `true` | Shipping calendar reminders/auto-start; per-user auto-start defaults off |
 | `meetingAutoStopEnabled` | `true` | Shipping ADR-023 surface; per-user setting defaults off, so recordings stop manually until the user opts in |
 | `meetingCaptureReliabilityEnabled` | `true` | Default-on kill switch for ADR-025 signal-based mic-health monitoring and local event hooks; direct source lifecycle recovery is independent |
-| `meetingSourceHealthUIEnabled` | `false` | Routine source-health chips/pill glyph/tile mirror stay hidden; actionable recovering, stalled, interrupted, or unavailable warnings bypass this presentation flag |
+| `meetingSourceHealthUIEnabled` | `false` | Routine source-health chips/pill glyph/tile mirror stay hidden; actionable recovering, stalled, interrupted, or unavailable warnings bypass this presentation flag on the panel, tile, and floating pill |
 | `meetingActivityDetectionEnabled` | `false` | ADR-024 collectors/detector are compiled but runtime coordinator/UI remain gated |
 | `voiceProfilesEnabled` | `false` | Experimental meeting voice profiles; DEBUG builds may opt in with `--enable-voice-profiles`, but the preference remains off and requires consent plus meeting speaker detection. Release builds ignore that argument. Consent, enrollment, suggestion, manual assignment and administration UI are implemented. Held-out real-meeting evaluation and native workflow qualification remain release gates; see the [contract](contracts/speaker-voiceprints.md) and release gates (historical reference; file absent from this checkout). |
 | `transformsEnabled` | `true` | Productized Transforms shipping surface |
