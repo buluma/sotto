@@ -106,7 +106,7 @@ The on-device local LLM plan's single-model invariant applies to the **shipped f
 - One saved default provider config via `LLMConfigStore`.
 - Optional cleanup and analysis full-route overrides; Transforms inherit the default route.
 - Per-prompt and per-Transform `modelOverride`, plus `--model` on stored-config CLI commands, overlay the resolved route without replacing it. Inline CLI commands that pass a full provider context are independent configs.
-- Per-surface formatter enablement and the transcription length cap.
+- Per-surface formatter enablement. Long transcripts are cleaned in sections rather than skipped.
 - No specialist recipes and no translation product.
 
 ## Consequences
