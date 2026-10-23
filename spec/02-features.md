@@ -1386,7 +1386,8 @@ TXT and Markdown are reading surfaces rather than subtitle surfaces. When word t
 - Automatic detection uses Nemotron 3 `fast128`, with up to eight speakers per analyzed source. Explicit speaker-count constraints and experimental voice profiles retain Community-1 (pyannote segmentation, WeSpeaker v2 embeddings and VBx clustering).
 - Current source pins FluidAudio 0.17.4. The matched evaluation records improved speaker identity/counts alongside worse results on some distant-microphone recordings; it is not a universal accuracy improvement (ADR-010).
 - Setup prepares both the ~199 MB Nemotron model and ~130 MB Community-1 assets for offline use. Upgrading an old, unmarked Community-1 cache requires one connected setup to obtain the revision-pinned assets.
-- Runs after ASR completes and merges speaker segments with word-level timestamps by time overlap. Isolated one-word flips and unlabeled gaps inherit a speaker only when both neighboring runs agree (ADR-010 2026-09-15).
+- Runs after ASR completes and merges speaker segments with word-level timestamps by time overlap. Unlabeled gaps inherit a speaker only when both neighboring runs agree. A one-word turn that already has another speaker is kept (ADR-010 2026-10-12).
+- In a diarized meeting, system-track words that no cluster claims appear as `Unattributed`, not as another `Others` speaker, and do not count toward the speaker count or the re-transcription default.
 - Diarization is non-fatal — if it fails, ASR result is still persisted without speaker data
 - Automatic IDs (`"S1"`, `"S2"`) belong to one transcript version. User corrections are stored separately and resolved into effective attribution for display, search, exports, artifacts and AI; IDs are not cross-file or retranscription identity.
 - Nemotron retains overlapping speaker activity; the word merger still assigns at most one speaker per word. Community-1 retains exclusive output and can leave overlap-zone words unassigned.

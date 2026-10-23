@@ -599,7 +599,7 @@ Audio file
          WordTimestamp entries with speakerId
 ```
 
-Each word's time range is compared against diarization speaker segments. The speaker with the most overlap is assigned to that word, so a word under overlapping Nemotron activity still gets one label. Words in silence gaps get `speakerId = nil`, as do words in overlap zones that Community-1 trims.
+Each word's time range is compared against diarization speaker segments. The speaker with the most overlap is assigned to that word, so a word under overlapping Nemotron activity still gets one label. Words in silence gaps get `speakerId = nil`, as do words in overlap zones that Community-1 trims. In a meeting, system-track words that stay unassigned after the gap fill keep `speakerId = "system"` and appear as `Unattributed` beside the diarized clusters (#1228).
 
 **Diarization is non-fatal.** If diarization fails (`noSpeechDetected`, model error, etc.), the ASR result is still persisted. Speaker fields remain nil and the transcript displays without speaker attribution.
 
@@ -622,7 +622,7 @@ The automatic path uses the `fast128` preset, a 0.5 activity threshold and no mi
 
 For the explicit-count path, `DiarizationService.highAccuracyConfig` starts from the library default and sets segmentation `stepRatio = 0.1`, embedding `minSegmentDurationSeconds = 0`, and zero-vote re-embedding enabled. Speaker-count constraints are applied to this preset per request.
 
-For both paths, isolated one-word speaker flips and unlabeled gaps are smoothed at word assignment (`SpeakerMerger`) only when both neighboring runs agree (issue #1046). This does not change diarizer output, and it can erase a brief reply.
+For both paths, unlabeled words at word assignment (`SpeakerMerger`) take the speaker of both neighboring runs when they agree. A one-word turn of another speaker is kept, since it is mostly a real reply (issue #1046). This does not change diarizer output.
 
 The app pins FluidAudio 0.17.4. Older Community-1 measurements under 0.15.x are not current app accuracy or throughput guarantees. Asset sizes above also do not measure peak process memory. See ADR-010's 2026-09-25 Nemotron amendment and its earlier amendments for provenance and the remaining DER gap.
 
