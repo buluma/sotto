@@ -2,11 +2,11 @@
 
 > Status: **Accepted**
 > Date: 2026-03-04
-> Current scope (2026-09-25): post-ASR file/URL transcription and isolated system-track meeting refinement. The Nemotron amendment below governs the default and FluidAudio 0.17.4 pin. Earlier model comparisons, throughput claims and Community-1-only decisions remain historical context. This development decision does not describe the stable DMG.
+> Current scope (2026-09-25): post-ASR file/URL transcription and isolated system-track meeting refinement. The Nemotron amendment below governs the default; the 2026-10-08 amendment governs the FluidAudio 0.17.7 pin. Earlier model comparisons, throughput claims and Community-1-only decisions remain historical context. This development decision does not describe the stable DMG.
 
 ## Nemotron default decision (2026-09-25)
 
-Use **Nemotron 3 `fast128` through FluidAudio 0.17.4** for automatic speaker detection after recording. Keep the existing Community-1/WeSpeaker/VBx service for explicit Exact/Range choices and experimental voice-profile builds, whose identity embeddings Nemotron does not provide. The shared factory supplies the app, CLI transcription/retranscription, health and model preparation paths.
+Use **Nemotron 3 `fast128` through FluidAudio 0.17.4** (pinned to 0.17.7 by the 2026-10-08 amendment, with identical Nemotron results) for automatic speaker detection after recording. Keep the existing Community-1/WeSpeaker/VBx service for explicit Exact/Range choices and experimental voice-profile builds, whose identity embeddings Nemotron does not provide. The shared factory supplies the app, CLI transcription/retranscription, health and model preparation paths.
 
 Nemotron has eight activity channels per analyzed source. This is an accepted limit for the default meeting use case, not a way to detect or correctly split an arbitrary number of participants. Choosing an explicit speaker count keeps the existing Community-1 behavior, including counts above eight. Automatic calendar bounds remain advisory inputs: a natural Nemotron count within the bounds is accepted; a nonempty result outside them takes the existing constrained Community-1 path. If that advisory fallback is unavailable, retain the successful Nemotron result and log the unapplied bound; cancellation still propagates. Explicit count failures retain their existing behavior. Silence stays empty rather than inventing a minimum speaker.
 
@@ -27,6 +27,21 @@ Three implementation boundaries remain material:
 - The existing word merger can replace a real one-word reply with the surrounding speaker and fill unknown gaps. This is deliberate smoothing, tested as current behavior, not a guarantee of correct word attribution. A policy change needs final-word evaluation, not only better acoustic DER.
 - A diarization failure preserves successful ASR, but the nonblocking warning specified below is not yet implemented as a durable per-run GUI/CLI outcome. Current completion telemetry also omits the actual backend and fallback result; `speaker_prior` describes the requested policy and may be unapplied when advisory fallback fails. Preserve the warning requirement rather than presenting it as already shipped.
 - Files retain raw acoustic `diarizationSegments`; captured meetings rebuild them from recognized words, and manual reassignment can also rebuild them. They are therefore not a uniform acoustic-activity timeline. The separate [audio speaker timeline contract](../contracts/audio-speaker-timeline-v1.md) remains the intended boundary for preserving that evidence.
+
+## FluidAudio 0.17.7 (2026-10-08)
+
+Pin FluidAudio 0.17.7. Over 0.17.4 it adds two Community-1 fixes from [upstream #1046](https://github.com/moona3k/macparakeet/issues/1046): [FluidAudio #988](https://github.com/FluidInference/FluidAudio/pull/988) takes the FBank mean over frames that hold signal, so windows of digital silence (a muted call track, the padded last window of a file) no longer lose the voice and gather into extra clusters; [FluidAudio #982](https://github.com/FluidInference/FluidAudio/pull/982) re-embeds zero-vote runs from the span repeated across the window instead of zero padding. The other changes since 0.17.4 add the Phonon-2 ASR model (not offered by the app; `AppPaths` only maps its cache folder), make custom vocabulary alignment iterative (#962), add a LocalVQE echo-suppression beta the app does not use (its own LocalVQE runtime is separate), adopt matching unmarked model caches during connected preparation (#977; the app still reports an unmarked cache as not ready, so the one connected setup described above still applies), and change TTS.
+
+Matched app-bench runs on the 16 AMI mixed-headset test meetings, NIST-scored as in the Nemotron evaluation, original audio and audio with non-speech set to exact zero (gated), as measured upstream:
+
+| Backend / audio | 0.17.4 DER, confusion, exact count | 0.17.7 DER, confusion, exact count |
+| --- | ---: | ---: |
+| Community-1 / original | 23.19%, 3.47%, 12/16 | 22.97%, 3.25%, 14/16 |
+| Community-1 / gated | 24.82%, 5.62%, 1/16 | 22.42%, 3.22%, 14/16 |
+| Nemotron fast128 / original | 26.03%, 0.72%, 15/16 | identical |
+| Nemotron fast128 / gated | 25.76%, 0.76%, 14/16 | identical |
+
+Misses and false alarms are unchanged in every arm. The Community-1 aggregation revision becomes `fluidaudio-0.17.7`: experimental voice profiles enrolled under 0.17.4 stay comparable with new runs under the stricter cross-aggregation threshold (speaker-voiceprints contract).
 
 ## Context (original decision)
 
