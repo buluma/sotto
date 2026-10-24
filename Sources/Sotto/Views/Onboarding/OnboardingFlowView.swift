@@ -540,9 +540,9 @@ struct OnboardingFlowView: View {
 
             permissionRow(
                 icon: "keyboard.fill",
-                title: "Use your dictation key and type into any app",
+                title: "Type your words into any app",
                 detail:
-                    "Lets Sotto notice your dictation key from any app and paste your words where the cursor is.",
+                    "Lets Sotto paste your words where the cursor is, in whatever app you're using.",
                 tag: "Required",
                 granted: viewModel.accessibilityGranted
             ) {
