@@ -152,6 +152,16 @@ Meeting Recording and Calendar are opt-in and self-prompt on first use (see ADR-
 
 Dictation defaults to a built-in shared `Fn` gesture preset: hold `Fn` for push-to-talk, or double-tap `Fn` for hands-free mode. `Fn+Fn` is not a customizable recorded hotkey; choosing restore default returns to this preset. Each dictation role can still be assigned a custom shortcut. The "record a shortcut" UI supports bare modifiers (Fn, Control, etc.), standalone keys (F5, Tab, etc.), modifier+key chords (Fn+Space, Cmd+9, Ctrl+Shift+D), and modifier-only chords (Command+Option, including side-specific variants like Right Command+Right Option). See ADR-009 for full details. Custom dictation shortcuts may be distinct, or both roles may share the exact same non-disabled trigger to reuse the hold/double-tap gesture model. Settings blocks overlapping but non-identical triggers.
 
+Settings > Capture > Dictation > **Additional shortcuts** provides an optional
+second push-to-talk and hands-free shortcut. Both pairs remain active on all
+keyboards. Within either pair, assigning the same trigger enables hold/double-tap
+behavior; distinct triggers use hold and single-tap respectively. Additional
+slots default to disabled and never migrate or replace the primary pair. During
+hands-free recording either ordinary hands-free shortcut can stop the take;
+hold-to-talk remains owned by the trigger that started it, and pressing another
+dictation shortcut during a hold does not interrupt it. See
+[dictation shortcuts contract](contracts/dictation-shortcuts.md).
+
 | Mode | Gesture | Behavior |
 |------|---------|----------|
 | **Hands-free** | Double-tap the shared Fn/custom trigger when both dictation roles share one, or tap the configured hands-free shortcut when roles are distinct | Persistent recording. Tap the shortcut again to stop. |
@@ -167,7 +177,7 @@ Legacy default installs using `Fn+Space` hands-free plus `Fn` push-to-talk migra
 - `HotkeyTrigger` struct with `.modifier` / `.keyCode` / `.chord` / `.modifierChord` kind discriminator (see ADR-009)
 - Modifier triggers: `flagsChanged` events with `CGEventFlags` mask, bare-tap filtering
 - KeyCode triggers: `keyDown`/`keyUp` events with event swallowing, edge detection via `triggerKeyIsPressed` boolean
-- Modifier+key chord triggers: require ALL modifier flags present on `keyDown` of the trigger key. Hold-to-talk chord triggers use release-any-part behavior: releasing either the trigger key or any required modifier stops dictation. `chordModifierReleased` flag prevents double-fire when modifier is released while trigger key is still held.
+- Modifier+key chord triggers: on `keyDown` of the trigger key, the five relevant modifiers (fn, control, option, shift, command) must match the configured set exactly. Caps Lock and other non-relevant bits stay ignored. A function-family chord that does not itself require fn also ignores the phantom fn bit macOS sets on that key's own event. Extra real modifiers do not fire the chord, and that key is delivered to the front app. The decision belongs to the initial key-down of a press: auto-repeats keep it until key-up, so adding a modifier does not cancel an accepted hold and releasing one cannot start a press that was already rejected. Once the chord is down, hold-to-talk still uses release-any-part: releasing the trigger key or any required modifier stops dictation, and pressing an additional modifier does not. `chordModifierReleased` prevents a second stop when the modifier is released while the trigger key is still held. Tap recovery still treats the chord as held when the trigger key and its required modifiers are down.
 - Modifier-only chord triggers: require an exact set of 2+ chord-eligible modifiers before emitting the same key-agnostic gesture signals as single-key triggers. Generic and side-specific variants are persisted distinctly, and overlap checks block ambiguous assignments.
 - Edge detection: only fire on actual transitions of the target key state
 - Bare-tap filtering (modifiers only): if a regular key is pressed while the modifier is held (e.g., Ctrl+C), the release is not counted as a tap — prevents keyboard shortcuts from triggering dictation
@@ -175,7 +185,7 @@ Legacy default installs using `Fn+Space` hands-free plus `Fn` push-to-talk migra
 - Chord validation: Escape blocked for all kinds. Modifier+key chords containing Command warn about system shortcut conflicts (Cmd+Tab, Cmd+Space, Cmd+Q/W/H/M). Fn is allowed in modifier+key chords such as Fn+Space.
 - Hands-free key-down: toggles persistent recording immediately for key and modifier+key triggers; bare modifier hands-free triggers toggle on bare release so normal modifier shortcuts are not captured.
 - Dedicated push-to-talk key-down: schedule only the startup debounce, then start hold-to-talk.
-- Duplicate or overlapping dictation shortcuts: exact duplicate triggers are allowed and use the shared hold/double-tap gesture model; overlapping but non-identical assignments are rejected in Settings and reported at runtime instead of creating a hidden combined gesture.
+- Duplicate or overlapping dictation shortcuts: within one pair, exact duplicate triggers are allowed and use the shared hold/double-tap gesture model; overlapping but non-identical assignments are rejected in Settings and reported at runtime instead of creating a hidden combined gesture. Across the primary and additional pairs every overlap, including an exact duplicate, is rejected, as are chords that share a terminal key even with different modifiers (see the dictation shortcuts contract).
 - On key-up: dedicated push-to-talk releases after startup debounce stop and process.
 - Escape cannot be assigned as a hotkey. It cancels a live dictation by default (`escapeCancelsDictation`). Off leaves Escape for the front app during a live take. A pending gesture that has not started a take still clears.
 - Requires Accessibility permission (prompted on first activation).
