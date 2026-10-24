@@ -14,7 +14,7 @@ Keep optional speaker identity memory local, explicitly enabled and separate fro
 - `AppEnvironment` supplies feature/preference gating and starts `SpeakerVoiceprintRetention` maintenance. Enrollment, suggestion and manual-assignment UI must call the gated service; ordinary speaker renames continue through the speaker-correction layer. Naming a speaker from the list of enrolled voices is one of those calls: it records a profile link after the requested transcript label correction succeeds.
 - Export, CLI JSON, diagnostics, feedback/support bundles and external AI context are not consumers of the voiceprint tables. They may use transcript labels explicitly applied through the existing correction path.
 
-The default Nemotron 3 service emits anonymous activity and no reusable speaker embeddings. When experimental voice profiles are available, the shared factory selects the existing Community-1/WeSpeaker service instead. Its aggregation revision is `fluidaudio-0.17.4`; existing mismatch safeguards still apply and no profile data is deleted by this dependency upgrade.
+The default Nemotron 3 service emits anonymous activity and no reusable speaker embeddings. When experimental voice profiles are available, the shared factory selects the existing Community-1/WeSpeaker service instead. Its aggregation revision is `fluidaudio-0.17.7`. That upgrade changes Community-1 embeddings of windows with digital silence. Profiles enrolled under `fluidaudio-0.17.4` stay comparable with new runs under the stricter cross-aggregation threshold (`tau - crossAggregationPenalty`), so they may still match; no profile data is deleted by this dependency upgrade.
 
 ## Availability And Consent
 
