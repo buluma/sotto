@@ -133,7 +133,7 @@ struct OnboardingPracticeStepView: View {
 
     private var keyStatusPill: some View {
         Group {
-            if !viewModel.accessibilityGranted {
+            if !viewModel.hotkeyAccessGranted {
                 statusPill(
                     "Needs hotkey access", icon: "exclamationmark.triangle.fill",
                     color: DesignSystem.Colors.warningAmber)
@@ -155,7 +155,7 @@ struct OnboardingPracticeStepView: View {
     }
 
     private var keyInstruction: String {
-        guard viewModel.accessibilityGranted else {
+        guard viewModel.hotkeyAccessGranted else {
             return "The key can't reach Sotto without hotkey access. Go Back to Permissions to allow it."
         }
         guard hasAnyKey else {

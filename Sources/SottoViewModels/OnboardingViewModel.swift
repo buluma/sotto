@@ -159,6 +159,10 @@ public final class OnboardingViewModel {
     public private(set) var step: Step = .welcome
     public private(set) var micStatus: PermissionStatus = .notDetermined
     public private(set) var accessibilityGranted: Bool = false
+    /// The dictation key's event tap needs Input Monitoring in addition to
+    /// Accessibility; macOS grants them separately.
+    public private(set) var inputMonitoringGranted: Bool = false
+    public var hotkeyAccessGranted: Bool { accessibilityGranted && inputMonitoringGranted }
     public private(set) var engineState: EngineState = .idle
     public private(set) var whisperRecommendation: WhisperOnboardingRecommendation?
 
@@ -376,11 +380,13 @@ public final class OnboardingViewModel {
         refreshTask = Task {
             let mic = await permissionService.checkMicrophonePermission()
             let ax = permissionService.checkAccessibilityPermission()
+            let inputMonitoring = permissionService.checkInputMonitoringPermission()
             guard !Task.isCancelled else { return }
             // The class is @MainActor, so this Task already runs on the main
             // actor — assign directly rather than hopping through MainActor.run.
             self.micStatus = mic
             self.applyAccessibilityPermission(ax)
+            self.inputMonitoringGranted = inputMonitoring
             self.refreshTask = nil
         }
     }
@@ -389,6 +395,8 @@ public final class OnboardingViewModel {
     public func refreshAccessibilityPermission() -> Bool {
         let granted = permissionService.checkAccessibilityPermission()
         applyAccessibilityPermission(granted)
+        // Continue gates on both hotkey grants, so keep them in step.
+        inputMonitoringGranted = permissionService.checkInputMonitoringPermission()
         return granted
     }
 
@@ -463,7 +471,7 @@ public final class OnboardingViewModel {
         case .welcome, .done:
             return true
         case .permissions:
-            return accessibilityGranted
+            return hotkeyAccessGranted
         case .practice:
             switch practicePhase {
             case .hotkey: return hasLitHotkey
@@ -621,6 +629,17 @@ public final class OnboardingViewModel {
         accessibilityPromptedInCurrentRun = true
         _ = permissionService.requestAccessibilityPermission(prompt: prompt)
         refreshAccessibilityPermission()
+        isBusy = false
+    }
+
+    public func requestInputMonitoringAccess() {
+        isBusy = true
+        // The request prompts only while undetermined; after a denial it
+        // returns false silently, so take the user to System Settings.
+        if !permissionService.requestInputMonitoringPermission() {
+            permissionService.openInputMonitoringSettings()
+        }
+        inputMonitoringGranted = permissionService.checkInputMonitoringPermission()
         isBusy = false
     }
 

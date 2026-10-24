@@ -312,7 +312,7 @@ struct OnboardingFlowView: View {
         case .welcome:
             return viewModel.step.rawValue > step.rawValue
         case .permissions:
-            return viewModel.accessibilityGranted && viewModel.step.rawValue > step.rawValue
+            return viewModel.hotkeyAccessGranted && viewModel.step.rawValue > step.rawValue
         case .practice:
             return viewModel.hasPracticeResult
         case .done:
@@ -506,7 +506,7 @@ struct OnboardingFlowView: View {
     // MARK: - Permissions
 
     private var allPermissionsGranted: Bool {
-        viewModel.accessibilityGranted && viewModel.micStatus == .granted
+        viewModel.hotkeyAccessGranted && viewModel.micStatus == .granted
     }
 
     private var permissionsStep: some View {
@@ -554,6 +554,27 @@ struct OnboardingFlowView: View {
                     Text("macOS opens Privacy & Security. Turn on Sotto there, and this page updates by itself.")
                     Button("Open System Settings") {
                         openPrivacySettings(anchor: "Privacy_Accessibility")
+                    }
+                    .buttonStyle(.link)
+                }
+            }
+
+            permissionRow(
+                icon: "hand.tap.fill",
+                title: "Hear your dictation key from any app",
+                detail:
+                    "macOS lists this as Input Monitoring. It is separate from Accessibility, and without it your key does nothing.",
+                tag: "Required",
+                granted: viewModel.inputMonitoringGranted
+            ) {
+                OnboardingAccentButton(title: "Allow", disabled: viewModel.isBusy) {
+                    viewModel.requestInputMonitoringAccess()
+                }
+            } footnote: {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Turn on Sotto under Input Monitoring, and this page updates by itself.")
+                    Button("Open System Settings") {
+                        openPrivacySettings(anchor: "Privacy_ListenEvent")
                     }
                     .buttonStyle(.link)
                 }
@@ -798,7 +819,7 @@ struct OnboardingFlowView: View {
     private var primaryButtonTitle: String {
         switch viewModel.step {
         case .permissions:
-            return viewModel.accessibilityGranted && viewModel.micStatus != .granted
+            return viewModel.hotkeyAccessGranted && viewModel.micStatus != .granted
                 ? "Continue without microphone" : "Continue"
         case .welcome, .practice, .done:
             return "Continue"

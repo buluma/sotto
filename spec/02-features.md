@@ -127,7 +127,7 @@ This branch's feature remains development-only, enabled with `--enable-voice-con
 
 **Flow (4 steps, first dictation inside onboarding; ADR-005 amendment 2026-09-23):**
 1. Welcome (the speech stack starts downloading here: Parakeet; speaker detection defaults on where supported; locale-aware Whisper setup for CJK macOS languages)
-2. Permissions on one page: microphone (skippable; dictation and mic-backed meetings request it on first use; persistent dictation continues that same press, hold-to-talk waits for the next hold after the system sheet) and Accessibility (required for auto-paste). Global keyboard shortcuts also require Input Monitoring in System Settings → Privacy & Security; this is a separate permission from Accessibility and may need to be enabled manually.
+2. Permissions on one page: microphone (skippable; dictation and mic-backed meetings request it on first use; persistent dictation continues that same press, hold-to-talk waits for the next hold after the system sheet), Accessibility (required for auto-paste), and Input Monitoring (required for global keyboard shortcuts; a separate permission from Accessibility, granted in System Settings → Privacy & Security).
 3. Try It: the configured keys are drawn in the card and light while the real key is active (no recording, no STT); Continue waits for one lit key; Edit shortcut is on this screen. Then a dictation box shows model progress until the engine is ready, asks for a click, and receives a real dictation. Continue waits for delivered text; Skip is always available.
 4. All Set (quotes the practice result when present; Finish closes the window)
 
