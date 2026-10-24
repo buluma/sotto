@@ -56,6 +56,34 @@ struct LLMSettingsView: View {
             Divider()
             taskRouteSection
 
+            if let error = viewModel.credentialAccessError {
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+                    Text(error)
+                        .font(DesignSystem.Typography.caption)
+                        .foregroundStyle(DesignSystem.Colors.warningAmber)
+                    Text(
+                        "In Keychain Access, find com.sotto.llm and allow this copy of Sotto access. Your saved key has not been removed."
+                    )
+                    .font(DesignSystem.Typography.caption)
+                    .foregroundStyle(.secondary)
+                    HStack {
+                        Button("Open Keychain Access") {
+                            if let url = NSWorkspace.shared.urlForApplication(
+                                withBundleIdentifier: "com.apple.keychainaccess")
+                            {
+                                NSWorkspace.shared.open(url)
+                            }
+                        }
+                        .sottoAction(.secondary)
+                        Button("Retry access") {
+                            viewModel.retrySavedCredentialAccess()
+                        }
+                        .sottoAction(.secondary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
             if viewModel.cleanupOverrideProviderID == .appleIntelligence {
                 appleIntelligenceStatusSection
             }
