@@ -72,6 +72,10 @@ Stderr stays plain text for human-only progress / status (e.g. "Saved PromptResu
 
 ## [Unreleased]
 
+### Changed
+
+- Inline Anthropic and OpenRouter LLM commands now default to Claude Sonnet 5.5 (`claude-sonnet-5-5` and `anthropic/claude-sonnet-5.5`). Pass `--model` to keep a previous model. The `--model` help example references the same ID.
+
 ### Fixed
 
 - `retranscribe --update` for saved transcriptions and meetings returns the row committed by the shared transcription service. Notes, chat, names, favorites and audio metadata changed during recognition are preserved; the CLI no longer performs a second stale save that could undo those edits or recreate a deleted recording. JSON shapes and exit-code meanings are unchanged.
