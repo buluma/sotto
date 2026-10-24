@@ -570,6 +570,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsViewModel.onAccessibilityGranted = { [weak self] in
             self?.handleAccessibilityGrant()
         }
+        // Event taps fail without Input Monitoring too, so its grant needs the
+        // same hotkey re-arm.
+        settingsViewModel.onInputMonitoringGranted = { [weak self] in
+            self?.handleAccessibilityGrant()
+        }
         meetingSplitViewModel.configure(
             service: env.meetingSplitService,
             recordingLookup: { [repository = env.transcriptionRepo] id in try repository.fetch(id: id) },

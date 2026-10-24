@@ -1734,6 +1734,46 @@ final class SettingsViewModelTests: XCTestCase {
         vm.onAccessibilityGranted = nil
     }
 
+    func testBackgroundInputMonitoringGrantRecoversShortcuts() async throws {
+        mockPermissions.inputMonitoringPermission = false
+        var recoveryCount = 0
+        let vm = makeBackgroundGrantViewModel()
+        vm.onInputMonitoringGranted = { recoveryCount += 1 }
+        try await waitUntil { self.mockPermissions.checkInputMonitoringPermissionCallCount >= 3 }
+        XCTAssertFalse(vm.inputMonitoringGranted)
+        XCTAssertEqual(recoveryCount, 0)
+        XCTAssertEqual(mockPermissions.checkScreenRecordingPermissionCallCount, 1,
+                       "Input Monitoring watch must not poll the other permissions")
+
+        mockPermissions.inputMonitoringPermission = true
+        try await waitUntil { recoveryCount == 1 }
+        XCTAssertTrue(vm.inputMonitoringGranted)
+
+        let checksAfterGrant = mockPermissions.checkInputMonitoringPermissionCallCount
+        try await Task.sleep(for: .milliseconds(120))
+        XCTAssertEqual(recoveryCount, 1, "Recovery must fire once per grant")
+        XCTAssertEqual(mockPermissions.checkInputMonitoringPermissionCallCount, checksAfterGrant,
+                       "Watch must stop once access is granted")
+        vm.onInputMonitoringGranted = nil
+    }
+
+    func testInputMonitoringWatchDoesNotKeepDeniedViewModelAlive() async throws {
+        mockPermissions.inputMonitoringPermission = false
+        weak var weakViewModel: SettingsViewModel?
+        do {
+            let vm = makeBackgroundGrantViewModel()
+            weakViewModel = vm
+            try await waitUntil { self.mockPermissions.checkInputMonitoringPermissionCallCount >= 2 }
+            XCTAssertFalse(vm.inputMonitoringGranted)
+        }
+        try await waitUntil { weakViewModel == nil }
+
+        let checksAfterRelease = mockPermissions.checkInputMonitoringPermissionCallCount
+        try await Task.sleep(for: .milliseconds(120))
+        XCTAssertEqual(mockPermissions.checkInputMonitoringPermissionCallCount, checksAfterRelease,
+                       "Watch must stop polling once the view model is released")
+    }
+
     func testAccessibilityWatchDoesNotKeepDeniedViewModelAlive() async throws {
         mockPermissions.accessibilityPermission = false
         weak var weakViewModel: SettingsViewModel?
@@ -1829,6 +1869,37 @@ final class SettingsViewModelTests: XCTestCase {
         XCTAssertTrue(viewModel.microphoneGranted)
         XCTAssertTrue(viewModel.accessibilityGranted)
         XCTAssertTrue(viewModel.screenRecordingGranted)
+    }
+
+    func testRefreshPermissionsReportsMissingInputMonitoring() async throws {
+        mockPermissions.inputMonitoringPermission = false
+
+        viewModel.configure(
+            permissionService: mockPermissions,
+            dictationRepo: mockRepo,
+            entitlementsService: entitlements,
+            checkoutURL: nil
+        )
+        try await waitUntil { self.mockPermissions.checkScreenRecordingPermissionCallCount == 1 }
+
+        XCTAssertFalse(viewModel.inputMonitoringGranted)
+    }
+
+    func testRequestInputMonitoringAccessPromptsAndOpensSettingsWhenStillMissing() {
+        // Once denied, the system request returns false without a prompt, so
+        // the button must still land the user on the Input Monitoring pane.
+        mockPermissions.inputMonitoringPermission = false
+        viewModel.configure(
+            permissionService: mockPermissions,
+            dictationRepo: mockRepo,
+            entitlementsService: entitlements,
+            checkoutURL: nil
+        )
+
+        viewModel.requestInputMonitoringAccess()
+
+        XCTAssertEqual(mockPermissions.requestInputMonitoringPermissionCallCount, 1)
+        XCTAssertEqual(mockPermissions.openInputMonitoringSettingsCallCount, 1)
     }
 
     func testRefusedScreenRecordingRequestOpensSystemSettings() {

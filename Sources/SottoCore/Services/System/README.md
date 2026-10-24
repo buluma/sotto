@@ -10,7 +10,7 @@ Use the protocol for the surface you need and inject the concrete service from t
 
 ## What Is Here
 
-- `PermissionService.swift` -- microphone, screen recording, and Accessibility checks/prompts/settings links. Global event taps also depend on the separate macOS Input Monitoring grant.
+- `PermissionService.swift` -- microphone, screen recording, Accessibility, and Input Monitoring checks/prompts/settings links. Global event taps depend on Input Monitoring, which is separate from Accessibility.
 - `ClipboardService.swift` -- pasteboard writes and restore behavior.
 - `StreamingCursorScheduler.swift` / `StreamingCursorInserter.swift` -- optional default-off dictation caret stream (#449); paste remains the default path.
 - `EventTapTeardown.swift` -- shared CGEvent tap teardown; always invalidates the Mach port (#1132).

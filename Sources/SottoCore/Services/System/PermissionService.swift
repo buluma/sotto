@@ -13,6 +13,9 @@ public protocol PermissionServiceProtocol: Sendable {
     func openScreenRecordingSettings()
     func checkAccessibilityPermission() -> Bool
     func requestAccessibilityPermission(prompt: Bool) -> Bool
+    func checkInputMonitoringPermission() -> Bool
+    func requestInputMonitoringPermission() -> Bool
+    func openInputMonitoringSettings()
 }
 
 public enum PermissionStatus: Equatable, Sendable {
@@ -67,5 +70,22 @@ public final class PermissionService: PermissionServiceProtocol, Sendable {
     public func requestAccessibilityPermission(prompt: Bool = true) -> Bool {
         let options: CFDictionary = ["AXTrustedCheckOptionPrompt": prompt] as CFDictionary
         return AXIsProcessTrustedWithOptions(options)
+    }
+
+    /// Global hotkey event taps need Input Monitoring, which is separate from
+    /// Accessibility. Ad-hoc signed rebuilds can silently invalidate it.
+    public func checkInputMonitoringPermission() -> Bool {
+        CGPreflightListenEventAccess()
+    }
+
+    public func requestInputMonitoringPermission() -> Bool {
+        CGRequestListenEventAccess()
+    }
+
+    public func openInputMonitoringSettings() {
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent") else {
+            return
+        }
+        NSWorkspace.shared.open(url)
     }
 }
