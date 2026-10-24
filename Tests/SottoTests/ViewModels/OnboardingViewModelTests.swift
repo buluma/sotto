@@ -271,6 +271,45 @@ final class OnboardingViewModelTests: XCTestCase {
         XCTAssertTrue(vm.canContinueFromCurrentStep())
     }
 
+    func testPermissionsStepRequiresInputMonitoringForTheDictationKey() async throws {
+        let perms = MockPermissionService()
+        perms.accessibilityPermission = true
+        perms.inputMonitoringPermission = false
+        let stt = MockSTTClient()
+        let suite = makeIsolatedDefaultsSuite("com.sotto.tests.")
+        let defaults = UserDefaults(suiteName: suite)!
+
+        let vm = makeViewModel(permissionService: perms, sttClient: stt, defaults: defaults)
+        vm.jump(to: .permissions)
+
+        vm.refresh()
+        try await Task.sleep(for: .milliseconds(50))
+        XCTAssertFalse(vm.inputMonitoringGranted)
+        XCTAssertFalse(vm.canContinueFromCurrentStep(), "the dictation key cannot fire without Input Monitoring")
+
+        perms.inputMonitoringPermission = true
+        vm.refresh()
+        try await Task.sleep(for: .milliseconds(50))
+        XCTAssertTrue(vm.inputMonitoringGranted)
+        XCTAssertTrue(vm.canContinueFromCurrentStep())
+    }
+
+    func testRequestInputMonitoringAccessOpensSettingsWhenNoPromptAppears() {
+        let perms = MockPermissionService()
+        perms.inputMonitoringPermission = false
+        let stt = MockSTTClient()
+        let suite = makeIsolatedDefaultsSuite("com.sotto.tests.")
+        let defaults = UserDefaults(suiteName: suite)!
+
+        let vm = makeViewModel(permissionService: perms, sttClient: stt, defaults: defaults)
+        vm.jump(to: .permissions)
+        vm.requestInputMonitoringAccess()
+
+        XCTAssertEqual(perms.requestInputMonitoringPermissionCallCount, 1)
+        XCTAssertEqual(perms.openInputMonitoringSettingsCallCount, 1)
+        XCTAssertFalse(vm.isBusy)
+    }
+
     func testAccessibilityDeniedTelemetryEmitsWhenPromptedUserDismissesStillUngranted() {
         let telemetry = OnboardingTelemetrySpy()
         Telemetry.configure(telemetry)
