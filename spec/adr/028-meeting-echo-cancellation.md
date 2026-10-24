@@ -37,6 +37,8 @@ Render skip (echo probe, PR #676):
 - Each render/skip emits a per-session diagnostics summary (model version, render duration and realtime factor, delay estimate, probe score, final reason) so accuracy complaints are debuggable from one line.
 - The same render/skip summary is persisted into the session's `meeting-recording-metadata.json` sidecar as additive optional `echoSuppression` fields (`reasonCode` plus optional `modelVersion`, `renderDurationMs`, `delayEstimateMs`, `probeBestCorrelation`), per `spec/contracts/meeting-artifacts-v1.md`, so shared artifact folders self-describe cleaned-vs-raw routing without app logs.
 
+Memory/storage (October 2026): the renderer spools decoded PCM to private, immediately unlinked scratch files and encodes conditioned output incrementally, instead of holding recording-length PCM arrays. Model choice, probe policy and quality are unchanged, and no new durable artifact is introduced. The tradeoff is temporary disk I/O for a bounded in-process sample working set; mechanics, storage cost and failure behavior are owned by `spec/05-audio-pipeline.md` (Meeting Echo Cancellation).
+
 The cleaned mic is exposed in the artifact manifest (`cleanedMicrophoneAudioPath`, `spec/contracts/meeting-artifacts-v1.md`).
 
 ## Alternatives considered
