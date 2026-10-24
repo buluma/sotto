@@ -114,6 +114,16 @@ private final class PollingPermissionService: PermissionServiceProtocol, @unchec
     func requestAccessibilityPermission(prompt _: Bool) -> Bool {
         true
     }
+
+    func checkInputMonitoringPermission() -> Bool {
+        true
+    }
+
+    func requestInputMonitoringPermission() -> Bool {
+        true
+    }
+
+    func openInputMonitoringSettings() {}
 }
 
 private final class DelayedMicrophonePermissionService: PermissionServiceProtocol, @unchecked Sendable {
@@ -150,6 +160,16 @@ private final class DelayedMicrophonePermissionService: PermissionServiceProtoco
     func requestAccessibilityPermission(prompt _: Bool) -> Bool {
         accessibilityPermission
     }
+
+    func checkInputMonitoringPermission() -> Bool {
+        true
+    }
+
+    func requestInputMonitoringPermission() -> Bool {
+        true
+    }
+
+    func openInputMonitoringSettings() {}
 }
 
 @MainActor

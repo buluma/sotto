@@ -925,8 +925,10 @@ public final class SettingsViewModel {
     public var microphoneGranted: Bool { microphoneStatus == .granted }
     public var accessibilityGranted = false
     public var screenRecordingGranted = false
+    public var inputMonitoringGranted = true
     /// Reinstall shortcuts after macOS grants access to a running app.
     public var onAccessibilityGranted: (() -> Void)?
+    public var onInputMonitoringGranted: (() -> Void)?
 
     // Stats
     public var dictationCount = 0
@@ -988,6 +990,7 @@ public final class SettingsViewModel {
     // model lifetime; unsafe access lets deinit cancel/unregister.
     @ObservationIgnored nonisolated(unsafe) private var permissionPollingTask: Task<Void, Never>?
     @ObservationIgnored nonisolated(unsafe) private var accessibilityGrantWatchTask: Task<Void, Never>?
+    @ObservationIgnored nonisolated(unsafe) private var inputMonitoringGrantWatchTask: Task<Void, Never>?
     @ObservationIgnored nonisolated(unsafe) private var microphoneTestTask: Task<Void, Never>?
     @ObservationIgnored nonisolated(unsafe) private var storageStatsTask: Task<Void, Never>?
     @ObservationIgnored nonisolated(unsafe) private var calendarSettingsObserver: NSObjectProtocol?
@@ -1204,6 +1207,7 @@ public final class SettingsViewModel {
     deinit {
         permissionPollingTask?.cancel()
         accessibilityGrantWatchTask?.cancel()
+        inputMonitoringGrantWatchTask?.cancel()
         microphoneTestTask?.cancel()
         storageStatsTask?.cancel()
         if let calendarSettingsObserver {
@@ -1571,8 +1575,10 @@ public final class SettingsViewModel {
             if let service = permissionService {
                 let micStatus = await service.checkMicrophonePermission()
                 let accStatus = service.checkAccessibilityPermission()
+                let inputMonitoringStatus = service.checkInputMonitoringPermission()
                 let screenRecordingStatus = service.checkScreenRecordingPermission()
                 microphoneStatus = micStatus
+                applyInputMonitoringStatus(inputMonitoringStatus)
                 screenRecordingGranted = screenRecordingStatus
                 applyAccessibilityStatus(accStatus)
             }
@@ -1615,6 +1621,42 @@ public final class SettingsViewModel {
     private func stopAccessibilityGrantWatch() {
         accessibilityGrantWatchTask?.cancel()
         accessibilityGrantWatchTask = nil
+    }
+
+    private func applyInputMonitoringStatus(_ granted: Bool) {
+        let becameGranted = granted && !inputMonitoringGranted
+        inputMonitoringGranted = granted
+        if granted {
+            stopInputMonitoringGrantWatch()
+        } else {
+            startInputMonitoringGrantWatch()
+        }
+        if becameGranted {
+            onInputMonitoringGranted?()
+        }
+    }
+
+    /// Same background re-check as Accessibility: rebuilt ad-hoc signed apps
+    /// lose this grant, and re-enabling it in System Settings should restore
+    /// shortcuts without visiting Sotto's Settings.
+    private func startInputMonitoringGrantWatch() {
+        guard inputMonitoringGrantWatchTask == nil else { return }
+        let interval = permissionPollingInterval
+        inputMonitoringGrantWatchTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: interval)
+                guard !Task.isCancelled, let self, let service = self.permissionService else { break }
+                if service.checkInputMonitoringPermission() {
+                    self.applyInputMonitoringStatus(true)
+                    break
+                }
+            }
+        }
+    }
+
+    private func stopInputMonitoringGrantWatch() {
+        inputMonitoringGrantWatchTask?.cancel()
+        inputMonitoringGrantWatchTask = nil
     }
 
     public func refreshMicrophoneDevices() {
@@ -1722,6 +1764,16 @@ public final class SettingsViewModel {
         // Settings either way, so take the user there.
         if !permissionService.requestScreenRecordingPermission() {
             permissionService.openScreenRecordingSettings()
+        }
+        refreshPermissions()
+    }
+
+    public func requestInputMonitoringAccess() {
+        guard let permissionService else { return }
+        // Like Screen Recording, the request prompts only while undetermined
+        // and the grant itself happens in System Settings.
+        if !permissionService.requestInputMonitoringPermission() {
+            permissionService.openInputMonitoringSettings()
         }
         refreshPermissions()
     }

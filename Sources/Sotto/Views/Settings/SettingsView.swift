@@ -3662,7 +3662,7 @@ struct SettingsView: View {
         }
     }
 
-    /// Roll-up of the three permissions. `.required` if any core gate is
+    /// Roll-up of the permission rows. `.required` if any core gate is
     /// missing; Screen Recording is only required by meeting source modes that
     /// capture system audio.
     private var permissionsCardStatus: SettingsCardStatus? {
@@ -3670,6 +3670,7 @@ struct SettingsView: View {
             meetingRecordingEnabled: AppFeatures.meetingRecordingEnabled,
             microphoneGranted: viewModel.microphoneGranted,
             accessibilityGranted: viewModel.accessibilityGranted,
+            inputMonitoringGranted: viewModel.inputMonitoringGranted,
             screenRecordingGranted: viewModel.screenRecordingGranted,
             meetingAudioSourceMode: viewModel.meetingAudioSourceMode
         )
@@ -3677,8 +3678,8 @@ struct SettingsView: View {
 
     private var permissionsCard: some View {
         let permissionsSubtitle = AppFeatures.meetingRecordingEnabled
-            ? "Microphone is needed for dictation and microphone meetings. Accessibility is required for the global hotkey and paste. Screen Recording is needed for system-audio meetings."
-            : "Microphone is needed for dictation. Accessibility is required for the global hotkey and paste."
+            ? "Microphone is needed for dictation and microphone meetings. Accessibility and Input Monitoring are required for the global hotkey; Accessibility also enables paste. Screen Recording is needed for system-audio meetings."
+            : "Microphone is needed for dictation. Accessibility and Input Monitoring are required for the global hotkey; Accessibility also enables paste."
 
         return SettingsCard(
             title: "Permissions",
@@ -3704,6 +3705,17 @@ struct SettingsView: View {
                     permissionPill(granted: viewModel.accessibilityGranted)
                 }
 
+                Divider()
+
+                HStack {
+                    rowText(
+                        title: "Input Monitoring",
+                        detail: "Required for the global hotkey to receive key presses. Separate from Accessibility."
+                    )
+                    Spacer()
+                    permissionPill(granted: viewModel.inputMonitoringGranted)
+                }
+
                 if AppFeatures.meetingRecordingEnabled {
                     Divider()
 
@@ -3720,7 +3732,9 @@ struct SettingsView: View {
                 let needsScreenRecordingAction = AppFeatures.meetingRecordingEnabled
                     && viewModel.meetingAudioSourceMode.capturesSystemAudio
                     && !viewModel.screenRecordingGranted
-                if !viewModel.microphoneGranted || !viewModel.accessibilityGranted || needsScreenRecordingAction {
+                if !viewModel.microphoneGranted || !viewModel.accessibilityGranted
+                    || !viewModel.inputMonitoringGranted || needsScreenRecordingAction
+                {
                     Divider()
                     LazyVGrid(
                         columns: [GridItem(.adaptive(minimum: 260), alignment: .leading)],
@@ -3735,6 +3749,14 @@ struct SettingsView: View {
                         if !viewModel.accessibilityGranted {
                             Button("Open Accessibility Settings") {
                                 openAccessibilitySettings()
+                            }
+                            .sottoAction(.primaryProminent)
+                            .fixedSize()
+                        }
+
+                        if !viewModel.inputMonitoringGranted {
+                            Button("Open Input Monitoring Settings") {
+                                viewModel.requestInputMonitoringAccess()
                             }
                             .sottoAction(.primaryProminent)
                             .fixedSize()
