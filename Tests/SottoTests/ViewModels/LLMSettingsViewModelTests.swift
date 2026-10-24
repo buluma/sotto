@@ -705,7 +705,7 @@ final class LLMSettingsViewModelTests: XCTestCase {
         viewModel.configure(configStore: mockConfigStore, llmClient: mockClient)
 
         viewModel.selectedProviderID = .anthropic
-        XCTAssertEqual(viewModel.modelName, "claude-sonnet-5")
+        XCTAssertEqual(viewModel.modelName, "claude-sonnet-5-5")
 
         viewModel.selectedProviderID = .gemini
         XCTAssertEqual(viewModel.modelName, "gemini-3.5-flash")
@@ -2349,7 +2349,7 @@ final class LLMSettingsViewModelTests: XCTestCase {
         viewModel.configure(configStore: mockConfigStore, llmClient: mockClient)
         viewModel.selectedProviderID = .openrouter
         XCTAssertTrue(viewModel.requiresAPIKey)
-        XCTAssertEqual(viewModel.modelName, "anthropic/claude-sonnet-5")
+        XCTAssertEqual(viewModel.modelName, "anthropic/claude-sonnet-5.5")
     }
 
     // MARK: - Local CLI
