@@ -190,7 +190,12 @@ public final class TranscriptionViewModel {
         clearError()
         switch request {
         case .file(let url, let source, let ordinal):
-            startTranscribingFile(url: url, source: source, audioTrackOrdinal: ordinal)
+            startTranscribingFile(
+                url: url,
+                source: source,
+                audioTrackOrdinal: ordinal,
+                speakerSelection: consumeNextRunSpeakerSelection()
+            )
         case .mediaURL(let url):
             urlInput = url
             transcribeURL()
@@ -239,6 +244,10 @@ public final class TranscriptionViewModel {
     public private(set) var pendingAudioTrackSelection: AudioTrackSelectionRequest?
     public var isDragging = false
     public var urlInput: String = ""
+    /// Speaker count for the next file drop, file pick, or media link only.
+    /// Starting that run resets it to `.automatic`, so a count chosen for one
+    /// recording never silently constrains a later one (#1225).
+    public var nextRunSpeakerSelection: SpeakerCountSelection = .automatic
     public var hasPromptResultTabs: Bool = false
 
     // LLM state
@@ -270,6 +279,7 @@ public final class TranscriptionViewModel {
     private var batchAudioTrackOrdinal: Int?
     private var batchMultiTrackFilePaths: Set<String> = []
     private var batchAudioTrackPreflightFailedPaths: Set<String> = []
+    private var batchSpeakerSelection: SpeakerCountSelection?
 
     /// One-line batch status for the global progress bar / batch card,
     /// e.g. "Transcribing 7 of 40" or "Transcribing 7 of 40 · 1 failed".
@@ -507,14 +517,36 @@ public final class TranscriptionViewModel {
                 expansion: AudioFileEnumerator.Result(files: [url], droppedCount: 0)
             )
         } else {
-            startTranscribingFile(url: url, source: source, audioTrackOrdinal: nil)
+            startTranscribingFile(
+                url: url,
+                source: source,
+                audioTrackOrdinal: nil,
+                speakerSelection: consumeNextRunSpeakerSelection()
+            )
         }
+    }
+
+    /// Takes the one-run speaker count. `nil` means the saved speaker-detection
+    /// preference decides, which is also the answer whenever that preference is
+    /// off: the Transcribe view hides the control then, so a count chosen
+    /// earlier must not turn detection back on.
+    private func consumeNextRunSpeakerSelection() -> SpeakerCountSelection? {
+        let applies = nextRunSpeakerCountApplies
+        let selection = nextRunSpeakerSelection
+        nextRunSpeakerSelection = .automatic
+        return applies ? selection : nil
+    }
+
+    private var nextRunSpeakerCountApplies: Bool {
+        nextRunSpeakerSelection.exactCount != nil
+            && UserDefaultsAppRuntimePreferences.speakerDiarizationEnabled(defaults: defaults)
     }
 
     private func startTranscribingFile(
         url: URL,
         source: TelemetryTranscriptionSource,
-        audioTrackOrdinal: Int?
+        audioTrackOrdinal: Int?,
+        speakerSelection: SpeakerCountSelection?
     ) {
         guard let service = transcriptionService else {
             reportMissingConfiguration("transcriptionService", action: "startTranscribingFile")
@@ -532,7 +564,20 @@ public final class TranscriptionViewModel {
                     }
                 }
                 let result: Transcription
-                if let audioTrackOrdinal {
+                if let speakerSelection {
+                    guard let speakerService = service as? any SpeakerConfiguredTranscriptionService else {
+                        throw STTError.engineStartFailed(
+                            "Per-run speaker configuration cannot be honored by this transcription service."
+                        )
+                    }
+                    result = try await speakerService.transcribe(
+                        fileURL: url,
+                        source: source,
+                        audioTrackOrdinal: audioTrackOrdinal,
+                        speakerSelection: speakerSelection,
+                        onProgress: progressHandler
+                    )
+                } else if let audioTrackOrdinal {
                     guard let audioTrackService else {
                         throw AudioProcessorError.conversionFailed(
                             "Audio-track selection is unavailable for this transcription service."
@@ -751,12 +796,19 @@ public final class TranscriptionViewModel {
             multiTrackFilePaths.contains(first.standardizedFileURL.path)
             ? audioTrackOrdinal
             : nil
+        let speakerSelection = consumeNextRunSpeakerSelection()
 
         if files.count == 1 {
-            startTranscribingFile(url: first, source: source, audioTrackOrdinal: firstAudioTrackOrdinal)
+            startTranscribingFile(
+                url: first,
+                source: source,
+                audioTrackOrdinal: firstAudioTrackOrdinal,
+                speakerSelection: speakerSelection
+            )
         } else {
             batchSource = source
             batchAudioTrackOrdinal = audioTrackOrdinal
+            batchSpeakerSelection = speakerSelection
             batchMultiTrackFilePaths = multiTrackFilePaths
             batchAudioTrackPreflightFailedPaths = preflightFailedFilePaths
             batchTotalCount = files.count
@@ -807,8 +859,11 @@ public final class TranscriptionViewModel {
             placeholderName = "Podcast episode"
         } else if YouTubeURLValidator.isYouTubeURL(url) {
             guard let videoID = YouTubeURLValidator.extractVideoID(url) else { return }
-            // Check for existing transcription of the same video
-            if let existing = try? transcriptionRepo?.fetchCompletedByVideoID(videoID) {
+            // Reuse a saved transcript of the same video, unless an exact
+            // speaker count asks for a fresh run.
+            if !nextRunSpeakerCountApplies,
+                let existing = try? transcriptionRepo?.fetchCompletedByVideoID(videoID)
+            {
                 currentTranscription = existing
                 urlInput = ""
                 return
@@ -832,14 +887,30 @@ public final class TranscriptionViewModel {
         let taskID = beginNewTranscription(source: source, fileName: placeholderName)
         activeRetryRequest = .mediaURL(url)
         urlInput = ""
+        let speakerSelection = consumeNextRunSpeakerSelection()
 
         transcriptionTask = Task { @MainActor [weak self] in
             guard let self else { return }
             do {
-                let result = try await service.transcribeURL(urlString: url) { [weak self] progress in
+                let progressHandler: @Sendable (TranscriptionProgress) -> Void = { [weak self] progress in
                     Task { @MainActor [weak self] in
                         self?.updateProgress(with: progress, taskID: taskID)
                     }
+                }
+                let result: Transcription
+                if let speakerSelection {
+                    guard let speakerService = service as? any SpeakerConfiguredTranscriptionService else {
+                        throw STTError.engineStartFailed(
+                            "Per-run speaker configuration cannot be honored by this transcription service."
+                        )
+                    }
+                    result = try await speakerService.transcribeURL(
+                        urlString: url,
+                        speakerSelection: speakerSelection,
+                        onProgress: progressHandler
+                    )
+                } else {
+                    result = try await service.transcribeURL(urlString: url, onProgress: progressHandler)
                 }
                 completeSuccessfulTranscription(taskID: taskID, result: result)
             } catch is CancellationError {
@@ -1030,7 +1101,7 @@ public final class TranscriptionViewModel {
     public func retranscribe(
         _ original: Transcription,
         speechEngineOverride: SpeechEngineSelection? = nil,
-        speakerSelection: RetranscriptionSpeakerSelection? = nil
+        speakerSelection: SpeakerCountSelection? = nil
     ) {
         guard canStartTranscription else { return }
         guard let service = transcriptionService else {
@@ -1241,7 +1312,8 @@ public final class TranscriptionViewModel {
                 source: batchSource,
                 audioTrackOrdinal: batchMultiTrackFilePaths.contains(next.standardizedFileURL.path)
                     ? batchAudioTrackOrdinal
-                    : nil
+                    : nil,
+                speakerSelection: batchSpeakerSelection
             )
             return
         }
@@ -1267,6 +1339,7 @@ public final class TranscriptionViewModel {
         batchAudioTrackOrdinal = nil
         batchMultiTrackFilePaths.removeAll()
         batchAudioTrackPreflightFailedPaths.removeAll()
+        batchSpeakerSelection = nil
     }
 
     private func emitCompletionSignal(_ content: TranscriptionCompletionNotifier.Content?) {
