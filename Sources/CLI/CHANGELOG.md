@@ -74,6 +74,7 @@ Stderr stays plain text for human-only progress / status (e.g. "Saved PromptResu
 
 ### Fixed
 
+- Transform shortcut assignment rejects collisions with either additional dictation shortcut configured in the app. Existing error/output schemas are unchanged.
 - `retranscribe --update` for saved transcriptions and meetings returns the row committed by the shared transcription service. Notes, chat, names, favorites and audio metadata changed during recognition are preserved; the CLI no longer performs a second stale save that could undo those edits or recreate a deleted recording. JSON shapes and exit-code meanings are unchanged.
 - Rerunning a completed or cancelled dictation requires its row still to exist with the original status. A concurrent deletion or status change now fails with a `lookup` error instead of restoring stale history or recounting a deleted take. Failed-dictation recovery and audio-retention rules are unchanged.
 
