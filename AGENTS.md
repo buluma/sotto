@@ -29,9 +29,6 @@ scripts/dev/format.sh
 scripts/dev/ci_local.sh
 scripts/dev/greptile_review.sh [BaseBranch]
 scripts/dev/run_app.sh
-no-mistakes doctor
-no-mistakes init
-no-mistakes axi
 swift run sotto-cli --help
 swift run sotto-cli health
 ```
@@ -90,8 +87,6 @@ The old manual requirements/traceability workflow is retired. The legacy require
 ## Review And Commit
 
 Use [`docs/pr-review-workflow.md`](./docs/pr-review-workflow.md) for substantial changes. Scale review to risk: trivial edits can go straight in; small contained fixes need focused verification; substantial changes benefit from branch-first PRs, CI, local Greptile CLI review, and independent review until findings converge. Greptile CLI reviews committed branch changes only; uncommitted changes are ignored, so run it from the clean worktree/branch that owns the PR.
-
-Sotto adopts `no-mistakes` as the preferred gate for non-trivial agent-authored branches when it is installed. Initialize once per checkout with `no-mistakes init`; it adds the local `no-mistakes` remote and installs the user-level `/no-mistakes` skill for Claude Code and Codex. The committed [`.no-mistakes.yaml`](./.no-mistakes.yaml) keeps the gate deterministic: `swift test` is the baseline test command, `swift-format lint` is the lint command, automatic review fixing is off by default, in-repo evidence artifacts stay disabled, and transcript-based intent extraction is disabled so agents should pass explicit intent. For substantial ready-to-review work, prefer `/no-mistakes <task>` from the agent or `git push no-mistakes <branch>` from the terminal over a direct `git push origin`. If the tool is unavailable, continue with the documented PR workflow and say so in the handoff or PR notes.
 
 Commit messages should help a future reader understand the change. The rich format in [`docs/commit-guidelines.md`](./docs/commit-guidelines.md) is a tool for significant work, not ceremony for every typo. Do not add Cursor or other assistant `Co-authored-by` trailers.
 
