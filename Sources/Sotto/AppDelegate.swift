@@ -661,7 +661,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let llmService = env.llmService
         let llmServiceProvider: () -> LLMServiceProtocol? = { [weak configStore, llmService] in
             guard let configStore else { return nil }
-            return (try? configStore.loadConfig()) != nil ? llmService : nil
+            return (try? configStore.loadConfigMetadata()) != nil ? llmService : nil
         }
 
         // Productized Transforms coordinator (ADR-022). Reads `.transform`
@@ -673,7 +673,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             promptRepository: env.promptRepo,
             historyRepository: env.transformHistoryRepo,
             activeModelNameProvider: { [weak configStore] in
-                try? configStore?.loadConfig()?.modelName
+                try? configStore?.loadConfigMetadata()?.modelName
             },
             reservedHotkeysProvider: { [weak self] in
                 self?.transformReservedHotkeysForTransforms() ?? []
@@ -722,6 +722,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     guard let self else { return [] }
                     let transforms = (try? env.promptRepo.fetchVisible(category: .transform)) ?? []
                     return [self.settingsViewModel.hotkeyTrigger, self.settingsViewModel.pushToTalkHotkeyTrigger,
+                            self.settingsViewModel.alternateHandsFreeHotkeyTrigger,
+                            self.settingsViewModel.alternatePushToTalkHotkeyTrigger,
                             self.settingsViewModel.meetingHotkeyTrigger, self.settingsViewModel.fileTranscriptionHotkeyTrigger,
                             self.settingsViewModel.youtubeTranscriptionHotkeyTrigger]
                         + transforms.compactMap { $0.shortcut?.hotkeyTrigger }
@@ -919,6 +921,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 conflictMode: .bareModifierDictation
             ),
             TransformShortcutReservedHotkey(
+                name: "additional hands-free shortcut", trigger: settingsViewModel.alternateHandsFreeHotkeyTrigger,
+                conflictMode: .bareModifierDictation),
+            TransformShortcutReservedHotkey(
+                name: "additional push-to-talk shortcut", trigger: settingsViewModel.alternatePushToTalkHotkeyTrigger,
+                conflictMode: .bareModifierDictation),
+            TransformShortcutReservedHotkey(
                 name: "file transcription", trigger: settingsViewModel.fileTranscriptionHotkeyTrigger),
             TransformShortcutReservedHotkey(
                 name: "video URL transcription", trigger: settingsViewModel.youtubeTranscriptionHotkeyTrigger),
@@ -994,7 +1002,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             ?? AppHotkeyCoordinator.menuTitle(
                 handsFree: settingsViewModel.hotkeyTrigger,
                 pushToTalk: settingsViewModel.pushToTalkHotkeyTrigger,
-                aiPolish: settingsViewModel.dictationAIPolishHotkeyTrigger
+                aiPolish: settingsViewModel.dictationAIPolishHotkeyTrigger,
+                alternateHandsFree: settingsViewModel.alternateHandsFreeHotkeyTrigger,
+                alternatePushToTalk: settingsViewModel.alternatePushToTalkHotkeyTrigger
             )
     }
 

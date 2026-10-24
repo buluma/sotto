@@ -1447,6 +1447,32 @@ final class SettingsViewModelTests: XCTestCase {
         wait(for: [expectation], timeout: 1.0)
     }
 
+    func testAdditionalDictationShortcutsRoundTripWithoutChangingPrimaryBindings() {
+        XCTAssertEqual(viewModel.alternateHandsFreeHotkeyTrigger, .disabled)
+        XCTAssertEqual(viewModel.alternatePushToTalkHotkeyTrigger, .disabled)
+        let primary = viewModel.hotkeyTrigger
+        let hold = viewModel.pushToTalkHotkeyTrigger
+        let key = HotkeyTrigger.fromKeyCode(117)
+        let handsFreeChanged = expectation(forNotification: .sottoHotkeyTriggerDidChange, object: nil)
+        let holdChanged = expectation(forNotification: .sottoPushToTalkHotkeyTriggerDidChange, object: nil)
+        viewModel.alternateHandsFreeHotkeyTrigger = key
+        viewModel.alternatePushToTalkHotkeyTrigger = key
+        wait(for: [handsFreeChanged, holdChanged], timeout: 1)
+        let reloaded = SettingsViewModel(defaults: testDefaults)
+        XCTAssertEqual(reloaded.alternateHandsFreeHotkeyTrigger, key)
+        XCTAssertEqual(reloaded.alternatePushToTalkHotkeyTrigger, key)
+        XCTAssertEqual(reloaded.hotkeyTrigger, primary)
+        XCTAssertEqual(reloaded.pushToTalkHotkeyTrigger, hold)
+        reloaded.alternateHandsFreeHotkeyTrigger = .disabled
+        XCTAssertEqual(SettingsViewModel(defaults: testDefaults).alternateHandsFreeHotkeyTrigger, .disabled)
+        XCTAssertEqual(SettingsViewModel(defaults: testDefaults).alternatePushToTalkHotkeyTrigger, key)
+    }
+
+    func testMalformedAdditionalShortcutFallsBackToDisabled() {
+        testDefaults.set("broken json", forKey: HotkeyTrigger.alternateHandsFreeDefaultsKey)
+        XCTAssertEqual(SettingsViewModel(defaults: testDefaults).alternateHandsFreeHotkeyTrigger, .disabled)
+    }
+
     func testPushToTalkHotkeyPostsNotificationOnChange() {
         let expectation = expectation(
             forNotification: Notification.Name("sotto.pushToTalkHotkeyTriggerDidChange"),
@@ -1803,6 +1829,39 @@ final class SettingsViewModelTests: XCTestCase {
         XCTAssertTrue(viewModel.microphoneGranted)
         XCTAssertTrue(viewModel.accessibilityGranted)
         XCTAssertTrue(viewModel.screenRecordingGranted)
+    }
+
+    func testRefusedScreenRecordingRequestOpensSystemSettings() {
+        // After a denial the system request returns false without a prompt,
+        // so Allow must lead to System Settings instead of doing nothing.
+        mockPermissions.screenRecordingPermission = false
+        mockPermissions.requestScreenRecordingResult = false
+        viewModel.configure(
+            permissionService: mockPermissions,
+            dictationRepo: mockRepo,
+            entitlementsService: entitlements,
+            checkoutURL: nil
+        )
+
+        viewModel.requestScreenRecordingAccess()
+
+        XCTAssertEqual(mockPermissions.openScreenRecordingSettingsCallCount, 1)
+    }
+
+    func testGrantedScreenRecordingRequestStaysInApp() {
+        mockPermissions.screenRecordingPermission = false
+        mockPermissions.requestScreenRecordingResult = true
+        viewModel.configure(
+            permissionService: mockPermissions,
+            dictationRepo: mockRepo,
+            entitlementsService: entitlements,
+            checkoutURL: nil
+        )
+
+        viewModel.requestScreenRecordingAccess()
+
+        XCTAssertTrue(mockPermissions.screenRecordingPermission, "Allow must make the system request")
+        XCTAssertEqual(mockPermissions.openScreenRecordingSettingsCallCount, 0)
     }
 
     func testRefreshPermissionsUpdatesNotGrantedState() async throws {

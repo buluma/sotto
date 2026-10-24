@@ -195,6 +195,19 @@ public final class SettingsViewModel {
             Telemetry.send(pushToTalkHotkeyTrigger.customizedEvent(surface: .pushToTalk))
         }
     }
+    public var alternateHandsFreeHotkeyTrigger: HotkeyTrigger {
+        didSet {
+            alternateHandsFreeHotkeyTrigger.save(to: defaults, defaultsKey: HotkeyTrigger.alternateHandsFreeDefaultsKey)
+            NotificationCenter.default.post(name: .sottoHotkeyTriggerDidChange, object: nil)
+        }
+    }
+    public var alternatePushToTalkHotkeyTrigger: HotkeyTrigger {
+        didSet {
+            alternatePushToTalkHotkeyTrigger.save(
+                to: defaults, defaultsKey: HotkeyTrigger.alternatePushToTalkDefaultsKey)
+            NotificationCenter.default.post(name: .sottoPushToTalkHotkeyTriggerDidChange, object: nil)
+        }
+    }
     public var meetingHotkeyTrigger: HotkeyTrigger {
         didSet {
             meetingHotkeyTrigger.save(to: defaults, defaultsKey: HotkeyTrigger.meetingDefaultsKey)
@@ -1069,6 +1082,12 @@ public final class SettingsViewModel {
         if resolvedDictationHotkeys.shouldPersistPushToTalk {
             resolvedDictationHotkeys.pushToTalk.save(to: defaults, defaultsKey: HotkeyTrigger.pushToTalkDefaultsKey)
         }
+        alternateHandsFreeHotkeyTrigger = HotkeyTrigger.current(
+            defaults: defaults, defaultsKey: HotkeyTrigger.alternateHandsFreeDefaultsKey, fallback: .disabled
+        )
+        alternatePushToTalkHotkeyTrigger = HotkeyTrigger.current(
+            defaults: defaults, defaultsKey: HotkeyTrigger.alternatePushToTalkDefaultsKey, fallback: .disabled
+        )
         meetingHotkeyTrigger = Self.resolveMeetingHotkeyTrigger(defaults: defaults)
         fileTranscriptionHotkeyTrigger = Self.resolveTranscriptionHotkeyTrigger(
             defaults: defaults,
@@ -1698,7 +1717,12 @@ public final class SettingsViewModel {
     public func requestScreenRecordingAccess() {
         guard let permissionService else { return }
         Telemetry.send(.permissionPrompted(permission: .screenRecording))
-        _ = permissionService.requestScreenRecordingPermission()
+        // The request prompts only while access is undetermined; after a
+        // denial it returns false silently. Access is granted in System
+        // Settings either way, so take the user there.
+        if !permissionService.requestScreenRecordingPermission() {
+            permissionService.openScreenRecordingSettings()
+        }
         refreshPermissions()
     }
 

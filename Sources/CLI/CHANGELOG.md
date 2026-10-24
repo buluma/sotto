@@ -64,7 +64,7 @@ Any command that accepts `--json` emits this envelope on stdout when the command
 }
 ```
 
-`errorType` is a low-cardinality stable string. Current values: `auth`, `config`, `connection`, `conflict`, `context`, `input_empty`, `input_missing`, `import_schema`, `invalid_response`, `lookup`, `model`, `provider`, `rate_limit`, `runtime`, `streaming`, `truncated`, `validation`. New error classes get new values in minor releases; existing values are stable within a major.
+`errorType` is a low-cardinality stable string. Current values: `auth`, `config`, `connection`, `conflict`, `context`, `input_empty`, `input_missing`, `import_schema`, `invalid_response`, `lookup`, `model`, `provider`, `rate_limit`, `runtime`, `streaming`, `timeout`, `truncated`, `validation`. New error classes get new values in minor releases; existing values are stable within a major.
 
 Stderr stays plain text for human-only progress / status (e.g. "Saved PromptResult abc12345"), so piping `--json` stdout through `jq` is safe.
 
@@ -72,8 +72,19 @@ Stderr stays plain text for human-only progress / status (e.g. "Saved PromptResu
 
 ## [Unreleased]
 
+### Changed
+
+- FluidAudio 0.17.7. Explicit `--speaker-count`, `--speaker-min` and `--speaker-max` runs (Community-1) no longer over-split audio that contains digital silence, such as a muted call track. Automatic speaker detection (Nemotron), ASR, JSON fields and exit codes are unchanged.
+- Inline Anthropic and OpenRouter LLM commands now default to Claude Sonnet 5.5 (`claude-sonnet-5-5` and `anthropic/claude-sonnet-5.5`). Pass `--model` to keep a previous model. The `--model` help example references the same ID.
+
 ### Fixed
 
+- A provider request that hits its idle timeout reports `errorType` `timeout` with "The request timed out before the provider finished responding." It was previously `connection` ("Connection failed: The request timed out.").
+- Non-streaming cloud LLM requests wait 300 seconds for the response body, matching local providers. AI cleanup of a transcript longer than about seven minutes was failing at 30 seconds.
+- AI cleanup of a long transcript is sent in sections of at most 12,000 characters and joined. Meetings are no longer skipped at 20,000 characters.
+- Saved Keychain credentials no longer open system password dialogs during CLI execution. Blocked access returns an error; grant this executable access in Keychain Access before retrying. Existing keys and routes are preserved.
+- When speaker detection finds remote speakers in a meeting, system-track words that none of them claimed no longer appear as an extra `Others` speaker. Their `speakers` entry keeps the id `system` with the label `Unattributed`, and `speakerCount` leaves it out. When no remote speaker is detected, the entry stays `Others` and is counted. Rows saved earlier keep their stored values. JSON shapes are unchanged.
+- Transform shortcut assignment rejects collisions with either additional dictation shortcut configured in the app. Existing error/output schemas are unchanged.
 - `retranscribe --update` for saved transcriptions and meetings returns the row committed by the shared transcription service. Notes, chat, names, favorites and audio metadata changed during recognition are preserved; the CLI no longer performs a second stale save that could undo those edits or recreate a deleted recording. JSON shapes and exit-code meanings are unchanged.
 - Rerunning a completed or cancelled dictation requires its row still to exist with the original status. A concurrent deletion or status change now fails with a `lookup` error instead of restoring stale history or recounting a deleted take. Failed-dictation recovery and audio-retention rules are unchanged.
 

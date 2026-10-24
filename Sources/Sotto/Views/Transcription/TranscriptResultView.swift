@@ -80,7 +80,7 @@ private struct RetranscriptionConfirmation: Identifiable {
     let id = UUID()
     let transcriptionID: UUID
     let speechEngineOverride: SpeechEngineSelection?
-    let speakerSelection: RetranscriptionSpeakerSelection?
+    let speakerSelection: SpeakerCountSelection?
     let countsOtherSpeakers: Bool
     let resetsSpeakerCorrections: Bool
     let purpose: Purpose
@@ -88,7 +88,7 @@ private struct RetranscriptionConfirmation: Identifiable {
     init(
         transcriptionID: UUID,
         speechEngineOverride: SpeechEngineSelection?,
-        speakerSelection: RetranscriptionSpeakerSelection?,
+        speakerSelection: SpeakerCountSelection?,
         countsOtherSpeakers: Bool,
         resetsSpeakerCorrections: Bool,
         purpose: Purpose = .standard
@@ -436,7 +436,7 @@ final class TranscriptNotesActionGate {
 private struct RetranscribePick: Sendable {
     let transcriptionID: UUID
     let override: SpeechEngineSelection?
-    let speakerSelection: RetranscriptionSpeakerSelection?
+    let speakerSelection: SpeakerCountSelection?
     let countsOtherSpeakers: Bool
 }
 
@@ -547,7 +547,7 @@ struct TranscriptResultView: View {
     var meetingSplitViewModel: MeetingSplitViewModel? = nil
     var onBack: (() -> Void)?
     var onStartNew: (() -> Void)?
-    var onRetranscribe: ((Transcription, SpeechEngineSelection?, RetranscriptionSpeakerSelection?) -> Void)?
+    var onRetranscribe: ((Transcription, SpeechEngineSelection?, SpeakerCountSelection?) -> Void)?
     var onSetUpAI: (() -> Void)?
 
     @AppStorage(UserDefaultsAppRuntimePreferences.transcriptAIContextModeKey)
@@ -1252,8 +1252,8 @@ struct TranscriptResultView: View {
                         if engineOption != nil || canConfigureSpeakers {
                             selectedRetranscriptionSpeechEngineOverride = nil
                             retranscriptionExactSpeakerCount = min(
-                                max(defaultRetranscriptionSpeakerCount, RetranscriptionSpeakerSelection.supportedExactCount.lowerBound),
-                                RetranscriptionSpeakerSelection.supportedExactCount.upperBound
+                                max(defaultRetranscriptionSpeakerCount, SpeakerCountSelection.supportedExactCount.lowerBound),
+                                SpeakerCountSelection.supportedExactCount.upperBound
                             )
                             showingRetranscribeOptions.toggle()
                         } else {
@@ -1471,7 +1471,7 @@ struct TranscriptResultView: View {
                     transcriptionID: transcription.id,
                     override: selectedRetranscriptionSpeechEngineOverride,
                     speakerSelection: canConfigureSpeakers
-                        ? selectedRetranscriptionSpeakerSelection
+                        ? selectedSpeakerCountSelection
                         : nil,
                     countsOtherSpeakers: activeTranscription.sourceType == .meeting
                 )
@@ -1509,7 +1509,7 @@ struct TranscriptResultView: View {
             if retranscriptionUsesExactSpeakerCount {
                 Stepper(
                     value: $retranscriptionExactSpeakerCount,
-                    in: RetranscriptionSpeakerSelection.supportedExactCount
+                    in: SpeakerCountSelection.supportedExactCount
                 ) {
                     Text("Exact: \(retranscriptionExactSpeakerCount)")
                 }
@@ -1521,7 +1521,7 @@ struct TranscriptResultView: View {
         }
     }
 
-    private var selectedRetranscriptionSpeakerSelection: RetranscriptionSpeakerSelection {
+    private var selectedSpeakerCountSelection: SpeakerCountSelection {
         retranscriptionUsesExactSpeakerCount
             ? .exact(retranscriptionExactSpeakerCount)
             : .automatic
@@ -1635,7 +1635,8 @@ struct TranscriptResultView: View {
     }
 
     private var speakerCountValue: Int {
-        activeTranscription.speakers?.count ?? activeTranscription.speakerCount ?? 0
+        activeTranscription.speakers.map { SpeakerInfo.participants(in: $0).count }
+            ?? activeTranscription.speakerCount ?? 0
     }
 
     /// Meeting retranscription configures the diarized participants captured
@@ -1643,7 +1644,8 @@ struct TranscriptResultView: View {
     private var defaultRetranscriptionSpeakerCount: Int {
         guard activeTranscription.sourceType == .meeting else { return speakerCountValue }
         if let speakers = activeTranscription.speakers, !speakers.isEmpty {
-            return speakers.filter { $0.id != AudioSource.microphone.rawValue }.count
+            return SpeakerInfo.participants(in: speakers)
+                .filter { $0.id != AudioSource.microphone.rawValue }.count
         }
         return max(0, speakerCountValue - 1)
     }
@@ -4904,7 +4906,7 @@ struct TranscriptResultView: View {
             editableSegments: attribution?.editableSegments ?? [],
             effectiveTurnCards: (attribution?.speakers.isEmpty ?? true)
                 ? [] : identifiedEffectiveSpeakerTurnCards(attribution?.turns ?? []),
-            availableSpeakers: attribution?.speakers ?? [],
+            availableSpeakers: SpeakerInfo.participants(in: attribution?.speakers ?? []),
             isSpeakerEditing: editingSpeakers,
             isTimedTextEditingAvailable: timedTextEditingAvailable,
             isSpeakerActionDisabled: viewModel.isApplyingSpeakerCorrection,
@@ -5001,7 +5003,7 @@ struct TranscriptResultView: View {
         }
 
         Menu("Assign to…") {
-            ForEach(viewModel.speakerAttribution?.speakers ?? [], id: \.id) { speaker in
+            ForEach(SpeakerInfo.participants(in: viewModel.speakerAttribution?.speakers ?? []), id: \.id) { speaker in
                 Button(speaker.label) {
                     assignSelectedSegments(to: .speaker(id: speaker.id))
                 }
@@ -5310,7 +5312,10 @@ struct TranscriptResultView: View {
                             }
 
                             Menu("Merge into…") {
-                                ForEach(speakers.filter { $0.id != speaker.id }, id: \.id) { target in
+                                ForEach(
+                                    SpeakerInfo.participants(in: speakers).filter { $0.id != speaker.id },
+                                    id: \.id
+                                ) { target in
                                     Button(target.label) {
                                         viewModel.applySpeakerCorrection(
                                             .merge(

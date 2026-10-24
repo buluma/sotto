@@ -550,7 +550,7 @@ When a `--json` command fails *after argument parsing succeeds* (provider error,
 }
 ```
 
-`errorType` is a stable low-cardinality string; `fix` and `meta` are optional. Branch on the exit code, then classify the error with `Sources/CLI/CHANGELOG.md`. A potentially transient provider error (`rate_limit`, `connection`, `streaming`) does not by itself authorize replaying a mutating command. Check whether partial output or saved results already exist before retrying; fix `auth`, `model`, input, lookup, and validation problems rather than retrying them unchanged.
+`errorType` is a stable low-cardinality string; `fix` and `meta` are optional. Branch on the exit code, then classify the error with `Sources/CLI/CHANGELOG.md`. A potentially transient provider error (`rate_limit`, `connection`, `timeout`, `streaming`) does not by itself authorize replaying a mutating command. Check whether partial output or saved results already exist before retrying; fix `auth`, `model`, input, lookup, and validation problems rather than retrying them unchanged.
 
 Parse-time failures (unknown flags, missing required flags, mutually-exclusive combos like `--json` with `--stream`) surface through ArgumentParser's plain-text stderr path with exit code `2`. Always branch on the exit code first.
 

@@ -379,6 +379,7 @@ public enum LLMError: Error, LocalizedError, Sendable {
     case contextTooLong            // Transcript exceeds model context
     case providerError(String)     // Provider-specific error message
     case streamingError(String)    // SSE parse failure or stream interruption
+    case requestTimedOut           // Provider sent no bytes before the idle timeout
 }
 ```
 
@@ -476,6 +477,8 @@ The public Settings flow defaults to no AI provider and recommends cloud/frontie
 
 The setup header and settings card describe the saved provider: a failed test of an unsaved draft does not mark the working saved provider as disconnected. Test Connection never saves a draft; Save remains a separate action. A saved configuration is shown as ready without implying that connectivity was tested. Credential writes/deletes must succeed before replacing provider metadata. Local CLI settings are encoded before committing the provider switch, so an encoding failure leaves the previous provider and CLI settings intact. Failed Save or Clear keeps the working configuration and reports an error without notifying consumers or resetting formatter preferences. Successful transitions update the view model's committed state before notifying consumers.
 
+Status rendering uses provider metadata rather than secret reads; blocked saved credentials show Open Keychain Access and Retry access actions. See [credential access](contracts/credential-access.md).
+
 Clear (and Save with no default or task provider selected) removes the saved routes, not every remembered provider setup. Saved provider API keys stay in the Keychain, as they do when switching providers, so choosing a provider again does not ask for its key again. **Default AI = None** leaves tasks without an override disabled; explicit task routes can be saved independently. In particular, Apple Intelligence cleanup requires no other provider. Formatter availability follows the saved cleanup route, while summaries and Transforms follow analysis and transform respectively. **Remove saved key** under the key field deletes it once no saved route uses that provider. Clear deletes Local CLI command settings only when the saved provider can be identified as Local CLI, and preserves inactive providers' settings. A key typed but not yet saved survives switching to another provider and back within the same Settings session. If saved provider metadata is unreadable, Clear removes that metadata without guessing ownership of the remaining provider-specific settings. Selecting a remembered Local CLI draft afterward does not reactivate AI; the user must explicitly Save.
 
 ```
@@ -522,7 +525,7 @@ Saved dictation rows surface their routing provenance in History: rows formatted
 
 The production context adapter is `FocusedAppContextService`, an AppKit-shaped service that reads `NSWorkspace.shared.frontmostApplication` without giving Core UI ownership. Focus drift is handled by preferring a valid stop/undo-time context and falling back to the start-time context when the finish context is missing or points at Sotto itself.
 
-Profiles apply only to Dictation AI Formatter in V1. File/URL and meeting transcription formatting continues to use the transcript formatter prompt (all transcription finalization paths share `completeTranscription`, which invokes the formatter). Dictation uses the dictation formatter prompt as its fallback after profiles/smart defaults. The transcripts-side formatter has its own "Use for transcripts" toggle (default off) and an input-length cap that skips formatting for transcripts too long to rewrite inside realistic provider timeouts (#493).
+Profiles apply only to Dictation AI Formatter in V1. File/URL and meeting transcription formatting continues to use the transcript formatter prompt (all transcription finalization paths share `completeTranscription`, which invokes the formatter). Dictation uses the dictation formatter prompt as its fallback after profiles/smart defaults. The transcripts-side formatter has its own "Use for transcripts" toggle (default off). A transcript longer than one provider response is cleaned in successive sections and joined, instead of being skipped (#493, upstream #1253).
 
 Browser hostname/domain matching is intentionally deferred. In V1, Gmail in Chrome can match an exact Chrome profile or the coarse `browser` category, but Sotto does not inspect the active tab URL or window title.
 
