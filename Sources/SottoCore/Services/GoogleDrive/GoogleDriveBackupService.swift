@@ -196,7 +196,10 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
             }
         }
         if session == nil {
-            var body: [String: Any] = ["name": name, "trashed": false]
+            // Trash state is restored by metadata() for existing files. It
+            // is not valid creation metadata and Drive can reject it only
+            // when the resumable content upload completes.
+            var body: [String: Any] = ["name": name]
             if !exists {
                 body["id"] = id
                 if parent != "root" { body["parents"] = [parent] }
@@ -219,7 +222,7 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
                 }
                 response = try await request(
                     "PATCH", path: "files/\(id)",
-                    query: ["uploadType": "resumable", "fields": "id"], body: ["name": name, "trashed": false],
+                    query: ["uploadType": "resumable", "fields": "id"], body: ["name": name],
                     headers: [
                         "X-Upload-Content-Type": Self.mimeType(file.relativePath),
                         "X-Upload-Content-Length": "\(file.size)",

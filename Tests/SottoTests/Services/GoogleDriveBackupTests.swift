@@ -222,6 +222,27 @@ final class GoogleDriveBackupTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: snapshot.files[0].url), original)
     }
 
+    func testContentCreationOmitsTrashStateAndUpdateOmitsCreationFields() async throws {
+        let root = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let transport = DriveStubTransport()
+        let service = GoogleDriveBackupService(
+            account: try connectedAccount(transport: transport), transport: transport,
+            ledgerURL: root.appendingPathComponent("ledger.json"))
+        let snapshot = try uploadSnapshot(root: root, size: 12)
+        let destination = GoogleDriveFolder(id: "destination", name: "Backups")
+
+        try await service.upload(snapshot, to: destination, identity: testIdentity) { _ in }
+        try await service.upload(snapshot, to: destination, identity: testIdentity) { _ in }
+
+        let createdKeys = await transport.createdUploadMetadataKeys
+        let updatedKeys = await transport.updatedUploadMetadataKeys
+        XCTAssertEqual(createdKeys, [Set(["id", "name", "parents"])])
+        XCTAssertEqual(updatedKeys, [Set(["name"])])
+        let uploads = await transport.finishedUploads
+        XCTAssertEqual(uploads.count, 2)
+    }
+
     func testUploadReusesPersistedIDsAndUpdatesExistingFilesAfterReopeningService() async throws {
         let root = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -555,6 +576,8 @@ private actor DriveStubTransport: GoogleDriveTransport {
     var requestCount = 0
     var rootLookups = 0
     var rootCreateHadParents: [Bool] = []
+    var createdUploadMetadataKeys: [Set<String>] = []
+    var updatedUploadMetadataKeys: [Set<String>] = []
     var tokenStatus: Int?
     var failIDReservationRequest = false
     var rejectedContentReason: String?
@@ -642,6 +665,15 @@ private actor DriveStubTransport: GoogleDriveTransport {
             }
             let body = try XCTUnwrap(
                 try JSONSerialization.jsonObject(with: request.httpBody ?? Data()) as? [String: Any])
+            if request.httpMethod == "POST" {
+                createdUploadMetadataKeys.append(Set(body.keys))
+                if body["trashed"] != nil {
+                    return .init(
+                        data: Data(#"{"error":{"errors":[{"reason":"fieldNotWritable"}]}}"#.utf8), status: 403)
+                }
+            } else {
+                updatedUploadMetadataKeys.append(Set(body.keys))
+            }
             let id = body["id"] as? String ?? url.lastPathComponent
             let parent = (body["parents"] as? [String])?.first ?? resources[id]?.parent ?? "destination"
             let sessionID = "s\(sessions.count)"
