@@ -54,7 +54,7 @@ public actor MeetingDriveBackupPreparer {
             // Only our own staging directories may be removed.
             guard
                 snapshot.folder.deletingLastPathComponent().standardizedFileURL
-                    == FileManager.default.temporaryDirectory.standardizedFileURL,
+                    == FileManager.default.temporaryDirectory.resolvingSymlinksInPath().standardizedFileURL,
                 snapshot.folder.lastPathComponent.hasPrefix("sotto-drive-backup-")
             else { continue }
             try? FileManager.default.removeItem(at: snapshot.folder)
@@ -77,7 +77,8 @@ public actor MeetingDriveBackupPreparer {
             "microphone-cleaned.m4a", "microphone.m4a", "system.m4a",
             "meeting-recording-metadata.json",
         ]
-        let folder = fm.temporaryDirectory.appendingPathComponent("sotto-drive-backup-\(UUID().uuidString)")
+        let folder = fm.temporaryDirectory.resolvingSymlinksInPath()
+            .appendingPathComponent("sotto-drive-backup-\(UUID().uuidString)")
         try fm.createDirectory(at: folder, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
         do {
             for name in retainedNames {

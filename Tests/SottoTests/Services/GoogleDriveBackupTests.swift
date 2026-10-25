@@ -270,6 +270,32 @@ final class GoogleDriveBackupTests: XCTestCase {
         await model.close()
     }
 
+    func testReconciliationDoesNotTrashChildrenOfMovedPromptResultsDirectory() async throws {
+        let root = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let transport = DriveStubTransport()
+        let service = GoogleDriveBackupService(
+            account: try connectedAccount(transport: transport), transport: transport,
+            ledgerURL: root.appendingPathComponent("ledger.json"))
+        let directory = root.appendingPathComponent("prompt-results")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
+        let file = directory.appendingPathComponent("01-Summary.md")
+        try Data("Summary".utf8).write(to: file)
+        let snapshot = MeetingDriveBackupSnapshot(
+            id: UUID(), title: "Meeting", folder: root,
+            files: [.init(relativePath: "prompt-results/01-Summary.md", url: file, size: 7)])
+        let destination = GoogleDriveFolder(id: "destination", name: "Backups")
+        try await service.upload(snapshot, to: destination, identity: testIdentity) { _ in }
+        await transport.moveNestedFolder(to: "separate-archive")
+        let noResults = MeetingDriveBackupSnapshot(id: snapshot.id, title: snapshot.title, folder: root, files: [])
+        do {
+            try await service.upload(noResults, to: destination, identity: testIdentity) { _ in }
+            XCTFail("Do not trash children of moved directories")
+        } catch { XCTAssertTrue(error.localizedDescription.contains("moved")) }
+        let trashed = await transport.trashedIDs
+        XCTAssertTrue(trashed.isEmpty)
+    }
+
     @MainActor
     func testNewDestinationClearsCompletionEvenWhenListingFails() async throws {
         let root = try temporaryFolder()
@@ -393,6 +419,13 @@ private actor DriveStubTransport: GoogleDriveTransport {
     }
     func moveUploadedFile(to parent: String) {
         if let item = resources.first(where: { $0.value.mimeType == "audio/mp4" }) {
+            resources[item.key] = Resource(parent: parent, mimeType: item.value.mimeType)
+        }
+    }
+    func moveNestedFolder(to parent: String) {
+        if let item = resources.first(where: {
+            $0.value.mimeType == "application/vnd.google-apps.folder" && $0.value.parent.hasPrefix("id")
+        }) {
             resources[item.key] = Resource(parent: parent, mimeType: item.value.mimeType)
         }
     }

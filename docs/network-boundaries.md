@@ -1,6 +1,6 @@
 # Personal Sotto network boundaries
 
-This inventory describes the personal fork’s source behavior, not a packet-capture certification. Core microphone/system capture, installed-model speech recognition, transcript storage, corrections, playback, local search, and exports stay on-device. Offline operation requires the selected models and helpers to be installed already. Optional integrations are not a global network sandbox.
+This inventory describes the personal fork’s source behavior, not a packet-capture certification. Core microphone/system capture, installed-model speech recognition, transcript storage, corrections, playback, local search, and local exports stay on-device. Offline operation requires the selected models and helpers to be installed already. Optional integrations are not a global network sandbox.
 
 | Surface | Classification | Current boundary |
 |---|---|---|

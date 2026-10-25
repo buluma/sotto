@@ -147,6 +147,15 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
             else {
                 throw GoogleDriveError.message("A backup directory is missing from the local upload ledger.")
             }
+            if !directory.isEmpty {
+                guard
+                    let parent = try await metadata(
+                        id: expectedParent, parent: folderID, identity: identity, restoreTrashed: false),
+                    parent.mimeType == Self.folderMIME
+                else {
+                    throw GoogleDriveError.message("A backup directory is no longer available in the meeting folder.")
+                }
+            }
             guard try await metadata(id: id, parent: expectedParent, identity: identity, restoreTrashed: false) != nil
             else { continue }
             let response = try await request(

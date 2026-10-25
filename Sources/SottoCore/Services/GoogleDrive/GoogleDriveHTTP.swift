@@ -39,19 +39,23 @@ public protocol GoogleDriveTransport: Sendable {
 }
 
 /// Credentials are never forwarded through redirects, caches, or cookies.
-public final class GoogleDriveHTTPTransport: NSObject, GoogleDriveTransport, URLSessionTaskDelegate, Sendable {
-    public override init() { super.init() }
+public final class GoogleDriveHTTPTransport: GoogleDriveTransport, Sendable {
+    private let session: URLSession
+
+    public init() {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.httpCookieStorage = nil
+        configuration.urlCache = nil
+        configuration.timeoutIntervalForRequest = 60
+        session = URLSession(configuration: configuration, delegate: GoogleDriveRedirectBlocker(), delegateQueue: nil)
+    }
+
+    deinit { session.invalidateAndCancel() }
 
     public func send(_ request: URLRequest) async throws -> GoogleDriveResponse {
         guard let url = request.url, Self.isTrusted(url) else {
             throw GoogleDriveError.message("Google Drive returned an unexpected upload address.")
         }
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.httpCookieStorage = nil
-        configuration.urlCache = nil
-        configuration.timeoutIntervalForRequest = 60
-        let session = URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
-        defer { session.finishTasksAndInvalidate() }
         let (data, response) = try await session.data(for: request)
         guard let response = response as? HTTPURLResponse else { throw GoogleDriveError.http(0) }
         let headers = response.allHeaderFields.reduce(into: [String: String]()) { result, entry in
@@ -65,7 +69,10 @@ public final class GoogleDriveHTTPTransport: NSObject, GoogleDriveTransport, URL
             && ["www.googleapis.com", "oauth2.googleapis.com"].contains(url.host)
     }
 
-    public func urlSession(
+}
+
+private final class GoogleDriveRedirectBlocker: NSObject, URLSessionTaskDelegate, Sendable {
+    func urlSession(
         _ session: URLSession, task: URLSessionTask,
         willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest,
         completionHandler: @escaping (URLRequest?) -> Void

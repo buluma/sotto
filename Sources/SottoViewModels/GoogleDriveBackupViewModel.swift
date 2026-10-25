@@ -82,6 +82,8 @@ public final class GoogleDriveBackupViewModel {
             self.path.append(folder)
             self.folders = folders
             self.completed.removeAll()
+            self.failures.removeAll()
+            self.statusMessage = nil
         }
     }
 
@@ -92,6 +94,8 @@ public final class GoogleDriveBackupViewModel {
             self.folders = try await self.service.folders(parent: parent.id, identity: self.requireIdentity())
             self.path.removeLast()
             self.completed.removeAll()
+            self.failures.removeAll()
+            self.statusMessage = nil
         }
     }
 
