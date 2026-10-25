@@ -64,6 +64,21 @@ final class GoogleDriveBackupTests: XCTestCase {
         }
     }
 
+    func testPreviewCreatesTranscriptOnlyBackupWhenLegacyMeetingHasNoArtifactPath() async throws {
+        let root = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        var row = meeting(folder: root)
+        row.filePath = nil
+        row.meetingArtifactFolderPath = nil
+
+        let snapshots = try await MeetingDriveBackupPreparer().prepare([source(row)])
+        let snapshot = try XCTUnwrap(snapshots.first)
+        XCTAssertTrue(snapshot.files.contains { $0.relativePath == "transcript.json" })
+        XCTAssertTrue(snapshot.files.contains { $0.relativePath == "meeting.md" })
+        XCTAssertFalse(snapshot.files.contains { $0.relativePath.hasSuffix(".m4a") })
+        await MeetingDriveBackupPreparer().cleanup(snapshots)
+    }
+
     func testOAuthUsesPKCEOnlyDriveFileAndRejectsForgedCallbackWithoutNetwork() async throws {
         let transport = DriveStubTransport()
         let store = DriveTestStore()
