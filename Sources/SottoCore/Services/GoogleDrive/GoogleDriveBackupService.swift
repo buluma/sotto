@@ -192,7 +192,7 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
             } else if response.status == 404 || response.status == 410 {
                 session = nil; sessions[id] = nil
             } else {
-                try response.requireSuccess()
+                throw response.failure(operation: "check the upload of \(file.relativePath)")
             }
         }
         if session == nil {
@@ -246,7 +246,9 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
             let response: GoogleDriveResponse
             do {
                 let sent = try await sendChunk(data, to: session, range: range, identity: identity)
-                if sent.status == 429 || sent.status >= 500 { throw GoogleDriveError.http(sent.status) }
+                if sent.status == 429 || sent.status >= 500 {
+                    throw sent.failure(operation: "upload \(file.relativePath)")
+                }
                 response = sent
             } catch {
                 try Task.checkCancellation()
@@ -261,7 +263,9 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
                 await progress(file.size)
                 return
             }
-            guard response.status == 308 else { throw GoogleDriveError.http(response.status) }
+            guard response.status == 308 else {
+                throw response.failure(operation: "upload \(file.relativePath)")
+            }
             let next = try Self.nextOffset(response, size: file.size)
             if next <= offset { stalled += 1 } else { stalled = 0 }
             guard stalled <= 3 else { throw GoogleDriveError.message("The upload stopped making progress. Retry it.") }

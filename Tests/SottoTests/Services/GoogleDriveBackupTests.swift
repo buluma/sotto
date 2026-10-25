@@ -191,6 +191,37 @@ final class GoogleDriveBackupTests: XCTestCase {
         XCTAssertEqual(rootCreateHadParents, [false])
     }
 
+    func testRejectedContentUploadAndRetryPreserveGoogleReasonWithoutRawResponse() async throws {
+        let root = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let transport = DriveStubTransport()
+        await transport.rejectContentUploads(reason: "storageQuotaExceeded")
+        let service = GoogleDriveBackupService(
+            account: try connectedAccount(transport: transport), transport: transport,
+            ledgerURL: root.appendingPathComponent("ledger.json"))
+        let snapshot = try uploadSnapshot(root: root, size: 12)
+        let original = try Data(contentsOf: snapshot.files[0].url)
+
+        for attempt in 0..<2 {
+            do {
+                try await service.upload(
+                    snapshot, to: GoogleDriveFolder(id: "destination", name: "Backups"), identity: testIdentity
+                ) { _ in }
+                XCTFail("A rejected content upload must fail")
+            } catch let error as GoogleDriveError {
+                guard case .api(status: 403, operation: let operation, reason: "storageQuotaExceeded") = error else {
+                    return XCTFail("The content response's safe reason must be preserved")
+                }
+                XCTAssertEqual(
+                    operation, attempt == 0 ? "upload meeting-playback.m4a" : "check the upload of meeting-playback.m4a"
+                )
+                XCTAssertTrue(error.localizedDescription.contains("storage is full"))
+                XCTAssertFalse(error.localizedDescription.contains("private-response-message"))
+            }
+        }
+        XCTAssertEqual(try Data(contentsOf: snapshot.files[0].url), original)
+    }
+
     func testUploadReusesPersistedIDsAndUpdatesExistingFilesAfterReopeningService() async throws {
         let root = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -526,6 +557,7 @@ private actor DriveStubTransport: GoogleDriveTransport {
     var rootCreateHadParents: [Bool] = []
     var tokenStatus: Int?
     var failIDReservationRequest = false
+    var rejectedContentReason: String?
     var trashedIDs: [String] = []
     var resources: [String: Resource] = [:]
     var sessions: [String: Session] = [:]
@@ -535,6 +567,7 @@ private actor DriveStubTransport: GoogleDriveTransport {
     func loseNextChunkResponse() { loseChunk = true }
     func setTokenStatus(_ status: Int?) { tokenStatus = status }
     func failIDReservation() { failIDReservationRequest = true }
+    func rejectContentUploads(reason: String) { rejectedContentReason = reason }
     func moveBackupFolder(to parent: String) {
         if let item = resources.first(where: { $0.value.mimeType == "application/vnd.google-apps.folder" }) {
             resources[item.key] = Resource(parent: parent, mimeType: item.value.mimeType)
@@ -580,6 +613,12 @@ private actor DriveStubTransport: GoogleDriveTransport {
         if url.path.hasPrefix("/upload/") {
             let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
             if let sessionID = query.first(where: { $0.name == "upload_id" })?.value {
+                if let rejectedContentReason {
+                    let body: [String: Any] = [
+                        "error": ["message": "private-response-message", "errors": [["reason": rejectedContentReason]]]
+                    ]
+                    return .init(data: try JSONSerialization.data(withJSONObject: body), status: 403)
+                }
                 var session = try XCTUnwrap(sessions[sessionID])
                 let range = request.value(forHTTPHeaderField: "Content-Range") ?? ""
                 let total = Int64(range.split(separator: "/").last ?? "0") ?? 0

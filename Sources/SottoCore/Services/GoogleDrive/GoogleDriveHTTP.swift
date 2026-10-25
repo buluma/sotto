@@ -16,8 +16,12 @@ public enum GoogleDriveError: LocalizedError, Sendable {
         case .http(let status): return "Google Drive returned an error (\(status)). Try again."
         case .api(let status, let operation, let reason):
             let detail = reason.map { " (\($0))" } ?? ""
+            if reason == "storageQuotaExceeded" {
+                return
+                    "Google Drive storage is full (storageQuotaExceeded). Free space in this Google account, then retry."
+            }
             return
-                "Google Drive couldn’t \(operation) (HTTP \(status)\(detail)). Try another destination or check the Google Drive API setup."
+                "Google Drive couldn’t \(operation) (HTTP \(status)\(detail)). Retry, or check the connected account and destination."
         }
     }
 }
@@ -36,6 +40,10 @@ public struct GoogleDriveResponse: Sendable {
 
     func requireSuccess() throws {
         guard (200..<300).contains(status) else { throw GoogleDriveError.http(status) }
+    }
+
+    func failure(operation: String) -> GoogleDriveError {
+        .api(status: status, operation: operation, reason: providerErrorReason)
     }
 
     var providerErrorReason: String? {
