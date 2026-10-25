@@ -136,19 +136,20 @@ public actor MeetingDriveBackupPreparer {
     }
 
     private func listFiles(in folder: URL) throws -> [MeetingDriveBackupFile] {
-        guard
-            let enumerator = FileManager.default.enumerator(
-                at: folder, includingPropertiesForKeys: [.isRegularFileKey, .fileSizeKey])
-        else {
+        guard let enumerator = FileManager.default.enumerator(atPath: folder.path) else {
             throw GoogleDriveError.message("The backup preview could not be prepared.")
         }
         var files: [MeetingDriveBackupFile] = []
-        for case let url as URL in enumerator {
+        // Foundation's URL enumerator can return /private/var paths even
+        // when resolvingSymlinksInPath() represents its root as /var. Use
+        // the enumerator's relative names, never absolute-path slicing.
+        for case let relativePath as String in enumerator {
+            let url = folder.appendingPathComponent(relativePath)
             let values = try url.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey])
             if values.isRegularFile == true {
                 files.append(
                     MeetingDriveBackupFile(
-                        relativePath: String(url.path.dropFirst(folder.path.count + 1)),
+                        relativePath: relativePath,
                         url: url, size: Int64(values.fileSize ?? 0)))
             }
         }
