@@ -128,6 +128,7 @@ public final class GoogleDriveBackupViewModel {
                     }
                     self.completed.insert(snapshot.id)
                 } catch is CancellationError { throw CancellationError() } catch {
+                    if Task.isCancelled { throw CancellationError() }
                     self.failures[snapshot.id] = error.localizedDescription
                 }
             }

@@ -139,10 +139,15 @@ public actor GoogleDriveAccount {
         if credential.expiresAt.timeIntervalSinceNow > 90 { return credential.accessToken }
         let expectedGeneration = generation
         let client = try loadClient()
-        let token = try await requestToken([
-            "client_id": client.client_id, "client_secret": client.client_secret ?? "",
-            "refresh_token": credential.refreshToken, "grant_type": "refresh_token",
-        ])
+        let token: TokenResponse
+        do {
+            token = try await requestToken([
+                "client_id": client.client_id, "client_secret": client.client_secret ?? "",
+                "refresh_token": credential.refreshToken, "grant_type": "refresh_token",
+            ])
+        } catch GoogleDriveError.http(400), GoogleDriveError.http(401) {
+            throw GoogleDriveError.message("Google Drive sign-in expired. Disconnect and connect again.")
+        }
         try Task.checkCancellation()
         guard expectedGeneration == generation else { throw CancellationError() }
         credential.accessToken = token.access_token

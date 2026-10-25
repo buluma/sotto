@@ -103,6 +103,35 @@ final class GoogleDriveBackupTests: XCTestCase {
         XCTAssertNotNil(try store.getString("client"))
     }
 
+    func testExpiredRefreshTokenPromptsReconnectAndOtherHTTPFailuresPropagate() async throws {
+        for status in [400, 401, 503] {
+            let transport = DriveStubTransport()
+            await transport.setTokenStatus(status)
+            let store = DriveTestStore()
+            let account = GoogleDriveAccount(store: store, transport: transport)
+            try await account.importClient(
+                Data(#"{"installed":{"client_id":"test.apps.googleusercontent.com"}}"#.utf8))
+            let credential: [String: Any] = [
+                "accessToken": "expired", "refreshToken": "refresh-token",
+                "expiresAt": 0,
+                "identity": ["permissionID": "owner", "email": "owner@example.test"],
+            ]
+            let data = try JSONSerialization.data(withJSONObject: credential)
+            try store.setString(String(decoding: data, as: UTF8.self), forKey: "credential")
+
+            do {
+                _ = try await account.accessToken()
+                XCTFail("Refresh status \(status) must fail")
+            } catch let error as GoogleDriveError {
+                if status == 400 || status == 401 {
+                    XCTAssertTrue(error.localizedDescription.contains("Disconnect and connect again"))
+                } else {
+                    guard case .http(503) = error else { return XCTFail("Expected the original HTTP error") }
+                }
+            }
+        }
+    }
+
     func testUploadReusesPersistedIDsAndUpdatesExistingFilesAfterReopeningService() async throws {
         let root = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -434,6 +463,7 @@ private actor DriveStubTransport: GoogleDriveTransport {
     var finishedUploads: [Data] = []
     var probes = 0
     var requestCount = 0
+    var tokenStatus: Int?
     var trashedIDs: [String] = []
     var resources: [String: Resource] = [:]
     var sessions: [String: Session] = [:]
@@ -441,6 +471,7 @@ private actor DriveStubTransport: GoogleDriveTransport {
     var loseChunk = false
     func loseNextFolderResponse() { loseFolder = true }
     func loseNextChunkResponse() { loseChunk = true }
+    func setTokenStatus(_ status: Int?) { tokenStatus = status }
     func moveBackupFolder(to parent: String) {
         if let item = resources.first(where: { $0.value.mimeType == "application/vnd.google-apps.folder" }) {
             resources[item.key] = Resource(parent: parent, mimeType: item.value.mimeType)
@@ -463,6 +494,7 @@ private actor DriveStubTransport: GoogleDriveTransport {
         requestCount += 1
         let url = try XCTUnwrap(request.url)
         if url.path == "/token" {
+            if let tokenStatus { return .init(data: Data(), status: tokenStatus) }
             return try json([
                 "access_token": "access-token", "refresh_token": "refresh-token", "expires_in": 3600,
                 "scope": GoogleDriveAccount.scope,
@@ -560,7 +592,9 @@ private actor DriveViewModelService: GoogleDriveBackingUp {
     ) async throws {
         calls.append(snapshot.id)
         identities.append(identity)
-        if blockUploads { try await Task.sleep(for: .seconds(60)) }
+        if blockUploads {
+            do { try await Task.sleep(for: .seconds(60)) } catch { throw URLError(.cancelled) }
+        }
         if failOnce == snapshot.id {
             failOnce = nil
             throw GoogleDriveError.http(503)
