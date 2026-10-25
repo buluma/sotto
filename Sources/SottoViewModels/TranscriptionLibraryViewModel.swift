@@ -209,6 +209,7 @@ public final class TranscriptionLibraryViewModel {
     private var transcriptionRepo: TranscriptionRepositoryProtocol?
     public private(set) var speakerAttributionProjectionProvider:
         (@Sendable (Transcription) throws -> SpeakerAttributionProjection)?
+    public private(set) var driveBackupSourcesProvider: (@Sendable ([UUID]) async throws -> [MeetingDriveBackupSource])?
     private var loadTask: Task<Void, Never>?
     private var openRequestID = UUID()
     private var searchDebounceTask: Task<Void, Never>?
@@ -234,7 +235,8 @@ public final class TranscriptionLibraryViewModel {
         meetingTypeRepository: (any MeetingTypeRepositoryProtocol)? = nil,
         meetingLabelRepository: (any MeetingLabelRepositoryProtocol)? = nil,
         meetingClassificationService: (any MeetingClassificationServiceProtocol)? = nil,
-        speakerAttributionReader: SpeakerAttributionReading? = nil
+        speakerAttributionReader: SpeakerAttributionReading? = nil,
+        promptResultRepo: (any PromptResultRepositoryProtocol)? = nil
     ) {
         self.transcriptionRepo = transcriptionRepo
         if let meetingTypeRepository, let meetingLabelRepository, let meetingClassificationService {
@@ -246,13 +248,38 @@ public final class TranscriptionLibraryViewModel {
             meetingClassificationViewModel.loadOptions()
         }
         if let speakerAttributionReader {
-            let projectionProvider:
-                @Sendable (Transcription) throws -> SpeakerAttributionProjection = { transcription in
-                    try speakerAttributionReader.resolve(transcription: transcription)
-                }
+            let projectionProvider: @Sendable (Transcription) throws -> SpeakerAttributionProjection = {
+                transcription in
+                try speakerAttributionReader.resolve(transcription: transcription)
+            }
             speakerAttributionProjectionProvider = projectionProvider
         } else {
             speakerAttributionProjectionProvider = nil
+        }
+        if let speakerAttributionReader, let promptResultRepo {
+            driveBackupSourcesProvider = { ids in
+                let worker = Task.detached(priority: .userInitiated) {
+                    try ids.map { id in
+                        try Task.checkCancellation()
+                        guard let projection = try speakerAttributionReader.resolve(transcriptionId: id) else {
+                            throw GoogleDriveError.message("A selected meeting is no longer in the Library.")
+                        }
+                        return MeetingDriveBackupSource(
+                            projection: projection,
+                            promptResults: try promptResultRepo.fetchAll(transcriptionId: id),
+                            classification: try meetingClassificationService.map {
+                                MeetingArtifactClassificationSnapshot(try $0.classification(for: id))
+                            })
+                    }
+                }
+                return try await withTaskCancellationHandler {
+                    try await worker.value
+                } onCancel: {
+                    worker.cancel()
+                }
+            }
+        } else {
+            driveBackupSourcesProvider = nil
         }
     }
 

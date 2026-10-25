@@ -4,7 +4,7 @@
 
 ## Overview
 
-Sotto uses **SQLite via GRDB** for its canonical local library and derived retrieval data. The default database is `~/Library/Application Support/Sotto/sotto.db`; it has no cloud sync. Preferences use UserDefaults, provider credentials use Keychain, and retained audio, meeting artifacts, and downloaded models live in separate local files. The database alone is not a complete backup of those files.
+Sotto uses **SQLite via GRDB** for its canonical local library and derived retrieval data. The default database is `~/Library/Application Support/Sotto/sotto.db`; it has no cloud sync. Preferences use UserDefaults, provider credentials use Keychain, and retained audio, meeting artifacts, and downloaded models live in separate local files. The database alone is not a complete backup of those files. Optional [Google Drive meeting backup](../docs/google-drive-backup.md) uploads explicitly selected artifact snapshots and keeps only opaque remote-ID reservations in a separate local JSON ledger; it does not synchronize this database.
 
 Version prefixes below identify database migrations, not product releases. `DatabaseManager.swift` is authoritative for the executable schema; the SQL and Swift excerpts here explain its shape rather than provide a standalone schema or complete API listing.
 
