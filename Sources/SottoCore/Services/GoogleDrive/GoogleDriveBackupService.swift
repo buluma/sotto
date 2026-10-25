@@ -381,8 +381,23 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
         }
         for (key, value) in headers { request.setValue(value, forHTTPHeaderField: key) }
         let response = try await transport.send(request)
-        if !accepting.contains(response.status) { try response.requireSuccess() }
+        if !accepting.contains(response.status), !(200..<300).contains(response.status) {
+            throw GoogleDriveError.api(
+                status: response.status, operation: Self.operationDescription(method: method, path: path),
+                reason: response.providerErrorReason)
+        }
         return response
+    }
+    private static func operationDescription(method: String, path: String) -> String {
+        return switch (method, path) {
+        case ("GET", "files/root"): "find My Drive"
+        case ("GET", "files/generateIds"): "reserve an upload ID"
+        case ("GET", "files"): "list destination folders"
+        case ("POST", "files"): "create the folder or upload session"
+        case ("PATCH", let value) where value.hasPrefix("files/"): "update an existing Drive item"
+        case ("GET", let value) where value.hasPrefix("files/"): "check a Drive item"
+        default: "complete a Drive request"
+        }
     }
     private static func validateID(_ id: String) throws {
         guard !id.isEmpty, id.count <= 256,

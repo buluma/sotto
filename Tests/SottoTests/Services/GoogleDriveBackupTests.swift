@@ -132,6 +132,25 @@ final class GoogleDriveBackupTests: XCTestCase {
         }
     }
 
+    func testFolderCreationErrorNamesFailedDriveOperationAndSanitizesReason() async throws {
+        let root = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let transport = DriveStubTransport()
+        await transport.failIDReservation()
+        let service = GoogleDriveBackupService(
+            account: try connectedAccount(transport: transport), transport: transport,
+            ledgerURL: root.appendingPathComponent("ledger.json"))
+
+        do {
+            _ = try await service.createFolder(name: "Sotto", parent: "root", identity: testIdentity)
+            XCTFail("An ID reservation failure must be visible")
+        } catch let error as GoogleDriveError {
+            guard case .api(status: 404, operation: "reserve an upload ID", reason: "notFound") = error else {
+                return XCTFail("Expected a specific, sanitized Drive error")
+            }
+        }
+    }
+
     func testUploadReusesPersistedIDsAndUpdatesExistingFilesAfterReopeningService() async throws {
         let root = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -464,6 +483,7 @@ private actor DriveStubTransport: GoogleDriveTransport {
     var probes = 0
     var requestCount = 0
     var tokenStatus: Int?
+    var failIDReservationRequest = false
     var trashedIDs: [String] = []
     var resources: [String: Resource] = [:]
     var sessions: [String: Session] = [:]
@@ -472,6 +492,7 @@ private actor DriveStubTransport: GoogleDriveTransport {
     func loseNextFolderResponse() { loseFolder = true }
     func loseNextChunkResponse() { loseChunk = true }
     func setTokenStatus(_ status: Int?) { tokenStatus = status }
+    func failIDReservation() { failIDReservationRequest = true }
     func moveBackupFolder(to parent: String) {
         if let item = resources.first(where: { $0.value.mimeType == "application/vnd.google-apps.folder" }) {
             resources[item.key] = Resource(parent: parent, mimeType: item.value.mimeType)
@@ -506,6 +527,11 @@ private actor DriveStubTransport: GoogleDriveTransport {
         }
         if url.path.hasSuffix("/files/root") { return try json(["id": "real-root-id"]) }
         if url.path.hasSuffix("generateIds") {
+            if failIDReservationRequest {
+                failIDReservationRequest = false
+                let body = Data(#"{"error":{"errors":[{"reason":"notFound"}]}}"#.utf8)
+                return .init(data: body, status: 404)
+            }
             generated += 1
             return try json(["ids": ["id\(generated)"]])
         }
