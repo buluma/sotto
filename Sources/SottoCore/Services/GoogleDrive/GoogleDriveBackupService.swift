@@ -28,7 +28,6 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
     private let account: GoogleDriveAccount
     private let transport: any GoogleDriveTransport
     private let ledgerURL: URL
-    private var allocatedIDs: [String: String]?
     private struct UploadSession {
         let url: URL
         let source: URL
@@ -95,6 +94,8 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
         }
         busy = true
         defer { busy = false }
+        let lease = try GoogleDriveReservationStore(url: ledgerURL).acquireUploadLease()
+        defer { lease.release() }
         let parent = try await resolveParent(destination.id, identity: identity)
         try Self.validateID(destination.id)
         let prefix = "\(identity.permissionID)|\(destination.id)|\(snapshot.id.uuidString)|"
@@ -339,28 +340,11 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
             throw GoogleDriveError.http(0)
         }
         try Self.validateID(id)
-        var ledger = try ledger()
-        if let existing = ledger[key] { return existing }
-        ledger[key] = id
-        try FileManager.default.createDirectory(
-            at: ledgerURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-        let data = try JSONEncoder().encode(ledger)
-        try data.write(to: ledgerURL, options: [.atomic])
-        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: ledgerURL.path)
-        allocatedIDs = ledger
-        return id
+        return try GoogleDriveReservationStore(url: ledgerURL).reserve(key, generatedID: id)
     }
 
     private func ledger() throws -> [String: String] {
-        if let allocatedIDs { return allocatedIDs }
-        let value: [String: String]
-        if FileManager.default.fileExists(atPath: ledgerURL.path) {
-            value = try JSONDecoder().decode([String: String].self, from: Data(contentsOf: ledgerURL))
-        } else {
-            value = [:]
-        }
-        allocatedIDs = value
-        return value
+        try GoogleDriveReservationStore(url: ledgerURL).read()
     }
 
     private func resolveParent(_ parent: String, identity: GoogleDriveIdentity) async throws -> String {

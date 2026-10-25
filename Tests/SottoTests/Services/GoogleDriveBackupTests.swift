@@ -177,6 +177,35 @@ final class GoogleDriveBackupTests: XCTestCase {
                 .init(data: Data(), status: 308, headers: ["Range": "bytes=50-60"]), size: 100))
     }
 
+    func testReservationStoresMergeAcrossInstancesAndReuseExistingKeys() async throws {
+        let root = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let url = root.appendingPathComponent("ledger.json")
+        let first = GoogleDriveReservationStore(url: url)
+        let second = GoogleDriveReservationStore(url: url)
+        XCTAssertTrue(try first.read().isEmpty)
+        XCTAssertTrue(try second.read().isEmpty)
+        XCTAssertEqual(try first.reserve("meeting-a", generatedID: "id-a"), "id-a")
+        XCTAssertEqual(try second.reserve("meeting-b", generatedID: "id-b"), "id-b")
+        XCTAssertEqual(try first.reserve("meeting-b", generatedID: "unused-id"), "id-b")
+        XCTAssertEqual(try second.read(), ["meeting-a": "id-a", "meeting-b": "id-b"])
+        let lease = try first.acquireUploadLease()
+        XCTAssertThrowsError(try second.acquireUploadLease())
+        lease.release()
+        let next = try second.acquireUploadLease()
+        next.release()
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for index in 0..<16 {
+                group.addTask {
+                    _ = try GoogleDriveReservationStore(url: url).reserve(
+                        "concurrent-\(index)", generatedID: "id-\(index)")
+                }
+            }
+            try await group.waitForAll()
+        }
+        XCTAssertEqual(try first.read().count, 18)
+    }
+
     func testUploadRejectsAccountDifferentFromPreviewBeforeSendingRequests() async throws {
         let root = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: root) }
