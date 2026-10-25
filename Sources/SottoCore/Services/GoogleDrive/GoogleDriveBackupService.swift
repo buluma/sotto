@@ -49,7 +49,6 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
     }
 
     public func folders(parent: String, identity: GoogleDriveIdentity) async throws -> [GoogleDriveFolder] {
-        let parent = try await resolveParent(parent, identity: identity)
         try Self.validateID(parent)
         var folders: [GoogleDriveFolder] = []
         var page: String?
@@ -75,7 +74,6 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
         guard !name.isEmpty, name.count <= 200 else {
             throw GoogleDriveError.message("Enter a folder name of up to 200 characters.")
         }
-        let parent = try await resolveParent(parent, identity: identity)
         try Self.validateID(parent)
         // A user-created destination gets its own reservation too: retrying a
         // lost response with the same name and parent cannot duplicate it.
@@ -96,7 +94,7 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
         defer { busy = false }
         let lease = try GoogleDriveReservationStore(url: ledgerURL).acquireUploadLease()
         defer { lease.release() }
-        let parent = try await resolveParent(destination.id, identity: identity)
+        let parent = destination.id
         try Self.validateID(destination.id)
         let prefix = "\(identity.permissionID)|\(destination.id)|\(snapshot.id.uuidString)|"
         let folderID = try await reserve(prefix + "folder", identity: identity)
@@ -199,7 +197,10 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
         }
         if session == nil {
             var body: [String: Any] = ["name": name, "trashed": false]
-            if !exists { body["id"] = id; body["parents"] = [parent] }
+            if !exists {
+                body["id"] = id
+                if parent != "root" { body["parents"] = [parent] }
+            }
             var response = try await request(
                 exists ? "PATCH" : "POST", path: exists ? "files/\(id)" : "files",
                 query: ["uploadType": "resumable", "fields": "id"], body: body,
@@ -297,12 +298,9 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
             }
             return
         }
-        let response = try await request(
-            "POST", path: "files",
-            body: [
-                "id": id, "name": name,
-                "mimeType": Self.folderMIME, "parents": [parent],
-            ], identity: identity, accepting: [409])
+        var body: [String: Any] = ["id": id, "name": name, "mimeType": Self.folderMIME]
+        if parent != "root" { body["parents"] = [parent] }
+        let response = try await request("POST", path: "files", body: body, identity: identity, accepting: [409])
         if response.status == 409 {
             guard let item = try await metadata(id: id, parent: parent, identity: identity),
                 item.mimeType == Self.folderMIME
@@ -321,7 +319,13 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
             identity: identity, accepting: [404])
         if response.status == 404 { return nil }
         let value = try JSONDecoder().decode(Metadata.self, from: response.data)
-        guard value.parents?.contains(parent) == true else {
+        let hasExpectedParent: Bool
+        if parent == "root" {
+            hasExpectedParent = try await rootContains(id, trashed: value.trashed, identity: identity)
+        } else {
+            hasExpectedParent = value.parents?.contains(parent) == true
+        }
+        guard hasExpectedParent else {
             throw GoogleDriveError.message(
                 "A backup item was moved in Drive. Move it back before updating this backup.")
         }
@@ -347,14 +351,23 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
         try GoogleDriveReservationStore(url: ledgerURL).read()
     }
 
-    private func resolveParent(_ parent: String, identity: GoogleDriveIdentity) async throws -> String {
-        try Self.validateID(parent)
-        guard parent == "root" else { return parent }
-        let response = try await request("GET", path: "files/root", query: ["fields": "id"], identity: identity)
-        struct Root: Decodable { let id: String }
-        let id = try JSONDecoder().decode(Root.self, from: response.data).id
-        try Self.validateID(id)
-        return id
+    private func rootContains(_ id: String, trashed: Bool, identity: GoogleDriveIdentity) async throws -> Bool {
+        var page: String?
+        repeat {
+            let response = try await request(
+                "GET", path: "files",
+                query: [
+                    "q": "'root' in parents and trashed = \(trashed)",
+                    "fields": "nextPageToken,files(id)", "pageSize": "1000", "pageToken": page ?? "",
+                ], identity: identity)
+            struct Page: Decodable {
+                struct Item: Decodable { let id: String }; let files: [Item]; let nextPageToken: String?
+            }
+            let result = try JSONDecoder().decode(Page.self, from: response.data)
+            if result.files.contains(where: { $0.id == id }) { return true }
+            page = result.nextPageToken
+        } while page != nil
+        return false
     }
     private func token(for expected: GoogleDriveIdentity) async throws -> String {
         try Task.checkCancellation()

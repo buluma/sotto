@@ -151,6 +151,24 @@ final class GoogleDriveBackupTests: XCTestCase {
         }
     }
 
+    func testRootFolderCreationUsesDriveFileCompatibleImplicitMyDriveParent() async throws {
+        let root = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let transport = DriveStubTransport()
+        let service = GoogleDriveBackupService(
+            account: try connectedAccount(transport: transport), transport: transport,
+            ledgerURL: root.appendingPathComponent("ledger.json"))
+
+        let created = try await service.createFolder(name: "Sotto", parent: "root", identity: testIdentity)
+        let repeated = try await service.createFolder(name: "Sotto", parent: "root", identity: testIdentity)
+
+        XCTAssertEqual(created, repeated)
+        let rootLookups = await transport.rootLookups
+        let rootCreateHadParents = await transport.rootCreateHadParents
+        XCTAssertEqual(rootLookups, 0)
+        XCTAssertEqual(rootCreateHadParents, [false])
+    }
+
     func testUploadReusesPersistedIDsAndUpdatesExistingFilesAfterReopeningService() async throws {
         let root = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -482,6 +500,8 @@ private actor DriveStubTransport: GoogleDriveTransport {
     var finishedUploads: [Data] = []
     var probes = 0
     var requestCount = 0
+    var rootLookups = 0
+    var rootCreateHadParents: [Bool] = []
     var tokenStatus: Int?
     var failIDReservationRequest = false
     var trashedIDs: [String] = []
@@ -525,7 +545,7 @@ private actor DriveStubTransport: GoogleDriveTransport {
         if url.path.hasSuffix("/about") {
             return try json(["user": ["emailAddress": "owner@example.test", "permissionId": "owner"]])
         }
-        if url.path.hasSuffix("/files/root") { return try json(["id": "real-root-id"]) }
+        if url.path.hasSuffix("/files/root") { rootLookups += 1; return try json(["id": "real-root-id"]) }
         if url.path.hasSuffix("generateIds") {
             if failIDReservationRequest {
                 failIDReservationRequest = false
@@ -569,10 +589,29 @@ private actor DriveStubTransport: GoogleDriveTransport {
                 data: Data(), status: 200,
                 headers: ["Location": "https://www.googleapis.com/upload/drive/v3/files?upload_id=\(sessionID)"])
         }
+        if url.path.hasSuffix("/files") && request.httpMethod == "GET" {
+            let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            let isRootQuery = query.first(where: { $0.name == "q" })?.value?.contains("'root' in parents") == true
+            if isRootQuery {
+                let children = resources.filter { $0.value.parent == "root" }.map {
+                    ["id": $0.key, "name": $0.key, "mimeType": $0.value.mimeType]
+                }
+                return try json(["files": children])
+            }
+        }
         if request.httpMethod == "POST" {
             let body = try XCTUnwrap(
                 try JSONSerialization.jsonObject(with: request.httpBody ?? Data()) as? [String: Any])
             let id = try XCTUnwrap(body["id"] as? String)
+            if body["mimeType"] as? String == "application/vnd.google-apps.folder",
+                body["parents"] == nil
+            {
+                rootCreateHadParents.append(false)
+            } else if body["mimeType"] as? String == "application/vnd.google-apps.folder",
+                (body["parents"] as? [String])?.first == "root"
+            {
+                rootCreateHadParents.append(true)
+            }
             resources[id] = Resource(
                 parent: (body["parents"] as? [String])?.first ?? "root",
                 mimeType: body["mimeType"] as? String ?? "")
