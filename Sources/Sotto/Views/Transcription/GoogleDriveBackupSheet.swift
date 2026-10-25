@@ -55,7 +55,7 @@ struct GoogleDriveBackupSheet: View {
         .padding(24)
         .frame(width: 620, height: 700)
         .interactiveDismissDisabled(model.isBusy)
-        .task { model.prepare(sources: sources) }
+        .task { [sources] in model.prepare(sources: sources) }
         .onDisappear { Task { await model.close() } }
     }
 

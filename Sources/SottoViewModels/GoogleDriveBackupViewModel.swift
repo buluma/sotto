@@ -22,6 +22,7 @@ public final class GoogleDriveBackupViewModel {
     private let service: any GoogleDriveBackingUp
     private let preparer: MeetingDriveBackupPreparer
     private var operation: Task<Void, Never>?
+    private var closed = false
 
     public init(
         account: GoogleDriveAccount = .shared, service: any GoogleDriveBackingUp = GoogleDriveBackupService.shared,
@@ -33,6 +34,7 @@ public final class GoogleDriveBackupViewModel {
     }
 
     public func prepare(sources: @escaping @Sendable () async throws -> [MeetingDriveBackupSource]) {
+        guard snapshots.isEmpty else { return }
         run {
             self.hasClient = try await self.account.hasClient()
             self.identity = try await self.account.identity()
@@ -51,6 +53,9 @@ public final class GoogleDriveBackupViewModel {
     public func connect(using signIn: @escaping @MainActor () async throws -> GoogleDriveIdentity) {
         run {
             self.identity = try await signIn()
+            self.completed.removeAll()
+            self.failures.removeAll()
+            self.statusMessage = nil
             self.folders = try await self.service.folders(parent: self.destination.id)
         }
     }
@@ -61,6 +66,9 @@ public final class GoogleDriveBackupViewModel {
                 self.identity = nil
                 self.folders = []
                 self.path = [GoogleDriveFolder(id: "root", name: "My Drive")]
+                self.completed.removeAll()
+                self.failures.removeAll()
+                self.statusMessage = nil
             }
             try await self.account.disconnect()
         }
@@ -122,6 +130,7 @@ public final class GoogleDriveBackupViewModel {
     }
 
     public func close() async {
+        closed = true
         operation?.cancel()
         await operation?.value
         await preparer.cleanup(snapshots)
@@ -131,7 +140,7 @@ public final class GoogleDriveBackupViewModel {
     private func receive(_ update: GoogleDriveBackupProgress) { progress = update }
 
     private func run(_ body: @escaping @MainActor () async throws -> Void) {
-        guard !isBusy else { return }
+        guard !isBusy, !closed else { return }
         isBusy = true
         errorMessage = nil
         operation = Task {
