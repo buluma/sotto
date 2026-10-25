@@ -4,6 +4,13 @@ import XCTest
 @testable import SottoViewModels
 
 final class GoogleDriveBackupTests: XCTestCase {
+    func testDevGoogleDriveCredentialsUseAnIsolatedKeychainService() {
+        XCTAssertEqual(
+            GoogleDriveAccount.keychainService(bundleIdentifier: "com.sotto.dev"), "com.sotto.dev.google-drive")
+        XCTAssertEqual(
+            GoogleDriveAccount.keychainService(bundleIdentifier: "com.sotto.nightly"), "com.sotto.google-drive")
+    }
+
     private var testIdentity: GoogleDriveIdentity {
         GoogleDriveIdentity(permissionID: "owner", email: "owner@example.test")
     }
