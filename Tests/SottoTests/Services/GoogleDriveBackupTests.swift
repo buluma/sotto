@@ -4,6 +4,9 @@ import XCTest
 @testable import SottoViewModels
 
 final class GoogleDriveBackupTests: XCTestCase {
+    private var testIdentity: GoogleDriveIdentity {
+        GoogleDriveIdentity(permissionID: "owner", email: "owner@example.test")
+    }
     func testPreviewUsesCurrentTranscriptAndOnlyManagedArtifactsWithoutChangingSource() async throws {
         let root = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -109,11 +112,11 @@ final class GoogleDriveBackupTests: XCTestCase {
         let snapshot = try uploadSnapshot(root: root, size: 2_100_000)
         let folder = GoogleDriveFolder(id: "destination", name: "Backups")
         let service = GoogleDriveBackupService(account: account, transport: transport, ledgerURL: ledger)
-        try await service.upload(snapshot, to: folder) { _ in }
+        try await service.upload(snapshot, to: folder, identity: testIdentity) { _ in }
         let firstIDs = await transport.generated
         let firstCreates = await transport.createdFolders
         let reopened = GoogleDriveBackupService(account: account, transport: transport, ledgerURL: ledger)
-        try await reopened.upload(snapshot, to: folder) { _ in }
+        try await reopened.upload(snapshot, to: folder, identity: testIdentity) { _ in }
         let secondIDs = await transport.generated
         let secondCreates = await transport.createdFolders
         XCTAssertEqual(secondIDs, firstIDs)
@@ -135,8 +138,11 @@ final class GoogleDriveBackupTests: XCTestCase {
             ledgerURL: root.appendingPathComponent("ledger.json"))
         let snapshot = try uploadSnapshot(root: root, size: 12)
         let destination = GoogleDriveFolder(id: "destination", name: "Backups")
-        do { try await service.upload(snapshot, to: destination) { _ in }; XCTFail("Expected lost response") } catch {}
-        try await service.upload(snapshot, to: destination) { _ in }
+        do {
+            try await service.upload(snapshot, to: destination, identity: testIdentity) { _ in };
+            XCTFail("Expected lost response")
+        } catch {}
+        try await service.upload(snapshot, to: destination, identity: testIdentity) { _ in }
         let creates = await transport.createdFolders
         XCTAssertEqual(creates, 1)
     }
@@ -150,7 +156,9 @@ final class GoogleDriveBackupTests: XCTestCase {
             account: try connectedAccount(transport: transport), transport: transport,
             ledgerURL: root.appendingPathComponent("ledger.json"))
         let snapshot = try uploadSnapshot(root: root, size: 2_100_000)
-        try await service.upload(snapshot, to: GoogleDriveFolder(id: "destination", name: "Backups")) { _ in }
+        try await service.upload(
+            snapshot, to: GoogleDriveFolder(id: "destination", name: "Backups"), identity: testIdentity
+        ) { _ in }
         let probes = await transport.probes
         let uploads = await transport.finishedUploads
         XCTAssertEqual(probes, 1)
@@ -167,6 +175,153 @@ final class GoogleDriveBackupTests: XCTestCase {
         XCTAssertThrowsError(
             try GoogleDriveBackupService.nextOffset(
                 .init(data: Data(), status: 308, headers: ["Range": "bytes=50-60"]), size: 100))
+    }
+
+    func testUploadRejectsAccountDifferentFromPreviewBeforeSendingRequests() async throws {
+        let root = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let transport = DriveStubTransport()
+        let service = GoogleDriveBackupService(
+            account: try connectedAccount(transport: transport), transport: transport,
+            ledgerURL: root.appendingPathComponent("ledger.json"))
+        do {
+            try await service.upload(
+                try uploadSnapshot(root: root, size: 12),
+                to: GoogleDriveFolder(id: "root", name: "My Drive"),
+                identity: GoogleDriveIdentity(permissionID: "other-owner", email: "other@example.test")
+            ) { _ in }
+            XCTFail("An open preview must not follow an account switch")
+        } catch { XCTAssertTrue(error.localizedDescription.contains("account changed")) }
+        let count = await transport.requestCount
+        XCTAssertEqual(count, 0)
+    }
+
+    func testMovedRootLevelMeetingFolderIsNotUpdatedInNewLocation() async throws {
+        let root = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let transport = DriveStubTransport()
+        let service = GoogleDriveBackupService(
+            account: try connectedAccount(transport: transport), transport: transport,
+            ledgerURL: root.appendingPathComponent("ledger.json"))
+        let snapshot = try uploadSnapshot(root: root, size: 12)
+        let destination = GoogleDriveFolder(id: "root", name: "My Drive")
+        try await service.upload(snapshot, to: destination, identity: testIdentity) { _ in }
+        await transport.moveBackupFolder(to: "shared-folder")
+        do {
+            try await service.upload(snapshot, to: destination, identity: testIdentity) { _ in }
+            XCTFail("A moved backup must not receive new content")
+        } catch { XCTAssertTrue(error.localizedDescription.contains("moved")) }
+        let uploads = await transport.finishedUploads
+        XCTAssertEqual(uploads.count, 1)
+    }
+
+    func testReconciliationDoesNotTrashManagedFileMovedElsewhere() async throws {
+        let root = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let transport = DriveStubTransport()
+        let service = GoogleDriveBackupService(
+            account: try connectedAccount(transport: transport), transport: transport,
+            ledgerURL: root.appendingPathComponent("ledger.json"))
+        let snapshot = try uploadSnapshot(root: root, size: 12)
+        let destination = GoogleDriveFolder(id: "destination", name: "Backups")
+        try await service.upload(snapshot, to: destination, identity: testIdentity) { _ in }
+        await transport.moveUploadedFile(to: "separate-archive")
+        let withoutAudio = MeetingDriveBackupSnapshot(id: snapshot.id, title: snapshot.title, folder: root, files: [])
+        do {
+            try await service.upload(withoutAudio, to: destination, identity: testIdentity) { _ in }
+            XCTFail("Do not reconcile files outside the backup")
+        } catch { XCTAssertTrue(error.localizedDescription.contains("moved")) }
+        let trashed = await transport.trashedIDs
+        XCTAssertTrue(trashed.isEmpty)
+    }
+
+    @MainActor
+    func testViewModelRetriesOnlyFailuresAndResetsCompletionForAnotherAccount() async throws {
+        let root = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let transport = DriveStubTransport()
+        let first = source(meeting(folder: root))
+        let second = source(meeting(folder: root))
+        let service = DriveViewModelService(failOnce: first.projection.automaticTranscription.id)
+        let model = GoogleDriveBackupViewModel(account: try connectedAccount(transport: transport), service: service)
+        model.prepare { [first, second] in [first, second] }
+        try await waitForIdle(model)
+        XCTAssertEqual(model.snapshots.count, 2)
+        model.upload()
+        try await waitForIdle(model)
+        XCTAssertEqual(model.completed.count, 1)
+        XCTAssertEqual(model.failures.count, 1)
+        model.upload()
+        try await waitForIdle(model)
+        XCTAssertEqual(model.completed.count, 2)
+        let calls = await service.calls
+        XCTAssertEqual(calls.count, 3)
+        model.disconnect()
+        try await waitForIdle(model)
+        XCTAssertTrue(model.completed.isEmpty)
+        XCTAssertTrue(model.failures.isEmpty)
+        let other = GoogleDriveIdentity(permissionID: "other-owner", email: "other@example.test")
+        model.connect { other }
+        try await waitForIdle(model)
+        model.upload()
+        try await waitForIdle(model)
+        let identities = await service.identities
+        XCTAssertEqual(identities.suffix(2), [other, other])
+        await model.close()
+    }
+
+    @MainActor
+    func testNewDestinationClearsCompletionEvenWhenListingFails() async throws {
+        let root = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let source = source(meeting(folder: root))
+        let service = DriveViewModelService()
+        let model = GoogleDriveBackupViewModel(
+            account: try connectedAccount(transport: DriveStubTransport()), service: service)
+        model.prepare { [source] in [source] }
+        try await waitForIdle(model)
+        model.upload()
+        try await waitForIdle(model)
+        XCTAssertEqual(model.completed.count, 1)
+        model.createFolder(name: "Another destination")
+        try await waitForIdle(model)
+        XCTAssertTrue(model.completed.isEmpty)
+        XCTAssertEqual(model.destination.id, "new-destination")
+        XCTAssertNotNil(model.errorMessage)
+        await model.close()
+    }
+
+    @MainActor
+    private func waitForIdle(_ model: GoogleDriveBackupViewModel) async throws {
+        for _ in 0..<500 {
+            if !model.isBusy { return }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        XCTFail("Backup operation did not settle")
+    }
+
+    @MainActor
+    func testCancellingUploadKeepsPreviewForRetryAndCloseOnlyRemovesStaging() async throws {
+        let root = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let source = source(meeting(folder: root))
+        let model = GoogleDriveBackupViewModel(
+            account: try connectedAccount(transport: DriveStubTransport()),
+            service: DriveViewModelService(blockUploads: true))
+        model.prepare { [source] in [source] }
+        try await waitForIdle(model)
+        let stagedFolder = try XCTUnwrap(model.snapshots.first?.folder)
+        model.upload()
+        for _ in 0..<100 where !model.isUploading { await Task.yield() }
+        model.cancel()
+        try await waitForIdle(model)
+        XCTAssertFalse(model.isUploading)
+        XCTAssertTrue(model.completed.isEmpty)
+        XCTAssertEqual(model.snapshots.count, 1)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: stagedFolder.path))
+        await model.close()
+        XCTAssertFalse(FileManager.default.fileExists(atPath: stagedFolder.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: root.path))
     }
 
     private func temporaryFolder() throws -> URL {
@@ -224,12 +379,23 @@ private actor DriveStubTransport: GoogleDriveTransport {
     var finishedUploads: [Data] = []
     var probes = 0
     var requestCount = 0
+    var trashedIDs: [String] = []
     var resources: [String: Resource] = [:]
     var sessions: [String: Session] = [:]
     var loseFolder = false
     var loseChunk = false
     func loseNextFolderResponse() { loseFolder = true }
     func loseNextChunkResponse() { loseChunk = true }
+    func moveBackupFolder(to parent: String) {
+        if let item = resources.first(where: { $0.value.mimeType == "application/vnd.google-apps.folder" }) {
+            resources[item.key] = Resource(parent: parent, mimeType: item.value.mimeType)
+        }
+    }
+    func moveUploadedFile(to parent: String) {
+        if let item = resources.first(where: { $0.value.mimeType == "audio/mp4" }) {
+            resources[item.key] = Resource(parent: parent, mimeType: item.value.mimeType)
+        }
+    }
 
     func send(_ request: URLRequest) async throws -> GoogleDriveResponse {
         requestCount += 1
@@ -244,6 +410,7 @@ private actor DriveStubTransport: GoogleDriveTransport {
         if url.path.hasSuffix("/about") {
             return try json(["user": ["emailAddress": "owner@example.test", "permissionId": "owner"]])
         }
+        if url.path.hasSuffix("/files/root") { return try json(["id": "real-root-id"]) }
         if url.path.hasSuffix("generateIds") {
             generated += 1
             return try json(["ids": ["id\(generated)"]])
@@ -294,7 +461,11 @@ private actor DriveStubTransport: GoogleDriveTransport {
             return try json(["id": id])
         }
         let id = url.lastPathComponent
-        if request.httpMethod == "PATCH" { return try json(["id": id]) }
+        if request.httpMethod == "PATCH" {
+            let body = try JSONSerialization.jsonObject(with: request.httpBody ?? Data()) as? [String: Any]
+            if body?["trashed"] as? Bool == true { trashedIDs.append(id) }
+            return try json(["id": id])
+        }
         if let resource = resources[id] {
             return try json(["parents": [resource.parent], "mimeType": resource.mimeType, "trashed": false])
         }
@@ -302,5 +473,36 @@ private actor DriveStubTransport: GoogleDriveTransport {
     }
     private func json(_ value: [String: Any]) throws -> GoogleDriveResponse {
         .init(data: try JSONSerialization.data(withJSONObject: value), status: 200)
+    }
+}
+
+private actor DriveViewModelService: GoogleDriveBackingUp {
+    var failOnce: UUID?
+    let blockUploads: Bool
+    var calls: [UUID] = []
+    var identities: [GoogleDriveIdentity] = []
+    init(failOnce: UUID? = nil, blockUploads: Bool = false) {
+        self.failOnce = failOnce
+        self.blockUploads = blockUploads
+    }
+    func folders(parent: String, identity: GoogleDriveIdentity) async throws -> [GoogleDriveFolder] {
+        if parent == "new-destination" { throw GoogleDriveError.http(503) }
+        return []
+    }
+    func createFolder(name: String, parent: String, identity: GoogleDriveIdentity) async throws -> GoogleDriveFolder {
+        GoogleDriveFolder(id: "new-destination", name: name)
+    }
+    func upload(
+        _ snapshot: MeetingDriveBackupSnapshot, to destination: GoogleDriveFolder, identity: GoogleDriveIdentity,
+        progress: @escaping @Sendable (GoogleDriveBackupProgress) async -> Void
+    ) async throws {
+        calls.append(snapshot.id)
+        identities.append(identity)
+        if blockUploads { try await Task.sleep(for: .seconds(60)) }
+        if failOnce == snapshot.id {
+            failOnce = nil
+            throw GoogleDriveError.http(503)
+        }
+        try Task.checkCancellation()
     }
 }

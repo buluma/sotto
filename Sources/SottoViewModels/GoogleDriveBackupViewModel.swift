@@ -39,7 +39,9 @@ public final class GoogleDriveBackupViewModel {
             self.hasClient = try await self.account.hasClient()
             self.identity = try await self.account.identity()
             self.snapshots = try await self.preparer.prepare(sources())
-            if self.identity != nil { self.folders = try await self.service.folders(parent: self.destination.id) }
+            if let identity = self.identity {
+                self.folders = try await self.service.folders(parent: self.destination.id, identity: identity)
+            }
         }
     }
 
@@ -56,7 +58,7 @@ public final class GoogleDriveBackupViewModel {
             self.completed.removeAll()
             self.failures.removeAll()
             self.statusMessage = nil
-            self.folders = try await self.service.folders(parent: self.destination.id)
+            self.folders = try await self.service.folders(parent: self.destination.id, identity: self.requireIdentity())
         }
     }
 
@@ -76,7 +78,7 @@ public final class GoogleDriveBackupViewModel {
 
     public func openFolder(_ folder: GoogleDriveFolder) {
         run {
-            let folders = try await self.service.folders(parent: folder.id)
+            let folders = try await self.service.folders(parent: folder.id, identity: self.requireIdentity())
             self.path.append(folder)
             self.folders = folders
             self.completed.removeAll()
@@ -87,7 +89,7 @@ public final class GoogleDriveBackupViewModel {
         guard path.count > 1 else { return }
         let parent = path[path.count - 2]
         run {
-            self.folders = try await self.service.folders(parent: parent.id)
+            self.folders = try await self.service.folders(parent: parent.id, identity: self.requireIdentity())
             self.path.removeLast()
             self.completed.removeAll()
         }
@@ -95,15 +97,19 @@ public final class GoogleDriveBackupViewModel {
 
     public func createFolder(name: String) {
         run {
-            let folder = try await self.service.createFolder(name: name, parent: self.destination.id)
+            let folder = try await self.service.createFolder(
+                name: name, parent: self.destination.id, identity: self.requireIdentity())
             self.path.append(folder)
-            self.folders = try await self.service.folders(parent: folder.id)
             self.completed.removeAll()
+            self.failures.removeAll()
+            self.statusMessage = nil
+            self.folders = []
+            self.folders = try await self.service.folders(parent: folder.id, identity: self.requireIdentity())
         }
     }
 
     public func upload() {
-        guard identity != nil, !snapshots.isEmpty else { return }
+        guard let identity, !snapshots.isEmpty else { return }
         run {
             self.isUploading = true
             defer { self.isUploading = false; self.progress = nil }
@@ -113,7 +119,7 @@ public final class GoogleDriveBackupViewModel {
             for snapshot in self.snapshots where !self.completed.contains(snapshot.id) {
                 try Task.checkCancellation()
                 do {
-                    try await self.service.upload(snapshot, to: destination) { update in
+                    try await self.service.upload(snapshot, to: destination, identity: identity) { update in
                         await self.receive(update)
                     }
                     self.completed.insert(snapshot.id)
@@ -135,6 +141,11 @@ public final class GoogleDriveBackupViewModel {
         await operation?.value
         await preparer.cleanup(snapshots)
         snapshots = []
+    }
+
+    private func requireIdentity() throws -> GoogleDriveIdentity {
+        guard let identity else { throw GoogleDriveError.message("Connect your Google account first.") }
+        return identity
     }
 
     private func receive(_ update: GoogleDriveBackupProgress) { progress = update }

@@ -14,10 +14,10 @@ public struct GoogleDriveBackupProgress: Sendable {
 }
 
 public protocol GoogleDriveBackingUp: Sendable {
-    func folders(parent: String) async throws -> [GoogleDriveFolder]
-    func createFolder(name: String, parent: String) async throws -> GoogleDriveFolder
+    func folders(parent: String, identity: GoogleDriveIdentity) async throws -> [GoogleDriveFolder]
+    func createFolder(name: String, parent: String, identity: GoogleDriveIdentity) async throws -> GoogleDriveFolder
     func upload(
-        _ snapshot: MeetingDriveBackupSnapshot, to destination: GoogleDriveFolder,
+        _ snapshot: MeetingDriveBackupSnapshot, to destination: GoogleDriveFolder, identity: GoogleDriveIdentity,
         progress: @escaping @Sendable (GoogleDriveBackupProgress) async -> Void) async throws
 }
 
@@ -49,8 +49,8 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
             .appendingPathComponent("google-drive-backup-ids.json")
     }
 
-    public func folders(parent: String) async throws -> [GoogleDriveFolder] {
-        let identity = try await identity()
+    public func folders(parent: String, identity: GoogleDriveIdentity) async throws -> [GoogleDriveFolder] {
+        let parent = try await resolveParent(parent, identity: identity)
         try Self.validateID(parent)
         var folders: [GoogleDriveFolder] = []
         var page: String?
@@ -69,12 +69,14 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
         return folders.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
-    public func createFolder(name: String, parent: String) async throws -> GoogleDriveFolder {
+    public func createFolder(name: String, parent: String, identity: GoogleDriveIdentity) async throws
+        -> GoogleDriveFolder
+    {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty, name.count <= 200 else {
             throw GoogleDriveError.message("Enter a folder name of up to 200 characters.")
         }
-        let identity = try await identity()
+        let parent = try await resolveParent(parent, identity: identity)
         try Self.validateID(parent)
         // A user-created destination gets its own reservation too: retrying a
         // lost response with the same name and parent cannot duplicate it.
@@ -85,7 +87,7 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
     }
 
     public func upload(
-        _ snapshot: MeetingDriveBackupSnapshot, to destination: GoogleDriveFolder,
+        _ snapshot: MeetingDriveBackupSnapshot, to destination: GoogleDriveFolder, identity: GoogleDriveIdentity,
         progress: @escaping @Sendable (GoogleDriveBackupProgress) async -> Void
     ) async throws {
         guard !busy else {
@@ -93,13 +95,13 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
         }
         busy = true
         defer { busy = false }
-        let identity = try await identity()
+        let parent = try await resolveParent(destination.id, identity: identity)
         try Self.validateID(destination.id)
         let prefix = "\(identity.permissionID)|\(destination.id)|\(snapshot.id.uuidString)|"
         let folderID = try await reserve(prefix + "folder", identity: identity)
         try await ensureFolder(
             id: folderID, name: "\(snapshot.title.prefix(120)) — \(snapshot.id.uuidString)",
-            parent: destination.id, identity: identity)
+            parent: parent, identity: identity)
         var folders = ["": folderID]
         var uploaded: Int64 = 0
         // Publish the manifest last; a failed operation is visibly partial.
@@ -136,8 +138,17 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
         // Trash is recoverable in Drive and never affects local artifacts.
         let currentPaths = Set(snapshot.files.map { prefix + "file:" + $0.relativePath })
         let stale = try ledger().filter { $0.key.hasPrefix(prefix + "file:") && !currentPaths.contains($0.key) }
-        for (_, id) in stale {
+        for (key, id) in stale {
             try Task.checkCancellation()
+            try Self.validateID(id)
+            let relativePath = String(key.dropFirst((prefix + "file:").count))
+            let directory = relativePath.split(separator: "/").dropLast().joined(separator: "/")
+            guard let expectedParent = directory.isEmpty ? folderID : try ledger()[prefix + "directory:" + directory]
+            else {
+                throw GoogleDriveError.message("A backup directory is missing from the local upload ledger.")
+            }
+            guard try await metadata(id: id, parent: expectedParent, identity: identity, restoreTrashed: false) != nil
+            else { continue }
             let response = try await request(
                 "PATCH", path: "files/\(id)", body: ["trashed": true],
                 identity: identity, accepting: [404])
@@ -292,18 +303,19 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
     }
 
     private struct Metadata: Decodable { let mimeType: String; let parents: [String]?; let trashed: Bool }
-    private func metadata(id: String, parent: String, identity: GoogleDriveIdentity) async throws -> Metadata? {
+    private func metadata(id: String, parent: String, identity: GoogleDriveIdentity, restoreTrashed: Bool = true)
+        async throws -> Metadata?
+    {
         let response = try await request(
             "GET", path: "files/\(id)", query: ["fields": "mimeType,parents,trashed"],
             identity: identity, accepting: [404])
         if response.status == 404 { return nil }
         let value = try JSONDecoder().decode(Metadata.self, from: response.data)
-        // 'root' is an alias, not the real ID returned in parents.
-        guard parent == "root" || value.parents?.contains(parent) == true else {
+        guard value.parents?.contains(parent) == true else {
             throw GoogleDriveError.message(
                 "A backup item was moved in Drive. Move it back before updating this backup.")
         }
-        if value.trashed {
+        if value.trashed && restoreTrashed {
             _ = try await request("PATCH", path: "files/\(id)", body: ["trashed": false], identity: identity)
         }
         return value
@@ -342,16 +354,22 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
         return value
     }
 
-    private func identity() async throws -> GoogleDriveIdentity {
-        guard let identity = try await account.identity() else {
-            throw GoogleDriveError.message("Connect your Google account first.")
-        }
-        return identity
+    private func resolveParent(_ parent: String, identity: GoogleDriveIdentity) async throws -> String {
+        try Self.validateID(parent)
+        guard parent == "root" else { return parent }
+        let response = try await request("GET", path: "files/root", query: ["fields": "id"], identity: identity)
+        struct Root: Decodable { let id: String }
+        let id = try JSONDecoder().decode(Root.self, from: response.data).id
+        try Self.validateID(id)
+        return id
     }
     private func token(for expected: GoogleDriveIdentity) async throws -> String {
         try Task.checkCancellation()
         let token = try await account.accessToken()
-        guard try await account.identity() == expected else { throw CancellationError() }
+        guard try await account.identity() == expected else {
+            throw GoogleDriveError.message(
+                "The Google account changed. Close this backup and reopen it to review the connected account.")
+        }
         return token
     }
     private func request(
