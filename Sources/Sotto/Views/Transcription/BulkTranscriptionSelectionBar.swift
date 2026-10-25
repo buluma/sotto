@@ -13,6 +13,7 @@ struct BulkTranscriptionSelectionBar: View {
     let onClear: () -> Void
     let onCancel: () -> Void
     var onExport: (() -> Void)?
+    var onDriveBackup: (() -> Void)? = nil
     var onAskSelected: (() -> Void)?
     var isAskDisabled = false
     let onDeleteAudioOnly: () -> Void
@@ -123,6 +124,7 @@ struct BulkTranscriptionSelectionBar: View {
             selectVisibleAction
             clearAction
             exportAction
+            driveBackupAction
             askAction
         }
     }
@@ -142,6 +144,7 @@ struct BulkTranscriptionSelectionBar: View {
             selectVisibleAction
             clearAction
             exportAction
+            driveBackupAction
             askAction
             if showsAudioAction {
                 deleteAudioAction
@@ -196,6 +199,15 @@ struct BulkTranscriptionSelectionBar: View {
                 isDisabled: isExportDisabled,
                 action: onExport
             )
+        }
+    }
+
+    @ViewBuilder
+    private var driveBackupAction: some View {
+        if let onDriveBackup {
+            SelectionBarActionButton(
+                title: "Google Drive…", systemImage: "externaldrive.badge.icloud", tone: .utility,
+                isDisabled: isPerformingOperation, action: onDriveBackup)
         }
     }
 

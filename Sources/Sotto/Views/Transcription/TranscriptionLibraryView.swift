@@ -32,6 +32,7 @@ struct TranscriptionLibraryView: View {
     @State private var splitOperationId: UUID?
     @State private var audioSaveErrorMessage: String?
     @State private var showingBulkExportOptions = false
+    @State private var driveBackupSelection: DriveBackupSelection?
     @AppStorage("com.sotto.libraryBulkExportFormat")
     private var selectedBulkExportFormatRawValue = TranscriptExportFormat.txt.rawValue
     @AppStorage("com.sotto.libraryBulkExportIncludeTimestamps")
@@ -309,6 +310,11 @@ struct TranscriptionLibraryView: View {
 
     private var presentationContent: some View {
         secondaryAlertsContent
+            .sheet(item: $driveBackupSelection) { selection in
+                if let provider = viewModel.driveBackupSourcesProvider {
+                    GoogleDriveBackupSheet(sources: { try await provider(selection.ids) })
+                }
+            }
             .popover(item: $bulkExportResult, arrowEdge: .top) { result in
                 bulkExportConfirmationPopover(result)
             }
@@ -462,6 +468,15 @@ struct TranscriptionLibraryView: View {
         if transcription.sourceType == .meeting {
             Divider()
 
+            if viewModel.driveBackupSourcesProvider != nil {
+                Button {
+                    driveBackupSelection = DriveBackupSelection(ids: [transcription.id])
+                } label: {
+                    Label("Back up to Google Drive…", systemImage: "externaldrive.badge.icloud")
+                }
+                .disabled(transcription.status == .processing)
+            }
+
             let audioState = MeetingAudioFile.state(for: transcription)
             let audioAvailable = audioState == .saved
             let audioRemovable = MeetingAudioFile.isRemovable(for: transcription, state: audioState)
@@ -597,6 +612,9 @@ struct TranscriptionLibraryView: View {
             onClear: { viewModel.clearSelection() },
             onCancel: { viewModel.exitBulkSelection() },
             onExport: { showingBulkExportOptions = true },
+            onDriveBackup: viewModel.driveBackupSourcesProvider != nil && !selectedBulkExportTargets.isEmpty
+                && selectedBulkExportTargets.allSatisfy({ $0.sourceType == .meeting && $0.status != .processing })
+                ? { driveBackupSelection = DriveBackupSelection(ids: selectedBulkExportTargets.map(\.id)) } : nil,
             onAskSelected: onAskSelected.map { action in
                 {
                     let ids = viewModel.filteredTranscriptions
@@ -1190,6 +1208,11 @@ struct TranscriptionLibraryView: View {
     private var hasLabelFilter: Bool {
         !viewModel.selectedMeetingLabelIDs.isEmpty
     }
+}
+
+private struct DriveBackupSelection: Identifiable {
+    let id = UUID()
+    let ids: [UUID]
 }
 
 // MARK: - Library filter chip

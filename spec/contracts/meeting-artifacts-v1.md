@@ -25,6 +25,12 @@ Meeting rename publishes the row returned by its database transaction. Notes, re
 
 ## Consumers
 
+### Explicit Google Drive backup (SOT-9)
+
+The Library's **Back up to Google Drive…** action creates a private staging snapshot of saved, non-processing meeting rows, effective speaker/text corrections, notes, classifications, and prompt results. Standard artifact views are materialized only in staging; canonical database rows and local artifact folders are not changed. Retained audio and the recording metadata sidecar are copied using the stable filename allowlist, including legacy raw-audio names. Recovery locks, unrelated files, and symbolic links are excluded. The exact staged filenames and byte counts are shown before an explicit upload; later local edits cannot change that preview's bytes.
+
+The snapshot can include full meeting metadata and saved calendar context. OAuth uses a configured Desktop app client, PKCE, a loopback-only callback, device-only Keychain storage, and only `drive.file`. The native destination browser exposes My Drive and folders accessible under that scope. Per-account/destination/meeting/file Drive IDs are saved locally before creates; retries reuse those IDs. Active resumable sessions are tied to the staged file identity, so a new preview never resumes bytes from an older snapshot. Uploads are sequential and cancellable; a meeting is successful only after all files and stale-managed-file reconciliation succeed. Obsolete Sotto-managed remote files are trashed after current files upload; other remote contents are preserved. Remote updates can be partial on failure; no upload outcome grants authority to delete or modify local data. Automatic uploads, library/database synchronization, and restore are outside V1. See [Google Drive backup](../../docs/google-drive-backup.md).
+
 - Library, Meetings, and detail-view "Open Meeting Folder" / "Copy Artifact Folder Path" actions.
 - Audio-specific "Show Audio in Finder" / "Save Audio As..." actions while retained meeting audio is still available.
 - `sotto-cli meetings artifact` and `--envelope` output.

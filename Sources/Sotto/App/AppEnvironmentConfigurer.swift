@@ -141,7 +141,8 @@ final class AppEnvironmentConfigurer {
             meetingTypeRepository: env.meetingTypeRepo,
             meetingLabelRepository: env.meetingLabelRepo,
             meetingClassificationService: env.meetingClassificationService,
-            speakerAttributionReader: env.speakerAttributionReader
+            speakerAttributionReader: env.speakerAttributionReader,
+            promptResultRepo: env.promptResultRepo
         )
         if let askWorkspaceService = env.askWorkspaceService {
             askWorkspaceViewModel.configure(service: askWorkspaceService)

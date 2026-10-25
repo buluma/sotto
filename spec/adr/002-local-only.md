@@ -1,5 +1,9 @@
 # ADR-002: Local-First Processing
 
+## Personal Sotto amendment — 2026-10-25: explicit meeting backup
+
+SOT-9 authorizes an optional, user-initiated Google Drive copy of selected saved meeting artifacts, including retained audio. The Library remains canonical and core speech processing stays on-device. The owner connects a Google Desktop OAuth client with `drive.file`, chooses a destination, reviews a frozen list of files and disclosed meeting metadata, and explicitly starts each upload. Uploads have no automatic trigger in V1. Account identity and remote parent membership are checked before mutations, and every outcome preserves local data. This deliberately qualifies the inherited absolute statements about audio never leaving the device and the “No cloud backup or sync” consequence: this owner-requested backup is an explicit external storage action; automatic backup, Library/database sync, and Drive-to-Library restore remain out of scope. The guarantee that data stays on-device applies to capture and speech processing. See [backup behavior](../../docs/google-drive-backup.md), [artifact contract](../contracts/meeting-artifacts-v1.md), and [network inventory](../../docs/network-boundaries.md).
+
 ## Personal Sotto amendment — 2026-10-04
 
 This amendment supersedes the inherited Discover, telemetry and app-update network descriptions below for this personal fork. Discover is off by default and reads only bundled, original Rick-and-Morty-style banter. It ignores old feed caches, never refreshes over HTTP, and has no thoughts submission surface. Remote analytics/crash transport and Sparkle app updates are removed. Feedback submission and hosted sharing transports are also removed. Configured AI/media/model/helper integrations  remain separate. See [personal Discover](../../docs/discover.md) and [telemetry contract](../contracts/telemetry-v1.md).
@@ -26,14 +30,14 @@ Meanwhile, local-only alternatives (MacWhisper, VoiceInk, BetterDictation) have 
 
 ## Decision
 
-**Local processing with a fully local path.** The core product — transcription and dictation — runs on-device. Audio never leaves the device.
+**Local processing with a fully local path.** The core product — transcription and dictation — runs on-device without uploading audio. The explicit meeting-backup exception is governed by the personal-fork amendment above.
 
 LLM-powered features (summaries, chat/Meeting Ask, AI Formatter, and Transforms) use external providers configured by the user. This is opt-in, explicit, and text-only — audio is never sent.
 
 ### What is always local (non-negotiable)
 
 - **STT**: Parakeet runs locally via FluidAudio CoreML on ANE (v3 default, v2 English-only TDT opt-in, Unified English opt-in), with optional local Nemotron Beta, Cohere Transcribe, and WhisperKit engines for broader language and accuracy coverage (ADR-001, ADR-007, ADR-016, ADR-021)
-- **Audio capture**: All microphone and file audio stays on-device
+- **Audio capture**: Microphone and file capture/recognition run on-device; saved artifacts leave the Mac only through an explicit user-authorized backup
 - **Text processing**: Deterministic pipeline runs locally (ADR-004)
 - **Database**: All dictations, transcriptions, history stored locally (SQLite/GRDB)
 - **Derived retrieval**: Segment search, transcript context reads, and existing knowledge-card reads are local. Generating cards is a separate LLM operation.
@@ -93,7 +97,7 @@ Cloud LLM costs are paid directly by the user to their provider (Anthropic, Open
 
 ### Positive
 
-- Audio never leaves the device — core privacy promise intact
+- Core speech processing requires no audio upload; optional meeting backups require explicit account, destination, file review, and upload actions
 - Transcription works fully offline — no degradation
 - LLM features use best-available models (Claude, GPT-4) without bundling a runtime
 - Local-only users can use Ollama or LM Studio, and the eligible on-device Apple Intelligence provider for dictation cleanup
@@ -106,7 +110,7 @@ Cloud LLM costs are paid directly by the user to their provider (Anthropic, Open
 - **Messaging complexity**: Local speech is narrower than a no-network app. Configured providers, media/model/helper downloads must be described independently.
 - **Cloud providers require internet**: Summaries, chat/Meeting Ask, AI Formatter, and Transforms can run offline only when configured with an available local provider (eligible on-device Apple Intelligence covers dictation cleanup only). Transcription still works offline.
 - **Transcript text exposure**: When using cloud providers or cloud-backed CLI tools, transcript text is sent to third-party services. Must be clear in UI. Users with sensitive content should choose a local provider or skip LLM features.
-- **No cloud backup or sync**: User data stays on-device. If the Mac is lost, dictation history is lost. This is intentional.
+- **No automatic cloud backup or Library sync**: The owner-initiated SOT-9 Google Drive copy is an explicit exception for selected meeting artifacts; automatic backup, database backup, and cross-device Library sync are out of scope. Without a user-initiated backup, dictation history remains on-device and can be lost with the Mac.
 - **No collaborative corpus**: ADR-029 permits a separately encrypted, read-only text snapshot. Real-time collaboration, team vocabularies, comments, and cross-device Library sync remain out of scope.
 
 ## References
