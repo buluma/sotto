@@ -3,6 +3,7 @@ import Foundation
 public enum GoogleDriveError: LocalizedError, Sendable {
     case message(String)
     case http(Int)
+    case api(status: Int, operation: String, reason: String?)
 
     public var errorDescription: String? {
         switch self {
@@ -13,6 +14,10 @@ public enum GoogleDriveError: LocalizedError, Sendable {
         case .http(404): return "The Google Drive item is unavailable. Choose an accessible destination and retry."
         case .http(429): return "Google Drive is busy. Try the upload again later."
         case .http(let status): return "Google Drive returned an error (\(status)). Try again."
+        case .api(let status, let operation, let reason):
+            let detail = reason.map { " (\($0))" } ?? ""
+            return
+                "Google Drive couldn’t \(operation) (HTTP \(status)\(detail)). Try another destination or check the Google Drive API setup."
         }
     }
 }
@@ -31,6 +36,20 @@ public struct GoogleDriveResponse: Sendable {
 
     func requireSuccess() throws {
         guard (200..<300).contains(status) else { throw GoogleDriveError.http(status) }
+    }
+
+    var providerErrorReason: String? {
+        struct ErrorEnvelope: Decodable {
+            struct Detail: Decodable { let reason: String? }
+            struct GoogleError: Decodable { let errors: [Detail]? }
+            let error: GoogleError?
+        }
+        guard let envelope = try? JSONDecoder().decode(ErrorEnvelope.self, from: data),
+            let reason = envelope.error?.errors?.first?.reason,
+            !reason.isEmpty, reason.count <= 40,
+            reason.allSatisfy({ $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "_" || $0 == "-") })
+        else { return nil }
+        return reason
     }
 }
 
