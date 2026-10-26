@@ -67,9 +67,10 @@ public actor MeetingDriveBackupPreparer {
         guard transcription.sourceType == .meeting, transcription.status != .processing else {
             throw GoogleDriveError.message("Only saved meetings that have finished processing can be backed up.")
         }
-        guard let original = MeetingArtifactStore.sessionFolderURL(for: transcription) else {
-            throw MeetingArtifactError.missingSessionFolder
-        }
+        let original =
+            MeetingArtifactStore.sessionFolderURL(for: transcription)
+            ?? URL(fileURLWithPath: AppPaths.meetingRecordingsDir, isDirectory: true)
+            .appendingPathComponent(transcription.id.uuidString, isDirectory: true)
         // No directory enumeration of the source: locks, scratch files, and
         // unrelated user files must never silently become upload candidates.
         let retainedNames = [

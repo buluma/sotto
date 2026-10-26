@@ -18,11 +18,16 @@ public struct GoogleDriveAuthorization: Sendable {
 /// One native-app OAuth identity. Client configuration and tokens stay in a
 /// dedicated device-only Keychain namespace, never in the backup ledger.
 public actor GoogleDriveAccount {
-    public static let shared = GoogleDriveAccount()
+    public static let shared = GoogleDriveAccount(
+        store: KeychainKeyValueStore(service: keychainService(bundleIdentifier: Bundle.main.bundleIdentifier)))
     public static let scope = "https://www.googleapis.com/auth/drive.file"
     private let store: any KeyValueStore
     private let transport: any GoogleDriveTransport
     private var generation = UUID()
+
+    static func keychainService(bundleIdentifier: String?) -> String {
+        bundleIdentifier == "com.sotto.dev" ? "com.sotto.dev.google-drive" : "com.sotto.google-drive"
+    }
 
     private struct Client: Codable {
         let client_id: String
