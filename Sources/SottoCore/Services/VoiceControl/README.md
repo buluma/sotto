@@ -36,7 +36,7 @@ Pages with more than 200 legal controls are truncated by priority — focused, t
 
 Stop cancels child observation/model tasks while continuing to drain any already-dispatched adapter effect. `waitForIdle` is the ownership-release boundary without destroying task history; `cancelAndDrain` also clears task content. Confirmation expiry emits a visible pause event without waiting for a later click.
 
-Consequence policy treats ordinary form entry, navigation, selectors, dates and searching as authorized task steps. A typed Jev consequence assessment supplements local policy; definite payment/deletion/external-commitment evidence cannot be downgraded by a model's ordinary classification. Typing into a payment form is not itself payment. Generated rewrites still require their explicit preview acceptance.
+Consequence policy treats ordinary form entry, navigation, selectors, dates and searching as authorized task steps. Local payment, destructive-action and external-commitment keywords in a pressable label are checked regardless of label length; a typed Jev consequence assessment supplements this policy and cannot downgrade definite local evidence. Operation context is checked first: typing into a payment form is not itself payment. Generated rewrites still require their explicit preview acceptance.
 
 The runner keeps at most 256 local trace records in memory. Records contain correlation IDs, revision, stage, operation, actor, route, target id, control label, closed key names, policy/outcome codes, durations, coverage/counts and available model/score metadata. They contain no field value, selection, audio, screenshot, credential or remote error body. Copy diagnostics writes a shareable JSON object that keeps opaque ids and strips instruction and labels.
 

@@ -267,6 +267,9 @@ final class VoiceControlRecoveryTests: XCTestCase {
         XCTAssertEqual(policy("Address book"), .ordinary)
         XCTAssertEqual(policy("Delete file"), .destructive)
         XCTAssertEqual(policy("Send message"), .externalCommitment)
+        XCTAssertEqual(policy("Review and confirm payment for this order now"), .payment)
+        XCTAssertEqual(policy("Permanently delete these old draft message records"), .destructive)
+        XCTAssertEqual(policy("Send this message to all selected recipients now"), .externalCommitment)
         let continued = VoiceControlTarget(
             id: "t", label: "Continue", role: "button", operations: [.press], consequence: .payment)
         XCTAssertEqual(
@@ -280,6 +283,7 @@ final class VoiceControlRecoveryTests: XCTestCase {
                 of: .init(operation: .press, targetID: "t", consequence: .ordinary), target: unmarked),
             .unknown)
         XCTAssertEqual(policy("Payment amount", operation: .setValue), .ordinary)
+        XCTAssertEqual(policy("Enter payment details before checkout", operation: .setValue), .ordinary)
         let returnKey = VoiceControlAction(operation: .key, targetID: "t", value: "return")
         let body = VoiceControlTarget(
             id: "t", label: "Body", role: "text", operations: [.insertText, .key], isFocused: true)
