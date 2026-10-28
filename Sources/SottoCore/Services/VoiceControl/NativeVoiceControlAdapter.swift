@@ -451,7 +451,9 @@ public actor NativeVoiceControlAdapter: VoiceControlAdapter {
             if !verified, action.operation == .insertText {
                 let current = Self.attribute(node, kAXValueAttribute) as? String ?? ""
                 if current == beforeValue {
-                    try typeUnicode(supplied, authority: authority)
+                    try await typeUnicode(
+                        supplied, authority: authority, node: node, expectedPID: expectedPID,
+                        expectedWindow: expectedWindow, expectedFingerprint: bound.fingerprint)
                     verified = await verifyTextValue(node, expected: replacement, authority: authority)
                     typedBlind = !verified && beforeValue.isEmpty
                 }
@@ -650,33 +652,69 @@ public actor NativeVoiceControlAdapter: VoiceControlAdapter {
 
     /// Webpage fields often ignore AXSelectedText. Unicode HID posts are the
     /// same path dictation already uses for Chrome, marked so hotkeys ignore them.
-    private func typeUnicode(_ text: String, authority: ActionAuthority) throws {
-        try authority.perform {
-            guard AXIsProcessTrusted() else { throw NativeVoiceControlError.permission }
-            guard let source = CGEventSource(stateID: .hidSystemState) else {
-                throw NativeVoiceControlError.unsupported
-            }
-            let units = Array(text.utf16)
-            var index = units.startIndex
-            while index < units.endIndex {
-                let end = units.index(index, offsetBy: 20, limitedBy: units.endIndex) ?? units.endIndex
-                var chunk = Array(units[index..<end])
-                guard let down = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: true),
-                    let up = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: false)
-                else {
-                    throw NativeVoiceControlError.unsupported
-                }
-                down.flags = []
-                up.flags = []
-                StreamingCursorEventMarker.mark(down)
-                StreamingCursorEventMarker.mark(up)
-                down.keyboardSetUnicodeString(stringLength: chunk.count, unicodeString: &chunk)
-                up.keyboardSetUnicodeString(stringLength: chunk.count, unicodeString: &chunk)
-                down.post(tap: .cghidEventTap)
-                up.post(tap: .cghidEventTap)
-                index = end
-            }
+    private func typeUnicode(
+        _ text: String, authority: ActionAuthority, node: AXUIElement, expectedPID: Int32,
+        expectedWindow: Element, expectedFingerprint: String
+    ) async throws {
+        guard AXIsProcessTrusted() else { throw NativeVoiceControlError.permission }
+        guard let source = CGEventSource(stateID: .hidSystemState) else {
+            throw NativeVoiceControlError.unsupported
         }
+        let units = Array(text.utf16)
+        var index = units.startIndex
+        while index < units.endIndex {
+            let end = units.index(index, offsetBy: 20, limitedBy: units.endIndex) ?? units.endIndex
+            let chunk = Array(units[index..<end])
+            try await MainActor.run {
+                try authority.perform {
+                    // HID events are global. Recheck the recipient in the same
+                    // synchronous effect immediately before each chunk is posted.
+                    try Self.validateKeyboardFallbackRecipient(
+                        node: node, expectedPID: expectedPID, expectedWindow: expectedWindow.value,
+                        expectedFingerprint: expectedFingerprint)
+                    guard let down = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: true),
+                        let up = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: false)
+                    else {
+                        throw NativeVoiceControlError.unsupported
+                    }
+                    var typedChunk = chunk
+                    down.flags = []
+                    up.flags = []
+                    StreamingCursorEventMarker.mark(down)
+                    StreamingCursorEventMarker.mark(up)
+                    down.keyboardSetUnicodeString(stringLength: typedChunk.count, unicodeString: &typedChunk)
+                    up.keyboardSetUnicodeString(stringLength: typedChunk.count, unicodeString: &typedChunk)
+                    down.post(tap: .cghidEventTap)
+                    up.post(tap: .cghidEventTap)
+                }
+            }
+            index = end
+        }
+    }
+
+    private static func validateKeyboardFallbackRecipient(
+        node: AXUIElement, expectedPID: Int32, expectedWindow: AXUIElement, expectedFingerprint: String
+    ) throws {
+        let app = AXUIElementCreateApplication(expectedPID)
+        let activeWindow = focusedOrMainWindow(app)
+        let focused = element(app, kAXFocusedUIElementAttribute)
+        let role = string(node, kAXRoleAttribute)
+        guard keyboardFallbackIsAuthorized(
+            frontmostPID: NSWorkspace.shared.frontmostApplication?.processIdentifier,
+            expectedPID: expectedPID,
+            activeWindowMatches: activeWindow.map { CFEqual($0, expectedWindow) } == true,
+            focusMatches: focused.map { CFEqual($0, node) } == true,
+            secure: isSecure(node, role: role),
+            fingerprintMatches: fingerprint(node) == expectedFingerprint,
+            visible: isVisible(node, within: expectedWindow))
+        else { throw NativeVoiceControlError.changed }
+    }
+
+    static func keyboardFallbackIsAuthorized(
+        frontmostPID: Int32?, expectedPID: Int32, activeWindowMatches: Bool, focusMatches: Bool,
+        secure: Bool, fingerprintMatches: Bool, visible: Bool
+    ) -> Bool {
+        frontmostPID == expectedPID && activeWindowMatches && focusMatches && !secure && fingerprintMatches && visible
     }
 
     /// Bounded structural evidence, not a model's success assertion. Changes to

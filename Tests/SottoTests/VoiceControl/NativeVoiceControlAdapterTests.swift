@@ -3,6 +3,29 @@ import ApplicationServices
 @testable import SottoCore
 
 final class NativeVoiceControlAdapterTests: XCTestCase {
+    func testKeyboardFallbackRequiresTheSameVisibleNonsecureFocusedRecipient() {
+        let valid = NativeVoiceControlAdapter.keyboardFallbackIsAuthorized(
+            frontmostPID: 42, expectedPID: 42, activeWindowMatches: true, focusMatches: true,
+            secure: false, fingerprintMatches: true, visible: true)
+        XCTAssertTrue(valid)
+
+        let invalidContexts: [(Int32?, Bool, Bool, Bool, Bool, Bool)] = [
+            (99, true, true, false, true, true), // different app
+            (42, false, true, false, true, true), // different window
+            (42, true, false, false, true, true), // focus moved
+            (42, true, true, true, true, true), // secure field
+            (42, true, true, false, false, true), // target changed
+            (42, true, true, false, true, false), // no longer visible
+            (nil, true, true, false, true, true), // frontmost app unknown
+        ]
+        for context in invalidContexts {
+            XCTAssertFalse(NativeVoiceControlAdapter.keyboardFallbackIsAuthorized(
+                frontmostPID: context.0, expectedPID: 42, activeWindowMatches: context.1,
+                focusMatches: context.2, secure: context.3, fingerprintMatches: context.4,
+                visible: context.5))
+        }
+    }
+
     func testAwaitingReturnsBeforeASlowTaskFinishes() async {
         let task = Task {
             try? await Task.sleep(for: .seconds(2))
