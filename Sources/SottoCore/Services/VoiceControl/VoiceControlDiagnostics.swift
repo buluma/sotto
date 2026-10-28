@@ -325,7 +325,8 @@ public enum VoiceControlConsequence: String, Codable, Sendable, CaseIterable {
 public enum VoiceControlConsequencePolicy {
     public static func consequence(of action: VoiceControlAction, target: VoiceControlTarget) -> VoiceControlConsequence
     {
-        // Editing payment-related fields is not a payment commitment.
+        // Context matters before label keywords: typing, scrolling and app activation
+        // do not commit a payment, even when the target describes a payment form.
         if [.setValue, .insertText, .scroll, .activateApp].contains(action.operation) { return .ordinary }
         if action.operation == .key, ["backspace", "delete"].contains(action.value?.lowercased() ?? "") {
             // Delete in a collection can remove a message/file, even when the
@@ -334,19 +335,16 @@ public enum VoiceControlConsequencePolicy {
         }
         let label = target.label.lowercased()
         let words = Set(label.split(whereSeparator: { !$0.isLetter && !$0.isNumber }).map(String.init))
-        let shortLabel = words.count <= 5
         // Reviewed local evidence always wins over model-proposed ordinary risk.
-        if shortLabel,
-            !words.isDisjoint(with: [
-                "pay", "purchase", "checkout", "buy", "payment", "subscribe", "order", "booking", "donate",
-            ])
-        {
+        if !words.isDisjoint(with: [
+            "pay", "purchase", "checkout", "buy", "payment", "subscribe", "order", "booking", "donate",
+        ]) {
             return .payment
         }
-        if shortLabel, !words.isDisjoint(with: ["delete", "erase", "trash", "destroy", "discard", "uninstall"]) {
+        if !words.isDisjoint(with: ["delete", "erase", "trash", "destroy", "discard", "uninstall"]) {
             return .destructive
         }
-        if shortLabel, !words.isDisjoint(with: ["send", "publish", "post", "transfer", "invite", "share"]) {
+        if !words.isDisjoint(with: ["send", "publish", "post", "transfer", "invite", "share"]) {
             return .externalCommitment
         }
         // A model's ordinary label cannot downgrade metadata the adapter already set.
