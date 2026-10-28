@@ -76,6 +76,29 @@ final class VoiceControlRecoveryTests: XCTestCase {
         XCTAssertEqual(effects.map(\.targetID), ["alpha", "gamma"])
     }
 
+    func testAlternateTargetRetainsRequiredConfirmation() async {
+        let adapter = RecoveryAdapter()
+        let engine = RecoveryEngine([
+            .action(.init(operation: .press, targetID: "alpha", requiresConfirmation: true)), .finished,
+            .finished, .finished,
+        ])
+        let runner = VoiceControlTurnRunner(adapter: adapter, engine: engine)
+
+        await runner.submit("Open Alpha")
+        let initialEffects = await adapter.effects
+        XCTAssertTrue(initialEffects.isEmpty)
+        await runner.confirm()
+
+        await runner.revise("No, the other one")
+        await runner.clarify("Beta")
+        var effects = await adapter.effects
+        XCTAssertEqual(effects.map(\.targetID), ["alpha"], "The alternate action must ask for confirmation again")
+
+        await runner.confirm()
+        effects = await adapter.effects
+        XCTAssertEqual(effects.map(\.targetID), ["alpha", "beta"])
+    }
+
     func testRevisingLiteralTaskCannotTriggerOldLocalCompletion() async {
         let adapter = RecoveryAdapter()
         let fallback = RecoveryEngine([.action(.init(operation: .setValue, targetID: "destination", value: "London")), .finished])

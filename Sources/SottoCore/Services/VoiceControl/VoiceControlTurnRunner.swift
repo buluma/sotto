@@ -428,7 +428,11 @@ public actor VoiceControlTurnRunner {
                     labels: alternativeLabels, targetIDs: alternativeIDs)
         }
         otherRequested = false; alternativeLabels = []; alternativeIDs = []; alternativeRawLabels = []; chosenAlternative = nil; chosenTargetID = nil
-        return .action(VoiceControlAction(operation: action.operation, targetID: target.id, value: action.value, targetLabel: target.label))
+        return .action(VoiceControlAction(
+            operation: action.operation, targetID: target.id, value: action.value, targetLabel: target.label,
+            requiresConfirmation: action.requiresConfirmation, receiptStatus: action.receiptStatus,
+            consequence: action.consequence, modelID: action.modelID,
+            decisionConfidence: action.decisionConfidence, postcondition: action.postcondition))
     }
     private func resolvedPick(_ snapshot: VoiceControlSnapshot) -> VoiceControlDecision? {
         guard !otherRequested, chosenTargetID != nil || chosenAlternative != nil else { return nil }
@@ -654,7 +658,8 @@ public actor VoiceControlTurnRunner {
     private func historyAction(_ action: VoiceControlAction, snapshot: VoiceControlSnapshot, status: VoiceControlReceipt.Status) -> VoiceControlAction {
         VoiceControlAction(operation: action.operation, targetID: action.targetID, value: action.value,
             targetLabel: snapshot.targets.first(where: { $0.id == action.targetID })?.label ?? action.targetLabel,
-            receiptStatus: status, consequence: action.consequence, modelID: action.modelID,
+            requiresConfirmation: action.requiresConfirmation, receiptStatus: status,
+            consequence: action.consequence, modelID: action.modelID,
             decisionConfidence: action.decisionConfidence, postcondition: action.postcondition)
     }
     private func reconcilePostcondition(in snapshot: VoiceControlSnapshot) {
