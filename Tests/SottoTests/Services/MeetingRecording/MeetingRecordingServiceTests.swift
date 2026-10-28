@@ -273,6 +273,46 @@ final class MeetingRecordingServiceTests: XCTestCase {
         await service.cancelRecording()
     }
 
+    func testStopWhileAcquiringSpeechEngineLeaseCancelsStartBeforeCapture() async throws {
+        let captureService = MockMeetingAudioCaptureService()
+        let lockStore = RecordingLockFileStore()
+        let sttClient = LeasingMeetingSTTClient(
+            selection: SpeechEngineSelection(engine: .whisper, language: "KO"), holdLease: true)
+        let service = MeetingRecordingService(
+            audioCaptureService: captureService,
+            audioConverter: MockMeetingAudioFileConverter(),
+            sttTranscriber: sttClient,
+            lockFileStore: lockStore
+        )
+
+        let start = Task { try await service.startRecording() }
+        await sttClient.waitForLeaseRequest()
+
+        do {
+            _ = try await service.stopRecording()
+            XCTFail("Stop during lease acquisition must not report an active recording")
+        } catch MeetingAudioError.notRunning {}
+
+        await sttClient.releaseLease()
+        do {
+            try await start.value
+            XCTFail("A start stopped during lease acquisition must not continue")
+        } catch is CancellationError {}
+
+        let cancelledStartCallCount = await captureService.startCallCount
+        XCTAssertEqual(cancelledStartCallCount, 0)
+        XCTAssertEqual(lockStore.writes.count, 0)
+        let isRecording = await service.isRecording
+        let activeLeaseCount = await sttClient.activeLeaseCount
+        XCTAssertFalse(isRecording)
+        XCTAssertEqual(activeLeaseCount, 0)
+
+        try await service.startRecording()
+        let replacementStartCallCount = await captureService.startCallCount
+        XCTAssertEqual(replacementStartCallCount, 1)
+        await service.cancelRecording()
+    }
+
     func testCaptureDiagnosticsRetainsOnlyMatchingStoppedSession() async throws {
         let captureService = MockMeetingAudioCaptureService()
         let service = MeetingRecordingService(
@@ -5873,13 +5913,19 @@ private actor LeasingMeetingSTTClient: STTClientProtocol, SpeechEngineRoutedTran
     private let capabilities: SpeechEngineCapabilities?
     private var activeLeases: Set<UUID> = []
     private(set) var routedSelections: [SpeechEngineSelection] = []
+    private var holdLease: Bool
+    private var leaseGate: CheckedContinuation<Void, Never>?
+    private var leaseRequestWaiters: [CheckedContinuation<Void, Never>] = []
+    private(set) var leaseRequestCount = 0
 
     init(
         selection: SpeechEngineSelection,
-        capabilities: SpeechEngineCapabilities? = nil
+        capabilities: SpeechEngineCapabilities? = nil,
+        holdLease: Bool = false
     ) {
         self.selection = selection
         self.capabilities = capabilities ?? SpeechEngineCapabilityRegistry.capabilities(for: selection.engine)
+        self.holdLease = holdLease
     }
 
     var activeLeaseCount: Int {
@@ -5887,9 +5933,27 @@ private actor LeasingMeetingSTTClient: STTClientProtocol, SpeechEngineRoutedTran
     }
 
     func beginSpeechEngineSession() async -> SpeechEngineLease {
+        leaseRequestCount += 1
+        let waiters = leaseRequestWaiters
+        leaseRequestWaiters.removeAll()
+        waiters.forEach { $0.resume() }
+        if holdLease {
+            await withCheckedContinuation { leaseGate = $0 }
+        }
         let lease = SpeechEngineLease(selection: selection, capabilities: capabilities)
         activeLeases.insert(lease.id)
         return lease
+    }
+
+    func waitForLeaseRequest() async {
+        guard leaseRequestCount == 0 else { return }
+        await withCheckedContinuation { leaseRequestWaiters.append($0) }
+    }
+
+    func releaseLease() {
+        holdLease = false
+        leaseGate?.resume()
+        leaseGate = nil
     }
 
     func endSpeechEngineSession(_ lease: SpeechEngineLease) async {
