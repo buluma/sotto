@@ -2,6 +2,35 @@ import XCTest
 @testable import SottoCore
 
 final class LLMProviderDescriptorTests: XCTestCase {
+    func testLoopbackEndpointRequiresAValidLoopbackHost() {
+        let loopbackURLs = [
+            "http://localhost/v1",
+            "http://localhost./v1",
+            "http://127.0.0.1/v1",
+            "http://127.255.255.255/v1",
+            "http://[::1]/v1",
+        ]
+        for value in loopbackURLs {
+            XCTAssertTrue(
+                LLMProviderConfig.isLoopbackEndpoint(URL(string: value)!),
+                "Expected \(value) to be recognized as loopback"
+            )
+        }
+
+        let nonLoopbackURLs = [
+            "http://127.attacker.example/v1",
+            "http://1270.0.1/v1",
+            "http://126.0.0.1/v1",
+            "http://[::2]/v1",
+        ]
+        for value in nonLoopbackURLs {
+            XCTAssertFalse(
+                LLMProviderConfig.isLoopbackEndpoint(URL(string: value)!),
+                "Expected \(value) not to be recognized as loopback"
+            )
+        }
+    }
+
     func testDescriptorsCoverEveryProvider() {
         for provider in LLMProviderID.allCases {
             let descriptor = provider.descriptor

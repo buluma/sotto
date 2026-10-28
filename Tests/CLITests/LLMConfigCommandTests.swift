@@ -14,6 +14,23 @@ final class LLMConfigCommandTests: XCTestCase {
         XCTAssertEqual(url.absoluteString, "https://example.com/openai")
     }
 
+    func testRemoteHTTPWithLoopbackLookingDNSHostRequiresOptIn() throws {
+        XCTAssertThrowsError(
+            try validateBaseURL(
+                "http://127.attacker.example/v1",
+                providerID: .openai,
+                allowInsecureHTTP: false
+            )
+        )
+
+        let optedInURL = try validateBaseURL(
+            "http://127.attacker.example/v1",
+            providerID: .openai,
+            allowInsecureHTTP: true
+        )
+        XCTAssertEqual(optedInURL.host, "127.attacker.example")
+    }
+
     func testValidateCustomBaseURLRejectsMissingScheme() {
         XCTAssertThrowsError(try validateBaseURL("localhost:8000/v1")) { error in
             XCTAssertTrue(error is ValidationError)
