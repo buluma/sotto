@@ -304,6 +304,9 @@ public actor MeetingRecordingService: MeetingRecordingServiceProtocol {
     /// Keeps replacement starts out while `audioCaptureService.start()` is still
     /// unwinding after cancellation. `currentSession` may already be nil then.
     private var startingSessionID: UUID?
+    /// Stop can arrive while the start is suspended before `currentSession` is
+    /// installed (notably while the speech-engine lease is being acquired).
+    private var stopRequestedStartingSessionID: UUID?
     /// Once set, the durable Stop path owns this session's settlement. A stale
     /// start task may still resume from `audioCaptureService.start()`, but its
     /// catch must not run failed-start deletion over finalized/recoverable data.
@@ -662,26 +665,47 @@ public actor MeetingRecordingService: MeetingRecordingServiceProtocol {
         let sessionID = UUID()
         lastCaptureDiagnostics = nil
         startingSessionID = sessionID
+        stopRequestedStartingSessionID = nil
         defer {
             if startingSessionID == sessionID {
                 startingSessionID = nil
+            }
+            if stopRequestedStartingSessionID == sessionID {
+                stopRequestedStartingSessionID = nil
             }
         }
 
         let folderURL = URL(fileURLWithPath: AppPaths.meetingRecordingsDir, isDirectory: true)
             .appendingPathComponent(sessionID.uuidString, isDirectory: true)
-        let writer = try MeetingAudioStorageWriter(folderURL: folderURL)
+        // Reserve the live engine before reading the final preference. The
+        // scheduler lease closes the switch/variant TOCTOU window and remains
+        // held even when the live engine cannot render meeting preview.
+        let speechEngineLease = await speechEngineSessionManager?.beginSpeechEngineSession()
+        guard stopRequestedStartingSessionID != sessionID, !Task.isCancelled else {
+            if let speechEngineLease {
+                await speechEngineSessionManager?.endSpeechEngineSession(speechEngineLease)
+            }
+            throw CancellationError()
+        }
+
+        let writer: MeetingAudioStorageWriter
         let chunkFolderURL = folderURL.appendingPathComponent("chunks", isDirectory: true)
-        try fileManager.createDirectory(at: chunkFolderURL, withIntermediateDirectories: true)
+        do {
+            try fileManager.createDirectory(at: chunkFolderURL, withIntermediateDirectories: true)
+            writer = try MeetingAudioStorageWriter(folderURL: folderURL)
+        } catch {
+            if let speechEngineLease {
+                await speechEngineSessionManager?.endSpeechEngineSession(speechEngineLease)
+            }
+            try? fileManager.removeItem(at: folderURL)
+            throw error
+        }
+
         // Single timestamp shared between displayName fallback and
         // startedAt — back-to-back wall clock reads would only diverge if
         // the clock ticked over a minute boundary between them, which is
         // vanishingly rare but trivially avoidable.
         let now = wallClockNow()
-        // Reserve the live engine before reading the final preference. The
-        // scheduler lease closes the switch/variant TOCTOU window and remains
-        // held even when the live engine cannot render meeting preview.
-        let speechEngineLease = await speechEngineSessionManager?.beginSpeechEngineSession()
         currentSpeechEngineLease = speechEngineLease
         let liveSpeechEngine: SpeechEngineSelection
         let liveSpeechEngineCapabilities: SpeechEngineCapabilities?
@@ -891,6 +915,9 @@ public actor MeetingRecordingService: MeetingRecordingServiceProtocol {
 
     public func stopRecording() async throws -> MeetingRecordingOutput {
         guard let session = currentSession else {
+            if let startingSessionID {
+                stopRequestedStartingSessionID = startingSessionID
+            }
             throw MeetingAudioError.notRunning
         }
         if settlementSessionID != nil {
