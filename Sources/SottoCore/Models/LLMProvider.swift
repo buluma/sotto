@@ -1,4 +1,5 @@
 import Foundation
+import Network
 
 // MARK: - Provider Descriptor
 
@@ -635,8 +636,29 @@ public struct LLMProviderConfig: Codable, Sendable, Equatable {
     }
 
     public static func isLoopbackEndpoint(_ url: URL) -> Bool {
-        guard let host = url.host?.lowercased() else { return false }
-        return host == "localhost" || host == "::1" || host.hasPrefix("127.")
+        guard let rawHost = url.host?.lowercased(), !rawHost.isEmpty else { return false }
+
+        let host: String
+        if rawHost.hasPrefix("["), rawHost.hasSuffix("]") {
+            host = String(rawHost.dropFirst().dropLast())
+        } else {
+            host = rawHost
+        }
+
+        if host == "localhost" || host == "localhost." {
+            return true
+        }
+
+        if let address = IPv4Address(host), address.rawValue.first == 127 {
+            return true
+        }
+
+        let ipv6Host = host.split(separator: "%", maxSplits: 1, omittingEmptySubsequences: false)
+            .first
+            .map(String.init) ?? host
+        guard let address = IPv6Address(ipv6Host) else { return false }
+        let bytes = Array(address.rawValue)
+        return bytes.count == 16 && bytes.dropLast().allSatisfy { $0 == 0 } && bytes.last == 1
     }
 
 }
