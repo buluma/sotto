@@ -371,7 +371,7 @@ final class VoiceControlCommandRouterTests: XCTestCase {
                 VoiceControlTarget(
                     id: "web:google-flights", label: "Google Flights", role: "url", operations: [.press],
                     isNavigation: true),
-            ])
+            ], webDestinationID: "web:google-flights")
         let result = try await router.decide(
             goal: "Find one-way flights from Zurich to London on September 20 2026.", snapshot: snapshot,
             history: [
@@ -392,7 +392,7 @@ final class VoiceControlCommandRouterTests: XCTestCase {
                     operations: [.setValue, .press]),
                 VoiceControlTarget(
                     id: "to", label: "Where to? ", role: "AXComboBox", operations: [.setValue, .press]),
-            ])
+            ], webDestinationID: "web:google-flights")
         let result = try await router.decide(
             goal: "Find one-way flights from Zurich to London on September 20 2026.", snapshot: snapshot,
             history: [
@@ -415,7 +415,7 @@ final class VoiceControlCommandRouterTests: XCTestCase {
                 VoiceControlTarget(
                     id: "web:google-flights", label: "Google Flights", role: "url", operations: [.press],
                     isNavigation: true),
-            ])
+            ], webDestinationID: "web:google-flights")
         let result = try await router.decide(
             goal: "Find one-way flights from Zurich to London on September 20 2026.", snapshot: snapshot,
             history: [
@@ -444,7 +444,7 @@ final class VoiceControlCommandRouterTests: XCTestCase {
                     id: "zrh", label: "Zurich Airport (ZRH)", role: "AXStaticText", operations: [.press]),
                 VoiceControlTarget(
                     id: "else", label: "Where else?", role: "AXComboBox", operations: [.setValue, .press]),
-            ])
+            ], webDestinationID: "web:google-flights")
         let result = try await router.decide(
             goal: "Find one-way flights from Zurich to London on September 20 2026.", snapshot: snapshot,
             history: [
@@ -469,7 +469,7 @@ final class VoiceControlCommandRouterTests: XCTestCase {
                     operations: [.key, .press], isFocused: true),
                 VoiceControlTarget(
                     id: "else", label: "Where else?", role: "AXComboBox", operations: [.setValue, .press]),
-            ])
+            ], webDestinationID: "web:google-flights")
         let result = try await router.decide(
             goal: "Find one-way flights from Zurich to London on September 20 2026.", snapshot: snapshot,
             history: [
@@ -504,7 +504,7 @@ final class VoiceControlCommandRouterTests: XCTestCase {
                     operations: [.setValue, .press]),
                 VoiceControlTarget(
                     id: "search", label: "Search flights", role: "AXButton", operations: [.press]),
-            ])
+            ], webDestinationID: "web:google-flights")
         _ = try await router.decide(
             goal: "Find one-way flights from Zurich to London on September 20 2026.", snapshot: snapshot,
             history: [
@@ -531,7 +531,7 @@ final class VoiceControlCommandRouterTests: XCTestCase {
                 VoiceControlTarget(
                     id: "web:google-flights", label: "Google Flights", role: "url", operations: [.press],
                     isNavigation: true),
-            ])
+            ], webDestinationID: "web:google-flights")
         let result = try await router.decide(
             goal: "Find one-way flights from Zurich to London on September 20 2026.", snapshot: snapshot,
             history: [
@@ -561,7 +561,7 @@ final class VoiceControlCommandRouterTests: XCTestCase {
                     id: "date", label: "Departure", role: "AXComboBox", operations: [.setValue, .press]),
                 VoiceControlTarget(
                     id: "search", label: "Search flights", role: "AXButton", operations: [.press]),
-            ])
+            ], webDestinationID: "web:google-flights")
         let result = try await router.decide(
             goal: "Find one-way flights from Zurich to London on September 20 2026.", snapshot: snapshot,
             history: [
@@ -589,7 +589,7 @@ final class VoiceControlCommandRouterTests: XCTestCase {
                 VoiceControlTarget(
                     id: "date", label: "Departure", role: "AXTextField", value: "September 20 2026",
                     operations: [.setValue, .press]),
-            ])
+            ], webDestinationID: "web:google-flights")
         let result = try await router.decide(
             goal: "Find one-way flights from Zurich to London on September 20 2026.", snapshot: snapshot,
             history: [
@@ -620,7 +620,7 @@ final class VoiceControlCommandRouterTests: XCTestCase {
                     operations: [.setValue, .press, .key]),
                 VoiceControlTarget(
                     id: "zrh", label: "Zurich Airport (ZRH)", role: "AXStaticText", operations: [.press]),
-            ])
+            ], webDestinationID: "web:google-flights")
         let result = try await router.decide(
             goal: "Find one-way flights from Zurich to London on September 20 2026.", snapshot: snapshot,
             history: [
@@ -653,7 +653,7 @@ final class VoiceControlCommandRouterTests: XCTestCase {
                 VoiceControlTarget(
                     id: "else", label: "Where else?", role: "AXComboBox", value: "London",
                     operations: [.setValue, .press]),
-            ])
+            ], webDestinationID: "web:google-flights")
         let result = try await router.decide(
             goal: "Find one-way flights from Zurich to London on September 20 2026.", snapshot: snapshot,
             history: [
@@ -685,7 +685,7 @@ final class VoiceControlCommandRouterTests: XCTestCase {
                 VoiceControlTarget(
                     id: "day21", label: "Monday, September 21, 2026 , 184 US dollars", role: "AXButton",
                     operations: [.press]),
-            ])
+            ], webDestinationID: "web:google-flights")
         let result = try await router.decide(
             goal: "Find one-way flights from Zurich to London on September 20 2026.", snapshot: snapshot,
             history: [
@@ -723,7 +723,7 @@ final class VoiceControlCommandRouterTests: XCTestCase {
                     id: "search", label: "Search flights", role: "AXButton", operations: [.press]),
                 VoiceControlTarget(
                     id: "r0", label: "Zurich Airport (ZRH)", role: "AXStaticText", operations: [.press]),
-            ])
+            ], webDestinationID: "web:google-flights")
         let result = try await router.decide(
             goal: "Find one-way flights from Zurich to London on September 20 2026.", snapshot: snapshot,
             history: [
@@ -750,7 +750,7 @@ final class VoiceControlCommandRouterTests: XCTestCase {
                     id: "q", label: "Search", role: "AXComboBox", operations: [.setValue, .press]),
                 VoiceControlTarget(
                     id: "web:youtube", label: "YouTube", role: "url", operations: [.press], isNavigation: true),
-            ])
+            ], webDestinationID: "web:youtube")
         let result = try await router.decide(
             goal: "Play the Apollo 11 documentary on YouTube", snapshot: snapshot,
             history: [
@@ -801,7 +801,7 @@ final class VoiceControlCommandRouterTests: XCTestCase {
                 VoiceControlTarget(
                     id: "web:google-search", label: "Google Search", role: "url", operations: [.press],
                     isNavigation: true),
-            ])
+            ], webDestinationID: "web:google-search")
         let result = try await router.decide(
             goal: "Search the web for weather in London", snapshot: snapshot,
             history: [
@@ -823,7 +823,7 @@ final class VoiceControlCommandRouterTests: XCTestCase {
                 VoiceControlTarget(
                     id: "web:google-maps", label: "Google Maps", role: "url", operations: [.press],
                     isNavigation: true),
-            ])
+            ], webDestinationID: "web:google-maps")
         let result = try await router.decide(
             goal: "Directions to the Golden Gate Bridge", snapshot: snapshot,
             history: [
@@ -833,6 +833,40 @@ final class VoiceControlCommandRouterTests: XCTestCase {
         XCTAssertEqual(
             result,
             .action(VoiceControlAction(operation: .setValue, targetID: "q", value: "the Golden Gate Bridge", consequence: .ordinary)))
+    }
+
+    func testMapsQueryDoesNotFillWhenOnlyPageTextAndStaleOpenHistoryMatch() async throws {
+        let router = VoiceControlCommandRouter(fallback: RecordingFallback())
+        let snapshot = VoiceControlSnapshot(
+            contextID: "test", applicationName: "Google Chrome",
+            targets: [
+                VoiceControlTarget(
+                    id: "q", label: "Search Google Maps", role: "AXComboBox", operations: [.setValue, .press]),
+                VoiceControlTarget(
+                    id: "web:google-maps", label: "Google Maps", role: "url", operations: [.press],
+                    isNavigation: true),
+            ], summary: "Directions", webDestinationID: "web:google-search")
+        let result = try await router.decide(
+            goal: "Directions to the Golden Gate Bridge", snapshot: snapshot,
+            history: [
+                VoiceControlAction(
+                    operation: .press, targetID: "web:google-maps", receiptStatus: .transitionObserved)
+            ])
+        XCTAssertEqual(result, .clarify("fallback"))
+    }
+
+    func testGoogleMapsAndSearchURLsHaveDistinctDestinationIdentity() throws {
+        XCTAssertEqual(
+            VoiceControlWebDestination.destinationID(for: URL(string: "https://www.google.com/maps")!),
+            "web:google-maps")
+        XCTAssertEqual(
+            VoiceControlWebDestination.destinationID(for: URL(string: "https://www.google.com/search?q=maps")!),
+            "web:google-search")
+        XCTAssertEqual(
+            VoiceControlWebDestination.destinationID(for: URL(string: "https://maps.google.com/route")!),
+            "web:google-maps")
+        XCTAssertNil(
+            VoiceControlWebDestination.destinationID(for: URL(string: "http://www.google.com/maps")!))
     }
 
     func testWikipediaQueryFillsSearch() async throws {
@@ -845,7 +879,7 @@ final class VoiceControlCommandRouterTests: XCTestCase {
                 VoiceControlTarget(
                     id: "web:wikipedia", label: "Wikipedia", role: "url", operations: [.press],
                     isNavigation: true),
-            ])
+            ], webDestinationID: "web:wikipedia")
         let result = try await router.decide(
             goal: "Look up Alan Turing on Wikipedia", snapshot: snapshot,
             history: [
@@ -864,7 +898,7 @@ final class VoiceControlCommandRouterTests: XCTestCase {
                 VoiceControlTarget(
                     id: "web:gmail", label: "Gmail", role: "url", operations: [.press], isNavigation: true),
             ],
-            summary: "Gmail Inbox")
+            summary: "Gmail Inbox", webDestinationID: "web:gmail")
         let result = try await router.decide(
             goal: "Compose a new email in Gmail", snapshot: snapshot,
             history: [

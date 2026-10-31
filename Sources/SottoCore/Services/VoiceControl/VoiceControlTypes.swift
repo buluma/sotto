@@ -93,13 +93,17 @@ public struct VoiceControlSnapshot: Codable, Sendable, Equatable {
     public let summary: String
     public let isComplete: Bool
     public let metrics: VoiceControlObservationMetrics?
+    /// Destination identity inferred from the active page URL. Nil means
+    /// origin-sensitive local web routes must fail closed.
+    public let webDestinationID: String?
     public init(
         id: UUID = UUID(), contextID: String, applicationName: String,
         targets: [VoiceControlTarget], summary: String = "", isComplete: Bool = true,
-        metrics: VoiceControlObservationMetrics? = nil
+        metrics: VoiceControlObservationMetrics? = nil, webDestinationID: String? = nil
     ) {
         self.id = id; self.contextID = contextID; self.applicationName = applicationName
         self.targets = targets; self.summary = summary; self.isComplete = isComplete; self.metrics = metrics
+        self.webDestinationID = webDestinationID
     }
 }
 

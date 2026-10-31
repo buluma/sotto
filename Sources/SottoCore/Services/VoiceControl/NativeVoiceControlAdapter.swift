@@ -304,9 +304,48 @@ public actor NativeVoiceControlAdapter: VoiceControlAdapter {
             metrics: VoiceControlObservationMetrics(
                 nodesVisited: walk.visited, capped: !walk.complete,
                 walkMilliseconds: Int(walkStarted.duration(to: .now).components.seconds) * 1000
-                    + Int(walkStarted.duration(to: .now).components.attoseconds / 1_000_000_000_000_000)))
+                    + Int(walkStarted.duration(to: .now).components.attoseconds / 1_000_000_000_000_000)),
+            webDestinationID: Self.currentWebDestinationID(in: root))
         current = snapshot
         return snapshot
+    }
+
+    /// Read destination identity from the observed web area URL, never from page
+    /// text or the editable address bar. Multiple or unrecognized web URLs make
+    /// origin-gated web actions unavailable for this snapshot.
+    private static func currentWebDestinationID(in root: AXUIElement) -> String? {
+        var pending = [root]
+        var visited: Set<CFHashCode> = []
+        var destinations: Set<String> = []
+        var pageURLCount = 0
+        var hasUnrecognizedURL = false
+        while let node = pending.popLast(), visited.count < 400 {
+            guard visited.insert(CFHash(node)).inserted else { continue }
+            if string(node, kAXRoleAttribute) == "AXWebArea" {
+                let value = attribute(node, kAXURLAttribute)
+                let url: URL?
+                if let value = value as? URL {
+                    url = value
+                } else if let value = value as? String {
+                    url = URL(string: value)
+                } else {
+                    url = nil
+                }
+                if let url {
+                    pageURLCount += 1
+                    if let destinationID = VoiceControlWebDestination.destinationID(for: url) {
+                        destinations.insert(destinationID)
+                    } else {
+                        hasUnrecognizedURL = true
+                    }
+                }
+            }
+            if let children = attribute(node, kAXChildrenAttribute) as? [AXUIElement] {
+                pending.append(contentsOf: children.prefix(80).reversed())
+            }
+        }
+        guard pageURLCount == 1, !hasUnrecognizedURL, destinations.count == 1 else { return nil }
+        return destinations.first
     }
 
     public func execute(
