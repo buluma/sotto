@@ -167,7 +167,7 @@ final class MeetingDecodedAudioTests: XCTestCase {
         mic: [Float], system: [Float], offsetMs: Int, conditioner: any MicConditioning
     ) -> [Float] {
         conditioner.reset()
-        let shift = Int((Double(offsetMs) / 1_000 * 16_000).rounded())
+        let shift = Int((Double(offsetMs - MeetingCleanedMicRenderer.referenceLookaheadMs) / 1_000 * 16_000).rounded())
         var output: [Float] = []
         var cursor = 0
         while cursor < mic.count {

@@ -23,6 +23,11 @@ final class MeetingCleanedMicRenderer {
     /// Sample rate the echo suppressor expects; the cleaned artifact is a derived
     /// STT input (not the playback/export `meeting-playback.m4a`), so 16 kHz mono is fine.
     static let renderSampleRate = 16_000
+    /// Read the rendered system reference ahead of its recorded offset. On
+    /// some meeting captures the acoustic echo reaches the microphone before
+    /// the loopback reference is timestamped; a causal cleaner cannot cancel
+    /// that negative lag. The extra headroom makes the residual lag searchable.
+    static let referenceLookaheadMs = 20
     static let maxDecodedFrames = renderSampleRate * 4 * 3_600
     /// Production probes use five 10-second windows, spread across the recording
     /// and selected only when the aligned system reference has energy. Within
@@ -282,7 +287,7 @@ final class MeetingCleanedMicRenderer {
         }
 
         let relativeShiftSamples = Int(
-            (Double(systemStartOffsetMs - microphoneStartOffsetMs) / 1000.0
+            (Double(systemStartOffsetMs - microphoneStartOffsetMs - referenceLookaheadMs) / 1000.0
                 * Double(sampleRate)).rounded())
         let starts = probeCandidateWindowStarts(
             sampleCount: microphone.count,
@@ -521,7 +526,7 @@ final class MeetingCleanedMicRenderer {
             self.system = system
             self.conditioner = conditioner
             relativeShiftSamples = Int(
-                (Double(systemStartOffsetMs - microphoneStartOffsetMs) / 1000.0
+                (Double(systemStartOffsetMs - microphoneStartOffsetMs - MeetingCleanedMicRenderer.referenceLookaheadMs) / 1000.0
                     * Double(max(1, sampleRate))).rounded())
             conditioner.reset()
         }
