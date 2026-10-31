@@ -282,7 +282,9 @@ final class VoiceControlMachineTests: XCTestCase {
         targets.append(
             VoiceControlTarget(
                 id: "search", label: "Search flights", role: "AXButton", operations: [.press]))
-        return VoiceControlSnapshot(contextID: "test", applicationName: "Google Chrome", targets: targets)
+        return VoiceControlSnapshot(
+            contextID: "test", applicationName: "Google Chrome", targets: targets,
+            webDestinationID: "web:google-flights")
     }
 }
 

@@ -174,8 +174,34 @@ public struct VoiceControlWebDestination: Sendable, Equatable {
     }
 
     public static func isCurrent(
-        _ destination: VoiceControlWebDestination, snapshot: VoiceControlSnapshot, history: [VoiceControlAction]
+        _ destination: VoiceControlWebDestination, snapshot: VoiceControlSnapshot, history _: [VoiceControlAction]
     ) -> Bool {
-        pageMatches(snapshot, destination: destination) || wasOpened(destination, history: history)
+        snapshot.webDestinationID == destination.id
+    }
+
+    /// Map only the active HTTPS page URL to a known destination. Page text,
+    /// address-bar contents, and navigation history cannot establish identity.
+    static func destinationID(for url: URL) -> String? {
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+            components.scheme?.lowercased() == "https",
+            let host = components.host?.lowercased(), !host.isEmpty,
+            components.user == nil, components.password == nil,
+            components.port == nil || components.port == 443
+        else { return nil }
+        let path = components.path.isEmpty ? "/" : components.path
+        switch host {
+        case "www.youtube.com": return "web:youtube"
+        case "mail.google.com": return "web:gmail"
+        case "en.wikipedia.org": return "web:wikipedia"
+        case "maps.google.com": return "web:google-maps"
+        case "www.google.com":
+            if path == "/maps" || path.hasPrefix("/maps/") { return "web:google-maps" }
+            if path == "/travel/flights" || path.hasPrefix("/travel/flights/") {
+                return "web:google-flights"
+            }
+            if path == "/" || path == "/search" { return "web:google-search" }
+            return nil
+        default: return nil
+        }
     }
 }
