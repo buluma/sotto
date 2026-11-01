@@ -1,6 +1,6 @@
 import Foundation
 
-public enum MeetingApp: String, Sendable, Equatable, CaseIterable {
+public enum MeetingApp: String, Sendable, Equatable, Hashable, CaseIterable {
     case zoom
     case teams
     case webex

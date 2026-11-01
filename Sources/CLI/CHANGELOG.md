@@ -72,6 +72,10 @@ Stderr stays plain text for human-only progress / status (e.g. "Saved PromptResu
 
 ## [Unreleased]
 
+### Added
+
+- `meetings show --json` may report `startContext.triggerKind: "activity_detection"` when a recording starts after the user accepts an activity-based reminder.
+
 ### Changed
 
 - FluidAudio 0.17.7. Explicit `--speaker-count`, `--speaker-min` and `--speaker-max` runs (Community-1) no longer over-split audio that contains digital silence, such as a muted call track. Automatic speaker detection (Nemotron), ASR, JSON fields and exit codes are unchanged.

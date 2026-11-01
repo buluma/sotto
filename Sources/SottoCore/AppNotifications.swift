@@ -47,6 +47,8 @@ public extension Notification.Name {
     /// `MeetingAutoStartCoordinator` re-reads its config and re-evaluates on
     /// the next poll tick instead of waiting for the timer.
     static let sottoCalendarSettingsDidChange = Notification.Name("sotto.calendarSettingsDidChange")
+    /// Posted when the opt-in activity reminder mode changes.
+    static let sottoMeetingActivitySettingsDidChange = Notification.Name("sotto.meetingActivitySettingsDidChange")
     /// Posted when the ADR-023 activity-based meeting auto-stop setting
     /// changes. The coordinator re-reads the opt-in toggle immediately so
     /// disabling it tears down observers/countdowns without waiting.

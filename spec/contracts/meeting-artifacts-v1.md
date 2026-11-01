@@ -145,7 +145,7 @@ When classified, the frontmatter also includes the type id/name and complete lab
 
 `startContext`, when present, keeps the recording-start snapshot:
 
-- `triggerKind`: `manual`, `hotkey`, or `calendar_auto_start`
+- `triggerKind`: `manual`, `hotkey`, `calendar_auto_start`, or `activity_detection` (the user accepted an activity-based recording reminder)
 - `sourceMode`: configured meeting source mode at start (`microphone_only`, `microphone_and_system`, or `system_only`)
 - `frontmostApplication`: optional object with `bundleIdentifier` and `localizedName`
 

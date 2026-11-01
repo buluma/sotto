@@ -824,8 +824,15 @@ public final class SettingsViewModel {
         return "This folder is unavailable or not writable. Choose another folder before the next meeting."
     }
 
+    // Activity-based meeting reminders (ADR-024)
+    public var meetingActivityDetectionMode: MeetingActivityDetectionMode {
+        didSet {
+            defaults.set(meetingActivityDetectionMode.rawValue, forKey: "MeetingActivityDetection.mode")
+            NotificationCenter.default.post(name: .sottoMeetingActivitySettingsDidChange, object: nil)
+        }
+    }
+
     // Calendar auto-start (ADR-017)
-    //
     // Each `didSet` writes the value through to `UserDefaults`, fires the
     // shared `sottoCalendarSettingsDidChange` notification (so the
     // coordinator re-reads its config without waiting for the next poll
@@ -1185,6 +1192,9 @@ public final class SettingsViewModel {
         ) as? Bool ?? true
         meetingAutoSaveFolderPath = Self.resolveAutoSaveFolderPath(defaults: defaults, scope: .meeting)
         calendarAutoStartMode = Self.resolveCalendarAutoStartMode(defaults: defaults)
+        meetingActivityDetectionMode = MeetingActivityDetectionMode(
+            rawValue: defaults.string(forKey: "MeetingActivityDetection.mode") ?? "off"
+        ) ?? .off
         calendarReminderMinutes = Self.resolveCalendarReminderMinutes(defaults: defaults)
         meetingTriggerFilter = Self.resolveMeetingTriggerFilter(defaults: defaults)
         calendarExcludedIdentifiers = Self.resolveCalendarExcludedIdentifiers(defaults: defaults)
