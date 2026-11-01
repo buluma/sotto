@@ -48,6 +48,10 @@ final class MeetingRecordingFlowCoordinator {
         }
     }
 
+    var isMeetingFlowBusy: Bool {
+        stateMachine.state != .idle
+    }
+
     var canPresentLiveMeetingPanel: Bool {
         guard panelController != nil else { return false }
         switch stateMachine.state {

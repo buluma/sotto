@@ -23,6 +23,7 @@ final class AppEnvironmentConfigurer {
         let hotkeyCoordinator: AppHotkeyCoordinator
         let meetingAutoStartCoordinator: MeetingAutoStartCoordinator?
         let meetingAutoStopCoordinator: MeetingAutoStopCoordinator?
+        let meetingActivityDetectionCoordinator: MeetingActivityDetectionCoordinator?
     }
 
     struct Callbacks {
@@ -369,6 +370,7 @@ final class AppEnvironmentConfigurer {
 
         var meetingAutoStopCoordinator: MeetingAutoStopCoordinator?
         var calendarCoordinator: MeetingAutoStartCoordinator?
+        var activityDetectionCoordinator: MeetingActivityDetectionCoordinator?
         var isMeetingAutoStopObservingRecording = false
         let endMeetingAutoStopObservation = {
             guard isMeetingAutoStopObservingRecording else { return }
@@ -580,12 +582,30 @@ final class AppEnvironmentConfigurer {
             meetingAutoStopCoordinator = coordinator
         }
 
+        if AppFeatures.meetingRecordingEnabled, AppFeatures.meetingActivityDetectionEnabled {
+            let coordinator = MeetingActivityDetectionCoordinator(
+                settings: settingsViewModel,
+                isRecording: { [weak meetingCoordinator] in
+                    meetingCoordinator?.isMeetingFlowBusy ?? false
+                },
+                isDictationActive: { [weak dictationCoordinator] in
+                    dictationCoordinator?.isDictationActive ?? false
+                },
+                startRecording: { [weak meetingCoordinator] in
+                    meetingCoordinator?.startRecording(trigger: .activityDetection)
+                }
+            )
+            coordinator.start()
+            activityDetectionCoordinator = coordinator
+        }
+
         return Runtime(
             dictationFlowCoordinator: dictationCoordinator,
             meetingRecordingFlowCoordinator: meetingCoordinator,
             hotkeyCoordinator: hotkeyCoordinator,
             meetingAutoStartCoordinator: calendarCoordinator,
-            meetingAutoStopCoordinator: meetingAutoStopCoordinator
+            meetingAutoStopCoordinator: meetingAutoStopCoordinator,
+            meetingActivityDetectionCoordinator: activityDetectionCoordinator
         )
     }
 

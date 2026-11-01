@@ -1,18 +1,17 @@
 # ADR-024: Activity-Based Meeting Detection
 
-> Status: **PARTIAL IMPLEMENTATION** — Phases A+B ship the default-off CoreAudio
-> process attribution collector, CoreMediaIO camera activity collector, shared
-> activity snapshot types, app registry, detection mode, and pure detector tests.
-> Coordinator/UI wiring, prompt/auto-start telemetry, and ADR-023 auto-stop
-> attribution remain proposed until later phases flip
-> `AppFeatures.meetingActivityDetectionEnabled`.
-> Default off / opt-in.
+> Status: **OPT-IN NATIVE-APP REMINDER IMPLEMENTED** — CoreAudio attribution,
+> camera metadata, app registry, pure detector, default-off preference, prompt
+> panel, and coordinator are wired. The initial runtime only prompts for
+> recognized native meeting-app audio; browser URL corroboration and camera-only
+> candidates remain deferred. Auto-start and ADR-023 attribution remain out of
+> scope. The preference defaults off.
 > Date: 2026-06-14
 > Related: ADR-002 (local-first), ADR-014 (meeting recording), ADR-015
 > (concurrent dictation/meeting), ADR-017 (calendar auto-start), ADR-023
 > (activity-based meeting auto-stop — authored in parallel; consumes the same
 > activity-signal layer this ADR builds).
-> Requirement: REQ-MEET-016 (v0.7, Phases A+B foundation implemented).
+> Historical requirement: REQ-MEET-016 (v0.7 foundation).
 
 ## Context
 
@@ -292,3 +291,7 @@ Flag-on (any tagged release) is a separate decision after Phase C/D land and a f
 - **`.prompt` vs `.autoStart` as the recommended on-state.** Is the gentle prompt enough value to be the headline, with `.autoStart` as power-user depth, or does the prompt's interruption undercut the "I forgot" win? Lean prompt for v1; revisit from telemetry.
 - **Relationship to calendar auto-start when both fire.** If a calendar event *and* an activity signal both point at the same live meeting, which surface wins, and how do we de-dupe so the user sees one prompt, not two? (First-to- arrive wins + a short cross-suppression window is the leaning answer.)
 - **Browser meeting-URL detection without screen access.** Recognizing a Meet/ Teams tab needs the active tab URL. Is there a metadata-only path (e.g. the frontmost window's accessibility-exposed URL) that stays within the no-content invariant, or do browsers stay limited to "frontmost + mic" until one exists?
+
+## 2026-11-01 Sotto port: native meeting reminders
+
+Sotto now wires the existing process-audio collector and pure detector to a default-off Settings toggle and a non-activating Record / Not now panel. The runtime prompts only for recognized native meeting-app microphone activity; Slack retains the detector's full-duplex requirement. A decline suppresses that app identity for 30 minutes. Browser URL/pre-join corroboration and camera-only candidates are not enabled because their richer candidate resolver has not been ported. Recording begins only after the user presses Record. Activity starts retain `activity_detection` in the local meeting start context. The personal fork's telemetry service remains a no-op.

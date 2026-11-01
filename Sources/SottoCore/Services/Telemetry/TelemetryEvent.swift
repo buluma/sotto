@@ -377,6 +377,7 @@ public enum TelemetryMeetingRecordingTrigger: String, Sendable, Equatable {
     case manual
     case hotkey
     case calendarAutoStart = "calendar_auto_start"
+    case activityDetection = "activity_detection"
 }
 
 /// Why a full meeting recording operation moved through its lifecycle. This is
@@ -395,6 +396,8 @@ public enum TelemetryMeetingOperationTrigger: String, Sendable, Equatable {
             self = .hotkey
         case .calendarAutoStart:
             self = .calendarAutoStart
+        case .activityDetection:
+            self = .manual
         }
     }
 }

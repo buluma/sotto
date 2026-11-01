@@ -33,6 +33,28 @@ struct CalendarSettingsView: View {
                 Divider()
                 calendarListRow
             }
+
+            if AppFeatures.meetingActivityDetectionEnabled {
+                Divider()
+                Toggle(isOn: Binding(
+                    get: { viewModel.meetingActivityDetectionMode == .prompt },
+                    set: { viewModel.meetingActivityDetectionMode = $0 ? .prompt : .off }
+                )) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: DesignSystem.Spacing.xs) {
+                            Text("Remind me when a meeting starts")
+                                .font(DesignSystem.Typography.body)
+                            Text("Beta")
+                                .font(DesignSystem.Typography.caption.weight(.medium))
+                                .foregroundStyle(.secondary)
+                        }
+                        Text("Sotto detects microphone use by recognized meeting apps and asks before recording.")
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .toggleStyle(.switch)
+            }
         }
         .task {
             await viewModel.refreshCalendarAccess()
