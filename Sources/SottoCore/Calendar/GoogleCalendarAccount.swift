@@ -66,6 +66,18 @@ public actor GoogleCalendarAccount {
     public func hasClient() throws -> Bool { try store.getString("client") != nil }
     public func identity() throws -> GoogleCalendarIdentity? { try credential()?.identity }
 
+    /// Copy only the desktop client configuration. Calendar keeps its own
+    /// authorization and credentials, and an existing Calendar client wins.
+    @discardableResult
+    public func reuseDriveClient(from drive: GoogleDriveAccount = .shared) async throws -> Bool {
+        guard try !hasClient(), try credential() == nil else { return false }
+        guard let data = try await drive.clientConfigurationForReuse() else { return false }
+        // The actor can be re-entered while reading the Drive account.
+        guard try !hasClient(), try credential() == nil else { return false }
+        try importClient(data)
+        return true
+    }
+
     func sessionMarker() -> UUID { generation }
 
     func ensureSession(_ marker: UUID) throws {

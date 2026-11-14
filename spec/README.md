@@ -292,7 +292,7 @@ Dictation + transcription + history + settings. Get audio in, text out, pasted i
 
 Calendar-related code is implemented and **enabled** (`AppFeatures.calendarEnabled = true`) after the post-#318 reliability hardening. It surfaces the Settings subsection, first-use permission prompt, search entry, reminder notifications, auto-start countdown, and coordinator polling; auto-start defaults to mode `.off`, so it is strictly opt-in. EventKit includes Microsoft 365 and Exchange calendars enabled in System Settings → Internet Accounts without a Sotto Microsoft sign-in:
 
-Direct Google Calendar connection is available in Meeting Recording settings using a user-supplied Google Cloud Desktop OAuth client with the Calendar API enabled. It requests read-only calendar access and does not require macOS Internet Accounts. Google event data is fetched on demand for meeting workflows. See [Google Calendar setup](../docs/google-calendar.md).
+Direct Google Calendar connection is available in Meeting Recording settings using the existing Google Drive OAuth client or an imported Google Cloud Desktop OAuth client with the Calendar API enabled. It requests read-only calendar access and does not require macOS Internet Accounts. Google event data is fetched on demand for meeting workflows. See [Google Calendar setup](../docs/google-calendar.md).
 
 
 - [x] Calendar-driven reminders (ADR-017 Phase 1): EventKit integration + first-use prompt + settings + per-calendar include list

@@ -33,7 +33,7 @@ public actor GoogleDriveAccount {
         let client_id: String
         let client_secret: String?
     }
-    private struct InstalledClient: Decodable { let installed: Client }
+    private struct InstalledClient: Codable { let installed: Client }
     private struct Credential: Codable {
         var accessToken: String
         var refreshToken: String
@@ -57,6 +57,12 @@ public actor GoogleDriveAccount {
 
     public func hasClient() throws -> Bool { try store.getString("client") != nil }
     public func identity() throws -> GoogleDriveIdentity? { try credential()?.identity }
+
+    /// Reuse the desktop client configuration without exposing Drive tokens.
+    func clientConfigurationForReuse() throws -> Data? {
+        guard try hasClient() else { return nil }
+        return try JSONEncoder().encode(InstalledClient(installed: loadClient()))
+    }
 
     public func importClient(_ data: Data) throws {
         let client: Client

@@ -8,7 +8,7 @@
 > **Amendment (2026-09-14): per-event skip implemented (#609).** Session-only toast dismiss is incomplete. Users can mute one occurrence or a repeating series; skip persists as a UserDefaults preference and blocks reminders and auto-start only. Optional-invitee is the motivation, not an automatic filter. See §11 and [the implementation plan](../../plans/active/2026-09-14-issue-609-calendar-event-skip.md).
 > Related: ADR-002 (local-first), ADR-005 (onboarding), ADR-009 (custom hotkeys), ADR-014 (meeting recording), ADR-015 (concurrent dictation/meeting)
 
-> **Amendment (2026-11-14): direct Google Calendar.** An optional Google Calendar connection uses a user-supplied Desktop OAuth client and read-only access independently of macOS Internet Accounts. Google events feed the existing meeting policy alongside EventKit. Credentials are stored in a dedicated Keychain namespace; fetched events are not cached in a queryable database.
+> **Amendment (2026-11-14): direct Google Calendar.** An optional Google Calendar connection reuses the configured Google Drive Desktop OAuth client or an imported Desktop client and uses read-only access independently of macOS Internet Accounts. Google events feed the existing meeting policy alongside EventKit. Credentials are stored in a dedicated Keychain namespace; fetched events are not cached in a queryable database.
 
 ## Context
 

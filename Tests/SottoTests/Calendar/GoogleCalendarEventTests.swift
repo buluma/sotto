@@ -83,6 +83,28 @@ final class GoogleCalendarEventTests: XCTestCase {
         XCTAssertEqual(
             GoogleCalendarAccount.keychainService(bundleIdentifier: "com.sotto"), "com.sotto.google-calendar")
     }
+
+    func testReusesDriveClientWithoutDriveCredentialsAndPreservesCalendarClient() async throws {
+        let driveStore = CalendarTestStore()
+        let calendarStore = CalendarTestStore()
+        let drive = GoogleDriveAccount(store: driveStore)
+        let calendar = GoogleCalendarAccount(store: calendarStore)
+        let driveClient = Data(
+            #"{"installed":{"client_id":"drive.apps.googleusercontent.com","client_secret":"client-secret"}}"#.utf8)
+        try await drive.importClient(driveClient)
+        try driveStore.setString("drive-token-must-not-be-copied", forKey: "credential")
+
+        let copied = try await calendar.reuseDriveClient(from: drive)
+        XCTAssertTrue(copied)
+        XCTAssertNil(try calendarStore.getString("credential"))
+        let auth = try await calendar.authorization(redirectURI: "http://127.0.0.1:12345/oauth/callback")
+        let items = try XCTUnwrap(URLComponents(url: auth.url, resolvingAgainstBaseURL: false)?.queryItems)
+        XCTAssertEqual(items.first(where: { $0.name == "client_id" })?.value, "drive.apps.googleusercontent.com")
+
+        let copiedAgain = try await calendar.reuseDriveClient(from: drive)
+        XCTAssertFalse(copiedAgain)
+        XCTAssertEqual(try driveStore.getString("credential"), "drive-token-must-not-be-copied")
+    }
 }
 
 private final class CalendarTestStore: KeyValueStore, @unchecked Sendable {
