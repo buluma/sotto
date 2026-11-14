@@ -1,6 +1,7 @@
 import SottoCore
 import SottoViewModels
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// Calendar auto-start — the "Start recording automatically" half of the
 /// Meeting Recording card's Automatic recording group. A single adaptive row
@@ -17,6 +18,11 @@ struct CalendarSettingsView: View {
     @Bindable var viewModel: SettingsViewModel
     @State private var isRequestingPermission = false
     @State private var calendarsExpanded = false
+    @State private var googleSignIn = GoogleCalendarSignIn()
+    @State private var googleIdentity: GoogleCalendarIdentity?
+    @State private var googleHasClient = false
+    @State private var googleBusy = false
+    @State private var googleError: String?
 
     var body: some View {
         VStack(spacing: DesignSystem.Spacing.md) {
@@ -29,6 +35,9 @@ struct CalendarSettingsView: View {
             Divider()
             calendarAccountsRow
 
+            Divider()
+            googleCalendarRow
+
             if viewModel.calendarPermissionGranted {
                 Divider()
                 calendarListRow
@@ -36,10 +45,12 @@ struct CalendarSettingsView: View {
 
             if AppFeatures.meetingActivityDetectionEnabled {
                 Divider()
-                Toggle(isOn: Binding(
-                    get: { viewModel.meetingActivityDetectionMode == .prompt },
-                    set: { viewModel.meetingActivityDetectionMode = $0 ? .prompt : .off }
-                )) {
+                Toggle(
+                    isOn: Binding(
+                        get: { viewModel.meetingActivityDetectionMode == .prompt },
+                        set: { viewModel.meetingActivityDetectionMode = $0 ? .prompt : .off }
+                    )
+                ) {
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: DesignSystem.Spacing.xs) {
                             Text("Remind me when a meeting starts")
@@ -57,6 +68,7 @@ struct CalendarSettingsView: View {
             }
         }
         .task {
+            await refreshGoogleAccount()
             await viewModel.refreshCalendarAccess()
             await viewModel.refreshCalendarNotificationAuthorization()
         }
@@ -64,6 +76,76 @@ struct CalendarSettingsView: View {
     }
 
     // MARK: - Calendar accounts
+
+    private var googleCalendarRow: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.sm) {
+            Text("Google Calendar").font(DesignSystem.Typography.body)
+            if let identity = googleIdentity {
+                HStack {
+                    Text(identity.email).foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Disconnect") {
+                        Task { await googleAction { try await GoogleCalendarAccount.shared.disconnect() } }
+                    }.sottoAction(.secondary).disabled(googleBusy)
+                }
+                Text(
+                    "Disconnect removes Sotto’s local credentials. You can also remove access in your Google account settings."
+                )
+                .font(DesignSystem.Typography.caption).foregroundStyle(.secondary)
+            } else {
+                Text(
+                    "Connect directly using a Google Cloud Desktop OAuth client with the Calendar API enabled. Credentials are stored in Keychain."
+                )
+                .font(DesignSystem.Typography.caption).foregroundStyle(.secondary)
+                HStack {
+                    Button(googleHasClient ? "Change OAuth client…" : "Import OAuth client JSON…") {
+                        importGoogleClient()
+                    }
+                    .sottoAction(.secondary)
+                    if googleHasClient {
+                        Button("Connect Google Calendar…") {
+                            Task { await googleAction { _ = try await googleSignIn.connect(account: .shared) } }
+                        }.sottoAction(.secondary)
+                    }
+                }.disabled(googleBusy)
+            }
+            if let googleError { Text(googleError).foregroundStyle(.red).textSelection(.enabled) }
+        }.frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func refreshGoogleAccount() async {
+        do {
+            _ = try await GoogleCalendarAccount.shared.reuseDriveClient()
+            googleHasClient = try await GoogleCalendarAccount.shared.hasClient()
+            googleIdentity = try await GoogleCalendarAccount.shared.identity()
+        } catch { googleError = error.localizedDescription }
+    }
+
+    private func googleAction(_ action: () async throws -> Void) async {
+        googleBusy = true
+        googleError = nil
+        do { try await action() } catch { googleError = error.localizedDescription }
+        await refreshGoogleAccount()
+        await viewModel.refreshCalendarAccess()
+        NotificationCenter.default.post(name: .sottoCalendarSettingsDidChange, object: nil)
+        googleBusy = false
+    }
+
+    private func importGoogleClient() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        Task {
+            await googleAction {
+                guard try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0 <= 65_536 else {
+                    throw GoogleCalendarError.message("Choose the small OAuth JSON downloaded from Google Cloud.")
+                }
+                let data = try Data(contentsOf: url)
+                try await GoogleCalendarAccount.shared.importClient(data)
+            }
+        }
+    }
 
     private var calendarAccountsRow: some View {
         HStack(alignment: .top, spacing: DesignSystem.Spacing.md) {
@@ -86,6 +168,21 @@ struct CalendarSettingsView: View {
                 .sottoAction(.secondary)
                 .controlSize(.small)
                 .help("Open System Settings → Internet Accounts")
+
+                if googleIdentity != nil && CalendarService.shared.eventKitPermissionStatus != .granted {
+                    Button("Allow Mac calendars…") {
+                        Task {
+                            if CalendarService.shared.eventKitPermissionStatus == .denied {
+                                viewModel.openCalendarSystemSettings()
+                            } else {
+                                _ = await viewModel.requestCalendarPermission()
+                                await viewModel.refreshCalendarAccess()
+                            }
+                        }
+                    }
+                    .sottoAction(.secondary)
+                    .controlSize(.small)
+                }
 
                 if viewModel.calendarPermissionGranted {
                     Button {
@@ -198,9 +295,11 @@ struct CalendarSettingsView: View {
             // macOS only shows the EventKit prompt once. Once denied, the
             // only path back is System Settings — a button that can't actually
             // re-prompt would mystify the user, so point them there explicitly.
-            return "Calendar access is blocked. Re-enable it in System Settings → Privacy & Security → Calendars to start meetings automatically."
+            return
+                "Calendar access is blocked. Re-enable it in System Settings → Privacy & Security → Calendars to start meetings automatically."
         case .notDetermined:
-            return "Start a recording when a scheduled meeting begins. Needs Calendar access — your events stay on your Mac and are never uploaded."
+            return
+                "Start a recording when a scheduled meeting begins. Needs Calendar access — your events stay on your Mac and are never uploaded."
         }
     }
 
@@ -251,6 +350,12 @@ struct CalendarSettingsView: View {
             get: { viewModel.calendarAutoStartMode != .off },
             set: { isOn in
                 viewModel.calendarAutoStartMode = isOn ? .notify : .off
+                if isOn {
+                    Task {
+                        await CalendarNotificationAuthorization.requestIfNeeded()
+                        await viewModel.refreshCalendarNotificationAuthorization()
+                    }
+                }
             }
         )
     }
