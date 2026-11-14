@@ -15,6 +15,13 @@ public struct GoogleCalendarAuthorization: Sendable {
     let generation: UUID
 }
 
+/// The optional Drive client could not be read; Calendar's own store is unaffected.
+public struct GoogleCalendarDriveClientError: LocalizedError {
+    public var errorDescription: String? {
+        "Sotto couldn’t read the saved Google Drive OAuth client. Import your OAuth client JSON to connect Calendar."
+    }
+}
+
 /// One native-app OAuth identity. Client configuration and tokens stay in a
 /// dedicated device-only Keychain namespace, never in the backup ledger.
 public actor GoogleCalendarAccount {
@@ -71,7 +78,13 @@ public actor GoogleCalendarAccount {
     @discardableResult
     public func reuseDriveClient(from drive: GoogleDriveAccount = .shared) async throws -> Bool {
         guard try !hasClient(), try credential() == nil else { return false }
-        guard let data = try await drive.clientConfigurationForReuse() else { return false }
+        let data: Data?
+        do {
+            data = try await drive.clientConfigurationForReuse()
+        } catch {
+            throw GoogleCalendarDriveClientError()
+        }
+        guard let data else { return false }
         // The actor can be re-entered while reading the Drive account.
         guard try !hasClient(), try credential() == nil else { return false }
         try importClient(data)

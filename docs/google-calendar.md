@@ -8,3 +8,5 @@ Sotto can read Google calendars directly without adding the account to macOS Int
 4. Enable the calendar reminder or auto-start option and select the calendars to include.
 
 Sotto stores Calendar client configuration and tokens in a dedicated Keychain entry. Reusing the Drive client does not copy Drive tokens. Disconnect removes those local credentials; remove the app's access in Google account settings if you also want to revoke the Google grant. Google may apply additional consent, verification, or testing restrictions to the Cloud project.
+
+If Sotto cannot read the saved Drive client, import the downloaded Desktop OAuth client JSON directly under Google Calendar. This leaves the existing Drive credentials untouched.

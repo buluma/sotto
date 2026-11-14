@@ -115,7 +115,11 @@ struct CalendarSettingsView: View {
 
     private func refreshGoogleAccount() async {
         do {
-            _ = try await GoogleCalendarAccount.shared.reuseDriveClient()
+            do {
+                _ = try await GoogleCalendarAccount.shared.reuseDriveClient()
+            } catch let error as GoogleCalendarDriveClientError {
+                if googleError == nil { googleError = error.localizedDescription }
+            }
             googleHasClient = try await GoogleCalendarAccount.shared.hasClient()
             googleIdentity = try await GoogleCalendarAccount.shared.identity()
         } catch { googleError = error.localizedDescription }

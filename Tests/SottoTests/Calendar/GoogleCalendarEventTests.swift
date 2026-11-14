@@ -105,6 +105,29 @@ final class GoogleCalendarEventTests: XCTestCase {
         XCTAssertFalse(copiedAgain)
         XCTAssertEqual(try driveStore.getString("credential"), "drive-token-must-not-be-copied")
     }
+
+    func testUnreadableDriveClientStillAllowsImportingCalendarClient() async throws {
+        let drive = GoogleDriveAccount(store: UnreadableDriveStore())
+        let calendar = GoogleCalendarAccount(store: CalendarTestStore())
+        do {
+            _ = try await calendar.reuseDriveClient(from: drive)
+            XCTFail("An unreadable Drive client must be reported")
+        } catch is GoogleCalendarDriveClientError {
+        }
+        let client = Data(#"{"installed":{"client_id":"calendar.apps.googleusercontent.com"}}"#.utf8)
+        try await calendar.importClient(client)
+        let copied = try await calendar.reuseDriveClient(from: drive)
+        XCTAssertFalse(copied)
+        let auth = try await calendar.authorization(redirectURI: "http://127.0.0.1:12345/oauth/callback")
+        let items = try XCTUnwrap(URLComponents(url: auth.url, resolvingAgainstBaseURL: false)?.queryItems)
+        XCTAssertEqual(items.first(where: { $0.name == "client_id" })?.value, "calendar.apps.googleusercontent.com")
+    }
+}
+
+private struct UnreadableDriveStore: KeyValueStore {
+    func getString(_ key: String) throws -> String? { throw KeyValueStoreError.unsupported }
+    func setString(_ value: String, forKey key: String) throws { throw KeyValueStoreError.unsupported }
+    func delete(_ key: String) throws { throw KeyValueStoreError.unsupported }
 }
 
 private final class CalendarTestStore: KeyValueStore, @unchecked Sendable {
