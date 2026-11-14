@@ -2,7 +2,7 @@ import ArgumentParser
 import Foundation
 import SottoCore
 
-/// `sotto-cli calendar` — agent-friendly access to the EventKit
+/// `sotto-cli calendar` — agent-friendly access to the calendar
 /// pipeline that powers calendar auto-start. Lets a developer or a CI agent
 /// verify "is my permission set up + does my filter actually pick the right
 /// events?" without launching the GUI.

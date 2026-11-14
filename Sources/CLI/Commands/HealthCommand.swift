@@ -221,10 +221,10 @@ struct HealthCommand: AsyncParsableCommand {
         }
         report.calendar = HealthReport.Calendar(permission: calendarStatus, calendarsVisible: calendarsVisible)
         if !json {
-            print("Calendar (EventKit):")
+            print("Calendar:")
             switch permission {
             case .granted:
-                print("  Status: Granted")
+                print("  Status: Available")
                 if let n = calendarsVisible { print("  Calendars visible: \(n)") }
             case .denied:
                 print("  Status: Denied (open System Settings → Privacy & Security → Calendars)")

@@ -1,6 +1,6 @@
 import Foundation
 
-/// A calendar event fetched from EventKit at poll time.
+/// A calendar event fetched from EventKit or Google Calendar at poll time.
 ///
 /// Sotto does not persist the polling cache, but a meeting recording may
 /// snapshot the triggering event onto its local transcript row and artifacts.

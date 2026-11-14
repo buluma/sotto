@@ -6,6 +6,10 @@ This file tracks the CLI specifically -- the commands, flags, output schemas, an
 
 The format is based on [Keep a Changelog](https://keepachangelog.com), and the CLI adheres to [Semantic Versioning](https://semver.org).
 
+## Unreleased
+
+- Calendar inspection includes direct Google Calendar events when the account is connected in Sotto. Calendar health reports availability from either Google Calendar or EventKit.
+
 ## [6.0.1] — 2026-10-06 (bundled with Sotto 0.1.8)
 
 - Clarified `transcribe`/`retranscribe` engine help: bare commands use Parakeet and explicit `--engine app-default` follows saved Live Speech. The GUI Final Transcription override does not change CLI defaults; routing behavior is unchanged.

@@ -1,7 +1,7 @@
 # Calendar
 
-> Local EventKit integration for meeting reminders and auto-start (ADR-017).
-> No cloud calendar APIs. No SQLite event cache.
+> EventKit and optional direct Google Calendar integration for meeting reminders and auto-start (ADR-017).
+> No SQLite event cache.
 
 ## Entry point
 
@@ -12,6 +12,7 @@ The app-layer coordinator (`MeetingAutoStartCoordinator`) polls, shows notificat
 ## What is here
 
 - `CalendarService.swift` / `CalendarServicing.swift` — permission, fetch, calendar list.
+- `GoogleCalendarAccount.swift` / `GoogleCalendarService.swift` — separate Keychain-backed OAuth account and read-only Google Calendar API source.
 - `CalendarEvent.swift` — EventKit snapshot. Occurrence identity is `dedupeKey` (`id` + start time). Meeting/series identity is `eventKey` (`externalId ?? id`); recurrence is `isRecurring`, not a non-nil `externalId`. Do not key suppression on title.
 - `CalendarSkip.swift` — occurrence vs event-level skip keys; occurrence janitor (14 days).
 - `MeetingMonitor.swift` — candidate filter + remind / auto-start / late-join windows. RSVP: declined is dropped; pending reminds but does not auto-start; tentative auto-starts. Skipped candidates stay listed.

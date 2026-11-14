@@ -8,19 +8,21 @@
 > **Amendment (2026-09-14): per-event skip implemented (#609).** Session-only toast dismiss is incomplete. Users can mute one occurrence or a repeating series; skip persists as a UserDefaults preference and blocks reminders and auto-start only. Optional-invitee is the motivation, not an automatic filter. See §11 and [the implementation plan](../../plans/active/2026-09-14-issue-609-calendar-event-skip.md).
 > Related: ADR-002 (local-first), ADR-005 (onboarding), ADR-009 (custom hotkeys), ADR-014 (meeting recording), ADR-015 (concurrent dictation/meeting)
 
+> **Amendment (2026-11-14): direct Google Calendar.** An optional Google Calendar connection uses a user-supplied Desktop OAuth client and read-only access independently of macOS Internet Accounts. Google events feed the existing meeting policy alongside EventKit. Credentials are stored in a dedicated Keychain namespace; fetched events are not cached in a queryable database.
+
 ## Context
 
 ADR-014 shipped meeting recording as a manual, hotkey-or-click flow. The user opens the meeting panel (or hits the meeting hotkey) when a call starts. This is simple and predictable, but it misses the most common failure mode: *the user forgets to start recording*. By the time they remember, the first 5–10 minutes of context is already gone.
 
 Oatmeal (sibling repo, same owner, GPL-3.0) solves this with calendar integration: EventKit access → upcoming events → reminder notifications → optional auto-start when a meeting begins. Oatmeal's code is already partitioned cleanly — a pure `MeetingMonitor` state machine plus a thin `CalendarService` wrapper plus a coordinator — and Sotto can port ~80% of it verbatim (license is GPL-3.0 → GPL-3.0, no conflict).
 
-This ADR defines Sotto's scope for that feature. It is deliberately narrower than Oatmeal's: no cloud sync, no AI-generated meeting titles, no attendee enrichment, no cross-meeting threading. Just **"remind me, and if I want, start recording for me."**
+This ADR defines Sotto's scope for that feature. It is deliberately narrower than Oatmeal's: no separate event database, no AI-generated meeting titles, no attendee enrichment, no cross-meeting threading. Just **"remind me, and if I want, start recording for me."**
 
 ## Decision
 
-### 1. EventKit only — no cloud calendar APIs
+### 1. Calendar sources
 
-Calendar access goes through Apple's EventKit framework (`EKEventStore`), which reads whatever calendars the user has already configured in the macOS Calendar app (iCloud, Google via macOS Internet Accounts, Exchange, CalDAV). Microsoft 365 and Exchange calendars therefore work when Calendar is enabled for the account in System Settings → Internet Accounts; an account configured only inside Outlook is outside EventKit and is not visible to Sotto. Shared and delegated Exchange calendars are not claimed without representative runtime verification. Sotto does not run its own OAuth flows and does not ship Google/Microsoft SDKs.
+Calendar access goes through Apple's EventKit framework (`EKEventStore`), which reads whatever calendars the user has already configured in the macOS Calendar app (iCloud, Google via macOS Internet Accounts, Exchange, CalDAV). Microsoft 365 and Exchange calendars therefore work when Calendar is enabled for the account in System Settings → Internet Accounts; an account configured only inside Outlook is outside EventKit and is not visible to Sotto. Shared and delegated Exchange calendars are not claimed without representative runtime verification. Sotto also supports a direct Google Calendar OAuth connection; Microsoft calendars continue to use EventKit.
 
 **Why:** ADR-002 (local-first). Events stay on-device; we don't add a new cloud surface. The in-context Settings flow delegates authorization to macOS without adding first-run friction.
 

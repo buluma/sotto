@@ -5,9 +5,8 @@ import OSLog
 /// Wraps EventKit (`EKEventStore`) so the rest of the app talks to a small,
 /// testable surface instead of the framework directly.
 ///
-/// Sotto does not run its own OAuth flows — the user's macOS Calendar
-/// already aggregates Google/iCloud/Exchange accounts. ADR-002 (local-first):
-/// events are read into memory on each poll and discarded, never persisted.
+/// EventKit calendars and an optional direct Google source are read into
+/// memory on each poll; the event list is never persisted.
 ///
 /// **Concurrency.** `EKEventStore` is documented as not thread-safe, and
 /// Apple recommends a single long-lived store per app. This type is an
@@ -48,6 +47,11 @@ public actor CalendarService {
     /// simple. (`requestPermission` *does* touch the store so it stays
     /// actor-isolated.)
     public nonisolated var permissionStatus: PermissionStatus {
+        if GoogleCalendarAccount.isConnected { return .granted }
+        return eventKitPermissionStatus
+    }
+
+    public nonisolated var eventKitPermissionStatus: PermissionStatus {
         let status = EKEventStore.authorizationStatus(for: .event)
         switch status {
         case .notDetermined:
@@ -103,16 +107,24 @@ public actor CalendarService {
     /// Lightweight metadata for the per-calendar include list in Settings.
     /// Returns empty if permission is missing rather than throwing — Settings
     /// just shows an empty state in that case.
-    public func availableCalendars() -> [CalendarInfo] {
-        guard permissionStatus == .granted else { return [] }
-        eventStore.reset()
-        return eventStore.calendars(for: .event).map { calendar in
-            CalendarInfo(
-                id: calendar.calendarIdentifier,
-                title: calendar.title,
-                sourceTitle: calendar.source?.title
-            )
+    public func availableCalendars() async -> [CalendarInfo] {
+        var calendars: [CalendarInfo] = []
+        if eventKitPermissionStatus == .granted {
+            eventStore.reset()
+            calendars = eventStore.calendars(for: .event).map { calendar in
+                CalendarInfo(
+                    id: calendar.calendarIdentifier,
+                    title: calendar.title,
+                    sourceTitle: calendar.source?.title
+                )
+            }
         }
+        if GoogleCalendarAccount.isConnected {
+            do { calendars += try await GoogleCalendarService.shared.availableCalendars() } catch {
+                logger.error("Google calendar list failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+        return calendars
     }
 
     // MARK: - Fetch Events
@@ -129,6 +141,14 @@ public actor CalendarService {
 
         logger.debug("Fetching events from \(from) to \(endDate)")
 
+        var googleEvents: [CalendarEvent] = []
+        if GoogleCalendarAccount.isConnected {
+            do { googleEvents = try await GoogleCalendarService.shared.events(from: from, to: endDate) } catch {
+                guard eventKitPermissionStatus == .granted else { throw error }
+                logger.error("Google calendar fetch failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+        guard eventKitPermissionStatus == .granted else { return googleEvents }
         let calendars = eventStore.calendars(for: .event)
         let predicate = eventStore.predicateForEvents(
             withStart: from,
@@ -137,7 +157,7 @@ public actor CalendarService {
         )
         let ekEvents = eventStore.events(matching: predicate)
 
-        let events = ekEvents.compactMap { convertEvent($0) }
+        let events = (ekEvents.compactMap { convertEvent($0) } + googleEvents)
             .filter { shouldInclude($0) }
             .sorted { $0.startTime < $1.startTime }
 
@@ -156,6 +176,16 @@ public actor CalendarService {
         let startDate = now.addingTimeInterval(-2 * 60 * 60)
         let endDate = now.addingTimeInterval(TimeInterval(withinMinutes * 60))
 
+        var googleEvents: [CalendarEvent] = []
+        if GoogleCalendarAccount.isConnected {
+            do { googleEvents = try await GoogleCalendarService.shared.events(from: startDate, to: endDate) } catch {
+                guard eventKitPermissionStatus == .granted else { throw error }
+                logger.error("Google calendar fetch failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+        guard eventKitPermissionStatus == .granted else {
+            return googleEvents.filter { $0.isNow || $0.startsWithin(minutes: withinMinutes) }
+        }
         let calendars = eventStore.calendars(for: .event)
         let predicate = eventStore.predicateForEvents(
             withStart: startDate,
@@ -164,7 +194,7 @@ public actor CalendarService {
         )
         let ekEvents = eventStore.events(matching: predicate)
 
-        return ekEvents.compactMap { convertEvent($0) }
+        return (ekEvents.compactMap { convertEvent($0) } + googleEvents)
             .filter { shouldInclude($0) }
             .filter { $0.isNow || $0.startsWithin(minutes: withinMinutes) }
             .sorted { $0.startTime < $1.startTime }
@@ -179,8 +209,9 @@ public actor CalendarService {
         // non-optional `CalendarEvent.id` crashed (SIGTRAP); drop the event
         // instead — without a stable identifier we can't track it anyway.
         guard let startDate = ekEvent.startDate,
-              let endDate = ekEvent.endDate,
-              let id = ekEvent.eventIdentifier else {
+            let endDate = ekEvent.endDate,
+            let id = ekEvent.eventIdentifier
+        else {
             return nil
         }
 
@@ -293,5 +324,6 @@ public enum CalendarError: Error, LocalizedError {
 
 public extension CalendarService {
     /// Deep-link to the Calendar privacy pane in System Settings.
-    nonisolated static let settingsURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars")!
+    nonisolated static let settingsURL = URL(
+        string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars")!
 }
