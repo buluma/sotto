@@ -25,22 +25,38 @@ public final class KeychainKeyValueStore: KeyValueStore {
 
     public func getString(_ key: String) throws -> String? {
         try Self.withoutUserInteraction {
-            let query: [String: Any] = [
-                kSecClass as String: kSecClassGenericPassword,
-                kSecAttrService as String: service,
-                kSecAttrAccount as String: key,
-                kSecMatchLimit as String: kSecMatchLimitOne,
-                kSecReturnData as String: true,
-                    // kSecUseDataProtectionKeychain requires entitlements not available in SPM dev builds
-            ]
-
-            var item: CFTypeRef?
-            let status = SecItemCopyMatching(query as CFDictionary, &item)
-            if status == errSecItemNotFound { return nil }
-            guard status == errSecSuccess else { throw KeychainError(status: status) }
-            guard let data = item as? Data else { return nil }
-            return String(data: data, encoding: .utf8)
+            try readString(key)
         }
+    }
+
+    /// Only call in response to an explicit user action. Normal access remains noninteractive.
+    public func requestAccess(to key: String) throws {
+        try Self.interactionLock.withLock {
+            var previouslyAllowed = DarwinBoolean(false)
+            let status = SecKeychainGetUserInteractionAllowed(&previouslyAllowed)
+            guard status == errSecSuccess else { throw KeychainError(status: status) }
+            let enableStatus = SecKeychainSetUserInteractionAllowed(true)
+            guard enableStatus == errSecSuccess else { throw KeychainError(status: enableStatus) }
+            defer { SecKeychainSetUserInteractionAllowed(previouslyAllowed.boolValue) }
+            _ = try readString(key)
+        }
+    }
+
+    private func readString(_ key: String) throws -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: key,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+            kSecReturnData as String: true,
+        ]
+
+        var item: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &item)
+        if status == errSecItemNotFound { return nil }
+        guard status == errSecSuccess else { throw KeychainError(status: status) }
+        guard let data = item as? Data else { return nil }
+        return String(data: data, encoding: .utf8)
     }
 
     public func setString(_ value: String, forKey key: String) throws {

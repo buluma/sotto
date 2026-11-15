@@ -8,6 +8,6 @@ This personal GPLv3 fork is always unlocked. The owner approved removing licensi
 
 Preserve `EntitlementsState`, `EntitlementsChecking`, existing Keychain namespaces, and persisted data. Do not restore network licensing or capture gates without an explicit owner decision and matching ADR/contract changes. The generic Keychain store remains available to existing consumers (AI providers, voice control, and sharing).
 
-**Credential access must not prompt.** All store operations disable system interaction and return errors when authorization is unavailable. Preserve the service/account namespaces and existing keys. UI status checks use provider metadata instead of secret reads. See [credential access](../../../spec/contracts/credential-access.md).
+**Ordinary credential access must not prompt.** Store operations disable system interaction and return errors when authorization is unavailable. Google Calendar settings can explicitly request access to its existing items after the user clicks the access button. Preserve the service/account namespaces and existing keys. UI status checks use provider metadata instead of secret reads. See [credential access](../../../spec/contracts/credential-access.md).
 
 Verify with `swift test --filter EntitlementsServiceTests`. Test existing and empty stored state, stale validation, no API/store accesses, unavailable activation, and non-destructive deactivation. Baseline capture tests remain separate.

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Sotto's shared Keychain store must not open system authentication dialogs from reads, writes, or deletes. This includes startup, status rendering, AI requests, retained licensing I/O, and share maintenance. An inaccessible item returns an error; only `errSecItemNotFound` means no saved item.
+Sotto's shared Keychain store must not open system authentication dialogs from ordinary reads, writes, or deletes. This includes startup, status rendering, AI requests, retained licensing I/O, and share maintenance. An inaccessible item returns an error; only `errSecItemNotFound` means no saved item. Google Calendar settings provide an explicit user-initiated access request for its existing client and credential items; this may display macOS authorization dialogs.
 
 ## Producers
 
@@ -17,7 +17,7 @@ Sotto's shared Keychain store must not open system authentication dialogs from r
 
 ## Stable behavior
 
-The existing services, account names, and app/dev/CLI sharing stay unchanged. This change does not migrate, clear, or weaken access controls on stored keys. File-based Keychain calls run with user interaction disabled inside a serialized scope that restores the previous process-wide setting, including when the call fails. The scope covers each whole read, write, or delete.
+The existing services, account names, and app/dev/CLI sharing stay unchanged. This change does not migrate, clear, or weaken access controls on stored keys. Ordinary file-based Keychain calls run with user interaction disabled inside a serialized scope that restores the previous process-wide setting, including when the call fails. The explicit Calendar access request uses the same lock, temporarily enables interaction, and restores the previous setting.
 
 Provider presence, task routes, and displayed provider/model names use metadata without reading credential values. A credential read failure must not hide or clear the configured provider, endpoint, model, or task overrides. Only Keychain failures are reported as credential errors; route-store failures are not. Providers that cannot use an API key do not read one.
 

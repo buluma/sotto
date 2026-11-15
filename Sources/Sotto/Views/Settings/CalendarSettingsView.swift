@@ -23,6 +23,7 @@ struct CalendarSettingsView: View {
     @State private var googleHasClient = false
     @State private var googleBusy = false
     @State private var googleError: String?
+    @State private var googleAccessBlocked = false
 
     var body: some View {
         VStack(spacing: DesignSystem.Spacing.md) {
@@ -110,11 +111,19 @@ struct CalendarSettingsView: View {
                     }
                 }.disabled(googleBusy)
             }
-            if let googleError { Text(googleError).foregroundStyle(.red).textSelection(.enabled) }
+            if let googleError {
+                Text(googleError).foregroundStyle(.red).textSelection(.enabled)
+                if googleAccessBlocked {
+                    Button("Allow Keychain access…") {
+                        Task { await googleAction { try await GoogleCalendarAccount.shared.requestKeychainAccess() } }
+                    }.sottoAction(.secondary).disabled(googleBusy)
+                }
+            }
         }.frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func refreshGoogleAccount() async {
+        googleAccessBlocked = false
         do {
             do {
                 _ = try await GoogleCalendarAccount.shared.reuseDriveClient()
@@ -123,7 +132,10 @@ struct CalendarSettingsView: View {
             }
             googleHasClient = try await GoogleCalendarAccount.shared.hasClient()
             googleIdentity = try await GoogleCalendarAccount.shared.identity()
-        } catch { googleError = error.localizedDescription }
+        } catch {
+            googleError = error.localizedDescription
+            googleAccessBlocked = error is KeychainError
+        }
     }
 
     private func googleAction(_ action: () async throws -> Void) async {
