@@ -63,6 +63,7 @@ struct CalendarSettingsView: View {
                             .font(DesignSystem.Typography.caption)
                             .foregroundStyle(.secondary)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .toggleStyle(.switch)
             }
