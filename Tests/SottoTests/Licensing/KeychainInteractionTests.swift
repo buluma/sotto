@@ -3,6 +3,13 @@ import Security
 @testable import SottoCore
 
 final class KeychainInteractionTests: XCTestCase {
+    func testExplicitAccessRestoresInteractionForMissingItem() throws {
+        let before = try interactionAllowed()
+        let store = KeychainKeyValueStore(service: "com.sotto.test." + UUID().uuidString)
+        try store.requestAccess(to: "missing")
+        XCTAssertEqual(try interactionAllowed(), before)
+    }
+
     func testInteractionIsDisabledDuringAccessAndRestoredAfterSuccess() throws {
         let before = try interactionAllowed()
         let result = try KeychainKeyValueStore.withoutUserInteraction {

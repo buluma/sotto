@@ -73,6 +73,13 @@ public actor GoogleCalendarAccount {
     public func hasClient() throws -> Bool { try store.getString("client") != nil }
     public func identity() throws -> GoogleCalendarIdentity? { try credential()?.identity }
 
+    /// Requests access to existing Calendar items without changing or deleting them.
+    public func requestKeychainAccess() throws {
+        guard let keychain = store as? KeychainKeyValueStore else { return }
+        try keychain.requestAccess(to: "client")
+        try keychain.requestAccess(to: "credential")
+    }
+
     /// Copy only the desktop client configuration. Calendar keeps its own
     /// authorization and credentials, and an existing Calendar client wins.
     @discardableResult
