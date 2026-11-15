@@ -100,12 +100,21 @@ func revealTranscriptFindSegment<ID: Hashable>(
         proxy.scrollTo(lineID, anchor: .center)
         return nil
     }
-    proxy.scrollTo(cardID, anchor: .center)
+    // A tall lazy card may not realize its first line when centered.
+    // Land at its top when the target is the first segment.
+    proxy.scrollTo(cardID, anchor: cardID == segmentID ? .top : .center)
     return Task { @MainActor in
         // Give the lazy card a layout pass before resolving its nested anchor.
         try? await Task.sleep(for: .milliseconds(50))
         guard !Task.isCancelled else { return }
         proxy.scrollTo(lineID, anchor: .center)
+        if cardID == segmentID {
+            // The first hop can still be completing its lazy layout when the
+            // nested ID is first queried. Retry after that layout settles.
+            try? await Task.sleep(for: .milliseconds(100))
+            guard !Task.isCancelled else { return }
+            proxy.scrollTo(lineID, anchor: .center)
+        }
     }
 }
 

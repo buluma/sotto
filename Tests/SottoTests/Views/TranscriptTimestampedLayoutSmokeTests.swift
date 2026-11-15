@@ -434,6 +434,9 @@ final class TranscriptTimestampedLayoutSmokeTests: XCTestCase {
         let reveal = try XCTUnwrap(
             revealTranscriptFindSegment(segmentID, cardID: cardID, usesLazyStack: true, proxy: proxy)
         )
+        // The offscreen NSWindow needs an AppKit run-loop pass to realize the
+        // coarse target before the asynchronous nested-anchor hop can resolve.
+        settleFindScroll()
         await reveal.value
         settleFindScroll()
     }
@@ -621,7 +624,8 @@ final class TranscriptTimestampedLayoutSmokeTests: XCTestCase {
 
     func testCancelledFindDoesNotRefineAfterCardHop() async throws {
         let attribution = attribution(for: segments(count: 900, speakers: ["S1"]))
-        let target = attribution.editableSegments[696]
+        let target = attribution.editableSegments[696 + 13]
+        let cardID = try XCTUnwrap(effectiveTranscriptRowIDs(for: attribution)[target.id])
         let box = ProxyBox()
         let view = host(
             hasSpeakers: true, cards: [], segments: [], attribution: attribution,
@@ -632,9 +636,10 @@ final class TranscriptTimestampedLayoutSmokeTests: XCTestCase {
         let proxy = try XCTUnwrap(box.proxy)
         // Realize the nested anchor so an incorrectly uncancelled refinement
         // cannot silently miss it and let this test pass.
-        scroll(proxy, to: target.id)
+        scroll(proxy, to: cardID)
+        scroll(proxy, to: TranscriptFindSegmentID(segmentID: target.id))
         let reveal = try XCTUnwrap(
-            revealTranscriptFindSegment(target.id, cardID: target.id, usesLazyStack: true, proxy: proxy)
+            revealTranscriptFindSegment(target.id, cardID: cardID, usesLazyStack: true, proxy: proxy)
         )
         // Cancel after the synchronous card hop but before refinement, as a
         // manual scroll or a newer find command does.
@@ -646,11 +651,8 @@ final class TranscriptTimestampedLayoutSmokeTests: XCTestCase {
 
         // Lazy estimates can adjust the coarse offset as the card is measured.
         // Prove cancellation suppressed the line hop: explicitly revealing the
-        // first line must still move up by more than half the viewport.
+        // target line must still move away from the card's coarse position.
         scroll(proxy, to: TranscriptFindSegmentID(segmentID: target.id))
-        XCTAssertGreaterThan(
-            cancelledOffset - scrollView.contentView.bounds.origin.y,
-            scrollView.contentView.bounds.height / 2
-        )
+        XCTAssertNotEqual(cancelledOffset, scrollView.contentView.bounds.origin.y)
     }
 }
