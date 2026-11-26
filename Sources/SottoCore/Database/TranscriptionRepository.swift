@@ -620,6 +620,40 @@ public final class TranscriptionRepository: TranscriptionRepositoryProtocol, @un
         }
     }
 
+    /// Read only backup discovery metadata. Full transcript payloads are
+    /// loaded through the same projection used by the manual backup sheet.
+    public func fetchAutomaticDriveBackupCandidates() throws -> [GoogleDriveAutomaticBackup.Candidate] {
+        let rows = try dbQueue.read { db in
+            try Row.fetchAll(
+                db,
+                sql: """
+                    SELECT id, fileName, updatedAt, meetingArtifactFolderPath, filePath
+                    FROM transcriptions WHERE sourceType = ? AND status = ?
+                    """,
+                arguments: [Transcription.SourceType.meeting.rawValue, Transcription.TranscriptionStatus.completed.rawValue]
+            ).map { row in
+                let id: UUID = row["id"]
+                let title: String = row["fileName"]
+                let updatedAt: Date = row["updatedAt"]
+                let artifactPath: String? = row["meetingArtifactFolderPath"]
+                let audioPath: String? = row["filePath"]
+                return (id, title, updatedAt, artifactPath, audioPath)
+            }
+        }
+        return rows.map { id, title, updatedAt, artifactPath, audioPath in
+            let manifest = MeetingArtifactStore.sessionFolderURL(artifactFolderPath: artifactPath, filePath: audioPath)?
+                .appendingPathComponent(MeetingArtifactStore.manifestFileName)
+            // Canonical regeneration records edits to prompt outputs and
+            // classification even when the transcription row is unchanged.
+            let manifestDate = (try? manifest?.resourceValues(forKeys: [.contentModificationDateKey]))?
+                .contentModificationDate ?? .distantPast
+            return GoogleDriveAutomaticBackup.Candidate(
+                id: id, title: title,
+                revision: "\(updatedAt.timeIntervalSinceReferenceDate)|\(manifestDate.timeIntervalSinceReferenceDate)",
+                changedAt: max(updatedAt, manifestDate))
+        }
+    }
+
     public func fetchMeetingAudioRetentionCandidates(createdAtOrBefore cutoff: Date) throws -> [Transcription] {
         try dbQueue.read { db in
             try Transcription

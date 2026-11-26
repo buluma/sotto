@@ -40,7 +40,7 @@ final class GoogleDriveFileLock {
         }
         guard flock(descriptor, LOCK_EX | (nonblocking ? LOCK_NB : 0)) == 0 else {
             Darwin.close(descriptor)
-            throw GoogleDriveError.message(
+            throw GoogleDriveError.busy(
                 "Another Sotto instance is backing up to Google Drive. Retry when it finishes.")
         }
         self.descriptor = descriptor

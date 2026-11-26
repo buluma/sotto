@@ -21,8 +21,8 @@ public protocol GoogleDriveBackingUp: Sendable {
         progress: @escaping @Sendable (GoogleDriveBackupProgress) async -> Void) async throws
 }
 
-/// Only manual uploads call this service. Reserved Drive IDs are saved before
-/// creates, so an uncertain response is retried against the same remote ID.
+/// Reserved Drive IDs are saved before creates, so an uncertain response
+/// is retried against the same remote ID.
 public actor GoogleDriveBackupService: GoogleDriveBackingUp {
     public static let shared = GoogleDriveBackupService()
     private let account: GoogleDriveAccount
@@ -88,7 +88,7 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
         progress: @escaping @Sendable (GoogleDriveBackupProgress) async -> Void
     ) async throws {
         guard !busy else {
-            throw GoogleDriveError.message("Another Google Drive backup is running. Try again when it finishes.")
+            throw GoogleDriveError.busy("Another Google Drive backup is running. Try again when it finishes.")
         }
         busy = true
         defer { busy = false }
@@ -378,12 +378,7 @@ public actor GoogleDriveBackupService: GoogleDriveBackingUp {
     }
     private func token(for expected: GoogleDriveIdentity) async throws -> String {
         try Task.checkCancellation()
-        let token = try await account.accessToken()
-        guard try await account.identity() == expected else {
-            throw GoogleDriveError.message(
-                "The Google account changed. Close this backup and reopen it to review the connected account.")
-        }
-        return token
+        return try await account.accessToken(for: expected)
     }
     private func request(
         _ method: String, path: String, query: [String: String] = [:], body: [String: Any]? = nil,

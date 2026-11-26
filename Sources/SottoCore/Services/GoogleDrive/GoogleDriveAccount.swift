@@ -144,8 +144,16 @@ public actor GoogleDriveAccount {
     }
 
     public func accessToken() async throws -> String {
+        try await accessToken(for: nil)
+    }
+
+    func accessToken(for expected: GoogleDriveIdentity?) async throws -> String {
         guard var credential = try credential() else {
-            throw GoogleDriveError.message("Connect your Google account first.")
+            throw GoogleDriveError.authenticationRequired("Connect your Google account first.")
+        }
+        if let expected, credential.identity != expected {
+            throw GoogleDriveError.authenticationRequired(
+                "The Google account changed. Reopen Google Drive backup to review the connected account.")
         }
         if credential.expiresAt.timeIntervalSinceNow > 90 { return credential.accessToken }
         let expectedGeneration = generation
@@ -157,7 +165,7 @@ public actor GoogleDriveAccount {
                 "refresh_token": credential.refreshToken, "grant_type": "refresh_token",
             ])
         } catch GoogleDriveError.http(400), GoogleDriveError.http(401) {
-            throw GoogleDriveError.message("Google Drive sign-in expired. Disconnect and connect again.")
+            throw GoogleDriveError.authenticationRequired("Google Drive sign-in expired. Disconnect and connect again.")
         }
         try Task.checkCancellation()
         guard expectedGeneration == generation else { throw CancellationError() }
