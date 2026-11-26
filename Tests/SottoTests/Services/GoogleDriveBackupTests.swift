@@ -1,4 +1,5 @@
 import Foundation
+import Security
 import XCTest
 @testable import SottoCore
 @testable import SottoViewModels
@@ -684,6 +685,34 @@ final class GoogleDriveBackupTests: XCTestCase {
     }
 
     @MainActor
+    func testViewModelOffersKeychainAccessAndReloadsAfterIt() async throws {
+        let root = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let transport = DriveStubTransport()
+        let store = DriveTestStore()
+        let row = source(meeting(folder: root))
+        let service = DriveViewModelService(failOnce: nil)
+        let model = GoogleDriveBackupViewModel(
+            account: try connectedAccount(transport: transport, store: store), service: service)
+        store.failReads = true
+        model.prepare { [row] in [row] }
+        try await waitForIdle(model)
+        XCTAssertTrue(model.keychainAccessBlocked)
+        XCTAssertNil(model.identity)
+        XCTAssertTrue(model.snapshots.isEmpty)
+
+        // The test store stands in for the user choosing Always Allow.
+        store.failReads = false
+        model.requestKeychainAccess()
+        try await waitForIdle(model)
+        XCTAssertFalse(model.keychainAccessBlocked)
+        XCTAssertNil(model.errorMessage)
+        XCTAssertEqual(model.identity, testIdentity)
+        XCTAssertEqual(model.snapshots.count, 1)
+        await model.close()
+    }
+
+    @MainActor
     func testViewModelRetriesOnlyFailuresAndResetsCompletionForAnotherAccount() async throws {
         let root = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -848,7 +877,7 @@ private final class DriveTestStore: KeyValueStore, @unchecked Sendable {
     }
     func getString(_ key: String) throws -> String? {
         try lock.withLock {
-            if readsFail { throw CocoaError(.fileReadNoPermission) }
+            if readsFail { throw KeychainError(status: errSecInteractionNotAllowed) }
             return values[key]
         }
     }

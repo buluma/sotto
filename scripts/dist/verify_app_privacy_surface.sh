@@ -6,6 +6,10 @@ EXPECTED_BUNDLE_ID="${EXPECTED_BUNDLE_ID:-com.sotto.Sotto}"
 EXPECTED_TEAM_ID="${EXPECTED_TEAM_ID:-FYAF2ZD7RM}"
 EXPECTED_AUTHORITY="${EXPECTED_AUTHORITY:-Developer ID Application: Daniel Moon (FYAF2ZD7RM)}"
 ALLOW_ADHOC_SIGNING="${ALLOW_ADHOC_SIGNING:-0}"
+# Personal builds signed with the owner's self-signed certificate. Pinning its
+# SHA-1 keeps the designated requirement, and so Keychain and privacy grants,
+# stable across builds.
+EXPECTED_SIGNING_CERT_SHA1="${EXPECTED_SIGNING_CERT_SHA1:-}"
 
 fail() {
   echo "error: $*" >&2
@@ -50,7 +54,17 @@ if ! codesign -d --xml --entitlements - "$APP_PATH" >"$ENTITLEMENTS_PLIST" 2>"$C
 fi
 
 CODESIGN_DETAILS="$(codesign -dv --verbose=4 "$APP_PATH" 2>&1)"
-if [[ "$ALLOW_ADHOC_SIGNING" == "1" ]]; then
+if [[ -n "$EXPECTED_SIGNING_CERT_SHA1" ]]; then
+  expected_leaf="$(tr '[:upper:]' '[:lower:]' <<<"$EXPECTED_SIGNING_CERT_SHA1")"
+  requirement="$(codesign -d -r- "$APP_PATH" 2>&1 | tr '[:upper:]' '[:lower:]')"
+  if grep -Fq "Signature=adhoc" <<<"$CODESIGN_DETAILS" \
+    || ! grep -Fq "TeamIdentifier=not set" <<<"$CODESIGN_DETAILS" \
+    || ! grep -Fq "certificate leaf = h\"$expected_leaf\"" <<<"$requirement"; then
+    echo "$CODESIGN_DETAILS" >&2
+    echo "$requirement" >&2
+    fail "Expected the pinned self-signed certificate $EXPECTED_SIGNING_CERT_SHA1"
+  fi
+elif [[ "$ALLOW_ADHOC_SIGNING" == "1" ]]; then
   if ! grep -Fq "Signature=adhoc" <<<"$CODESIGN_DETAILS" \
     || ! grep -Fq "TeamIdentifier=not set" <<<"$CODESIGN_DETAILS" \
     || grep -Fq "Authority=" <<<"$CODESIGN_DETAILS"; then

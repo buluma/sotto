@@ -59,3 +59,6 @@ jobs:
       version: ${{ needs.candidate.outputs.version }}
       release_tag: ${{ needs.candidate.outputs.tag }}
       channel: nightly
+    secrets:
+      SOTTO_SIGNING_P12_BASE64: ${{ secrets.SOTTO_SIGNING_P12_BASE64 }}
+      SOTTO_SIGNING_P12_PASSWORD: ${{ secrets.SOTTO_SIGNING_P12_PASSWORD }}

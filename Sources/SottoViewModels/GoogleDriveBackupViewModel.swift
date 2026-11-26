@@ -17,11 +17,14 @@ public final class GoogleDriveBackupViewModel {
     public private(set) var completed: Set<UUID> = []
     public private(set) var failures: [UUID: String] = [:]
     public var errorMessage: String?
+    /// The saved Drive items exist but this build is not allowed to read them.
+    public private(set) var keychainAccessBlocked = false
     public private(set) var statusMessage: String?
     private let account: GoogleDriveAccount
     private let service: any GoogleDriveBackingUp
     private let preparer: MeetingDriveBackupPreparer
     private var operation: Task<Void, Never>?
+    private var sources: (@Sendable () async throws -> [MeetingDriveBackupSource])?
     private var closed = false
 
     public init(
@@ -35,13 +38,27 @@ public final class GoogleDriveBackupViewModel {
 
     public func prepare(sources: @escaping @Sendable () async throws -> [MeetingDriveBackupSource]) {
         guard snapshots.isEmpty else { return }
+        self.sources = sources
+        run { try await self.load() }
+    }
+
+    /// Explicit user action: may show the macOS Keychain prompt, then reloads
+    /// the account and preview that the blocked read prevented.
+    public func requestKeychainAccess() {
         run {
-            self.hasClient = try await self.account.hasClient()
-            self.identity = try await self.account.identity()
-            self.snapshots = try await self.preparer.prepare(sources())
-            if let identity = self.identity {
-                self.folders = try await self.service.folders(parent: self.destination.id, identity: identity)
-            }
+            try await self.account.requestKeychainAccess()
+            try await self.load()
+        }
+    }
+
+    private func load() async throws {
+        hasClient = try await account.hasClient()
+        identity = try await account.identity()
+        if snapshots.isEmpty, let sources {
+            snapshots = try await preparer.prepare(sources())
+        }
+        if let identity {
+            folders = try await service.folders(parent: destination.id, identity: identity)
         }
     }
 
@@ -159,12 +176,16 @@ public final class GoogleDriveBackupViewModel {
         guard !isBusy, !closed else { return }
         isBusy = true
         errorMessage = nil
+        keychainAccessBlocked = false
         operation = Task {
             defer { self.isBusy = false }
             do { try await body() } catch is CancellationError {
                 self.statusMessage =
                     "Cancelled. Uploaded files remain in Drive; local meetings are unchanged. You can retry."
-            } catch { self.errorMessage = error.localizedDescription }
+            } catch {
+                self.errorMessage = error.localizedDescription
+                self.keychainAccessBlocked = error is KeychainError
+            }
         }
     }
 }
