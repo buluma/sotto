@@ -31,9 +31,13 @@ if [[ " $* " == *" --entitlements "* ]]; then
 </dict>
 </plist>
 PLIST
+elif [[ " $* " == *" -r- "* ]]; then
+  printf '%s\n' "designated => identifier \"com.sotto.fixture\" and certificate leaf = H\"${FIXTURE_LEAF:-}\""
 else
   if [[ "${FIXTURE_ADHOC:-0}" == "1" ]]; then
     printf '%s\n' 'Signature=adhoc' 'TeamIdentifier=not set' >&2
+  elif [[ -n "${FIXTURE_LEAF:-}" ]]; then
+    printf '%s\n' 'Signature size=2104' 'TeamIdentifier=not set' >&2
   else
     printf '%s\n' 'TeamIdentifier=TESTTEAM' 'Authority=Fixture Authority' >&2
   fi
@@ -147,6 +151,15 @@ assert_fail_contains "ad-hoc signing rejected by default" "$(make_app adhoc_defa
   "Unexpected signing team" 0 1
 assert_fail_contains "Developer ID rejected in ad-hoc mode" "$(make_app developer_id_adhoc_mode "$ATS_OK")" \
   "Expected an ad-hoc signature" 1 0
+SELF_SIGNED_SHA1="35DE9D5DBF12916A19A4F519ED1018D8D624891D"
+EXPECTED_SIGNING_CERT_SHA1="$SELF_SIGNED_SHA1" FIXTURE_LEAF="35de9d5dbf12916a19a4f519ed1018d8d624891d" \
+  assert_pass "pinned self-signed certificate" "$(make_app self_signed "$ATS_OK")"
+EXPECTED_SIGNING_CERT_SHA1="$SELF_SIGNED_SHA1" FIXTURE_LEAF="0000000000000000000000000000000000000000" \
+  assert_fail_contains "other self-signed certificate rejected" "$(make_app self_signed_other "$ATS_OK")" \
+  "Expected the pinned self-signed certificate"
+EXPECTED_SIGNING_CERT_SHA1="$SELF_SIGNED_SHA1" \
+  assert_fail_contains "ad-hoc rejected in self-signed mode" "$(make_app self_signed_adhoc "$ATS_OK")" \
+  "Expected the pinned self-signed certificate" 0 1
 
 assert_fail_contains \
   "NSAppTransportSecurity key missing entirely" \

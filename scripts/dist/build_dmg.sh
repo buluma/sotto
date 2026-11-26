@@ -1,17 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Package a personal-use, ad-hoc-signed app without Developer ID credentials.
+# Package a personal-use app without Developer ID credentials. Set
+# SIGNING_IDENTITY to the SHA-1 of the owner's self-signed code-signing
+# certificate (optionally with SIGNING_KEYCHAIN) to keep the designated
+# requirement stable across builds; otherwise the app is ad-hoc signed.
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 APP_PATH="${1:-$ROOT_DIR/dist/Sotto.app}"
 DMG_PATH="${2:-$ROOT_DIR/dist/Sotto.dmg}"
 [[ -d "$APP_PATH" ]] || { echo "Missing app bundle: $APP_PATH" >&2; exit 1; }
 "$ROOT_DIR/scripts/dist/verify_release_version.sh" "$APP_PATH"
 
-# No hardened runtime is requested for this personal ad-hoc build.
-codesign --force --deep --sign - --entitlements "$ROOT_DIR/scripts/dist/Sotto.entitlements" "$APP_PATH"
+SIGNING_IDENTITY="${SIGNING_IDENTITY:-}"
+sign_args=(--sign -)
+if [[ -n "$SIGNING_IDENTITY" ]]; then
+  sign_args=(--sign "$SIGNING_IDENTITY")
+  [[ -z "${SIGNING_KEYCHAIN:-}" ]] || sign_args+=(--keychain "$SIGNING_KEYCHAIN")
+fi
+# No hardened runtime is requested for this personal build.
+codesign --force --deep "${sign_args[@]}" --entitlements "$ROOT_DIR/scripts/dist/Sotto.entitlements" "$APP_PATH"
 codesign --verify --deep --strict "$APP_PATH"
-ALLOW_ADHOC_SIGNING=1 "$ROOT_DIR/scripts/dist/verify_app_privacy_surface.sh" "$APP_PATH"
+if [[ -n "$SIGNING_IDENTITY" ]]; then
+  EXPECTED_SIGNING_CERT_SHA1="$SIGNING_IDENTITY" "$ROOT_DIR/scripts/dist/verify_app_privacy_surface.sh" "$APP_PATH"
+else
+  ALLOW_ADHOC_SIGNING=1 "$ROOT_DIR/scripts/dist/verify_app_privacy_surface.sh" "$APP_PATH"
+fi
 VERIFY_CODE_SIGNATURES=1 "$ROOT_DIR/scripts/dist/verify_meeting_echo_assets.sh" "$APP_PATH"
 
 mkdir -p "$(dirname "$DMG_PATH")"

@@ -40,6 +40,10 @@ struct GoogleDriveBackupSheet: View {
             if let error = model.errorMessage {
                 Text(error).foregroundStyle(.red).textSelection(.enabled)
                     .accessibilityLabel("Backup error: \(error)")
+                if model.keychainAccessBlocked {
+                    Button("Allow Keychain access…") { model.requestKeychainAccess() }
+                        .sottoAction(.secondary).disabled(model.isBusy)
+                }
             }
             if let status = model.statusMessage { Text(status).foregroundStyle(.secondary) }
             if let progress = model.progress {

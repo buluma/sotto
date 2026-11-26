@@ -58,6 +58,14 @@ public actor GoogleDriveAccount {
     public func hasClient() throws -> Bool { try store.getString("client") != nil }
     public func identity() throws -> GoogleDriveIdentity? { try credential()?.identity }
 
+    /// Requests access to existing Drive items without changing or deleting
+    /// them. Only call from an explicit user action: macOS may show a prompt.
+    public func requestKeychainAccess() throws {
+        guard let keychain = store as? KeychainKeyValueStore else { return }
+        try keychain.requestAccess(to: "client")
+        try keychain.requestAccess(to: "credential")
+    }
+
     /// Reuse the desktop client configuration without exposing Drive tokens.
     func clientConfigurationForReuse() throws -> Data? {
         guard try hasClient() else { return nil }
