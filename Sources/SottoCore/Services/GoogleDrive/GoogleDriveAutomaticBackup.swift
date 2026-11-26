@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 /// Durable work and receipts for the explicitly selected account and destination.
 /// Local meeting artifacts remain the source of truth and are staged on demand.
@@ -48,6 +49,11 @@ public actor GoogleDriveAutomaticBackup {
         }
     }
 
+    private static let logger = Logger(subsystem: "com.sotto", category: "GoogleDriveBackup")
+    /// Unclassified failures (Keychain, staging I/O, local locks) are often
+    /// short-lived, so they retry with backoff before needing an explicit Retry.
+    static let maxUnclassifiedAttempts = 5
+
     private let queueURL: URL
     private let account: GoogleDriveAccount
     private let uploader: any GoogleDriveBackingUp
@@ -69,8 +75,13 @@ public actor GoogleDriveAutomaticBackup {
     }
 
     public func status() throws -> Status {
-        guard FileManager.default.fileExists(atPath: queueURL.path) else { return Status() }
-        return try JSONDecoder().decode(Status.self, from: Data(contentsOf: queueURL))
+        do {
+            return try read()
+        } catch is DecodingError {
+            let lock = try GoogleDriveFileLock(url: queueURL.appendingPathExtension("lock"), nonblocking: false)
+            defer { lock.release() }
+            return try readSettingAsideUndecodable()
+        }
     }
 
     public func enable(identity: GoogleDriveIdentity, destination: GoogleDriveFolder, now: Date = Date()) throws {
@@ -95,7 +106,9 @@ public actor GoogleDriveAutomaticBackup {
 
     public func retry(_ id: UUID) throws {
         try update { state in
-            guard let entry = state.records[id], entry.phase != .uploaded else { return }
+            // Pending entries may be waiting out a backoff that Retry must not reset.
+            guard let entry = state.records[id], entry.phase == .failed || entry.phase == .signInRequired
+            else { return }
             state.records[id] = Entry(candidate: entry.candidate)
         }
     }
@@ -103,6 +116,10 @@ public actor GoogleDriveAutomaticBackup {
     public func discover(_ candidates: [Candidate]) throws {
         try update { state in
             guard let config = state.configuration else { return }
+            // Receipts for meetings that no longer exist locally would otherwise
+            // accumulate forever. Unfinished work is removed by the worker.
+            let current = Set(candidates.map(\.id))
+            state.records = state.records.filter { $0.value.phase != .uploaded || current.contains($0.key) }
             for candidate in candidates {
                 let prior = state.records[candidate.id]
                 guard (prior != nil || candidate.changedAt >= config.enabledAt),
@@ -136,11 +153,11 @@ public actor GoogleDriveAutomaticBackup {
                 $0.phase == .pending && ($0.retryAt ?? .distantPast) <= eligibilityTime
             })
         else { return false }
+        // The account is shared by every entry. An unreadable Keychain or a
+        // disconnected or different account holds the queue instead of
+        // recording the same failure on each entry in turn.
+        guard try await account.identity() == config.identity else { return false }
         do {
-            guard try await account.identity() == config.identity else {
-                throw GoogleDriveError.authenticationRequired(
-                    "Reconnect the Google account selected for automatic backup.")
-            }
             guard let current = try await source(entry.id) else {
                 try save(nil, replacing: entry, configuration: config)
                 return true
@@ -148,7 +165,11 @@ public actor GoogleDriveAutomaticBackup {
             let snapshots = try await preparer.prepare([current])
             do {
                 let latest = try status()
-                guard latest.configuration == config, latest.records[entry.id]?.candidate == entry.candidate else {
+                // Pausing lets this staged upload finish; only a new generation
+                // (turned off, or a different account or destination) drops it.
+                guard latest.configuration?.generation == config.generation,
+                    latest.records[entry.id]?.candidate == entry.candidate
+                else {
                     await preparer.cleanup(snapshots)
                     return false
                 }
@@ -187,7 +208,7 @@ public actor GoogleDriveAutomaticBackup {
     private func update(_ change: (inout Status) -> Void) throws {
         let lock = try GoogleDriveFileLock(url: queueURL.appendingPathExtension("lock"), nonblocking: false)
         defer { lock.release() }
-        var state = try status()
+        var state = try readSettingAsideUndecodable()
         let encoder = JSONEncoder()
         encoder.outputFormatting = .sortedKeys
         let previous = try encoder.encode(state)
@@ -196,6 +217,26 @@ public actor GoogleDriveAutomaticBackup {
         guard data != previous else { return }
         try data.write(to: queueURL, options: .atomic)
         try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: queueURL.path)
+    }
+
+    private func read() throws -> Status {
+        guard FileManager.default.fileExists(atPath: queueURL.path) else { return Status() }
+        return try JSONDecoder().decode(Status.self, from: Data(contentsOf: queueURL))
+    }
+
+    /// Callers hold the queue lock. An undecodable queue (truncated, or from an
+    /// incompatible build) would otherwise block every control, including
+    /// Turn off, so its bytes are kept aside and automatic backup reads as off.
+    private func readSettingAsideUndecodable() throws -> Status {
+        do {
+            return try read()
+        } catch is DecodingError {
+            let aside = queueURL.appendingPathExtension("corrupt-\(Int(Date().timeIntervalSince1970))")
+            try? FileManager.default.removeItem(at: aside)
+            try FileManager.default.moveItem(at: queueURL, to: aside)
+            Self.logger.error("Set aside an unreadable automatic Drive backup queue; automatic backup is off.")
+            return Status()
+        }
     }
 
     private static func record(_ error: Error, on entry: inout Entry, now: Date) {
@@ -225,7 +266,11 @@ public actor GoogleDriveAutomaticBackup {
                 entry.phase = .failed
             }
         default:
-            entry.phase = .failed
+            if entry.attempts < maxUnclassifiedAttempts {
+                entry.retryAt = nextRetry(attempts: entry.attempts, now: now)
+            } else {
+                entry.phase = .failed
+            }
         }
     }
 

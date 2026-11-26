@@ -153,7 +153,7 @@ public actor GoogleDriveAccount {
         }
         if let expected, credential.identity != expected {
             throw GoogleDriveError.authenticationRequired(
-                "The Google account changed. Reconnect the account selected for this backup.")
+                "The Google account changed. Reopen Google Drive backup to review the connected account.")
         }
         if credential.expiresAt.timeIntervalSinceNow > 90 { return credential.accessToken }
         let expectedGeneration = generation

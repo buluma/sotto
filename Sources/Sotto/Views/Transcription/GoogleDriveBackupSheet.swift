@@ -100,6 +100,10 @@ struct GoogleDriveBackupSheet: View {
                     "\(configuration.paused ? "Paused" : "On") · \(configuration.identity.email) · \(configuration.destination.name)"
                 )
                 .foregroundStyle(.secondary)
+                if model.identity != configuration.identity {
+                    Text("Uploads are held until \(configuration.identity.email) is connected.")
+                        .foregroundStyle(.secondary)
+                }
                 HStack {
                     Button(configuration.paused ? "Resume" : "Pause") {
                         changeAutomaticBackup { try await $0.setPaused(!configuration.paused) }
@@ -135,7 +139,7 @@ struct GoogleDriveBackupSheet: View {
                         }
                     }
                     Spacer()
-                    if entry.phase != .uploaded {
+                    if entry.phase == .failed || entry.phase == .signInRequired {
                         Button("Retry") {
                             let id = entry.id
                             changeAutomaticBackup { try await $0.retry(id) }
@@ -156,11 +160,14 @@ struct GoogleDriveBackupSheet: View {
         }
     }
 
+    private static let automaticReadError = "Could not read the automatic backup queue."
+
     private func refreshAutomaticStatus() async {
         do {
             automaticStatus = try await GoogleDriveAutomaticBackup.shared.status()
+            if automaticError == Self.automaticReadError { automaticError = nil }
         } catch {
-            automaticError = "Could not read the automatic backup queue."
+            automaticError = Self.automaticReadError
         }
     }
 

@@ -465,10 +465,16 @@ public final class MeetingArtifactStore: MeetingArtifactStoring, @unchecked Send
         guard transcription.sourceType == .meeting else {
             return nil
         }
-        if let folderPath = normalizedPath(transcription.meetingArtifactFolderPath) {
+        return sessionFolderURL(
+            artifactFolderPath: transcription.meetingArtifactFolderPath, filePath: transcription.filePath)
+    }
+
+    /// Column-level form of `sessionFolderURL(for:)` for metadata-only reads.
+    static func sessionFolderURL(artifactFolderPath: String?, filePath: String?) -> URL? {
+        if let folderPath = normalizedPath(artifactFolderPath) {
             return URL(fileURLWithPath: folderPath, isDirectory: true)
         }
-        guard let filePath = transcription.filePath?.trimmingCharacters(in: .whitespacesAndNewlines),
+        guard let filePath = filePath?.trimmingCharacters(in: .whitespacesAndNewlines),
               !filePath.isEmpty
         else {
             return nil

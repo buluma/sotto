@@ -641,14 +641,11 @@ public final class TranscriptionRepository: TranscriptionRepositoryProtocol, @un
             }
         }
         return rows.map { id, title, updatedAt, artifactPath, audioPath in
-            let folder = artifactPath.map { URL(fileURLWithPath: $0, isDirectory: true) }
-                ?? audioPath.map { URL(fileURLWithPath: $0).deletingLastPathComponent() }
-                ?? URL(fileURLWithPath: AppPaths.meetingRecordingsDir, isDirectory: true)
-                    .appendingPathComponent(id.uuidString, isDirectory: true)
-            let manifest = folder.appendingPathComponent(MeetingArtifactStore.manifestFileName)
+            let manifest = MeetingArtifactStore.sessionFolderURL(artifactFolderPath: artifactPath, filePath: audioPath)?
+                .appendingPathComponent(MeetingArtifactStore.manifestFileName)
             // Canonical regeneration records edits to prompt outputs and
             // classification even when the transcription row is unchanged.
-            let manifestDate = (try? manifest.resourceValues(forKeys: [.contentModificationDateKey]))?
+            let manifestDate = (try? manifest?.resourceValues(forKeys: [.contentModificationDateKey]))?
                 .contentModificationDate ?? .distantPast
             return GoogleDriveAutomaticBackup.Candidate(
                 id: id, title: title,

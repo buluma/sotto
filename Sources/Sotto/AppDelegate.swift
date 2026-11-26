@@ -539,6 +539,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func startAutomaticDriveBackup(repository: TranscriptionRepository) {
+        // Its only controls live behind the meeting feature in the Library.
+        guard AppFeatures.meetingRecordingEnabled else { return }
         guard let provider = libraryViewModel.driveBackupSourcesProvider else { return }
         driveBackupTask?.cancel()
         driveBackupTask = Task.detached(priority: .utility) {
