@@ -32,6 +32,7 @@ struct TranscriptionLibraryView: View {
     @State private var splitOperationId: UUID?
     @State private var audioSaveErrorMessage: String?
     @State private var showingBulkExportOptions = false
+    @State private var showsAutomaticDriveBackup = false
     @State private var driveBackupSelection: DriveBackupSelection?
     @AppStorage("com.sotto.libraryBulkExportFormat")
     private var selectedBulkExportFormatRawValue = TranscriptExportFormat.txt.rawValue
@@ -138,6 +139,17 @@ struct TranscriptionLibraryView: View {
         .accessibilityLabel("Library layout")
         .frame(width: 76)
         .help(libraryLayoutMode == .grid ? "Switch to list view" : "Switch to grid view")
+
+        if AppFeatures.meetingRecordingEnabled, viewModel.driveBackupSourcesProvider != nil {
+            Button {
+                showsAutomaticDriveBackup = true
+            } label: {
+                Label("Google Drive backups", systemImage: "externaldrive.badge.icloud")
+                    .labelStyle(.iconOnly)
+            }
+            .sottoAction(.secondary)
+            .help("Google Drive backups")
+        }
 
         if let onManagePrompts {
             LibraryManagePromptsButton(action: onManagePrompts)
@@ -310,6 +322,9 @@ struct TranscriptionLibraryView: View {
 
     private var presentationContent: some View {
         secondaryAlertsContent
+            .sheet(isPresented: $showsAutomaticDriveBackup) {
+                GoogleDriveBackupSheet()
+            }
             .sheet(item: $driveBackupSelection) { selection in
                 if let provider = viewModel.driveBackupSourcesProvider {
                     GoogleDriveBackupSheet(sources: { try await provider(selection.ids) })

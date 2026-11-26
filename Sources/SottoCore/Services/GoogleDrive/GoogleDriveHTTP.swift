@@ -2,12 +2,14 @@ import Foundation
 
 public enum GoogleDriveError: LocalizedError, Sendable {
     case message(String)
+    case authenticationRequired(String)
+    case busy(String)
     case http(Int)
     case api(status: Int, operation: String, reason: String?)
 
     public var errorDescription: String? {
         switch self {
-        case .message(let text): return text
+        case .message(let text), .authenticationRequired(let text), .busy(let text): return text
         case .http(401): return "Google Drive authorization expired. Disconnect and connect again."
         case .http(403):
             return "Google Drive denied access. Check folder permissions, storage space, and your Google Cloud setup."

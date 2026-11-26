@@ -37,6 +37,10 @@ The snapshot can include full meeting metadata and saved calendar context. OAuth
 - Meeting automation hooks through `SOTTO_ARTIFACT_DIR` and `SOTTO_ARTIFACT_MANIFEST`.
 - Support diagnostics and future local agent workflows.
 
+### Automatic Google Drive backup (SOT-10)
+
+Automatic backup is off until the user confirms an account and folder in the Library. The running app discovers newly completed and changed eligible meetings and persists a local revision queue and status. Pending work survives app restart, uses the same private staging allowlist as manual backup, and reuses that account and destination’s reserved Drive IDs. A confirmed upload marks only its queued revision complete. Rate limits and connectivity failures retry with bounded backoff. Sign-in and permanent errors stay visible and can be retried. An account change cannot redirect queued uploads. Local artifacts remain authoritative and user-owned. See [Google Drive backup](../../docs/google-drive-backup.md#automatic-backup-sot-10).
+
 ## Stable Folder Entries
 
 Selected capture sources start independently. The recording service installs the source writer's event consumer before awaiting capture startup; a stuck microphone cannot prevent a healthy system source from being written. A missing selected source can therefore produce a valid partial meeting. Stop finalizes surviving audio through the existing source-alignment, playback and capture-report contract. A late source retains its actual offset rather than moving meeting time zero.

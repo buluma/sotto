@@ -1,4 +1,5 @@
 import AppKit
+import OSLog
 import SottoCore
 import SottoViewModels
 
@@ -22,6 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var voiceControlCoordinator: VoiceControlCoordinator?
     private var hasPresentedHotkeyUnavailableAlert = false
     private var hasPresentedHotkeyConflictAlert = false
+    private var driveBackupTask: Task<Void, Never>?
     private var environmentSetupTask: Task<Void, Never>?
     private var meetingQuitTask: Task<Void, Never>?
     private let savedMeetingNotesCoordinator = SavedMeetingNotesCoordinator.shared
@@ -415,6 +417,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         voiceControlCoordinator?.shutdown()
         settingsObserverCoordinator.stopObserving()
         environmentSetupTask?.cancel()
+        driveBackupTask?.cancel()
         speechPreWarmTask?.cancel()
 
         // Bound the wait so termination does not hang, while still giving shutdown
@@ -535,6 +538,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    private func startAutomaticDriveBackup(repository: TranscriptionRepository) {
+        guard let provider = libraryViewModel.driveBackupSourcesProvider else { return }
+        driveBackupTask?.cancel()
+        driveBackupTask = Task.detached(priority: .utility) {
+            let backup = GoogleDriveAutomaticBackup.shared
+            let logger = Logger(subsystem: "com.sotto", category: "GoogleDriveBackup")
+            while !Task.isCancelled {
+                do {
+                    if try await backup.status().configuration != nil {
+                        try await backup.discover(repository.fetchAutomaticDriveBackupCandidates())
+                        for _ in 0..<10 {
+                            try Task.checkCancellation()
+                            let attempted = try await backup.uploadNext { id in
+                                guard try repository.fetch(id: id) != nil else { return nil }
+                                let source = try await provider([id]).first
+                                guard source?.projection.automaticTranscription.status == .completed else {
+                                    throw GoogleDriveError.busy("Waiting for the meeting to finish processing.")
+                                }
+                                return source
+                            }
+                            if !attempted { break }
+                        }
+                    }
+                } catch is CancellationError {
+                    return
+                } catch {
+                    logger.error("Could not read or update the automatic Drive backup queue.")
+                }
+                do { try await Task.sleep(for: .seconds(15)) } catch { return }
+            }
+        }
+    }
+
     private func setupEnvironment(_ env: AppEnvironment) {
         appEnvironment = env
         if let shareStopObserver {
@@ -639,6 +675,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             )
         )
 
+        startAutomaticDriveBackup(repository: env.transcriptionRepo)
         dictationFlowCoordinator = runtime.dictationFlowCoordinator
         dictationFlowCoordinator?.isPracticeTarget = { [weak self] in
             self?.onboardingWindowController.isVisible == true

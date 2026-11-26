@@ -5,7 +5,10 @@ import SottoViewModels
 import UniformTypeIdentifiers
 
 struct GoogleDriveBackupSheet: View {
-    let sources: @Sendable () async throws -> [MeetingDriveBackupSource]
+    var sources: (@Sendable () async throws -> [MeetingDriveBackupSource])? = nil
+    @State private var automaticStatus: GoogleDriveAutomaticBackup.Status?
+    @State private var automaticError: String?
+    @State private var confirmsAutomaticBackup = false
     @State private var model = GoogleDriveBackupViewModel()
     @State private var folderName = "Sotto Meetings"
     @State private var signIn = GoogleDriveSignIn()
@@ -13,17 +16,24 @@ struct GoogleDriveBackupSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Back up to Google Drive").font(.title2.weight(.semibold))
-            Text(
-                "Review the files below before uploading. Google will store this copy in your Drive, including any retained audio and meeting metadata."
-            )
-            .foregroundStyle(.secondary)
+            Text(sources == nil ? "Google Drive backups" : "Back up to Google Drive")
+                .font(.title2.weight(.semibold))
+            if sources != nil {
+                Text(
+                    "Review the files below before uploading. Google will store this copy in your Drive, including any retained audio and meeting metadata."
+                )
+                .foregroundStyle(.secondary)
+            }
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     accountControls
                     if model.identity != nil { destinationControls }
                     Divider()
-                    preview
+                    if sources == nil {
+                        automaticControls
+                    } else {
+                        preview
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -45,18 +55,127 @@ struct GoogleDriveBackupSheet: View {
                 }
                 Spacer()
                 Button("Close") { dismiss() }.sottoAction(.secondary).disabled(model.isBusy)
-                Button(model.failures.isEmpty ? "Upload" : "Retry failed uploads") { model.upload() }
-                    .sottoAction(.primary)
-                    .disabled(
-                        model.isBusy || model.identity == nil || model.snapshots.isEmpty
-                            || model.completed.count == model.snapshots.count)
+                if sources != nil {
+                    Button(model.failures.isEmpty ? "Upload" : "Retry failed uploads") { model.upload() }
+                        .sottoAction(.primary)
+                        .disabled(
+                            model.isBusy || model.identity == nil || model.snapshots.isEmpty
+                                || model.completed.count == model.snapshots.count)
+                }
             }
         }
         .padding(24)
         .frame(width: 620, height: 700)
         .interactiveDismissDisabled(model.isBusy)
-        .task { model.prepare(sources: { @Sendable [sources] in try await sources() }) }
+        .task {
+            model.prepare(sources: sources ?? { [] })
+            guard sources == nil else { return }
+            while !Task.isCancelled {
+                await refreshAutomaticStatus()
+                do { try await Task.sleep(for: .seconds(2)) } catch { return }
+            }
+        }
+        .alert("Enable automatic Drive backups?", isPresented: $confirmsAutomaticBackup) {
+            Button("Cancel", role: .cancel) {}
+            Button("Enable") {
+                guard let identity = model.identity else { return }
+                let destination = model.destination
+                changeAutomaticBackup { backup in
+                    try await backup.enable(identity: identity, destination: destination)
+                }
+            }
+        } message: {
+            Text(
+                "While Sotto is running, new and changed meetings will upload to \(model.destination.name) in \(model.identity?.email ?? "the selected account"). This includes transcripts, notes, prompt results, saved calendar context, local artifact paths, and retained audio. Changing the destination clears the previous local queue."
+            )
+        }
         .onDisappear { Task { await model.close() } }
+    }
+
+    private var automaticControls: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Automatic backup").font(.headline)
+            if let configuration = automaticStatus?.configuration {
+                Text(
+                    "\(configuration.paused ? "Paused" : "On") · \(configuration.identity.email) · \(configuration.destination.name)"
+                )
+                .foregroundStyle(.secondary)
+                HStack {
+                    Button(configuration.paused ? "Resume" : "Pause") {
+                        changeAutomaticBackup { try await $0.setPaused(!configuration.paused) }
+                    }.sottoAction(.secondary)
+                    Button("Turn off") {
+                        changeAutomaticBackup { try await $0.disable() }
+                    }.sottoAction(.secondary)
+                }
+            } else {
+                Text("Off. New and changed meetings can be uploaded while Sotto runs.")
+                    .foregroundStyle(.secondary)
+            }
+            if let identity = model.identity {
+                let config = automaticStatus?.configuration
+                if config?.identity != identity || config?.destination.id != model.destination.id {
+                    Button(config == nil ? "Enable for this folder…" : "Use this folder for automatic backup…") {
+                        confirmsAutomaticBackup = true
+                    }
+                    .sottoAction(.primary)
+                    .disabled(model.isBusy)
+                }
+            }
+            if let automaticError {
+                Text(automaticError).foregroundStyle(.red)
+            }
+            ForEach(automaticStatus?.entries ?? []) { entry in
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(entry.candidate.title)
+                        Text(backupStatus(entry)).font(.caption).foregroundStyle(.secondary)
+                        if let message = entry.message {
+                            Text(message).font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                    Spacer()
+                    if entry.phase != .uploaded {
+                        Button("Retry") {
+                            let id = entry.id
+                            changeAutomaticBackup { try await $0.retry(id) }
+                        }
+                        .sottoAction(.secondary)
+                    }
+                }
+            }
+        }
+    }
+
+    private func backupStatus(_ entry: GoogleDriveAutomaticBackup.Entry) -> String {
+        switch entry.phase {
+        case .pending: "Pending"
+        case .uploaded: "Uploaded"
+        case .signInRequired: "Sign-in required"
+        case .failed: "Failed"
+        }
+    }
+
+    private func refreshAutomaticStatus() async {
+        do {
+            automaticStatus = try await GoogleDriveAutomaticBackup.shared.status()
+        } catch {
+            automaticError = "Could not read the automatic backup queue."
+        }
+    }
+
+    private func changeAutomaticBackup(
+        _ change: @escaping @Sendable (GoogleDriveAutomaticBackup) async throws -> Void
+    ) {
+        Task {
+            do {
+                try await change(.shared)
+                automaticError = nil
+                await refreshAutomaticStatus()
+            } catch {
+                automaticError = "Could not update the automatic backup queue."
+            }
+        }
     }
 
     @ViewBuilder

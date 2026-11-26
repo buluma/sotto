@@ -14,6 +14,125 @@ final class GoogleDriveBackupTests: XCTestCase {
     private var testIdentity: GoogleDriveIdentity {
         GoogleDriveIdentity(permissionID: "owner", email: "owner@example.test")
     }
+    func testQueueSurvivesRestartAndCoalescesChangesWhilePaused() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let url = folder.appendingPathComponent("queue.json")
+        let queue = GoogleDriveAutomaticBackup(queueURL: url)
+        let identity = GoogleDriveIdentity(permissionID: "owner", email: "owner@example.test")
+        let destination = GoogleDriveFolder(id: "folder", name: "Meetings")
+        let start = Date(timeIntervalSince1970: 100)
+        let id = UUID()
+        let oldID = UUID()
+        try await queue.enable(identity: identity, destination: destination, now: start)
+        try await queue.setPaused(true)
+        try await queue.discover([
+            .init(id: oldID, title: "Old", revision: "one", changedAt: start.addingTimeInterval(-1)),
+            .init(id: id, title: "Meeting", revision: "one", changedAt: start),
+        ])
+
+        let reopened = GoogleDriveAutomaticBackup(queueURL: url)
+        try await reopened.discover([
+            .init(id: id, title: "Renamed", revision: "two", changedAt: start.addingTimeInterval(1))
+        ])
+        let state = try await reopened.status()
+        XCTAssertEqual(state.configuration?.identity, identity)
+        XCTAssertEqual(state.configuration?.destination, destination)
+        XCTAssertEqual(state.configuration?.paused, true)
+        XCTAssertEqual(state.entries.map(\.id), [id])
+        XCTAssertEqual(state.entries.first?.candidate.revision, "two")
+        XCTAssertEqual(state.entries.first?.candidate.title, "Renamed")
+        XCTAssertEqual(state.entries.first?.phase, .pending)
+    }
+
+    func testAutomaticBackupDiscoveryFindsFinalizedMeetingsAndArtifactOnlyEdits() throws {
+        let root = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let database = try DatabaseManager()
+        let repository = TranscriptionRepository(dbQueue: database.dbQueue)
+        let row = meeting(folder: root)
+        var processing = meeting(folder: root)
+        processing.status = .processing
+        try repository.save(row)
+        try repository.save(processing)
+
+        let candidates = try repository.fetchAutomaticDriveBackupCandidates()
+        XCTAssertEqual(candidates.count, 1)
+        let first = try XCTUnwrap(candidates.first)
+        XCTAssertEqual(first.id, row.id)
+        let manifest = root.appendingPathComponent(MeetingArtifactStore.manifestFileName)
+        try Data("updated artifact".utf8).write(to: manifest)
+        let editDate = row.updatedAt.addingTimeInterval(60)
+        try FileManager.default.setAttributes([.modificationDate: editDate], ofItemAtPath: manifest.path)
+        let changed = try XCTUnwrap(repository.fetchAutomaticDriveBackupCandidates().first)
+        XCTAssertNotEqual(changed.revision, first.revision)
+        XCTAssertEqual(changed.changedAt.timeIntervalSince1970, editDate.timeIntervalSince1970, accuracy: 0.1)
+    }
+
+    func testAutomaticBackupRecoversFromOfflineRestartAndUpdatesExistingFolder() async throws {
+        let root = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let queueURL = root.appendingPathComponent("automatic.json")
+        let ledgerURL = root.appendingPathComponent("ledger.json")
+        let transport = DriveStubTransport()
+        let account = try connectedAccount(transport: transport)
+        let destination = GoogleDriveFolder(id: "root", name: "My Drive")
+        let now = Date()
+        let row = meeting(folder: root)
+        let initialSource = source(row)
+        let initialUploader = GoogleDriveBackupService(account: account, transport: transport, ledgerURL: ledgerURL)
+        let queue = GoogleDriveAutomaticBackup(queueURL: queueURL, account: account, uploader: initialUploader)
+        try await queue.enable(identity: testIdentity, destination: destination, now: now)
+        try await queue.discover([.init(id: row.id, title: row.fileName, revision: "one", changedAt: now)])
+        await transport.setOffline(true)
+        let offline = try await queue.uploadNext(now: now) { _ in initialSource }
+        await transport.setOffline(false)
+        XCTAssertTrue(offline)
+
+        let service = GoogleDriveBackupService(account: account, transport: transport, ledgerURL: ledgerURL)
+        let reopened = GoogleDriveAutomaticBackup(queueURL: queueURL, account: account, uploader: service)
+        let premature = try await reopened.uploadNext(now: now) { _ in initialSource }
+        XCTAssertFalse(premature)
+        let retryTime = now.addingTimeInterval(15)
+        let retried = try await reopened.uploadNext(now: retryTime) { _ in initialSource }
+        XCTAssertTrue(retried)
+        let uploaded = try await reopened.status()
+        XCTAssertEqual(uploaded.entries.first?.phase, .uploaded)
+
+        var edited = row
+        edited.userNotes = "Changed after backup"
+        let editedSource = source(edited)
+        try await reopened.discover([.init(id: row.id, title: row.fileName, revision: "two", changedAt: retryTime)])
+        let reuploaded = try await reopened.uploadNext(now: retryTime) { _ in editedSource }
+        XCTAssertTrue(reuploaded)
+        let updated = try await reopened.status()
+        XCTAssertEqual(updated.entries.first?.phase, .uploaded)
+        let createdFolders = await transport.createdFolders
+        XCTAssertEqual(createdFolders, 1)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: root.path))
+    }
+
+    func testAutomaticBackupRejectsAccountMismatchBeforeReadingMeeting() async throws {
+        let root = try temporaryFolder()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let transport = DriveStubTransport()
+        let account = try connectedAccount(transport: transport)
+        let queue = GoogleDriveAutomaticBackup(queueURL: root.appendingPathComponent("queue.json"), account: account)
+        let now = Date()
+        let other = GoogleDriveIdentity(permissionID: "other", email: "other@example.test")
+        try await queue.enable(identity: other, destination: .init(id: "root", name: "My Drive"), now: now)
+        try await queue.discover([.init(id: UUID(), title: "Meeting", revision: "one", changedAt: now)])
+        let attempted = try await queue.uploadNext(now: now) { _ in
+            XCTFail("Account mismatch must not read the source")
+            return nil
+        }
+        XCTAssertTrue(attempted)
+        let status = try await queue.status()
+        XCTAssertEqual(status.entries.first?.phase, .signInRequired)
+        let requests = await transport.requestCount
+        XCTAssertEqual(requests, 0)
+    }
+
     func testPreviewUsesCurrentTranscriptAndOnlyManagedArtifactsWithoutChangingSource() async throws {
         let root = try temporaryFolder()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -586,6 +705,8 @@ private actor DriveStubTransport: GoogleDriveTransport {
     var sessions: [String: Session] = [:]
     var loseFolder = false
     var loseChunk = false
+    private var isOffline = false
+    func setOffline(_ enabled: Bool) { isOffline = enabled }
     func loseNextFolderResponse() { loseFolder = true }
     func loseNextChunkResponse() { loseChunk = true }
     func setTokenStatus(_ status: Int?) { tokenStatus = status }
@@ -611,6 +732,7 @@ private actor DriveStubTransport: GoogleDriveTransport {
 
     func send(_ request: URLRequest) async throws -> GoogleDriveResponse {
         requestCount += 1
+        if isOffline { throw URLError(.notConnectedToInternet) }
         let url = try XCTUnwrap(request.url)
         if url.path == "/token" {
             if let tokenStatus { return .init(data: Data(), status: tokenStatus) }
