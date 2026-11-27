@@ -20,6 +20,9 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+
 concurrency:
   # Keep each master push's CI run alive so a later merge cannot cancel the
   # exact-SHA validation required by that commit's nightly release.
