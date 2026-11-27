@@ -1050,6 +1050,11 @@
       ]
     };
 
+    // Input-derived strings are interpolated into innerHTML templates.
+    function escapeHTML(value) {
+      return String(value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+    }
+
     function formatCustomExpiry(value) {
       const date = new Date(value);
       if (Number.isNaN(date.getTime())) return 'an exact custom time';
@@ -1124,7 +1129,7 @@
         <div class="state-cell"><dt>Published copy</dt><dd class="${remoteClass}">${remote}${state.version ? ` · v${state.version}` : ''}</dd></div>
         <div class="state-cell"><dt>This Mac</dt><dd class="${state.online ? 'good' : 'warn'}">${state.online ? 'Online' : 'Offline'}</dd></div>
         <div class="state-cell"><dt>Recipient access</dt><dd class="${accessClass}">${access}</dd></div>`;
-      document.querySelector('#event-line').innerHTML = `<strong>What changed:</strong> ${state.lastEvent}`;
+      document.querySelector('#event-line').innerHTML = `<strong>What changed:</strong> ${escapeHTML(state.lastEvent)}`;
 
       document.querySelector('#free-play').innerHTML = `
         <span class="free-play-label">Free play</span>
@@ -1235,7 +1240,7 @@
               </div>
               ${isUpdate
                 ? `<div class="expiry-row"><span>Link expires</span><strong>${publishedExpiryPhrase()}</strong></div><p class="sheet-foot-note">Content updates keep the existing expiration. Change it separately from Shared.</p>`
-                : `<div class="expiry-row"><label for="expiry">Link expires</label><select id="expiry" data-expiry><option${state.expiryPreset === '1 hour' ? ' selected' : ''}>1 hour</option><option${state.expiryPreset === '24 hours' ? ' selected' : ''}>24 hours</option><option${state.expiryPreset === '7 days' ? ' selected' : ''}>7 days</option><option${state.expiryPreset === '30 days' ? ' selected' : ''}>30 days</option><option${state.expiryPreset === 'Custom…' ? ' selected' : ''}>Custom…</option></select></div>${state.expiryPreset === 'Custom…' ? `<div class="expiry-custom"><label for="custom-expiry">Exact date and time, within 90 days</label><input id="custom-expiry" type="datetime-local" min="2026-09-11T20:45" max="2026-12-10T20:45" value="${state.customExpiry}" data-custom-expiry required></div>` : ''}`}
+                : `<div class="expiry-row"><label for="expiry">Link expires</label><select id="expiry" data-expiry><option${state.expiryPreset === '1 hour' ? ' selected' : ''}>1 hour</option><option${state.expiryPreset === '24 hours' ? ' selected' : ''}>24 hours</option><option${state.expiryPreset === '7 days' ? ' selected' : ''}>7 days</option><option${state.expiryPreset === '30 days' ? ' selected' : ''}>30 days</option><option${state.expiryPreset === 'Custom…' ? ' selected' : ''}>Custom…</option></select></div>${state.expiryPreset === 'Custom…' ? `<div class="expiry-custom"><label for="custom-expiry">Exact date and time, within 90 days</label><input id="custom-expiry" type="datetime-local" min="2026-09-11T20:45" max="2026-12-10T20:45" value="${escapeHTML(state.customExpiry)}" data-custom-expiry required></div>` : ''}`}
               <p class="privacy-line"><strong>This encrypted text copy will leave your Mac.</strong> Anyone with the full link can read and forward it.</p>
             </div>
             <div class="preview-pane">
@@ -1278,7 +1283,7 @@
           <h2 id="expiry-title">Change expiration</h2>
           <p>The shared text and full link stay the same. The current expiration remains confirmed until this change succeeds.</p>
           <div class="expiry-row"><label for="managed-expiry">New expiration</label><select id="managed-expiry" data-expiry><option${state.expiryDraftPreset === '1 hour' ? ' selected' : ''}>1 hour</option><option${state.expiryDraftPreset === '24 hours' ? ' selected' : ''}>24 hours</option><option${state.expiryDraftPreset === '7 days' ? ' selected' : ''}>7 days</option><option${state.expiryDraftPreset === '30 days' ? ' selected' : ''}>30 days</option><option${state.expiryDraftPreset === 'Custom…' ? ' selected' : ''}>Custom…</option></select></div>
-          ${state.expiryDraftPreset === 'Custom…' ? `<div class="expiry-custom"><label for="managed-custom-expiry">Exact date and time, within 90 days</label><input id="managed-custom-expiry" type="datetime-local" min="2026-09-11T20:45" max="2026-12-10T20:45" value="${state.expiryDraftCustom}" data-custom-expiry required></div>` : ''}
+          ${state.expiryDraftPreset === 'Custom…' ? `<div class="expiry-custom"><label for="managed-custom-expiry">Exact date and time, within 90 days</label><input id="managed-custom-expiry" type="datetime-local" min="2026-09-11T20:45" max="2026-12-10T20:45" value="${escapeHTML(state.expiryDraftCustom)}" data-custom-expiry required></div>` : ''}
           <div class="confirm-caveat">Proposed: ${expiryDraftPhrase()}<br>Currently confirmed: ${confirmed.expiryPreset === 'Custom…' ? confirmed.expiry : `In ${confirmed.expiry}`}</div>
         </div>
         <footer class="sheet-foot"><span class="sheet-foot-note">${state.online ? 'Ready to confirm' : 'Offline: the confirmed expiration will be retained'}</span><div class="button-row"><button class="button" data-action="CLOSE_DIALOG">Cancel</button><button class="button primary" data-action="SAVE_EXPIRY">Confirm expiration</button></div></footer>
